@@ -1,5 +1,10 @@
 # TrainingPeaks SDK
 
+[![CI](https://github.com/your-org/trainingpeaks-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/trainingpeaks-sdk/actions/workflows/ci.yml)
+[![npm version](https://badge.fury.io/js/trainingpeaks-sdk.svg)](https://badge.fury.io/js/trainingpeaks-sdk)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![codecov](https://codecov.io/gh/your-org/trainingpeaks-sdk/branch/main/graph/badge.svg)](https://codecov.io/gh/your-org/trainingpeaks-sdk)
+
 A TypeScript SDK for interacting with the TrainingPeaks API. This SDK provides a simple and intuitive interface for authentication, workout uploads, and other TrainingPeaks functionality.
 
 ## Features
@@ -288,6 +293,51 @@ npm run lint:commit
 
 - `npm run docs:build` - Generate documentation
 - `npm run docs:serve` - Generate and serve documentation
+
+#### Release & Publishing
+
+- `npm run release:patch` - Create patch release
+- `npm run release:minor` - Create minor release
+- `npm run release:major` - Create major release
+
+### CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+#### Workflows
+
+- **CI Pipeline** (`.github/workflows/ci.yml`):
+  - Runs on every push and pull request
+  - Tests on Node.js 18.x and 20.x
+  - Executes linting, formatting checks, tests, and build
+  - Uploads coverage reports to Codecov
+  - Validates commit messages on pull requests
+
+- **Release Pipeline** (`.github/workflows/release.yml`):
+  - Triggers on version tags (v\*)
+  - Creates GitHub releases with auto-generated changelog
+  - Publishes to npm registry automatically
+
+- **Dependency Updates**:
+  - Dependabot keeps dependencies up to date
+  - Weekly checks for npm and GitHub Actions updates
+  - Automatic pull requests for security updates
+
+#### Making a Release
+
+```bash
+# 1. Update version in package.json
+npm version patch  # or minor/major
+
+# 2. Push tags to trigger release
+git push origin main --tags
+
+# 3. GitHub Actions will:
+#    - Run all tests and checks
+#    - Create GitHub release
+#    - Publish to npm
+#    - Generate changelog
+```
 
 ## Contributing
 

@@ -24,6 +24,9 @@
     "prepare": "husky",
     "commit": "git-cz",
     "lint:commit": "commitlint --from HEAD~1 --to HEAD --verbose",
+    "release:patch": "npm version patch && git push origin main --tags",
+    "release:minor": "npm version minor && git push origin main --tags",
+    "release:major": "npm version major && git push origin main --tags",
     "prepublishOnly": "npm run clean && npm run build && npm run test",
     "docs:build": "typedoc src/index.ts",
     "docs:serve": "typedoc src/index.ts --watch"
