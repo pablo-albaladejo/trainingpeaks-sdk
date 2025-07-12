@@ -1,0 +1,31 @@
+# <type>: <subject>
+#
+# <body>
+#
+# <footer>
+
+# Types:
+# feat:     New feature
+# fix:      Bug fix
+# docs:     Documentation changes
+# style:    Code style changes (formatting, etc.)
+# refactor: Code refactoring
+# test:     Adding or updating tests
+# chore:    Build process or auxiliary tool changes
+# perf:     Performance improvements
+# ci:       CI/CD changes
+# build:    Build system changes
+# revert:   Revert previous commit
+#
+# Rules:
+# - Use lowercase for subject
+# - No period at the end of subject
+# - Subject line max 72 characters
+# - Body lines max 100 characters
+# - Separate subject from body with blank line
+# - Use body to explain what and why vs. how
+#
+# Examples:
+# feat: add user authentication
+# fix: resolve memory leak in workout uploader
+# docs: update api documentation for auth module

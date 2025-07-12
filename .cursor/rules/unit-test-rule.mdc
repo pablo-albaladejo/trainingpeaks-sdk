@@ -1,0 +1,17 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Unit Test Guide
+
+- The test uses the Arrange-Act-Assert pattern and is written with `Vitest`.
+- Instead of manually mocking the logger, it uses a shared mock: @mockLogInfo and the real @logger instance.
+- When adding or updating tests, prefer using the shared logger mock and follow the Arrange-Act-Assert structure for clarity and consistency.
+- For common types, prefer generate a fixture builder helper in `src/__fixtures__`, for example [playbookConfiguration.fixture.ts](mdc:src/__fixtures__/playbookConfiguration.fixture.ts)
+- This approach ensures tests are robust and not dependent on static values.
+- When generating random values in unit tests, use `faker`. See [assignPlaybookSettings/index.test.ts](mdc:src/adapters/lambda/graphql/assignPlaybookSettings/index.test.ts) for an example.
+- For number types, use `randomNumber` from [utils.fixture.ts](mdc:src/__fixtures__/utils.fixture.ts)
+- To generate random value, use `faker`
+- Prefer using `toStrictEqual` over `toEqual`
+

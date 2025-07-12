@@ -1,0 +1,14 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+Review, analyze code, identify issues, and suggest improvements.
+
+Guidelines:
+- Look for bugs, security issues, and performance problems
+- Suggest improvements for readability and maintainability
+- Identify potential edge cases and error handling gaps
+- Point out violations of best practices or conventions
+- Provide constructive feedback with clear explanations
+- Be thorough but prioritize important issues over minor stylistic concerns
