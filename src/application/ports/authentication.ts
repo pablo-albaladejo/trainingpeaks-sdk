@@ -3,9 +3,9 @@
  * Defines contract for external authentication adapters
  */
 
-import { AuthToken } from '../../domain/entities/AuthToken.js';
-import { User } from '../../domain/entities/User.js';
-import { Credentials } from '../../domain/value-objects/Credentials.js';
+import { AuthToken } from '../../domain/entities/auth-token';
+import { User } from '../../domain/entities/user';
+import { Credentials } from '../../domain/value-objects/credentials';
 
 export interface AuthenticationConfig {
   /** Base URL for authentication */

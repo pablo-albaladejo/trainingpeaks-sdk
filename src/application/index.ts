@@ -4,19 +4,19 @@
  */
 
 // Use Cases
-export { GetCurrentUserUseCase } from './use-cases/GetCurrentUserUseCase.js';
-export { LoginUseCase } from './use-cases/LoginUseCase.js';
-export { LogoutUseCase } from './use-cases/LogoutUseCase.js';
+export { GetCurrentUserUseCase } from './use-cases/get-current-user';
+export { LoginUseCase } from './use-cases/login';
+export { LogoutUseCase } from './use-cases/logout';
 
 // Use Case DTOs
-export type { LoginRequest, LoginResponse } from './use-cases/LoginUseCase.js';
+export type { LoginRequest, LoginResponse } from './use-cases/login';
 
 // Services
-export { AuthApplicationService } from './services/AuthApplicationService.js';
+export { AuthApplicationService } from './services/auth-application';
 
 // Ports
 export type {
   AuthenticationConfig,
   AuthenticationPort,
-} from './ports/AuthenticationPort.js';
-export type { StoragePort } from './ports/StoragePort.js';
+} from './ports/authentication';
+export type { StoragePort } from './ports/storage';

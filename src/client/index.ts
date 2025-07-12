@@ -3,7 +3,7 @@
  */
 
 import { TrainingPeaksAuth } from '../auth';
-import { SimpleAuthManager } from '../auth/simple-auth-manager.js';
+import { SimpleAuthManager } from '../auth/simple-auth-manager';
 import { AuthToken, LoginCredentials, TrainingPeaksConfig } from '../types';
 import { WorkoutUploader } from '../workout';
 

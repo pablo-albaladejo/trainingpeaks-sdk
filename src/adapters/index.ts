@@ -4,4 +4,4 @@
  */
 
 // Repository Implementations
-export { TrainingPeaksAuthRepository } from './repositories/TrainingPeaksAuthRepository.js';
+export { TrainingPeaksAuthRepository } from './repositories/training-peaks-auth';

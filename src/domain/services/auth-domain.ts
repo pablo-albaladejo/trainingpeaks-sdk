@@ -3,8 +3,8 @@
  * Contains domain logic for authentication operations
  */
 
-import { AuthToken } from '../entities/AuthToken.js';
-import { Credentials } from '../value-objects/Credentials.js';
+import { AuthToken } from '../entities/auth-token';
+import { Credentials } from '../value-objects/credentials';
 
 export class AuthDomainService {
   /**

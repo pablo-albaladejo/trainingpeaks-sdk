@@ -3,9 +3,9 @@
  * Defines the contract for authentication operations
  */
 
-import { AuthToken } from '../entities/AuthToken.js';
-import { User } from '../entities/User.js';
-import { Credentials } from '../value-objects/Credentials.js';
+import { AuthToken } from '../entities/auth-token';
+import { User } from '../entities/user';
+import { Credentials } from '../value-objects/credentials';
 
 export interface AuthRepository {
   /**

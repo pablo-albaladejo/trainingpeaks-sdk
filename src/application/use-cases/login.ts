@@ -9,7 +9,7 @@ import {
   AuthToken,
   Credentials,
   User,
-} from '../../domain/index.js';
+} from '../../domain';
 
 export interface LoginRequest {
   username: string;

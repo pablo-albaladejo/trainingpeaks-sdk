@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { vi } from 'vitest';
+import { beforeEach, vi } from 'vitest';
 
 // Load environment variables first
 dotenv.config();

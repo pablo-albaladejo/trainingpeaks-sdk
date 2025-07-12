@@ -3,7 +3,7 @@
  * Retrieves current authenticated user information
  */
 
-import { AuthDomainService, AuthRepository, User } from '../../domain/index.js';
+import { AuthDomainService, AuthRepository, User } from '../../domain';
 
 export class GetCurrentUserUseCase {
   constructor(private readonly authRepository: AuthRepository) {}

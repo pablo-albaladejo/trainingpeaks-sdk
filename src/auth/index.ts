@@ -10,7 +10,7 @@ import {
   TrainingPeaksConfig,
   UserProfile,
 } from '../types';
-import { WebAuthService } from './web-auth.js';
+import { WebAuthService } from './web-auth';
 
 export class TrainingPeaksAuth {
   private httpClient: AxiosInstance;

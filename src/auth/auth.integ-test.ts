@@ -3,7 +3,7 @@ import { TrainingPeaksAuth } from '.';
 import {
   skipIfNotConfigured,
   testEnvironment,
-} from '../__fixtures__/testEnvironment.js';
+} from '../__fixtures__/test-environment';
 import { TrainingPeaksClient } from '../client';
 
 describe('Web Authentication Integration Tests', () => {

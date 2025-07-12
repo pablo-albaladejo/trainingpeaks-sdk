@@ -4,8 +4,8 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkoutUploader } from '.';
-import { TrainingPeaksConfigFixture } from '../__fixtures__/trainingPeaksConfig.fixture';
-import { WorkoutDataFixture } from '../__fixtures__/workoutData.fixture';
+import { TrainingPeaksConfigFixture } from '../__fixtures__/training-peaks-config.fixture';
+import { WorkoutDataFixture } from '../__fixtures__/workout-data.fixture';
 import { TrainingPeaksAuth } from '../auth';
 import { AuthenticationError, ValidationError } from '../errors';
 import { WorkoutType } from '../types';
@@ -13,6 +13,19 @@ import { WorkoutType } from '../types';
 // Mock axios
 vi.mock('axios');
 vi.mock('form-data');
+
+// Mock the auth module
+vi.mock('../auth', () => ({
+  TrainingPeaksAuth: vi.fn().mockImplementation(() => ({
+    isAuthenticated: vi.fn().mockReturnValue(true),
+    getToken: vi.fn().mockReturnValue({
+      accessToken: 'mock-token',
+      tokenType: 'Bearer',
+      expiresAt: Date.now() + 3600000,
+    }),
+    getUserId: vi.fn().mockReturnValue('123'),
+  })),
+}));
 
 describe('WorkoutUploader', () => {
   let workoutUploader: WorkoutUploader;

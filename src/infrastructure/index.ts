@@ -4,8 +4,8 @@
  */
 
 // Authentication Adapters
-export { ApiAuthAdapter } from './auth/ApiAuthAdapter.js';
-export { WebBrowserAuthAdapter } from './browser/WebBrowserAuthAdapter.js';
+export { ApiAuthAdapter } from './auth/api-adapter';
+export { WebBrowserAuthAdapter } from './browser/web-auth-adapter';
 
 // Storage Adapters
-export { InMemoryStorageAdapter } from './storage/InMemoryStorageAdapter.js';
+export { InMemoryStorageAdapter } from './storage/in-memory-adapter';

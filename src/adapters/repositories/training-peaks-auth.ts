@@ -7,9 +7,9 @@ import {
   AuthenticationConfig,
   AuthenticationPort,
   StoragePort,
-} from '../../application/index.js';
-import { AuthToken, Credentials, User } from '../../domain/index.js';
-import { AuthRepository } from '../../domain/repositories/AuthRepository.js';
+} from '../../application';
+import { AuthToken, Credentials, User } from '../../domain';
+import { AuthRepository } from '../../domain/repositories/auth';
 
 export class TrainingPeaksAuthRepository implements AuthRepository {
   private authAdapters: AuthenticationPort[] = [];

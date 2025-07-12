@@ -7,10 +7,10 @@ import axios, { AxiosInstance } from 'axios';
 import {
   AuthenticationConfig,
   AuthenticationPort,
-} from '../../application/ports/AuthenticationPort.js';
-import { AuthToken } from '../../domain/entities/AuthToken.js';
-import { User } from '../../domain/entities/User.js';
-import { Credentials } from '../../domain/value-objects/Credentials.js';
+} from '../../application/ports/authentication';
+import { AuthToken } from '../../domain/entities/auth-token';
+import { User } from '../../domain/entities/user';
+import { Credentials } from '../../domain/value-objects/credentials';
 
 export class ApiAuthAdapter implements AuthenticationPort {
   private httpClient: AxiosInstance;

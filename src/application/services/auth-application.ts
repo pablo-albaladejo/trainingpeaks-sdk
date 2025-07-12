@@ -3,14 +3,10 @@
  * Orchestrates authentication use cases and provides a unified interface
  */
 
-import { AuthRepository, AuthToken, User } from '../../domain/index.js';
-import { GetCurrentUserUseCase } from '../use-cases/GetCurrentUserUseCase.js';
-import {
-  LoginRequest,
-  LoginResponse,
-  LoginUseCase,
-} from '../use-cases/LoginUseCase.js';
-import { LogoutUseCase } from '../use-cases/LogoutUseCase.js';
+import { AuthRepository, AuthToken, User } from '../../domain';
+import { GetCurrentUserUseCase } from '../use-cases/get-current-user';
+import { LoginRequest, LoginResponse, LoginUseCase } from '../use-cases/login';
+import { LogoutUseCase } from '../use-cases/logout';
 
 export class AuthApplicationService {
   private readonly loginUseCase: LoginUseCase;
