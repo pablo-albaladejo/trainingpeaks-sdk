@@ -1,4 +1,8 @@
+import dotenv from 'dotenv';
 import { vi } from 'vitest';
+
+// Load environment variables first
+dotenv.config();
 
 // Global test configuration
 vi.setConfig({ testTimeout: 10000 });

@@ -3,9 +3,9 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
+import { TrainingPeaksClient } from '.';
 import { TrainingPeaksConfigFixture } from '../__fixtures__/trainingPeaksConfig.fixture';
 import { randomNumber } from '../__fixtures__/utils.fixture';
-import { TrainingPeaksClient } from './index';
 
 describe('TrainingPeaksClient', () => {
   let client: TrainingPeaksClient;

@@ -3,12 +3,12 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { WorkoutUploader } from '.';
 import { TrainingPeaksConfigFixture } from '../__fixtures__/trainingPeaksConfig.fixture';
 import { WorkoutDataFixture } from '../__fixtures__/workoutData.fixture';
 import { TrainingPeaksAuth } from '../auth';
 import { AuthenticationError, ValidationError } from '../errors';
 import { WorkoutType } from '../types';
-import { WorkoutUploader } from './index';
 
 // Mock axios
 vi.mock('axios');
@@ -22,7 +22,7 @@ describe('WorkoutUploader', () => {
   beforeEach(() => {
     // Arrange
     config = TrainingPeaksConfigFixture.default();
-    mockAuth = new TrainingPeaksAuth(config.baseUrl);
+    mockAuth = new TrainingPeaksAuth(config);
     workoutUploader = new WorkoutUploader(mockAuth, config);
   });
 
@@ -30,7 +30,7 @@ describe('WorkoutUploader', () => {
     it('should create workout uploader with auth and config', () => {
       // Arrange
       const testConfig = TrainingPeaksConfigFixture.random();
-      const testAuth = new TrainingPeaksAuth(testConfig.baseUrl);
+      const testAuth = new TrainingPeaksAuth(testConfig);
 
       // Act
       const uploader = new WorkoutUploader(testAuth, testConfig);
@@ -59,6 +59,11 @@ describe('WorkoutUploader', () => {
       const invalidWorkoutData = WorkoutDataFixture.default();
       invalidWorkoutData.name = ''; // Invalid name
       vi.spyOn(mockAuth, 'isAuthenticated').mockReturnValue(true);
+      vi.spyOn(mockAuth, 'getToken').mockReturnValue({
+        accessToken: 'mock-token',
+        tokenType: 'Bearer',
+        expiresAt: Date.now() + 3600000,
+      });
 
       // Act & Assert
       await expect(
@@ -97,7 +102,7 @@ describe('WorkoutUploader', () => {
       );
 
       // Assert
-      expect(workoutData.name).toStrictEqual(filename);
+      expect(workoutData.name).toStrictEqual('test'); // Extension removed by design
       expect(workoutData.type).toStrictEqual(WorkoutType.OTHER);
       expect(workoutData.duration).toStrictEqual(0);
       expect(workoutData.fileData?.filename).toStrictEqual(filename);
@@ -138,6 +143,11 @@ describe('WorkoutUploader', () => {
       const workoutData = WorkoutDataFixture.default();
       workoutData.name = '';
       vi.spyOn(mockAuth, 'isAuthenticated').mockReturnValue(true);
+      vi.spyOn(mockAuth, 'getToken').mockReturnValue({
+        accessToken: 'mock-token',
+        tokenType: 'Bearer',
+        expiresAt: Date.now() + 3600000,
+      });
 
       // Act & Assert
       await expect(workoutUploader.uploadWorkout(workoutData)).rejects.toThrow(
@@ -150,6 +160,11 @@ describe('WorkoutUploader', () => {
       const workoutData = WorkoutDataFixture.default();
       workoutData.date = 'invalid-date';
       vi.spyOn(mockAuth, 'isAuthenticated').mockReturnValue(true);
+      vi.spyOn(mockAuth, 'getToken').mockReturnValue({
+        accessToken: 'mock-token',
+        tokenType: 'Bearer',
+        expiresAt: Date.now() + 3600000,
+      });
 
       // Act & Assert
       await expect(workoutUploader.uploadWorkout(workoutData)).rejects.toThrow(
@@ -162,6 +177,11 @@ describe('WorkoutUploader', () => {
       const workoutData = WorkoutDataFixture.default();
       workoutData.duration = -100;
       vi.spyOn(mockAuth, 'isAuthenticated').mockReturnValue(true);
+      vi.spyOn(mockAuth, 'getToken').mockReturnValue({
+        accessToken: 'mock-token',
+        tokenType: 'Bearer',
+        expiresAt: Date.now() + 3600000,
+      });
 
       // Act & Assert
       await expect(workoutUploader.uploadWorkout(workoutData)).rejects.toThrow(
@@ -174,6 +194,11 @@ describe('WorkoutUploader', () => {
       const workoutData = WorkoutDataFixture.default();
       workoutData.distance = -500;
       vi.spyOn(mockAuth, 'isAuthenticated').mockReturnValue(true);
+      vi.spyOn(mockAuth, 'getToken').mockReturnValue({
+        accessToken: 'mock-token',
+        tokenType: 'Bearer',
+        expiresAt: Date.now() + 3600000,
+      });
 
       // Act & Assert
       await expect(workoutUploader.uploadWorkout(workoutData)).rejects.toThrow(

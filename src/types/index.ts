@@ -11,6 +11,17 @@ export interface TrainingPeaksConfig {
   headers?: Record<string, string>;
   /** Enable debug logging */
   debug?: boolean;
+  /** Authentication method to use */
+  authMethod?: 'web' | 'api';
+  /** Web authentication configuration */
+  webAuth?: {
+    /** Whether to run browser in headless mode */
+    headless?: boolean;
+    /** Browser timeout in milliseconds */
+    timeout?: number;
+    /** Custom browser executable path */
+    executablePath?: string;
+  };
 }
 
 export interface LoginCredentials {
@@ -50,13 +61,13 @@ export interface WorkoutData {
   /** Workout description */
   description?: string;
   /** Workout date */
-  date: string;
+  date?: string;
   /** Workout duration in seconds */
-  duration: number;
+  duration?: number;
   /** Workout distance in meters */
   distance?: number;
   /** Workout type */
-  type: WorkoutType;
+  type?: WorkoutType;
   /** Workout file data */
   fileData?: WorkoutFileData;
 }
@@ -64,17 +75,17 @@ export interface WorkoutData {
 export interface WorkoutFileData {
   /** File name */
   filename: string;
-  /** File content as buffer or base64 string */
-  content: Uint8Array | string;
+  /** File content as buffer or string */
+  content: Uint8Array | string | Buffer;
   /** File MIME type */
   mimeType: string;
 }
 
 export enum WorkoutType {
-  BIKE = 'bike',
-  RUN = 'run',
-  SWIM = 'swim',
-  OTHER = 'other',
+  BIKE = 'BIKE',
+  RUN = 'RUN',
+  SWIM = 'SWIM',
+  OTHER = 'OTHER',
 }
 
 export interface UploadResponse {
@@ -86,6 +97,8 @@ export interface UploadResponse {
   message?: string;
   /** Workout ID if successful */
   workoutId?: string;
+  /** Upload errors if any */
+  errors?: string[];
 }
 
 export interface ApiResponse<T = any> {

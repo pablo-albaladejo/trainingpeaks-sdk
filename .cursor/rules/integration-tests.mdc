@@ -1,0 +1,43 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Integration Tests Guide
+
+Integration tests in this codebase are designed to verify the correct behavior of features and modules in a real or simulated environment, often involving multiple components such as the database, authentication, and external APIs.
+
+## File Naming and Location
+- Integration test files typically use the `.integ-test.ts` suffix (e.g., `featureResolver.integ-test.ts`).
+- They are usually located alongside the feature or resolver they test, often in the same directory as the corresponding implementation and unit test files.
+
+## Structure
+- **Setup:**
+  - Authentication is performed using test credentials, often loaded from [testEnvironment.ts](mdc:src/adapters/shared/testEnvironment.ts).
+  - Database proxies or fixtures are initialized for direct DB operations.
+- **Test Cases:**
+  - Arrange: Prepare the necessary data in the database (e.g., insert rows, set up state).
+  - Act: Call the relevant GraphQL mutation, query, or API endpoint using a generated client.
+  - Assert: Check the response and validate the resulting state in the database or other systems.
+  - Error handling: Test invalid input or edge cases to ensure proper error responses.
+- **Teardown:**
+  - Clean up any test data created during the test to ensure isolation between tests.
+
+## Conventions
+- Use the same test user and companyId for consistency, typically from `testConfiguration`.
+- Prefer direct database assertions (using Drizzle ORM or similar) to verify side effects.
+- Follow the Arrange-Act-Assert pattern for clarity.
+- Use descriptive test names to indicate the scenario being tested.
+- When generating random values in integration tests, use `faker`.
+- For number types, use `randomNumber` from [utils.fixture.ts](mdc:src/__fixtures__/utils.fixture.ts).
+- For common types, prefer generate a fixture builder helper in `src/__fixtures__`, for example [playbookConfiguration.fixture.ts](mdc:src/__fixtures__/playbookConfiguration.fixture.ts).
+- When selecting from domain constants (e.g., languages, response types), use `faker.helpers.arrayElement()` with the appropriate constant array instead of hardcoded values, except when testing specific scenarios that require fixed values (e.g., parametrized tests with `it.each` that need to test each case explicitly).
+- This approach ensures tests are robust and not dependent on static values.
+- Prefer using `toStrictEqual` over `toEqual` in assertions.
+
+## Navigation
+- Look for `.integ-test.ts` files to find integration tests for a given feature or resolver.
+- Refer to the corresponding implementation and unit test files for additional context.
+
+## Example
+See [unassignPlaybookSettingsResolver.integ-test.ts](mdc:src/adapters/lambda/graphql/unassignPlaybookSettings/unassignPlaybookSettingsResolver.integ-test.ts) for a concrete example of an integration test following these conventions.

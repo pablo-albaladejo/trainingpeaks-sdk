@@ -4,7 +4,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'src/**/*.integ-test.ts'],
+    setupFiles: ['dotenv/config', './src/test.setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
@@ -14,12 +15,12 @@ export default defineConfig({
         'coverage/**',
         '**/*.test.ts',
         '**/*.spec.ts',
+        '**/*.integ-test.ts',
         'src/index.ts',
         'src/test.setup.ts',
         'src/__fixtures__/**',
       ],
     },
-    setupFiles: ['./src/test.setup.ts'],
   },
   resolve: {
     alias: {
