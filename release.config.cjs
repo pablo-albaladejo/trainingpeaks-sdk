@@ -87,9 +87,23 @@ module.exports = {
       '@semantic-release/github',
       {
         assets: [
+          // Main bundle with version in name
           {
-            path: 'dist/**/*',
-            label: 'Built Distribution',
+            path: 'dist/index.js',
+            name: 'trainingpeaks-sdk-${nextRelease.version}.js',
+            label: 'Main Bundle (v${nextRelease.version})',
+          },
+          // TypeScript declarations with version
+          {
+            path: 'dist/index.d.ts',
+            name: 'trainingpeaks-sdk-${nextRelease.version}.d.ts',
+            label: 'TypeScript Declarations (v${nextRelease.version})',
+          },
+          // Source map with version (optional)
+          {
+            path: 'dist/index.js.map',
+            name: 'trainingpeaks-sdk-${nextRelease.version}.js.map',
+            label: 'Source Map (v${nextRelease.version})',
           },
         ],
         successComment: false,
