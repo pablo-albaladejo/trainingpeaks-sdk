@@ -74,11 +74,10 @@ module.exports = {
       },
     ],
 
-    // Update package.json version (but don't publish to NPM)
     [
       '@semantic-release/npm',
       {
-        npmPublish: false, // Disable NPM publishing for now
+        npmPublish: true,
       },
     ],
 
