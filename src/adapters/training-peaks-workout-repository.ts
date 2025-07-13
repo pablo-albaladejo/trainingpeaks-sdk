@@ -9,10 +9,7 @@ import {
   WorkoutServicePort,
 } from '@/application/ports/workout';
 import { Workout } from '@/domain/entities/workout';
-import {
-  UploadResult,
-  WorkoutRepository,
-} from '@/domain/repositories/workout';
+import { UploadResult, WorkoutRepository } from '@/domain/repositories/workout';
 import { WorkoutFile } from '@/domain/value-objects/workout-file';
 
 export class TrainingPeaksWorkoutRepository implements WorkoutRepository {
