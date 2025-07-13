@@ -1,0 +1,286 @@
+# TrainingPeaks SDK - Cursor Rules
+
+## 🏗️ ARCHITECTURE DECISIONS
+
+### Hexagonal Architecture (Clean Architecture)
+
+- Use hexagonal architecture pattern for all new modules
+- Structure: domain/ → application/ → infrastructure/ → adapters/
+- Domain layer: Pure business logic, no external dependencies
+- Application layer: Use cases, ports/interfaces
+- Infrastructure layer: External adapters (API, browser, storage)
+- Adapters layer: Repository implementations connecting domain to infrastructure
+
+### Directory Structure
+
+```
+src/
+├── domain/           # Pure business logic
+│   ├── entities/     # Business entities with validation
+│   ├── value-objects/# Immutable value objects
+│   ├── repositories/ # Repository interfaces
+│   └── services/     # Domain services
+├── application/      # Use cases and orchestration
+│   ├── use-cases/    # Specific use cases
+│   ├── ports/        # Infrastructure interfaces
+│   └── services/     # Application services
+├── infrastructure/   # External adapters
+│   ├── auth/        # Authentication adapters
+│   ├── browser/     # Browser automation adapters
+│   ├── storage/     # Storage adapters
+│   └── workout/     # Workout API adapters
+└── adapters/        # Repository implementations
+```
+
+## 💻 CODE STYLE & CONVENTIONS
+
+### File Naming
+
+- CRITICAL: Use kebab-case for all files in ./src
+- CRITICAL: Never include folder name in file names (e.g., workout-manager.ts in workout/ folder should be index.ts or manager.ts)
+- Each module should have index.ts as entry point
+- Tests: place .test.ts files next to implementation files
+
+### TypeScript Imports
+
+- CRITICAL: Never add .js extensions to TypeScript imports
+- Use `import { X } from './path'` NOT `import { X } from './path.js'`
+- TypeScript handles extensions automatically during transpilation
+- Project has scripts/check-imports.sh and npm run check-imports to verify this
+- VSCode configured with "typescript.preferences.importModuleSpecifierEnding": "minimal"
+
+### Naming Patterns
+
+```typescript
+// ✅ Correct
+src / workout / index.ts;
+src / auth / auth - manager.ts;
+src / domain / entities / user.ts;
+src / application / use - cases / upload - workout.ts;
+
+// ❌ Incorrect
+src / workout / workout - manager.ts;
+src / auth / auth - auth - manager.ts;
+src / domain / entities / User.ts; // Wrong case
+```
+
+## 🧪 TESTING STRATEGY
+
+### Test Architecture
+
+- Write integration-style tests rather than complex unit tests with mocks
+- Tests should verify complete workflows, not individual method calls
+- Place test files next to implementation: `index.ts` → `index.test.ts`
+- Use **fixtures**/ for shared test data
+
+### Test Patterns
+
+- Follow AAA pattern: Arrange, Act, Assert
+- For tests that need data, create it in the test (don't assume external state)
+- Example pattern for workflow tests:
+
+```typescript
+describe('deleteWorkout', () => {
+  it('should delete workout by ID', async () => {
+    // Arrange - First create the data
+    const uploadResult = await workoutManager.uploadWorkout(workoutData);
+    expect(uploadResult.success).toBe(true);
+    const workoutId = uploadResult.workoutId!;
+
+    // Act - Perform the action
+    const result = await workoutManager.deleteWorkout(workoutId);
+
+    // Assert - Verify the result
+    expect(result).toBe(true);
+  });
+});
+```
+
+### Test Configuration
+
+- Unit tests: `npm run test` (excludes integration tests)
+- Integration tests: `npm run test:integration`
+- Coverage: `npm run test:coverage`
+
+## 🛠️ CODE QUALITY TOOLS
+
+### ESLint Configuration
+
+- Use @typescript-eslint/no-unused-vars instead of base no-unused-vars rule
+- Configuration uses ESLint 9.x flat config
+- Rules:
+
+```javascript
+rules: {
+  "no-unused-vars": "off",                      // Conflicts with TypeScript
+  "@typescript-eslint/no-unused-vars": "warn",  // TypeScript-specific rule
+  "import/no-unresolved": "error",
+}
+```
+
+### Prettier Configuration
+
+- Always format code with: `npm run format`
+- Check formatting with: `npm run format:check`
+- Settings: single quotes, semicolons, 80 char width, 2 spaces, LF line endings
+
+### Git Workflow
+
+- Use conventional commits for all commits
+- Pre-commit hook runs: format:check → lint → build → test
+- Commit format: `type(scope): description`
+- Types: feat, fix, docs, style, refactor, test, build, ci, chore, perf, revert
+
+## 📦 CONFIGURATION MANAGEMENT
+
+### Centralized Configuration
+
+- Use src/config.ts for all configuration
+- Support environment variables with fallback defaults
+- Type all configuration with TypeScript interfaces
+- Structure by context: auth, browser, timeouts, debug, etc.
+
+### Configuration Pattern
+
+```typescript
+// ✅ Use centralized config
+import { getSDKConfig } from '../config';
+const config = getSDKConfig();
+
+// ❌ Don't hardcode values
+const timeout = 30000; // Bad
+```
+
+## 🚀 BUILD & RELEASE
+
+### TypeScript Configuration
+
+- Target: ES2020, Module: CommonJS
+- Strict mode enabled with all strict checks
+- Use baseUrl and paths for module resolution
+- forceConsistentCasingInFileNames: true (prevents case sensitivity issues)
+
+### Semantic Release (Automated)
+
+- Releases trigger automatically on push to main/develop/alpha
+- Conventional commits determine version bumps:
+  - feat: → Minor (1.0.0 → 1.1.0)
+  - fix: → Patch (1.0.0 → 1.0.1)
+  - BREAKING CHANGE: → Major (1.0.0 → 2.0.0)
+- Generates CHANGELOG.md automatically
+- Creates GitHub releases with versioned assets
+
+### GitHub Assets
+
+- Use specific files with versioned names
+- Pattern: `trainingpeaks-sdk-${nextRelease.version}.js`
+- Include: main bundle, TypeScript declarations, source maps
+- Avoid dist/\*_/_ to prevent name collisions
+
+## 🎯 DEVELOPMENT PATTERNS
+
+### Error Handling
+
+- Create custom error classes extending base Error
+- Validate in domain entities and value objects
+- Use meaningful error messages
+- Handle errors gracefully with fallbacks
+
+### Dependency Injection
+
+- Use constructor injection in use cases and services
+- Define interfaces in application/ports/
+- Implement in infrastructure layer
+- Wire dependencies in main module entry points
+
+### Value Objects & Entities
+
+```typescript
+// Value Object Pattern
+export class Credentials {
+  private constructor(
+    private readonly _username: string,
+    private readonly _password: string
+  ) {
+    this.validateUsername();
+    this.validatePassword();
+  }
+
+  public static create(username: string, password: string): Credentials {
+    return new Credentials(username, password);
+  }
+
+  // Getters and validation methods...
+}
+```
+
+## 📊 ENVIRONMENT COMPATIBILITY
+
+### Case Sensitivity
+
+- Always use lowercase file names for cross-platform compatibility
+- Git tracks: user.ts, credentials.ts (lowercase)
+- Prevents Linux CI issues when developing on macOS
+
+### Module System
+
+- Package.json: "type": "module"
+- Use .cjs for CommonJS config files (release.config.cjs)
+- TypeScript compiles to CommonJS for NPM compatibility
+
+## 🔧 TOOLING & SCRIPTS
+
+### Essential Commands
+
+- `npm run build` - TypeScript compilation
+- `npm run test` - Unit tests only
+- `npm run test:coverage` - Tests with coverage
+- `npm run lint` - ESLint check
+- `npm run format` - Auto-format code
+- `npm run pre-release` - Full quality check before release
+- `npm run release:dry-run` - Test release process
+
+### Development Workflow
+
+1. Create feature branch from main
+2. Write code following these conventions
+3. Write tests for new functionality
+4. Run `npm run pre-release` before committing
+5. Use conventional commit messages
+6. Create PR to main
+7. Merge triggers automatic release
+
+## 🎯 PRINCIPLES TO FOLLOW
+
+1. **Clean Architecture**: Clear separation of concerns
+2. **SOLID Principles**: Especially Dependency Inversion
+3. **Convention over Configuration**: Consistent patterns
+4. **Type Safety**: TypeScript strict mode everywhere
+5. **Automation**: Automate quality checks and releases
+6. **Developer Experience**: Tools should help, not hinder
+7. **Testability**: Write testable code with clear interfaces
+8. **Documentation**: Code should be self-documenting
+
+## 🚫 ANTI-PATTERNS TO AVOID
+
+- Don't mix business logic with infrastructure concerns
+- Don't hardcode configuration values
+- Don't skip tests for new functionality
+- Don't use any type unless absolutely necessary
+- Don't commit code that doesn't pass lint/format checks
+- Don't create circular dependencies between layers
+- Don't use relative imports that go up more than 2 levels
+
+## 🔄 WHEN ADDING NEW FEATURES
+
+1. Start with domain entities and value objects
+2. Define repository interfaces in domain
+3. Create use cases in application layer
+4. Define ports for external dependencies
+5. Implement infrastructure adapters
+6. Create repository adapter connecting domain to infrastructure
+7. Wire everything in the main module
+8. Write comprehensive tests
+9. Update documentation if needed
+
+This project follows hexagonal architecture principles with automated quality gates and semantic releases. All code should be clean, tested, and follow these established patterns.
