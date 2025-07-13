@@ -3,7 +3,6 @@
  * Implements authentication using Playwright browser automation
  */
 
-import { Browser, chromium, Page, Response } from 'playwright-core';
 import {
   AuthenticationConfig,
   AuthenticationPort,
@@ -12,10 +11,24 @@ import { getSDKConfig } from '@/config';
 import { AuthToken } from '@/domain/entities/auth-token';
 import { User } from '@/domain/entities/user';
 import { Credentials } from '@/domain/value-objects/credentials';
+import { Browser, chromium, Page, Response } from 'playwright';
 
 interface InterceptedData {
   token?: AuthToken;
   userId?: string;
+}
+
+interface TokenResponse {
+  token?: {
+    access_token: string;
+    refresh_token?: string;
+  };
+}
+
+interface UserResponse {
+  user?: {
+    userId: string | number;
+  };
 }
 
 export class WebBrowserAuthAdapter implements AuthenticationPort {
@@ -281,7 +294,10 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
         return;
       }
 
-      const json = await this.parseJsonResponse(response, config);
+      const json = await this.parseJsonResponse<TokenResponse>(
+        response,
+        config
+      );
       if (!json?.token?.access_token) {
         return;
       }
@@ -317,7 +333,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
         return;
       }
 
-      const json = await this.parseJsonResponse(response, config);
+      const json = await this.parseJsonResponse<UserResponse>(response, config);
       if (!json?.user?.userId) {
         return;
       }
@@ -335,10 +351,10 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     }
   }
 
-  private async parseJsonResponse(
+  private async parseJsonResponse<T = unknown>(
     response: Response,
     config: Required<AuthenticationConfig>
-  ): Promise<any | null> {
+  ): Promise<T | null> {
     try {
       return await response.json();
     } catch (error) {
