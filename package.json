@@ -2,6 +2,7 @@
   "name": "trainingpeaks-sdk",
   "version": "0.1.0",
   "description": "TypeScript SDK for TrainingPeaks API integration",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -27,6 +28,8 @@
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@faker-js/faker": "^9.2.0",
     "@types/node": "^22.10.1",
     "@typescript-eslint/eslint-plugin": "^8.36.0",
