@@ -1,6 +1,6 @@
 /**
- * Semantic Release Configuration
- * Automates versioning and package publishing
+ * Semantic Release Configuration (Simple Testing)
+ * Solo análisis de commits y changelog
  */
 
 module.exports = {
@@ -71,39 +71,6 @@ module.exports = {
         changelogFile: 'CHANGELOG.md',
         changelogTitle:
           '# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n',
-      },
-    ],
-
-    // Update package.json version (but don't publish to NPM)
-    [
-      '@semantic-release/npm',
-      {
-        npmPublish: false, // Disable NPM publishing for now
-      },
-    ],
-
-    // Create GitHub release
-    [
-      '@semantic-release/github',
-      {
-        assets: [
-          {
-            path: 'dist/**/*',
-            label: 'Built Distribution',
-          },
-        ],
-        successComment: false,
-        failComment: false,
-      },
-    ],
-
-    // Commit changes back to repo
-    [
-      '@semantic-release/git',
-      {
-        assets: ['package.json', 'package-lock.json', 'CHANGELOG.md'],
-        message:
-          'chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}',
       },
     ],
   ],

@@ -1,6 +1,6 @@
 /**
- * Semantic Release Configuration
- * Automates versioning and package publishing
+ * Semantic Release Configuration (Local Testing)
+ * Sin NPM publishing para testing local
  */
 
 module.exports = {
@@ -74,15 +74,15 @@ module.exports = {
       },
     ],
 
-    // Update package.json version (but don't publish to NPM)
+    // Update package.json version (but don't publish)
     [
       '@semantic-release/npm',
       {
-        npmPublish: false, // Disable NPM publishing for now
+        npmPublish: false, // Disable NPM publishing
       },
     ],
 
-    // Create GitHub release
+    // Create GitHub release (disabled for local)
     [
       '@semantic-release/github',
       {
