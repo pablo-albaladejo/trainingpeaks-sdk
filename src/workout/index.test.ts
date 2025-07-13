@@ -88,7 +88,8 @@ describe('WorkoutManager', () => {
       const nonExistentFile = '/non/existent/file.tcx';
 
       // Act
-      const result = await workoutManager.uploadWorkoutFromFile(nonExistentFile);
+      const result =
+        await workoutManager.uploadWorkoutFromFile(nonExistentFile);
 
       // Assert
       expect(result).toBeDefined();

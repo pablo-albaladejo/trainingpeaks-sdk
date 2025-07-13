@@ -11,29 +11,32 @@ export { LogoutUseCase } from './use-cases/logout';
 // Workout Use Cases
 export {
   DeleteWorkoutUseCase,
-  type DeleteWorkoutRequest
+  type DeleteWorkoutRequest,
 } from './use-cases/delete-workout';
 export {
   GetWorkoutUseCase,
-  type GetWorkoutRequest
+  type GetWorkoutRequest,
 } from './use-cases/get-workout';
 export {
   ListWorkoutsUseCase,
-  type ListWorkoutsRequest
+  type ListWorkoutsRequest,
 } from './use-cases/list-workouts';
 export {
-  UploadWorkoutUseCase, type UploadWorkoutFromFileRequest, type UploadWorkoutRequest
+  UploadWorkoutUseCase,
+  type UploadWorkoutFromFileRequest,
+  type UploadWorkoutRequest,
 } from './use-cases/upload-workout';
 
 // Ports
 export type {
   AuthenticationConfig,
-  AuthenticationPort
+  AuthenticationPort,
 } from './ports/authentication';
 export type { StoragePort } from './ports/storage';
 export type {
-  FileSystemPort, WorkoutServiceConfig,
-  WorkoutServicePort
+  FileSystemPort,
+  WorkoutServiceConfig,
+  WorkoutServicePort,
 } from './ports/workout';
 
 // Services

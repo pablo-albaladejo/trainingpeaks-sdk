@@ -101,7 +101,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     const page = await context.newPage();
 
     if (config.debug) {
-      page.on('console', msg => console.log('Browser:', msg.text()));
+      page.on('console', (msg) => console.log('Browser:', msg.text()));
     }
 
     return page;
@@ -149,7 +149,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     interceptedData: InterceptedData,
     config: Required<AuthenticationConfig>
   ): void {
-    page.on('response', async response => {
+    page.on('response', async (response) => {
       const url = response.url();
 
       if (config.debug && (url.includes('/api/') || url.includes('/users/'))) {

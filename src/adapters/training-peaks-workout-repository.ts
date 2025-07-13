@@ -34,7 +34,7 @@ export class TrainingPeaksWorkoutRepository implements WorkoutRepository {
    * Get the appropriate workout service for the current configuration
    */
   private getWorkoutService(): WorkoutServicePort {
-    const service = this.workoutServices.find(s => s.canHandle(this.config));
+    const service = this.workoutServices.find((s) => s.canHandle(this.config));
 
     if (!service) {
       throw new Error(
@@ -208,14 +208,14 @@ export class TrainingPeaksWorkoutRepository implements WorkoutRepository {
     const workouts = await this.listWorkouts(filters);
 
     // Apply additional filtering
-    return workouts.filter(workout => {
+    return workouts.filter((workout) => {
       // Text search
       if (query.text) {
         const searchText = query.text.toLowerCase();
         const matchesText =
           workout.name.toLowerCase().includes(searchText) ||
           workout.description.toLowerCase().includes(searchText) ||
-          workout.tags?.some(tag => tag.toLowerCase().includes(searchText));
+          workout.tags?.some((tag) => tag.toLowerCase().includes(searchText));
 
         if (!matchesText) return false;
       }

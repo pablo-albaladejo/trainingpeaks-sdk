@@ -145,7 +145,7 @@ export class TrainingPeaksAuthRepository implements AuthRepository {
    * Get a compatible authentication adapter for the current configuration
    */
   private getCompatibleAdapter(): AuthenticationPort {
-    const compatibleAdapter = this.authAdapters.find(adapter =>
+    const compatibleAdapter = this.authAdapters.find((adapter) =>
       adapter.canHandle(this.config)
     );
 

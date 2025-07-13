@@ -1,6 +1,6 @@
 /**
  * Workout Management Module
- * 
+ *
  * This module provides a facade for workout operations:
  * - Domain: Workout entities and business rules
  * - Application: Use cases and ports
@@ -11,29 +11,25 @@
 import { TrainingPeaksWorkoutRepository } from '../adapters/training-peaks-workout-repository';
 import {
   DeleteWorkoutRequest,
-  DeleteWorkoutUseCase
+  DeleteWorkoutUseCase,
 } from '../application/use-cases/delete-workout';
 import {
   GetWorkoutRequest,
-  GetWorkoutUseCase
+  GetWorkoutUseCase,
 } from '../application/use-cases/get-workout';
 import {
   ListWorkoutsRequest,
-  ListWorkoutsUseCase
+  ListWorkoutsUseCase,
 } from '../application/use-cases/list-workouts';
 import {
   UploadWorkoutFromFileRequest,
   UploadWorkoutRequest,
-  UploadWorkoutUseCase
+  UploadWorkoutUseCase,
 } from '../application/use-cases/upload-workout';
 import { getSDKConfig } from '../config';
 import { Workout } from '../domain/entities/workout';
-import {
-  FileSystemAdapter
-} from '../infrastructure/filesystem/file-system-adapter';
-import {
-  TrainingPeaksWorkoutApiAdapter
-} from '../infrastructure/workout/trainingpeaks-api-adapter';
+import { FileSystemAdapter } from '../infrastructure/filesystem/file-system-adapter';
+import { TrainingPeaksWorkoutApiAdapter } from '../infrastructure/workout/trainingpeaks-api-adapter';
 import { TrainingPeaksClientConfig } from '../types';
 
 export interface WorkoutData {
@@ -102,43 +98,57 @@ export class WorkoutManager {
     workoutRepository.registerWorkoutService(trainingPeaksApiAdapter);
 
     // Store repository reference
-    (this as unknown as {
-      workoutRepository: TrainingPeaksWorkoutRepository;
-    }).workoutRepository = workoutRepository;
+    (
+      this as unknown as {
+        workoutRepository: TrainingPeaksWorkoutRepository;
+      }
+    ).workoutRepository = workoutRepository;
 
     // Application Layer - Use Cases
-    (this as unknown as {
-      uploadWorkoutUseCase: UploadWorkoutUseCase;
-    }).uploadWorkoutUseCase = new UploadWorkoutUseCase(workoutRepository);
-    (this as unknown as {
-      getWorkoutUseCase: GetWorkoutUseCase;
-    }).getWorkoutUseCase = new GetWorkoutUseCase(workoutRepository);
-    (this as unknown as {
-      listWorkoutsUseCase: ListWorkoutsUseCase;
-    }).listWorkoutsUseCase = new ListWorkoutsUseCase(workoutRepository);
-    (this as unknown as {
-      deleteWorkoutUseCase: DeleteWorkoutUseCase;
-    }).deleteWorkoutUseCase = new DeleteWorkoutUseCase(workoutRepository);
+    (
+      this as unknown as {
+        uploadWorkoutUseCase: UploadWorkoutUseCase;
+      }
+    ).uploadWorkoutUseCase = new UploadWorkoutUseCase(workoutRepository);
+    (
+      this as unknown as {
+        getWorkoutUseCase: GetWorkoutUseCase;
+      }
+    ).getWorkoutUseCase = new GetWorkoutUseCase(workoutRepository);
+    (
+      this as unknown as {
+        listWorkoutsUseCase: ListWorkoutsUseCase;
+      }
+    ).listWorkoutsUseCase = new ListWorkoutsUseCase(workoutRepository);
+    (
+      this as unknown as {
+        deleteWorkoutUseCase: DeleteWorkoutUseCase;
+      }
+    ).deleteWorkoutUseCase = new DeleteWorkoutUseCase(workoutRepository);
   }
 
   /**
    * Upload a workout file to TrainingPeaks
    */
-  public async uploadWorkout(workoutData: WorkoutData): Promise<WorkoutUploadResponse> {
+  public async uploadWorkout(
+    workoutData: WorkoutData
+  ): Promise<WorkoutUploadResponse> {
     try {
       const request: UploadWorkoutRequest = {
         fileContent: workoutData.fileContent,
         fileName: workoutData.fileName,
-        metadata: workoutData.metadata ? {
-          name: workoutData.metadata.title,
-          description: workoutData.metadata.description,
-          activityType: workoutData.metadata.activityType,
-          tags: workoutData.metadata.tags,
-        } : undefined,
+        metadata: workoutData.metadata
+          ? {
+              name: workoutData.metadata.title,
+              description: workoutData.metadata.description,
+              activityType: workoutData.metadata.activityType,
+              tags: workoutData.metadata.tags,
+            }
+          : undefined,
       };
 
       const result = await this.uploadWorkoutUseCase.execute(request);
-      
+
       return {
         success: result.success,
         workoutId: result.workoutId,
@@ -157,14 +167,16 @@ export class WorkoutManager {
   /**
    * Upload a workout file from disk
    */
-  public async uploadWorkoutFromFile(filePath: string): Promise<WorkoutUploadResponse> {
+  public async uploadWorkoutFromFile(
+    filePath: string
+  ): Promise<WorkoutUploadResponse> {
     try {
       const request: UploadWorkoutFromFileRequest = {
         filePath,
       };
 
       const result = await this.uploadWorkoutUseCase.executeFromFile(request);
-      
+
       return {
         success: result.success,
         workoutId: result.workoutId,

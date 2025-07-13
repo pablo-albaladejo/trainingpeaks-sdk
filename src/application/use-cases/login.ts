@@ -37,7 +37,7 @@ export class LoginUseCase {
 
     // Get the authenticated user
     const user = await this.authRepository.getCurrentUser();
-    
+
     if (!user) {
       throw new Error('Failed to retrieve user information');
     }
