@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## 1.0.0 (2025-07-13)
+
+* fix: add coverage dependency and fix delete workout test ([badc56f](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/badc56f))
+* fix: disable npm publishing temporarily to test semantic-release ([87470a1](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/87470a1))
+* fix: remove deprecated husky shebang lines ([0d828ee](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/0d828ee))
+* fix: rename files to lowercase for case-sensitive filesystems ([2fe1aed](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/2fe1aed))
+* fix: resolve case sensitivity issues for github actions ([1bb8d07](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/1bb8d07))
+* feat: add husky with commitlint and lint-staged ([180bbdb](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/180bbdb))
+* feat: add prettier code formatting support ([42ffd90](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/42ffd90))
+* feat: add web authentication and integration testing support ([117b7cb](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/117b7cb))
+* feat: implement semantic-release for automated versioning and publishing ([1548c25](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/1548c25))
+* ci: add github actions for ci/cd pipeline ([3e71ce8](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/3e71ce8))
+* ci: update nodejs version ([f1f114e](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/f1f114e))
+* refactor: convert all files to kebab-case and remove redundancy ([dce8d2d](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/dce8d2d))
+* refactor: implement  hexagonal architecture ([fa544e3](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/fa544e3))
+* refactor(workout): implement hexagonal architecture ([d2fddf0](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/d2fddf0))
+
 ## [Unreleased]
 
 ### ✨ Features
