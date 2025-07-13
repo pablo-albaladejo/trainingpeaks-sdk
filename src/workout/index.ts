@@ -1,319 +1,262 @@
 /**
- * TrainingPeaks Workout Upload Module
+ * Workout Management Module
+ * 
+ * This module provides a facade for workout operations:
+ * - Domain: Workout entities and business rules
+ * - Application: Use cases and ports
+ * - Infrastructure: External adapters
+ * - Adapters: Repository implementations
  */
 
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import FormData from 'form-data';
-import { TrainingPeaksAuth } from '../auth';
+import { TrainingPeaksWorkoutRepository } from '../adapters/training-peaks-workout-repository';
 import {
-  AuthenticationError,
-  NetworkError,
-  UploadError,
-  ValidationError,
-} from '../errors';
+  DeleteWorkoutRequest,
+  DeleteWorkoutUseCase
+} from '../application/use-cases/delete-workout';
 import {
-  TrainingPeaksConfig,
-  UploadResponse,
-  WorkoutData,
-  WorkoutFileData,
-  WorkoutType,
-} from '../types';
+  GetWorkoutRequest,
+  GetWorkoutUseCase
+} from '../application/use-cases/get-workout';
+import {
+  ListWorkoutsRequest,
+  ListWorkoutsUseCase
+} from '../application/use-cases/list-workouts';
+import {
+  UploadWorkoutFromFileRequest,
+  UploadWorkoutRequest,
+  UploadWorkoutUseCase
+} from '../application/use-cases/upload-workout';
+import { getSDKConfig } from '../config';
+import { Workout } from '../domain/entities/workout';
+import {
+  FileSystemAdapter
+} from '../infrastructure/filesystem/file-system-adapter';
+import {
+  TrainingPeaksWorkoutApiAdapter
+} from '../infrastructure/workout/trainingpeaks-api-adapter';
+import { TrainingPeaksClientConfig } from '../types';
 
-export class WorkoutUploader {
-  private httpClient: AxiosInstance;
-  private auth: TrainingPeaksAuth;
+export interface WorkoutData {
+  /** The workout file content (TCX, GPX, FIT, etc.) */
+  fileContent: string;
+  /** The workout file name */
+  fileName: string;
+  /** Optional workout metadata */
+  metadata?: {
+    title?: string;
+    description?: string;
+    tags?: string[];
+    activityType?: string;
+  };
+}
 
-  constructor(auth: TrainingPeaksAuth, config: TrainingPeaksConfig = {}) {
-    this.auth = auth;
+export interface WorkoutUploadResponse {
+  /** Success status */
+  success: boolean;
+  /** Workout ID assigned by TrainingPeaks */
+  workoutId?: string;
+  /** Upload status message */
+  message: string;
+  /** Any upload errors */
+  errors?: string[];
+}
 
-    this.httpClient = axios.create({
-      baseURL:
-        process.env.TRAININGPEAKS_BASE_URL ||
-        config.baseUrl ||
-        'https://www.trainingpeaks.com',
-      timeout: config.timeout || 30000,
-      headers: {
-        'User-Agent': 'TrainingPeaks-SDK/1.0.0',
-        ...config.headers,
-      },
-    });
+export class WorkoutManager {
+  private readonly sdkConfig = getSDKConfig();
+  private readonly workoutRepository!: TrainingPeaksWorkoutRepository;
+  private readonly uploadWorkoutUseCase!: UploadWorkoutUseCase;
+  private readonly getWorkoutUseCase!: GetWorkoutUseCase;
+  private readonly listWorkoutsUseCase!: ListWorkoutsUseCase;
+  private readonly deleteWorkoutUseCase!: DeleteWorkoutUseCase;
+
+  constructor(config: TrainingPeaksClientConfig = {}) {
+    // Setup dependency injection following hexagonal architecture
+    this.setupDependencies(config);
   }
 
   /**
-   * Upload a workout to TrainingPeaks
-   * @param workoutData - The workout data to upload
-   * @returns Upload response with ID and status
+   * Setup dependency injection for hexagonal architecture
    */
-  public async uploadWorkout(
-    workoutData: WorkoutData
-  ): Promise<UploadResponse> {
-    if (!this.auth.isAuthenticated()) {
-      throw new AuthenticationError('Must be authenticated to upload workouts');
-    }
+  private setupDependencies(config: TrainingPeaksClientConfig): void {
+    // Create workout service configuration
+    const workoutServiceConfig = {
+      baseUrl: config.baseUrl || this.sdkConfig.urls.baseUrl,
+      timeout: config.timeout || this.sdkConfig.timeouts.default,
+      debug: config.debug ?? this.sdkConfig.debug.enabled,
+      headers: config.headers || this.sdkConfig.requests.defaultHeaders,
+    };
 
-    this.validateWorkoutData(workoutData);
+    // Infrastructure Layer - File system adapter
+    const fileSystemAdapter = new FileSystemAdapter();
 
+    // Adapters Layer - Repository implementation
+    const workoutRepository = new TrainingPeaksWorkoutRepository(
+      fileSystemAdapter,
+      workoutServiceConfig
+    );
+
+    // Infrastructure Layer - Workout service adapters
+    const trainingPeaksApiAdapter = new TrainingPeaksWorkoutApiAdapter();
+
+    // Register adapters with the repository
+    workoutRepository.registerWorkoutService(trainingPeaksApiAdapter);
+
+    // Store repository reference
+    (this as unknown as {
+      workoutRepository: TrainingPeaksWorkoutRepository;
+    }).workoutRepository = workoutRepository;
+
+    // Application Layer - Use Cases
+    (this as unknown as {
+      uploadWorkoutUseCase: UploadWorkoutUseCase;
+    }).uploadWorkoutUseCase = new UploadWorkoutUseCase(workoutRepository);
+    (this as unknown as {
+      getWorkoutUseCase: GetWorkoutUseCase;
+    }).getWorkoutUseCase = new GetWorkoutUseCase(workoutRepository);
+    (this as unknown as {
+      listWorkoutsUseCase: ListWorkoutsUseCase;
+    }).listWorkoutsUseCase = new ListWorkoutsUseCase(workoutRepository);
+    (this as unknown as {
+      deleteWorkoutUseCase: DeleteWorkoutUseCase;
+    }).deleteWorkoutUseCase = new DeleteWorkoutUseCase(workoutRepository);
+  }
+
+  /**
+   * Upload a workout file to TrainingPeaks
+   */
+  public async uploadWorkout(workoutData: WorkoutData): Promise<WorkoutUploadResponse> {
     try {
-      const token = this.auth.getToken();
-      if (!token) {
-        throw new AuthenticationError('No authentication token available');
-      }
+      const request: UploadWorkoutRequest = {
+        fileContent: workoutData.fileContent,
+        fileName: workoutData.fileName,
+        metadata: workoutData.metadata ? {
+          name: workoutData.metadata.title,
+          description: workoutData.metadata.description,
+          activityType: workoutData.metadata.activityType,
+          tags: workoutData.metadata.tags,
+        } : undefined,
+      };
 
-      let response: AxiosResponse;
-
-      if (workoutData.fileData) {
-        response = await this.uploadWithFile(workoutData, token.accessToken);
-      } else {
-        response = await this.uploadManualWorkout(
-          workoutData,
-          token.accessToken
-        );
-      }
-
-      return this.parseUploadResponse(response.data);
-    } catch (error: unknown) {
-      if (
-        error instanceof AuthenticationError ||
-        error instanceof ValidationError
-      ) {
-        throw error;
-      }
-
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          throw new AuthenticationError('Authentication token expired');
-        }
-        if (error.response?.status === 413) {
-          throw new UploadError('File too large');
-        }
-        if (error.response?.status === 429) {
-          throw new UploadError('Rate limit exceeded');
-        }
-
-        const message = error.response?.data?.message || error.message;
-        throw new UploadError(`Upload failed: ${message}`);
-      }
-
-      throw new NetworkError('Network error during upload');
+      const result = await this.uploadWorkoutUseCase.execute(request);
+      
+      return {
+        success: result.success,
+        workoutId: result.workoutId,
+        message: result.message,
+        errors: result.errors,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Upload failed',
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+      };
     }
   }
 
   /**
-   * Upload workout with file attachment
-   * @private
+   * Upload a workout file from disk
    */
-  private async uploadWithFile(
-    workoutData: WorkoutData,
-    accessToken: string
-  ): Promise<AxiosResponse> {
-    const formData = new FormData();
-
-    // Add workout metadata
-    formData.append('name', workoutData.name);
-    if (workoutData.description)
-      formData.append('description', workoutData.description);
-    if (workoutData.date) formData.append('date', workoutData.date);
-    if (workoutData.duration)
-      formData.append('duration', workoutData.duration.toString());
-    if (workoutData.distance)
-      formData.append('distance', workoutData.distance.toString());
-    if (workoutData.type) formData.append('type', workoutData.type);
-
-    // Add file
-    const fileData = workoutData.fileData!;
-    formData.append('file', fileData.content, {
-      filename: fileData.filename,
-      contentType: fileData.mimeType,
-    });
-
-    return await this.httpClient.post('/api/workouts/upload', formData, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        ...formData.getHeaders(),
-      },
-    });
-  }
-
-  /**
-   * Upload manual workout without file
-   * @private
-   */
-  private async uploadManualWorkout(
-    workoutData: WorkoutData,
-    accessToken: string
-  ): Promise<AxiosResponse> {
-    const payload = {
-      name: workoutData.name,
-      description: workoutData.description,
-      date: workoutData.date,
-      duration: workoutData.duration,
-      distance: workoutData.distance,
-      type: workoutData.type,
-    };
-
-    return await this.httpClient.post('/api/workouts', payload, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
-  }
-
-  /**
-   * Validate workout data before upload
-   * @private
-   */
-  private validateWorkoutData(workoutData: WorkoutData): void {
-    if (!workoutData.name || workoutData.name.trim().length === 0) {
-      throw new ValidationError('Workout name is required');
-    }
-
-    if (workoutData.date) {
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(workoutData.date)) {
-        throw new ValidationError('Date must be in YYYY-MM-DD format');
-      }
-
-      const parsedDate = new Date(workoutData.date);
-      if (isNaN(parsedDate.getTime())) {
-        throw new ValidationError('Invalid date format');
-      }
-    }
-
-    if (workoutData.duration && workoutData.duration < 0) {
-      throw new ValidationError('Duration must be positive');
-    }
-
-    if (workoutData.distance && workoutData.distance < 0) {
-      throw new ValidationError('Distance must be positive');
-    }
-
-    if (workoutData.fileData) {
-      this.validateFileData(workoutData.fileData);
-    }
-  }
-
-  /**
-   * Validate file data
-   * @private
-   */
-  private validateFileData(fileData: WorkoutFileData): void {
-    if (!fileData.filename || fileData.filename.trim().length === 0) {
-      throw new ValidationError('File name is required');
-    }
-
-    if (!fileData.content) {
-      throw new ValidationError('File content is required');
-    }
-
-    if (!fileData.mimeType) {
-      throw new ValidationError('File MIME type is required');
-    }
-
-    // Check file size (assuming content is string, check length)
-    const contentSize =
-      typeof fileData.content === 'string'
-        ? Buffer.byteLength(fileData.content, 'utf8')
-        : fileData.content.length;
-
-    if (contentSize > 50 * 1024 * 1024) {
-      // 50MB limit
-      throw new ValidationError('File size exceeds 50MB limit');
-    }
-
-    // Validate file extension
-    const allowedExtensions = ['.gpx', '.tcx', '.fit', '.xml'];
-    const extension = fileData.filename
-      .toLowerCase()
-      .substring(fileData.filename.lastIndexOf('.'));
-
-    if (!allowedExtensions.includes(extension)) {
-      throw new ValidationError(
-        `Unsupported file type: ${extension}. Allowed: ${allowedExtensions.join(', ')}`
-      );
-    }
-  }
-
-  /**
-   * Parse upload response from TrainingPeaks
-   * @private
-   */
-  private parseUploadResponse(responseData: any): UploadResponse {
-    return {
-      id: responseData.id || responseData.uploadId || 'unknown',
-      status: responseData.status || 'success',
-      message: responseData.message || 'Upload completed successfully',
-      workoutId: responseData.workoutId || responseData.workout?.id,
-      errors: responseData.errors || [],
-    };
-  }
-
-  /**
-   * Create workout data from file
-   * @param filename - Name of the file
-   * @param content - File content (string or Buffer)
-   * @param mimeType - MIME type of the file
-   * @param metadata - Additional workout metadata
-   * @returns WorkoutData object ready for upload
-   */
-  public createWorkoutFromFile(
-    filename: string,
-    content: string | Buffer,
-    mimeType: string,
-    metadata: Partial<Omit<WorkoutData, 'fileData'>> = {}
-  ): WorkoutData {
-    return {
-      name: metadata.name || filename.replace(/\.[^/.]+$/, ''), // Remove extension
-      description: metadata.description,
-      date: metadata.date || new Date().toISOString().split('T')[0],
-      duration: metadata.duration || 0,
-      distance: metadata.distance,
-      type: metadata.type || WorkoutType.OTHER,
-      fileData: {
-        filename,
-        content,
-        mimeType,
-      },
-    };
-  }
-
-  /**
-   * Get upload status by ID
-   * @param uploadId - The upload ID returned from uploadWorkout
-   * @returns Upload status information
-   */
-  public async getUploadStatus(uploadId: string): Promise<any> {
-    if (!this.auth.isAuthenticated()) {
-      throw new AuthenticationError(
-        'Must be authenticated to check upload status'
-      );
-    }
-
+  public async uploadWorkoutFromFile(filePath: string): Promise<WorkoutUploadResponse> {
     try {
-      const token = this.auth.getToken();
-      if (!token) {
-        throw new AuthenticationError('No authentication token available');
-      }
+      const request: UploadWorkoutFromFileRequest = {
+        filePath,
+      };
 
-      const response = await this.httpClient.get(`/api/uploads/${uploadId}`, {
-        headers: {
-          Authorization: `Bearer ${token.accessToken}`,
-        },
-      });
-
-      return response.data;
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          throw new AuthenticationError('Authentication token expired');
-        }
-        if (error.response?.status === 404) {
-          throw new UploadError('Upload not found');
-        }
-
-        throw new NetworkError(`Failed to get upload status: ${error.message}`);
-      }
-      throw error;
+      const result = await this.uploadWorkoutUseCase.executeFromFile(request);
+      
+      return {
+        success: result.success,
+        workoutId: result.workoutId,
+        message: result.message,
+        errors: result.errors,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Failed to read workout file',
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+      };
     }
+  }
+
+  /**
+   * Get workout details by ID
+   */
+  public async getWorkout(workoutId: string): Promise<Workout> {
+    const request: GetWorkoutRequest = { workoutId };
+    return await this.getWorkoutUseCase.execute(request);
+  }
+
+  /**
+   * List user's workouts
+   */
+  public async listWorkouts(filters?: {
+    startDate?: Date;
+    endDate?: Date;
+    activityType?: string;
+    tags?: string[];
+    limit?: number;
+    offset?: number;
+  }): Promise<Workout[]> {
+    const request: ListWorkoutsRequest = filters || {};
+    return await this.listWorkoutsUseCase.execute(request);
+  }
+
+  /**
+   * Delete a workout by ID
+   */
+  public async deleteWorkout(workoutId: string): Promise<boolean> {
+    const request: DeleteWorkoutRequest = { workoutId };
+    return await this.deleteWorkoutUseCase.execute(request);
+  }
+
+  /**
+   * Search workouts by criteria
+   */
+  public async searchWorkouts(query: {
+    text?: string;
+    activityType?: string;
+    dateRange?: {
+      start: Date;
+      end: Date;
+    };
+    durationRange?: {
+      min: number;
+      max: number;
+    };
+    distanceRange?: {
+      min: number;
+      max: number;
+    };
+  }): Promise<Workout[]> {
+    return await this.workoutRepository.searchWorkouts(query);
+  }
+
+  /**
+   * Get workout statistics
+   */
+  public async getWorkoutStats(filters?: {
+    startDate?: Date;
+    endDate?: Date;
+    activityType?: string;
+  }): Promise<{
+    totalWorkouts: number;
+    totalDuration: number;
+    totalDistance: number;
+    averageDuration: number;
+    averageDistance: number;
+  }> {
+    return await this.workoutRepository.getWorkoutStats(filters);
+  }
+
+  /**
+   * Get workout repository for advanced operations
+   */
+  public getWorkoutRepository(): TrainingPeaksWorkoutRepository {
+    return this.workoutRepository;
   }
 }
+
+// Export the WorkoutManager class as the default export
+export default WorkoutManager;

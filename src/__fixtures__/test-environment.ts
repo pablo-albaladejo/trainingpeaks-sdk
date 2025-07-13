@@ -7,6 +7,7 @@ export interface TestEnvironment {
   testTimeout: number;
   loginUrl: string;
   appUrl: string;
+  errorHandlingTimeout: number;
 }
 
 export const testEnvironment: TestEnvironment = {
@@ -31,6 +32,10 @@ export const testEnvironment: TestEnvironment = {
     process.env.TRAININGPEAKS_LOGIN_URL ||
     'https://home.trainingpeaks.com/login',
   appUrl: process.env.TRAININGPEAKS_APP_URL || 'https://app.trainingpeaks.com',
+  errorHandlingTimeout: parseInt(
+    process.env.TRAININGPEAKS_ERROR_TIMEOUT || '15000',
+    10
+  ),
 };
 
 // Helper function to skip tests if environment is not configured

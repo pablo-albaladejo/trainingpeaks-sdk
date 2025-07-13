@@ -1,28 +1,29 @@
 /**
  * Get Current User Use Case
- * Retrieves current authenticated user information
+ * Retrieves the currently authenticated user
  */
 
-import { AuthDomainService, AuthRepository, User } from '../../domain';
+import { User } from '../../domain/entities/user';
+import { AuthRepository } from '../../domain/repositories/auth';
+import { AuthDomainService } from '../../domain/services/auth-domain';
 
 export class GetCurrentUserUseCase {
+  private readonly authDomainService = new AuthDomainService();
+
   constructor(private readonly authRepository: AuthRepository) {}
 
   public async execute(): Promise<User> {
-    // Verify authentication is active
     const currentToken = this.authRepository.getCurrentToken();
 
-    if (!AuthDomainService.isSessionActive(currentToken)) {
-      throw new Error('No active authentication session');
+    if (!currentToken || this.authDomainService.isTokenExpired(currentToken)) {
+      throw new Error('No valid authentication token available');
     }
 
-    // Get current user
-    const user = await this.authRepository.getCurrentUser();
-
-    if (!user) {
-      throw new Error('No authenticated user found');
+    const currentUser = await this.authRepository.getCurrentUser();
+    if (!currentUser) {
+      throw new Error('No current user found');
     }
 
-    return user;
+    return currentUser;
   }
 }

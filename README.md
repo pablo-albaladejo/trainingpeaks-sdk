@@ -51,7 +51,7 @@ const client = new TrainingPeaksClient({
 
 // Simple authentication
 await client.login({
-  username: 'your-email@example.com',
+  username: 'your-username',
   password: 'your-password',
 });
 
@@ -104,7 +104,7 @@ const client = new TrainingPeaksClient({
 
 // Login once, SDK handles everything
 await client.login({
-  username: 'your-email@example.com',
+  username: 'your-username',
   password: 'your-password',
 });
 
@@ -127,7 +127,7 @@ const client = new TrainingPeaksClient({
 
 // Get token for manual management
 const token = await client.loginAdvanced({
-  username: 'your-email@example.com',
+  username: 'your-username',
   password: 'your-password',
 });
 
@@ -246,7 +246,7 @@ cp .env.example .env
 TRAININGPEAKS_AUTH_METHOD=web
 
 # Your TrainingPeaks credentials
-TRAININGPEAKS_TEST_USERNAME=your-email@example.com
+TRAININGPEAKS_TEST_USERNAME=your-username
 TRAININGPEAKS_TEST_PASSWORD=your-password
 
 # Web authentication settings
@@ -316,7 +316,7 @@ Integration tests validate the SDK against real TrainingPeaks API endpoints and 
 1. Copy `.env.example` to `.env`
 2. Fill in your TrainingPeaks test credentials:
    ```bash
-   TRAININGPEAKS_TEST_USERNAME=your-test-username@example.com
+   TRAININGPEAKS_TEST_USERNAME=your-test-username
    TRAININGPEAKS_TEST_PASSWORD=your-test-password
    TRAININGPEAKS_AUTH_METHOD=web  # Use 'web' for real browser testing
    ```

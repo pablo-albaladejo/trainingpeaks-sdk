@@ -25,7 +25,7 @@ export interface TrainingPeaksConfig {
 }
 
 export interface LoginCredentials {
-  /** User email or username */
+  /** Username */
   username: string;
   /** User password */
   password: string;
@@ -45,14 +45,12 @@ export interface AuthToken {
 export interface UserProfile {
   /** User ID */
   id: string;
-  /** User email */
-  email: string;
   /** User full name */
   name: string;
   /** User avatar URL */
   avatar?: string;
   /** User preferences */
-  preferences?: Record<string, any>;
+  preferences?: Record<string, unknown>;
 }
 
 export interface WorkoutData {
@@ -101,7 +99,7 @@ export interface UploadResponse {
   errors?: string[];
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   /** Response data */
   data: T;
   /** Response status */
@@ -126,4 +124,31 @@ export interface RetryConfig {
   delay: number;
   /** Backoff factor */
   backoff: number;
+}
+
+/**
+ * Import and re-export configuration types from config module
+ */
+import type { TrainingPeaksSDKConfig } from '../config';
+export type { TrainingPeaksSDKConfig } from '../config';
+
+export interface TrainingPeaksClientConfig {
+  /** Base URL for TrainingPeaks */
+  baseUrl?: string;
+  /** Authentication method */
+  authMethod?: 'web' | 'api';
+  /** Browser configuration for web auth */
+  webAuth?: {
+    headless?: boolean;
+    timeout?: number;
+    executablePath?: string;
+  };
+  /** Enable debug logging */
+  debug?: boolean;
+  /** Request timeout */
+  timeout?: number;
+  /** Custom headers */
+  headers?: Record<string, string>;
+  /** Complete SDK configuration (overrides other options) */
+  sdkConfig?: Partial<TrainingPeaksSDKConfig>;
 }

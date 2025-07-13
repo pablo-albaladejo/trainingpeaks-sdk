@@ -1,7 +1,10 @@
 /**
  * Adapters Layer Exports
- * Barrel file for adapter implementations
+ * Repository implementations connecting domain to infrastructure
  */
 
-// Repository Implementations
+// Authentication Repository
 export { TrainingPeaksAuthRepository } from './repositories/training-peaks-auth';
+
+// Workout Repository
+export { TrainingPeaksWorkoutRepository } from './training-peaks-workout-repository';

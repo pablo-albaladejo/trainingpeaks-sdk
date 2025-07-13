@@ -1,222 +1,206 @@
 /**
- * WorkoutUploader Tests
+ * Workout Manager Tests
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { WorkoutUploader } from '.';
-import { TrainingPeaksConfigFixture } from '../__fixtures__/training-peaks-config.fixture';
-import { WorkoutDataFixture } from '../__fixtures__/workout-data.fixture';
-import { TrainingPeaksAuth } from '../auth';
-import { AuthenticationError, ValidationError } from '../errors';
-import { WorkoutType } from '../types';
+import { WorkoutManager } from './index';
 
-// Mock axios
-vi.mock('axios');
-vi.mock('form-data');
-
-// Mock the auth module
-vi.mock('../auth', () => ({
-  TrainingPeaksAuth: vi.fn().mockImplementation(() => ({
-    isAuthenticated: vi.fn().mockReturnValue(true),
-    getToken: vi.fn().mockReturnValue({
-      accessToken: 'mock-token',
-      tokenType: 'Bearer',
-      expiresAt: Date.now() + 3600000,
-    }),
-    getUserId: vi.fn().mockReturnValue('123'),
-  })),
-}));
-
-describe('WorkoutUploader', () => {
-  let workoutUploader: WorkoutUploader;
-  let mockAuth: TrainingPeaksAuth;
-  let config: any;
+describe('WorkoutManager', () => {
+  let workoutManager: WorkoutManager;
 
   beforeEach(() => {
-    // Arrange
-    config = TrainingPeaksConfigFixture.default();
-    mockAuth = new TrainingPeaksAuth(config);
-    workoutUploader = new WorkoutUploader(mockAuth, config);
+    vi.clearAllMocks();
+    workoutManager = new WorkoutManager();
   });
 
   describe('constructor', () => {
-    it('should create workout uploader with auth and config', () => {
-      // Arrange
-      const testConfig = TrainingPeaksConfigFixture.random();
-      const testAuth = new TrainingPeaksAuth(testConfig);
-
-      // Act
-      const uploader = new WorkoutUploader(testAuth, testConfig);
+    it('should create workout manager with default config', () => {
+      // Arrange & Act
+      const manager = new WorkoutManager();
 
       // Assert
-      expect(uploader).toBeDefined();
-      expect(uploader.uploadWorkout).toBeDefined();
-      expect(uploader.getUploadStatus).toBeDefined();
+      expect(manager).toBeDefined();
+      expect(manager).toBeInstanceOf(WorkoutManager);
+      expect(manager.getWorkoutRepository()).toBeDefined();
+    });
+
+    it('should create workout manager with custom config', () => {
+      // Arrange
+      const customConfig = {
+        baseUrl: 'https://custom.trainingpeaks.com',
+        timeout: 60000,
+        debug: true,
+      };
+
+      // Act
+      const manager = new WorkoutManager(customConfig);
+
+      // Assert
+      expect(manager).toBeDefined();
+      expect(manager).toBeInstanceOf(WorkoutManager);
     });
   });
 
   describe('uploadWorkout', () => {
-    it('should throw authentication error when not authenticated', async () => {
+    it('should successfully upload workout data', async () => {
       // Arrange
-      const workoutData = WorkoutDataFixture.default();
-      vi.spyOn(mockAuth, 'isAuthenticated').mockReturnValue(false);
-
-      // Act & Assert
-      await expect(workoutUploader.uploadWorkout(workoutData)).rejects.toThrow(
-        AuthenticationError
-      );
-    });
-
-    it('should throw validation error for invalid workout data', async () => {
-      // Arrange
-      const invalidWorkoutData = WorkoutDataFixture.default();
-      invalidWorkoutData.name = ''; // Invalid name
-      vi.spyOn(mockAuth, 'isAuthenticated').mockReturnValue(true);
-      vi.spyOn(mockAuth, 'getToken').mockReturnValue({
-        accessToken: 'mock-token',
-        tokenType: 'Bearer',
-        expiresAt: Date.now() + 3600000,
-      });
-
-      // Act & Assert
-      await expect(
-        workoutUploader.uploadWorkout(invalidWorkoutData)
-      ).rejects.toThrow(ValidationError);
-    });
-  });
-
-  describe('getUploadStatus', () => {
-    it('should throw authentication error when not authenticated', async () => {
-      // Arrange
-      const uploadId = 'test-upload-id';
-      vi.spyOn(mockAuth, 'isAuthenticated').mockReturnValue(false);
-
-      // Act & Assert
-      await expect(workoutUploader.getUploadStatus(uploadId)).rejects.toThrow(
-        AuthenticationError
-      );
-    });
-  });
-
-  describe('createWorkoutFromFile', () => {
-    it('should create workout data from file with default values', () => {
-      // Arrange
-      const filename = 'test.gpx';
-      const content = 'test content';
-      const mimeType = 'application/gpx+xml';
-      const metadata = {};
+      const workoutData = {
+        fileContent: '<tcx>sample workout data</tcx>',
+        fileName: 'test-workout.tcx',
+        metadata: {
+          title: 'Test Workout',
+          description: 'A test workout',
+          tags: ['running', 'test'],
+          activityType: 'Running',
+        },
+      };
 
       // Act
-      const workoutData = workoutUploader.createWorkoutFromFile(
-        filename,
-        content,
-        mimeType,
-        metadata
-      );
+      const result = await workoutManager.uploadWorkout(workoutData);
 
       // Assert
-      expect(workoutData.name).toStrictEqual('test'); // Extension removed by design
-      expect(workoutData.type).toStrictEqual(WorkoutType.OTHER);
-      expect(workoutData.duration).toStrictEqual(0);
-      expect(workoutData.fileData?.filename).toStrictEqual(filename);
-      expect(workoutData.fileData?.content).toStrictEqual(content);
-      expect(workoutData.fileData?.mimeType).toStrictEqual(mimeType);
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
+      expect(result.workoutId).toBeDefined();
+      expect(result.message).toContain('uploaded successfully');
     });
 
-    it('should create workout data from file with custom metadata', () => {
+    it('should handle invalid workout files', async () => {
       // Arrange
-      const filename = 'workout.tcx';
-      const content = 'workout content';
-      const mimeType = 'application/tcx+xml';
-      const metadata = WorkoutDataFixture.random();
+      const workoutData = {
+        fileContent: 'invalid content',
+        fileName: 'test.txt', // Invalid extension
+      };
 
       // Act
-      const workoutData = workoutUploader.createWorkoutFromFile(
-        filename,
-        content,
-        mimeType,
-        metadata
-      );
+      const result = await workoutManager.uploadWorkout(workoutData);
 
       // Assert
-      expect(workoutData.name).toStrictEqual(metadata.name);
-      expect(workoutData.description).toStrictEqual(metadata.description);
-      expect(workoutData.type).toStrictEqual(metadata.type);
-      expect(workoutData.duration).toStrictEqual(metadata.duration);
-      expect(workoutData.distance).toStrictEqual(metadata.distance);
-      expect(workoutData.fileData?.filename).toStrictEqual(filename);
-      expect(workoutData.fileData?.content).toStrictEqual(content);
-      expect(workoutData.fileData?.mimeType).toStrictEqual(mimeType);
+      expect(result).toBeDefined();
+      expect(result.success).toBe(false);
+      expect(result.errors).toBeDefined();
     });
   });
 
-  describe('validateWorkoutData', () => {
-    it('should throw validation error for empty workout name', async () => {
+  describe('uploadWorkoutFromFile', () => {
+    it('should handle file not found error', async () => {
       // Arrange
-      const workoutData = WorkoutDataFixture.default();
-      workoutData.name = '';
-      vi.spyOn(mockAuth, 'isAuthenticated').mockReturnValue(true);
-      vi.spyOn(mockAuth, 'getToken').mockReturnValue({
-        accessToken: 'mock-token',
-        tokenType: 'Bearer',
-        expiresAt: Date.now() + 3600000,
-      });
+      const nonExistentFile = '/non/existent/file.tcx';
 
-      // Act & Assert
-      await expect(workoutUploader.uploadWorkout(workoutData)).rejects.toThrow(
-        ValidationError
-      );
+      // Act
+      const result = await workoutManager.uploadWorkoutFromFile(nonExistentFile);
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to read workout file');
+      expect(result.errors).toBeDefined();
+    });
+  });
+
+  describe('getWorkout', () => {
+    it('should get workout by ID', async () => {
+      // Arrange
+      const workoutId = 'test-workout-123';
+
+      // Act
+      const workout = await workoutManager.getWorkout(workoutId);
+
+      // Assert
+      expect(workout).toBeDefined();
+      expect(workout.id).toBe(workoutId);
+      expect(workout.name).toBeDefined();
+    });
+  });
+
+  describe('listWorkouts', () => {
+    it('should list user workouts', async () => {
+      // Act
+      const workouts = await workoutManager.listWorkouts();
+
+      // Assert
+      expect(workouts).toBeDefined();
+      expect(Array.isArray(workouts)).toBe(true);
+      expect(workouts.length).toBeGreaterThan(0);
+      expect(workouts[0]).toHaveProperty('id');
+      expect(workouts[0]).toHaveProperty('name');
     });
 
-    it('should throw validation error for invalid date format', async () => {
+    it('should list workouts with filters', async () => {
       // Arrange
-      const workoutData = WorkoutDataFixture.default();
-      workoutData.date = 'invalid-date';
-      vi.spyOn(mockAuth, 'isAuthenticated').mockReturnValue(true);
-      vi.spyOn(mockAuth, 'getToken').mockReturnValue({
-        accessToken: 'mock-token',
-        tokenType: 'Bearer',
-        expiresAt: Date.now() + 3600000,
-      });
+      const filters = {
+        activityType: 'Running',
+        limit: 10,
+        offset: 0,
+      };
 
-      // Act & Assert
-      await expect(workoutUploader.uploadWorkout(workoutData)).rejects.toThrow(
-        ValidationError
-      );
+      // Act
+      const workouts = await workoutManager.listWorkouts(filters);
+
+      // Assert
+      expect(workouts).toBeDefined();
+      expect(Array.isArray(workouts)).toBe(true);
     });
+  });
 
-    it('should throw validation error for negative duration', async () => {
+  describe('deleteWorkout', () => {
+    it('should delete workout by ID', async () => {
       // Arrange
-      const workoutData = WorkoutDataFixture.default();
-      workoutData.duration = -100;
-      vi.spyOn(mockAuth, 'isAuthenticated').mockReturnValue(true);
-      vi.spyOn(mockAuth, 'getToken').mockReturnValue({
-        accessToken: 'mock-token',
-        tokenType: 'Bearer',
-        expiresAt: Date.now() + 3600000,
-      });
+      const workoutId = 'test-workout-123';
 
-      // Act & Assert
-      await expect(workoutUploader.uploadWorkout(workoutData)).rejects.toThrow(
-        ValidationError
-      );
+      // Act
+      const result = await workoutManager.deleteWorkout(workoutId);
+
+      // Assert
+      expect(result).toBe(true);
     });
+  });
 
-    it('should throw validation error for negative distance', async () => {
+  describe('searchWorkouts', () => {
+    it('should search workouts by criteria', async () => {
       // Arrange
-      const workoutData = WorkoutDataFixture.default();
-      workoutData.distance = -500;
-      vi.spyOn(mockAuth, 'isAuthenticated').mockReturnValue(true);
-      vi.spyOn(mockAuth, 'getToken').mockReturnValue({
-        accessToken: 'mock-token',
-        tokenType: 'Bearer',
-        expiresAt: Date.now() + 3600000,
-      });
+      const query = {
+        text: 'running',
+        activityType: 'Running',
+      };
 
-      // Act & Assert
-      await expect(workoutUploader.uploadWorkout(workoutData)).rejects.toThrow(
-        ValidationError
-      );
+      // Act
+      const workouts = await workoutManager.searchWorkouts(query);
+
+      // Assert
+      expect(workouts).toBeDefined();
+      expect(Array.isArray(workouts)).toBe(true);
+    });
+  });
+
+  describe('getWorkoutStats', () => {
+    it('should get workout statistics', async () => {
+      // Arrange
+      const filters = {
+        activityType: 'Running',
+      };
+
+      // Act
+      const stats = await workoutManager.getWorkoutStats(filters);
+
+      // Assert
+      expect(stats).toBeDefined();
+      expect(stats).toHaveProperty('totalWorkouts');
+      expect(stats).toHaveProperty('totalDuration');
+      expect(stats).toHaveProperty('totalDistance');
+      expect(stats).toHaveProperty('averageDuration');
+      expect(stats).toHaveProperty('averageDistance');
+      expect(typeof stats.totalWorkouts).toBe('number');
+    });
+  });
+
+  describe('getWorkoutRepository', () => {
+    it('should return the repository instance', () => {
+      // Act
+      const repository = workoutManager.getWorkoutRepository();
+
+      // Assert
+      expect(repository).toBeDefined();
     });
   });
 });

@@ -30,11 +30,6 @@ export class Credentials {
     );
   }
 
-  public isValidEmailFormat(): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(this._username);
-  }
-
   private validateUsername(): void {
     if (!this._username || this._username.trim().length === 0) {
       throw new Error('Username cannot be empty');

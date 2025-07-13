@@ -1,22 +1,40 @@
 /**
  * Application Layer Exports
- * Barrel file for use cases, services, and ports
+ * Use cases and ports
  */
 
-// Use Cases
+// Authentication Use Cases
 export { GetCurrentUserUseCase } from './use-cases/get-current-user';
 export { LoginUseCase } from './use-cases/login';
 export { LogoutUseCase } from './use-cases/logout';
 
-// Use Case DTOs
-export type { LoginRequest, LoginResponse } from './use-cases/login';
-
-// Services
-export { AuthApplicationService } from './services/auth-application';
+// Workout Use Cases
+export {
+  DeleteWorkoutUseCase,
+  type DeleteWorkoutRequest
+} from './use-cases/delete-workout';
+export {
+  GetWorkoutUseCase,
+  type GetWorkoutRequest
+} from './use-cases/get-workout';
+export {
+  ListWorkoutsUseCase,
+  type ListWorkoutsRequest
+} from './use-cases/list-workouts';
+export {
+  UploadWorkoutUseCase, type UploadWorkoutFromFileRequest, type UploadWorkoutRequest
+} from './use-cases/upload-workout';
 
 // Ports
 export type {
   AuthenticationConfig,
-  AuthenticationPort,
+  AuthenticationPort
 } from './ports/authentication';
 export type { StoragePort } from './ports/storage';
+export type {
+  FileSystemPort, WorkoutServiceConfig,
+  WorkoutServicePort
+} from './ports/workout';
+
+// Services
+export { AuthApplicationService } from './services/auth-application';

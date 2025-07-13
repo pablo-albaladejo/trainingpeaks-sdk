@@ -28,14 +28,6 @@ export function randomDate(): string {
 }
 
 /**
- * Generate a random email
- * @returns Random email
- */
-export function randomEmail(): string {
-  return faker.internet.email();
-}
-
-/**
  * Generate a random URL
  * @returns Random URL
  */

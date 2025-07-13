@@ -1,15 +1,13 @@
 /**
  * Login Use Case
- * Handles user authentication process
+ * Handles user authentication and session establishment
  */
 
-import {
-  AuthDomainService,
-  AuthRepository,
-  AuthToken,
-  Credentials,
-  User,
-} from '../../domain';
+import { AuthToken } from '../../domain/entities/auth-token';
+import { User } from '../../domain/entities/user';
+import { AuthRepository } from '../../domain/repositories/auth';
+import { AuthDomainService } from '../../domain/services/auth-domain';
+import { Credentials } from '../../domain/value-objects/credentials';
 
 export interface LoginRequest {
   username: string;
@@ -22,35 +20,31 @@ export interface LoginResponse {
 }
 
 export class LoginUseCase {
+  private readonly authDomainService = new AuthDomainService();
+
   constructor(private readonly authRepository: AuthRepository) {}
 
   public async execute(request: LoginRequest): Promise<LoginResponse> {
-    // Create credentials value object
+    // Create credentials from request
     const credentials = Credentials.create(request.username, request.password);
 
-    // Apply domain validation
-    AuthDomainService.validateCredentialsForAuth(credentials);
+    // Authenticate user
+    const authToken = await this.authRepository.authenticate(credentials);
 
-    // Authenticate through repository
-    const token = await this.authRepository.authenticate(credentials);
-
-    // Store the token
-    await this.authRepository.storeToken(token);
-
-    // Get user information
-    const user = await this.authRepository.getCurrentUser();
-    if (!user) {
-      throw new Error(
-        'Failed to retrieve user information after authentication'
-      );
+    if (!authToken) {
+      throw new Error('Authentication failed');
     }
 
-    // Store user information
-    await this.authRepository.storeUser(user);
+    // Get the authenticated user
+    const user = await this.authRepository.getCurrentUser();
+    
+    if (!user) {
+      throw new Error('Failed to retrieve user information');
+    }
 
     return {
-      token,
-      user,
+      token: authToken,
+      user: user,
     };
   }
 }

@@ -8,6 +8,7 @@ import {
   AuthenticationConfig,
   AuthenticationPort,
 } from '../../application/ports/authentication';
+import { getSDKConfig } from '../../config';
 import { AuthToken } from '../../domain/entities/auth-token';
 import { User } from '../../domain/entities/user';
 import { Credentials } from '../../domain/value-objects/credentials';
@@ -18,17 +19,7 @@ interface InterceptedData {
 }
 
 export class WebBrowserAuthAdapter implements AuthenticationPort {
-  private static readonly DEFAULT_CONFIG: Required<AuthenticationConfig> = {
-    baseUrl: 'https://www.trainingpeaks.com',
-    timeout: 30000,
-    debug: false,
-    headers: {},
-    webAuth: {
-      headless: true,
-      timeout: 30000,
-      executablePath: '',
-    },
-  };
+  private readonly sdkConfig = getSDKConfig();
 
   public canHandle(config: AuthenticationConfig): boolean {
     // This adapter handles web-based authentication
@@ -37,19 +28,18 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
 
   public async authenticate(
     credentials: Credentials,
-    config: AuthenticationConfig
+    config: Required<AuthenticationConfig>
   ): Promise<{ token: AuthToken; user: User }> {
-    const fullConfig = this.mergeConfig(config);
     let browser: Browser | null = null;
 
     try {
-      browser = await this.launchBrowser(fullConfig);
-      const page = await this.setupPage(browser, fullConfig);
+      browser = await this.launchBrowser(config);
+      const page = await this.setupPage(browser, config);
 
       const interceptedData = await this.performLogin(
         page,
         credentials,
-        fullConfig
+        config
       );
 
       if (!interceptedData.token || !interceptedData.userId) {
@@ -89,25 +79,13 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     throw new Error('Token refresh not supported for web authentication');
   }
 
-  private mergeConfig(
-    config: AuthenticationConfig
-  ): Required<AuthenticationConfig> {
-    return {
-      ...WebBrowserAuthAdapter.DEFAULT_CONFIG,
-      ...config,
-      webAuth: {
-        ...WebBrowserAuthAdapter.DEFAULT_CONFIG.webAuth,
-        ...config.webAuth,
-      },
-    };
-  }
-
   private async launchBrowser(
     config: Required<AuthenticationConfig>
   ): Promise<Browser> {
     return await chromium.launch({
       headless: config.webAuth.headless,
       executablePath: config.webAuth.executablePath || undefined,
+      timeout: this.sdkConfig.browser.launchTimeout,
     });
   }
 
@@ -140,9 +118,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     this.setupAuthResponseListeners(page, interceptedData, config);
 
     // Navigate to login page
-    const loginUrl =
-      process.env.TRAININGPEAKS_LOGIN_URL ||
-      'https://home.trainingpeaks.com/login';
+    const loginUrl = this.sdkConfig.urls.loginUrl;
 
     if (config.debug) {
       console.log(`Navigating to TrainingPeaks login page: ${loginUrl}`);
@@ -195,7 +171,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     try {
       await page.waitForSelector('#onetrust-accept-btn-handler', {
         state: 'visible',
-        timeout: 5000,
+        timeout: this.sdkConfig.timeouts.elementWait,
       });
       await page.click('#onetrust-accept-btn-handler');
 
@@ -255,7 +231,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
         '[data-cy="invalid_credentials_message"], .error-message, .alert-danger';
       const errorElement = await page.waitForSelector(errorSelector, {
         state: 'visible',
-        timeout: 5000,
+        timeout: this.sdkConfig.timeouts.elementWait,
       });
 
       if (errorElement) {
@@ -271,8 +247,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     page: Page,
     config: Required<AuthenticationConfig>
   ): Promise<void> {
-    const appUrl =
-      process.env.TRAININGPEAKS_APP_URL || 'https://app.trainingpeaks.com';
+    const appUrl = this.sdkConfig.urls.appUrl;
     const appUrlPattern = appUrl + '/**';
 
     if (config.debug) {
@@ -284,7 +259,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     });
 
     // Give time for API calls to complete
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(this.sdkConfig.browser.pageWaitTimeout);
 
     if (config.debug) {
       console.log('Successfully authenticated with TrainingPeaks');
@@ -315,7 +290,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
       interceptedData.token = AuthToken.create(
         json.token.access_token,
         'Bearer',
-        new Date(Date.now() + 23 * 60 * 60 * 1000), // 23 hours
+        new Date(Date.now() + this.sdkConfig.tokens.defaultExpiration),
         json.token.refresh_token
       );
 
