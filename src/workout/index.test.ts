@@ -116,6 +116,19 @@ describe('WorkoutManager', () => {
 
   describe('listWorkouts', () => {
     it('should list user workouts', async () => {
+      // Arrange - First upload a workout to ensure we have data
+      const workoutData = {
+        fileContent: '<tcx>sample workout data</tcx>',
+        fileName: 'test-workout.tcx',
+        metadata: {
+          title: 'Test Workout for Listing',
+          description: 'A test workout to be listed',
+        },
+      };
+
+      const uploadResult = await workoutManager.uploadWorkout(workoutData);
+      expect(uploadResult.success).toBe(true);
+
       // Act
       const workouts = await workoutManager.listWorkouts();
 
