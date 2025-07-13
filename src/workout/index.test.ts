@@ -166,6 +166,8 @@ describe('WorkoutManager', () => {
         metadata: {
           title: 'Test Workout for Deletion',
           description: 'A test workout to be deleted',
+          tags: ['running', 'test'],
+          activityType: 'Running',
         },
       };
 
