@@ -1,4 +1,8 @@
-# TrainingPeaks SDK - Cursor Rules
+---
+description:
+globs:
+alwaysApply: true
+---
 
 ## 🏗️ ARCHITECTURE DECISIONS
 
