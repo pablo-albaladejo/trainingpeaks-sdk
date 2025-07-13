@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## <small>1.0.1 (2025-07-13)</small>
+
+* Merge pull request #1 from pablo-albaladejo/dependabot/github_actions/codecov/codecov-action-5 ([98ab5ed](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/98ab5ed)), closes [#1](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/1)
+* ci: bump codecov/codecov-action from 3 to 5 ([498d257](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/498d257))
+
 ## 1.0.0 (2025-07-13)
 
 * fix: add coverage dependency and fix delete workout test ([badc56f](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/badc56f))
