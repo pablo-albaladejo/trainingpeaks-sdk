@@ -146,10 +146,21 @@ describe('WorkoutManager', () => {
 
   describe('deleteWorkout', () => {
     it('should delete workout by ID', async () => {
-      // Arrange
-      const workoutId = 'test-workout-123';
+      // Arrange - First upload a workout
+      const workoutData = {
+        fileContent: '<tcx>sample workout data</tcx>',
+        fileName: 'test-workout.tcx',
+        metadata: {
+          title: 'Test Workout for Deletion',
+          description: 'A test workout to be deleted',
+        },
+      };
 
-      // Act
+      const uploadResult = await workoutManager.uploadWorkout(workoutData);
+      expect(uploadResult.success).toBe(true);
+      const workoutId = uploadResult.workoutId!;
+
+      // Act - Delete the workout
       const result = await workoutManager.deleteWorkout(workoutId);
 
       // Assert
