@@ -3,7 +3,7 @@
  * Handles workout deletion
  */
 
-import { WorkoutRepository } from '../../domain/repositories/workout';
+import { WorkoutRepository } from '@/domain/repositories/workout';
 
 export interface DeleteWorkoutRequest {
   workoutId: string;

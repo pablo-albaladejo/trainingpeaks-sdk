@@ -3,11 +3,11 @@
  * Handles user authentication and session establishment
  */
 
-import { AuthToken } from '../../domain/entities/auth-token';
-import { User } from '../../domain/entities/user';
-import { AuthRepository } from '../../domain/repositories/auth';
-import { AuthDomainService } from '../../domain/services/auth-domain';
-import { Credentials } from '../../domain/value-objects/credentials';
+import { AuthToken } from '@/domain/entities/auth-token';
+import { User } from '@/domain/entities/user';
+import { AuthRepository } from '@/domain/repositories/auth';
+import { AuthDomainService } from '@/domain/services/auth-domain';
+import { Credentials } from '@/domain/value-objects/credentials';
 
 export interface LoginRequest {
   username: string;

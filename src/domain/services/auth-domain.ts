@@ -3,8 +3,8 @@
  * Contains business logic for authentication operations
  */
 
-import { getSDKConfig } from '../../config';
-import { AuthToken } from '../entities/auth-token';
+import { getSDKConfig } from '@/config';
+import { AuthToken } from '@/domain/entities/auth-token';
 
 export class AuthDomainService {
   private readonly sdkConfig = getSDKConfig();

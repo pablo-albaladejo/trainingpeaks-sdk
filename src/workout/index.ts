@@ -8,29 +8,29 @@
  * - Adapters: Repository implementations
  */
 
-import { TrainingPeaksWorkoutRepository } from '../adapters/training-peaks-workout-repository';
+import { TrainingPeaksWorkoutRepository } from '@/adapters/training-peaks-workout-repository';
 import {
   DeleteWorkoutRequest,
   DeleteWorkoutUseCase,
-} from '../application/use-cases/delete-workout';
+} from '@/application/use-cases/delete-workout';
 import {
   GetWorkoutRequest,
   GetWorkoutUseCase,
-} from '../application/use-cases/get-workout';
+} from '@/application/use-cases/get-workout';
 import {
   ListWorkoutsRequest,
   ListWorkoutsUseCase,
-} from '../application/use-cases/list-workouts';
+} from '@/application/use-cases/list-workouts';
 import {
   UploadWorkoutFromFileRequest,
   UploadWorkoutRequest,
   UploadWorkoutUseCase,
-} from '../application/use-cases/upload-workout';
-import { getSDKConfig } from '../config';
-import { Workout } from '../domain/entities/workout';
-import { FileSystemAdapter } from '../infrastructure/filesystem/file-system-adapter';
-import { TrainingPeaksWorkoutApiAdapter } from '../infrastructure/workout/trainingpeaks-api-adapter';
-import { TrainingPeaksClientConfig } from '../types';
+} from '@/application/use-cases/upload-workout';
+import { getSDKConfig } from '@/config';
+import { Workout } from '@/domain/entities/workout';
+import { FileSystemAdapter } from '@/infrastructure/filesystem/file-system-adapter';
+import { TrainingPeaksWorkoutApiAdapter } from '@/infrastructure/workout/trainingpeaks-api-adapter';
+import { TrainingPeaksClientConfig } from '@/types';
 
 export interface WorkoutData {
   /** The workout file content (TCX, GPX, FIT, etc.) */

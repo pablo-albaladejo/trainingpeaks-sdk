@@ -3,9 +3,9 @@
  * Implements storage using in-memory variables (not persistent across sessions)
  */
 
-import { StoragePort } from '../../application/ports/storage';
-import { AuthToken } from '../../domain/entities/auth-token';
-import { User } from '../../domain/entities/user';
+import { StoragePort } from '@/application/ports/storage';
+import { AuthToken } from '@/domain/entities/auth-token';
+import { User } from '@/domain/entities/user';
 
 export class InMemoryStorageAdapter implements StoragePort {
   private storedToken: AuthToken | null = null;

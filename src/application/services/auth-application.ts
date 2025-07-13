@@ -3,10 +3,10 @@
  * Orchestrates authentication use cases and provides a unified interface
  */
 
-import { AuthRepository, AuthToken, User } from '../../domain';
-import { GetCurrentUserUseCase } from '../use-cases/get-current-user';
-import { LoginRequest, LoginResponse, LoginUseCase } from '../use-cases/login';
-import { LogoutUseCase } from '../use-cases/logout';
+import { AuthRepository, AuthToken, User } from '@/domain';
+import { GetCurrentUserUseCase } from '@/application/use-cases/get-current-user';
+import { LoginRequest, LoginResponse, LoginUseCase } from '@/application/use-cases/login';
+import { LogoutUseCase } from '@/application/use-cases/logout';
 
 export class AuthApplicationService {
   private readonly loginUseCase: LoginUseCase;

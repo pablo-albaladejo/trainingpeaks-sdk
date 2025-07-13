@@ -8,8 +8,20 @@
     "declarationMap": true,
     "sourceMap": false,
     "removeComments": true,
-    "baseUrl": ".",
-    "paths": {}
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": false,
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@adapters/*": ["adapters/*"],
+      "@application/*": ["application/*"],
+      "@domain/*": ["domain/*"],
+      "@infrastructure/*": ["infrastructure/*"],
+      "@fixtures/*": ["__fixtures__/*"],
+      "@types/*": ["types/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": [

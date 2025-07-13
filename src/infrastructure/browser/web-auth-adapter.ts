@@ -7,11 +7,11 @@ import { Browser, chromium, Page, Response } from 'playwright-core';
 import {
   AuthenticationConfig,
   AuthenticationPort,
-} from '../../application/ports/authentication';
-import { getSDKConfig } from '../../config';
-import { AuthToken } from '../../domain/entities/auth-token';
-import { User } from '../../domain/entities/user';
-import { Credentials } from '../../domain/value-objects/credentials';
+} from '@/application/ports/authentication';
+import { getSDKConfig } from '@/config';
+import { AuthToken } from '@/domain/entities/auth-token';
+import { User } from '@/domain/entities/user';
+import { Credentials } from '@/domain/value-objects/credentials';
 
 interface InterceptedData {
   token?: AuthToken;

@@ -3,8 +3,8 @@
  * Defines interfaces for external services
  */
 
-import { Workout } from '../../domain/entities/workout';
-import { WorkoutFile } from '../../domain/value-objects/workout-file';
+import { Workout } from '@/domain/entities/workout';
+import { WorkoutFile } from '@/domain/value-objects/workout-file';
 
 export interface WorkoutServiceConfig {
   baseUrl: string;

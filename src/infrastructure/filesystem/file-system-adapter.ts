@@ -5,7 +5,7 @@
 
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import { FileSystemPort } from '../../application/ports/workout';
+import { FileSystemPort } from '@/application/ports/workout';
 
 export class FileSystemAdapter implements FileSystemPort {
   public async readFile(filePath: string): Promise<string> {

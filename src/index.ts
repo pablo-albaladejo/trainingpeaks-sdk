@@ -6,18 +6,18 @@
  */
 
 // Main Client (Facade)
+export type { TrainingPeaksClientConfig } from '@/types';
 export { TrainingPeaksClient } from './training-peaks-client';
-export type { TrainingPeaksClientConfig } from './types';
 
 // Configuration
-export { DEFAULT_CONFIG, getSDKConfig } from './config';
-export type { TrainingPeaksSDKConfig } from './config';
+export { DEFAULT_CONFIG, getSDKConfig } from '@/config';
+export type { TrainingPeaksSDKConfig } from '@/config';
 
 // Domain Entities (Public API)
-export { AuthToken, Credentials, User, Workout, WorkoutFile } from './domain';
+export { AuthToken, Credentials, User, Workout, WorkoutFile } from '@/domain';
 
 // Value Objects and Types
-export type { ApiResponse, LoginCredentials, UserProfile } from './types';
+export type { ApiResponse, LoginCredentials, UserProfile } from '@/types';
 
 // Use Cases (for advanced usage)
 export {
@@ -28,20 +28,20 @@ export {
   LoginUseCase,
   LogoutUseCase,
   UploadWorkoutUseCase,
-} from './application';
+} from '@/application';
 
 // Repository Interfaces (for advanced usage)
-export type { AuthRepository, UploadResult, WorkoutRepository } from './domain';
+export type { AuthRepository, UploadResult, WorkoutRepository } from '@/domain';
 
 // Services and Adapters (for advanced usage)
 export {
   TrainingPeaksAuthRepository,
   TrainingPeaksWorkoutRepository,
-} from './adapters';
+} from '@/adapters';
 
 // Workout Management
-export { WorkoutManager } from './workout';
-export type { WorkoutData, WorkoutUploadResponse } from './workout';
+export { WorkoutManager } from '@/workout';
+export type { WorkoutData, WorkoutUploadResponse } from '@/workout';
 
 // Infrastructure Adapters (for custom implementations)
 export {
@@ -50,7 +50,7 @@ export {
   InMemoryStorageAdapter,
   TrainingPeaksWorkoutApiAdapter,
   WebBrowserAuthAdapter,
-} from './infrastructure';
+} from '@/infrastructure';
 
 // Error Types (if any are exported from types)
 // export { ... } from './types';

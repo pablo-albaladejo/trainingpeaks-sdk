@@ -7,10 +7,10 @@ import axios, { AxiosInstance } from 'axios';
 import {
   WorkoutServiceConfig,
   WorkoutServicePort,
-} from '../../application/ports/workout';
-import { getSDKConfig } from '../../config';
-import { Workout } from '../../domain/entities/workout';
-import { WorkoutFile } from '../../domain/value-objects/workout-file';
+} from '@/application/ports/workout';
+import { getSDKConfig } from '@/config';
+import { Workout } from '@/domain/entities/workout';
+import { WorkoutFile } from '@/domain/value-objects/workout-file';
 
 export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
   private readonly sdkConfig = getSDKConfig();

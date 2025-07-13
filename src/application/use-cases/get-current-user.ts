@@ -3,9 +3,9 @@
  * Retrieves the currently authenticated user
  */
 
-import { User } from '../../domain/entities/user';
-import { AuthRepository } from '../../domain/repositories/auth';
-import { AuthDomainService } from '../../domain/services/auth-domain';
+import { User } from '@/domain/entities/user';
+import { AuthRepository } from '@/domain/repositories/auth';
+import { AuthDomainService } from '@/domain/services/auth-domain';
 
 export class GetCurrentUserUseCase {
   private readonly authDomainService = new AuthDomainService();

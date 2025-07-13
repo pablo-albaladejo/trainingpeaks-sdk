@@ -3,15 +3,15 @@
  * Implements TrainingPeaks API authentication using OAuth2 flow
  */
 
-import axios, { AxiosInstance } from 'axios';
 import {
   AuthenticationConfig,
   AuthenticationPort,
-} from '../../application/ports/authentication';
-import { getSDKConfig } from '../../config';
-import { AuthToken } from '../../domain/entities/auth-token';
-import { User } from '../../domain/entities/user';
-import { Credentials } from '../../domain/value-objects/credentials';
+} from '@/application/ports/authentication';
+import { getSDKConfig } from '@/config';
+import { AuthToken } from '@/domain/entities/auth-token';
+import { User } from '@/domain/entities/user';
+import { Credentials } from '@/domain/value-objects/credentials';
+import axios, { AxiosInstance } from 'axios';
 
 export class ApiAuthAdapter implements AuthenticationPort {
   private readonly sdkConfig = getSDKConfig();

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { TrainingPeaksConfig } from '../types';
+import { TrainingPeaksConfig } from '@/types';
 import { randomNumber, randomUrl } from './utils.fixture';
 
 /**

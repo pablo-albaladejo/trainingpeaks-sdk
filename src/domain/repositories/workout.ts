@@ -3,8 +3,8 @@
  * Defines the contract for workout operations
  */
 
-import { Workout } from '../entities/workout';
-import { WorkoutFile } from '../value-objects/workout-file';
+import { Workout } from '@/domain/entities/workout';
+import { WorkoutFile } from '@/domain/value-objects/workout-file';
 
 export interface UploadResult {
   success: boolean;

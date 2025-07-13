@@ -3,8 +3,8 @@
  * Handles retrieving a list of workouts
  */
 
-import { Workout } from '../../domain/entities/workout';
-import { WorkoutRepository } from '../../domain/repositories/workout';
+import { Workout } from '@/domain/entities/workout';
+import { WorkoutRepository } from '@/domain/repositories/workout';
 
 export interface ListWorkoutsRequest {
   startDate?: Date;

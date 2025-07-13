@@ -1,4 +1,4 @@
-import { TrainingPeaksConfig } from '../types';
+import { TrainingPeaksConfig } from '@/types';
 
 export interface TestEnvironment {
   trainingPeaksConfig: TrainingPeaksConfig;

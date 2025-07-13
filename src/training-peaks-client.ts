@@ -7,22 +7,22 @@
  * - Adapters: Repository implementations
  */
 
-import { TrainingPeaksAuthRepository } from './adapters';
+import { TrainingPeaksAuthRepository } from '@/adapters';
 import {
   AuthApplicationService,
   AuthenticationConfig,
   GetCurrentUserUseCase,
   LoginUseCase,
   LogoutUseCase,
-} from './application';
-import { getSDKConfig, TrainingPeaksSDKConfig } from './config';
-import { AuthToken, User } from './domain';
+} from '@/application';
+import { getSDKConfig, TrainingPeaksSDKConfig } from '@/config';
+import { AuthToken, User } from '@/domain';
 import {
   ApiAuthAdapter,
   InMemoryStorageAdapter,
   WebBrowserAuthAdapter,
-} from './infrastructure';
-import { TrainingPeaksClientConfig } from './types';
+} from '@/infrastructure';
+import { TrainingPeaksClientConfig } from '@/types';
 
 export interface AuthEventCallbacks {
   onLogin?: (user: User) => void;

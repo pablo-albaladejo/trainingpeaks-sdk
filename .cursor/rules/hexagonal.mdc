@@ -48,24 +48,57 @@ src/
 ### TypeScript Imports
 
 - CRITICAL: Never add .js extensions to TypeScript imports
-- Use `import { X } from './path'` NOT `import { X } from './path.js'`
+- CRITICAL: Always use path aliases (@/) instead of relative imports (../ or ./)
+- Use `import { X } from '@/domain/entities/user'` NOT `import { X } from '../domain/entities/user'`
+- Use `import { X } from '@/application/use-cases/login'` NOT `import { X } from './use-cases/login'`
 - TypeScript handles extensions automatically during transpilation
 - Project has scripts/check-imports.sh and npm run check-imports to verify this
 - VSCode configured with "typescript.preferences.importModuleSpecifierEnding": "minimal"
 
+### Path Aliases Configuration
+
+- All imports must use the configured path aliases:
+  - `@/*` - Root src directory
+  - `@/adapters/*` - Adapter implementations
+  - `@/application/*` - Use cases and application layer
+  - `@/domain/*` - Domain entities and business logic
+  - `@/infrastructure/*` - External adapters
+  - `@/types/*` - Type definitions
+  - `@/fixtures/*` - Test fixtures
+- Never use relative imports like `../` or `./` except for index.ts files in the same directory
+- This ensures clean, maintainable imports and prevents module resolution issues
+
 ### Naming Patterns
 
 ```typescript
-// ✅ Correct
+// ✅ Correct file names
 src / workout / index.ts;
 src / auth / auth - manager.ts;
 src / domain / entities / user.ts;
 src / application / use - cases / upload - workout.ts;
 
-// ❌ Incorrect
+// ❌ Incorrect file names
 src / workout / workout - manager.ts;
 src / auth / auth - auth - manager.ts;
 src / domain / entities / User.ts; // Wrong case
+```
+
+### Import Patterns
+
+```typescript
+// ✅ Correct imports (use path aliases)
+import { User } from '@/domain/entities/user';
+import { LoginUseCase } from '@/application/use-cases/login';
+import { TrainingPeaksAuthRepository } from '@/adapters/repositories/training-peaks-auth';
+import { getSDKConfig } from '@/config';
+import { WorkoutData } from '@/types';
+
+// ❌ Incorrect imports (relative paths)
+import { User } from '../domain/entities/user';
+import { LoginUseCase } from './use-cases/login';
+import { TrainingPeaksAuthRepository } from '../../adapters/repositories/training-peaks-auth';
+import { getSDKConfig } from '../config';
+import { WorkoutData } from './types';
 ```
 
 ## 🧪 TESTING STRATEGY
@@ -273,7 +306,9 @@ export class Credentials {
 - Don't use any type unless absolutely necessary
 - Don't commit code that doesn't pass lint/format checks
 - Don't create circular dependencies between layers
-- Don't use relative imports that go up more than 2 levels
+- **CRITICAL: Don't use relative imports (../ or ./) - Always use path aliases (@/)**
+- Don't use .js extensions in TypeScript imports
+- Don't create files with folder names in the filename (e.g., workout-workout.ts)
 
 ## 🔄 WHEN ADDING NEW FEATURES
 

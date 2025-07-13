@@ -3,12 +3,10 @@
  * Handles workout upload operations
  */
 
-import { Workout } from '../../domain/entities/workout';
-import {
-  UploadResult,
-  WorkoutRepository,
-} from '../../domain/repositories/workout';
-import { WorkoutFile } from '../../domain/value-objects/workout-file';
+import { Workout } from '@/domain/entities/workout';
+import { UploadResult, WorkoutRepository } from '@/domain/repositories/workout';
+import { WorkoutFile } from '@/domain/value-objects/workout-file';
+import { readFileSync } from 'fs';
 
 export interface UploadWorkoutRequest {
   fileContent: string;
@@ -79,7 +77,6 @@ export class UploadWorkoutUseCase {
   ): Promise<UploadResult> {
     try {
       // Read file content (this would be handled by infrastructure)
-      const { readFileSync } = require('fs');
       const fileContent = readFileSync(request.filePath, 'utf8');
       const fileName = request.filePath.split('/').pop() || 'workout.tcx';
 

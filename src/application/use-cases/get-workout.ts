@@ -3,8 +3,8 @@
  * Handles retrieving workout information
  */
 
-import { Workout } from '../../domain/entities/workout';
-import { WorkoutRepository } from '../../domain/repositories/workout';
+import { Workout } from '@/domain/entities/workout';
+import { WorkoutRepository } from '@/domain/repositories/workout';
 
 export interface GetWorkoutRequest {
   workoutId: string;

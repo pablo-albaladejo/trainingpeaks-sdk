@@ -129,8 +129,8 @@ export interface RetryConfig {
 /**
  * Import and re-export configuration types from config module
  */
-import type { TrainingPeaksSDKConfig } from '../config';
-export type { TrainingPeaksSDKConfig } from '../config';
+import type { TrainingPeaksSDKConfig } from '@/config';
+export type { TrainingPeaksSDKConfig } from '@/config';
 
 export interface TrainingPeaksClientConfig {
   /** Base URL for TrainingPeaks */
