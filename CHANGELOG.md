@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## 1.2.0 (2025-07-13)
+
+* feat: enhance package configuration and build process ([62e8094](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/62e8094))
+* feat: update node.js setup for npm authentication ([c99e94e](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/c99e94e))
+* chore(release): enable npm publishing in configuration ([0a1975e](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/0a1975e))
+
 ## 1.1.0 (2025-07-13)
 
 * feat: add hexagonal architecture rules and coding conventions ([a0ab8e5](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/a0ab8e5))
