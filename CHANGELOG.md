@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## 1.1.0 (2025-07-13)
+
+* feat: add hexagonal architecture rules and coding conventions ([a0ab8e5](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/a0ab8e5))
+* chore: remove local and simple semantic release configurations ([5a3f32c](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/5a3f32c))
+* chore(release): 1.0.2 [skip ci] ([e0eb4a1](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/e0eb4a1))
+* docs: add comprehensive cursor rules with architecture decisions ([d5de3c1](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/d5de3c1))
+* fix: resolve github assets name collision in semantic-release ([0b4a246](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/0b4a246))
+
 ## <small>1.0.2 (2025-07-13)</small>
 
 * docs: add comprehensive cursor rules with architecture decisions ([d5de3c1](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/d5de3c1))
