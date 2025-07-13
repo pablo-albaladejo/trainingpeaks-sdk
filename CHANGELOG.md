@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## <small>1.4.1 (2025-07-13)</small>
+
+* chore: update dependencies to use playwright-core and remove playwright ([255ccbd](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/255ccbd))
+
 ## 1.4.0 (2025-07-13)
 
 * feat: add tags and activity type to workout metadata in tests ([158557a](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/158557a))
