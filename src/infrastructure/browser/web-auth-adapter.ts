@@ -11,7 +11,7 @@ import { getSDKConfig } from '@/config';
 import { AuthToken } from '@/domain/entities/auth-token';
 import { User } from '@/domain/entities/user';
 import { Credentials } from '@/domain/value-objects/credentials';
-import { Browser, chromium, Page, Response } from 'playwright';
+import { Browser, chromium, Page, Response } from 'playwright-core';
 
 interface InterceptedData {
   token?: AuthToken;

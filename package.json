@@ -94,14 +94,6 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "peerDependencies": {
-    "playwright": "^1.40.0"
-  },
-  "peerDependenciesMeta": {
-    "playwright": {
-      "optional": true
-    }
-  },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
@@ -118,7 +110,6 @@
     "eslint": "^9.31.0",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.31.0",
-    "playwright": "^1.49.0",
     "prettier": "^3.6.2",
     "semantic-release": "^24.2.7",
     "tsc-alias": "^1.8.16",
@@ -129,6 +120,7 @@
   },
   "dependencies": {
     "axios": "^1.7.9",
-    "form-data": "^4.0.1"
+    "form-data": "^4.0.1",
+    "playwright-core": "^1.54.1"
   }
 }
