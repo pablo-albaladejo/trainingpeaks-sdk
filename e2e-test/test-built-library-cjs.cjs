@@ -7,7 +7,7 @@
  * in a CommonJS environment.
  */
 
-import { TrainingPeaksClient } from '../dist-cjs/index.js';
+const { TrainingPeaksClient } = require('../dist/index.cjs');
 
 console.log('🧪 Testing TrainingPeaks SDK (CommonJS)...\n');
 

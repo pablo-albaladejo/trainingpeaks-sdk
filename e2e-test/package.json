@@ -2,9 +2,8 @@
   "name": "trainingpeaks-sdk-e2e-tests",
   "version": "1.0.0",
   "description": "End-to-end tests for TrainingPeaks SDK",
-  "type": "module",
   "scripts": {
-    "test": "node run-e2e.sh",
+    "test": "bash run-e2e.sh",
     "test:esm": "node test-built-library.mjs",
     "test:cjs": "node test-built-library-cjs.cjs"
   },

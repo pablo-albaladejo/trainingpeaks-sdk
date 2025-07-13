@@ -41,13 +41,13 @@ if [ ! -d "dist" ]; then
     exit 1
 fi
 
-if [ ! -f "dist/esm/index.js" ]; then
-    echo "❌ ESM build not found at dist/esm/index.js"
+if [ ! -f "dist/index.js" ]; then
+    echo "❌ ESM build not found at dist/index.js"
     exit 1
 fi
 
-if [ ! -f "dist/cjs/index.js" ]; then
-    echo "❌ CommonJS build not found at dist/cjs/index.js"
+if [ ! -f "dist/index.cjs" ]; then
+    echo "❌ CommonJS build not found at dist/index.cjs"
     exit 1
 fi
 
