@@ -1,12 +1,34 @@
 {
   "name": "trainingpeaks-sdk",
   "version": "1.1.0",
-  "description": "TypeScript SDK for TrainingPeaks API integration",
+  "description": "TypeScript SDK for TrainingPeaks API integration with authentication and workout upload capabilities",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.cjs",
+    "dist/**/*.d.ts",
+    "!dist/**/*.test.*",
+    "!dist/**/*.integ-test.*",
+    "!dist/**/__fixtures__/**",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc -p tsconfig.build.json",
+    "build:cjs": "tsc -p tsconfig.build.json --module commonjs --outDir dist-cjs && node scripts/make-cjs.js",
     "dev": "tsc --watch",
     "test": "vitest run --exclude='**/*.integ-test.ts'",
     "test:unit": "vitest run --exclude='**/*.integ-test.ts'",
@@ -18,7 +40,8 @@
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
     "precommit": "npm run format:check && npm run lint && npm run build && npm test",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist dist-cjs",
+    "prepublishOnly": "npm run clean && npm run build && npm run test",
     "release": "semantic-release",
     "release:dry-run": "semantic-release --dry-run",
     "pre-release": "npm run clean && npm run test:coverage && npm run lint && npm run format:check && npm run build"
@@ -28,10 +51,36 @@
     "api",
     "sdk",
     "typescript",
-    "fitness"
+    "fitness",
+    "workout",
+    "sports",
+    "training",
+    "upload",
+    "tcx",
+    "gpx",
+    "fit"
   ],
-  "author": "Your Name",
+  "author": "Pablo Albaladejo <pablo@example.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pablo-albaladejo/trainingpeaks-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues"
+  },
+  "homepage": "https://github.com/pablo-albaladejo/trainingpeaks-sdk#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "peerDependencies": {
+    "playwright": "^1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",

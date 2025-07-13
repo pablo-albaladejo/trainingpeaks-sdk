@@ -1,0 +1,52 @@
+# Source files
+src/
+scripts/
+
+# Development files
+.cursor/
+.husky/
+.vscode/
+.github/
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+**/*.integ-test.ts
+__fixtures__/
+test-files/
+coverage/
+
+# Config files
+tsconfig*.json
+vitest*.config.ts
+eslint.config.js
+.eslintrc*
+.prettierrc*
+.prettierignore
+commitlint.config.*
+release.config.*
+.gitmessage
+
+# Environment files
+.env*
+!.env.example
+
+# Build artifacts
+dist-cjs/
+*.tgz
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Git files
+.git/
+.gitignore 
