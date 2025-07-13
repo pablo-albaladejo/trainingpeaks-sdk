@@ -22,7 +22,11 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": [
