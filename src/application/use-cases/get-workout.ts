@@ -1,30 +1,31 @@
 /**
  * Get Workout Use Case
- * Handles retrieving workout information
  */
 
-import type { getWorkout } from '@/application/services/workout-query';
-import { Workout } from '@/domain/entities/workout';
-
-export interface GetWorkoutRequest {
-  workoutId: string;
-}
+import type { GetWorkout } from '@/application/services/workout-query';
+import type { WorkoutData } from '@/types';
 
 /**
- * Get Workout Use Case Factory
- * Creates a get workout use case with dependency injection
+ * Request parameters for getting a workout
  */
-export const createGetWorkoutUseCase = (getWorkoutFn: getWorkout) => {
-  /**
-   * Execute get workout process
-   */
-  const execute = async (request: GetWorkoutRequest): Promise<Workout> => {
-    // Delegate to domain service
-    return await getWorkoutFn(request.workoutId);
-  };
-
-  return { execute };
+export type GetWorkoutRequest = {
+  workoutId: string;
 };
 
-// Export the type for dependency injection
-export type GetWorkoutUseCase = ReturnType<typeof createGetWorkoutUseCase>;
+/**
+ * Response type for getting a workout
+ */
+export type GetWorkoutResponse = WorkoutData | null;
+
+/**
+ * Use case for getting workouts
+ */
+export const createGetWorkoutUseCase = (getWorkoutFn: GetWorkout) => {
+  return {
+    execute: async (
+      request: GetWorkoutRequest
+    ): Promise<GetWorkoutResponse> => {
+      return await getWorkoutFn(request.workoutId);
+    },
+  };
+};

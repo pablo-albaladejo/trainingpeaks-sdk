@@ -16,6 +16,26 @@ export default tseslint.config(
       // Use TypeScript-specific rule instead
       '@typescript-eslint/no-unused-vars': 'warn',
       'import/no-unresolved': 'error',
+      // Naming convention: types must start with uppercase
+      '@typescript-eslint/naming-convention': [
+        'error',
+        {
+          selector: 'typeAlias',
+          format: ['PascalCase'],
+          custom: {
+            regex: '^[A-Z]',
+            match: true,
+          },
+        },
+        {
+          selector: 'typeParameter',
+          format: ['PascalCase'],
+          custom: {
+            regex: '^[A-Z]',
+            match: true,
+          },
+        },
+      ],
     },
     settings: {
       'import/resolver': {

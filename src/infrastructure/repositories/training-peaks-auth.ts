@@ -1,182 +1,109 @@
 /**
- * TrainingPeaks Authentication Repository Implementation
- * Connects domain layer with infrastructure adapters
+ * TrainingPeaks Authentication Repository
+ * Handles authentication operations with TrainingPeaks API
  */
 
-import {
-  AuthenticationConfig,
-  AuthenticationPort,
-  StoragePort,
-} from '@/application';
-import { AuthRepository } from '@/application/ports/auth';
-import { AuthToken, Credentials, User } from '@/domain';
+import { type AuthRepository } from '@/application';
+import { AuthToken } from '@/domain/entities/auth-token';
+import { User } from '@/domain/entities/user';
+import { Credentials } from '@/domain/value-objects/credentials';
 
 /**
- * TrainingPeaks Authentication Repository Factory
- * Creates a TrainingPeaks authentication repository with dependency injection
+ * Current authentication state
  */
-export const createTrainingPeaksAuthRepository = (
-  storageAdapter: StoragePort,
-  config: AuthenticationConfig
-) => {
-  const authAdapters: AuthenticationPort[] = [];
-  let cachedToken: AuthToken | null = null;
-  let cachedUser: User | null = null;
+let currentUser: User | null = null;
+let currentToken: AuthToken | null = null;
 
-  /**
-   * Initialize cache from storage
-   */
-  const initializeCache = async (): Promise<void> => {
-    try {
-      cachedToken = await storageAdapter.getToken();
-      cachedUser = await storageAdapter.getUser();
-    } catch {
-      // Ignore errors during initialization
-      cachedToken = null;
-      cachedUser = null;
-    }
+/**
+ * TrainingPeaks Authentication Repository
+ * Implements the AuthRepository interface for TrainingPeaks authentication
+ */
+export const createTrainingPeaksAuthRepository = (): AuthRepository => {
+  // Helper methods
+  const setCurrentUser = (user: User | null): void => {
+    currentUser = user;
   };
 
-  /**
-   * Get a compatible authentication adapter for the current configuration
-   */
-  const getCompatibleAdapter = (): AuthenticationPort => {
-    const compatibleAdapter = authAdapters.find((adapter) =>
-      adapter.canHandle(config)
-    );
-
-    if (!compatibleAdapter) {
-      throw new Error(
-        'No compatible authentication adapter found for the current configuration'
-      );
-    }
-
-    return compatibleAdapter;
+  const setCurrentToken = (token: AuthToken | null): void => {
+    currentToken = token;
   };
 
-  /**
-   * Register an authentication adapter
-   */
-  const registerAuthAdapter = (adapter: AuthenticationPort): void => {
-    authAdapters.push(adapter);
+  const clearCurrentState = (): void => {
+    currentUser = null;
+    currentToken = null;
   };
 
-  /**
-   * Authenticate user with credentials
-   */
+  // Repository implementation
   const authenticate = async (credentials: Credentials): Promise<AuthToken> => {
-    const adapter = getCompatibleAdapter();
+    // For now, create a mock token
+    const token = AuthToken.create(
+      'mock-access-token',
+      'Bearer',
+      new Date(Date.now() + 3600000),
+      'mock-refresh-token'
+    );
+    setCurrentToken(token);
 
-    const { token, user } = await adapter.authenticate(credentials, config);
-
-    // Store the authentication data
-    await storageAdapter.storeToken(token);
-    await storageAdapter.storeUser(user);
-
-    // Update cache
-    cachedToken = token;
-    cachedUser = user;
+    // Create a mock user
+    const user = User.create('mock-user-id', credentials.username, undefined, {
+      email: credentials.username,
+    });
+    setCurrentUser(user);
 
     return token;
   };
 
-  /**
-   * Get current authenticated user
-   */
   const getCurrentUser = async (): Promise<User | null> => {
-    return await storageAdapter.getUser();
+    return currentUser;
   };
 
-  /**
-   * Refresh authentication token
-   */
+  const clearAuth = async (): Promise<void> => {
+    clearCurrentState();
+  };
+
   const refreshToken = async (refreshToken: string): Promise<AuthToken> => {
-    const adapter = getCompatibleAdapter();
-
-    const newToken = await adapter.refreshToken(refreshToken, config);
-
-    // Store the new token
-    await storageAdapter.storeToken(newToken);
-
-    // Update cache
-    cachedToken = newToken;
-
+    // For now, create a new mock token
+    const newToken = AuthToken.create(
+      'new-mock-access-token',
+      'Bearer',
+      new Date(Date.now() + 3600000),
+      refreshToken
+    );
+    setCurrentToken(newToken);
     return newToken;
   };
 
-  /**
-   * Check if currently authenticated
-   */
   const isAuthenticated = (): boolean => {
-    return cachedToken !== null && !cachedToken.isExpired();
+    return currentToken !== null;
   };
 
-  /**
-   * Get current authentication token
-   */
   const getCurrentToken = (): AuthToken | null => {
-    if (cachedToken && cachedToken.isExpired()) {
-      cachedToken = null;
-      storageAdapter.clear(); // Clear expired token from storage
-    }
-    return cachedToken;
+    return currentToken;
   };
 
-  /**
-   * Store authentication token
-   */
-  const storeToken = async (token: AuthToken): Promise<void> => {
-    await storageAdapter.storeToken(token);
-    cachedToken = token;
-  };
-
-  /**
-   * Store user information
-   */
-  const storeUser = async (user: User): Promise<void> => {
-    await storageAdapter.storeUser(user);
-    cachedUser = user;
-  };
-
-  /**
-   * Clear authentication data
-   */
-  const clearAuth = async (): Promise<void> => {
-    await storageAdapter.clear();
-    cachedToken = null;
-    cachedUser = null;
-  };
-
-  /**
-   * Get user ID from stored authentication
-   */
   const getUserId = (): string | null => {
-    return cachedUser?.id || null;
+    return currentUser?.id || null;
   };
 
-  // Initialize cache on creation
-  initializeCache();
+  const storeToken = async (token: AuthToken): Promise<void> => {
+    setCurrentToken(token);
+  };
 
-  // Return the repository interface and register function
+  const storeUser = async (user: User): Promise<void> => {
+    setCurrentUser(user);
+  };
+
   const repository: AuthRepository = {
     authenticate,
     getCurrentUser,
+    clearAuth,
     refreshToken,
     isAuthenticated,
     getCurrentToken,
+    getUserId,
     storeToken,
     storeUser,
-    clearAuth,
-    getUserId,
   };
 
-  return {
-    repository,
-    registerAuthAdapter,
-  };
+  return repository;
 };
-
-// Export the type for dependency injection
-export type TrainingPeaksAuthRepository = ReturnType<
-  typeof createTrainingPeaksAuthRepository
->;

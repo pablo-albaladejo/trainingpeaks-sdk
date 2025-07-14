@@ -1,92 +1,42 @@
 /**
- * TrainingPeaks SDK - Main Entry Point
- *
- * A comprehensive SDK for interacting with TrainingPeaks services,
- * built using hexagonal architecture principles.
+ * TrainingPeaks SDK
+ * Main entry point for the SDK
  */
 
-// Main Client (Facade)
-export type { TrainingPeaksClientConfig } from '@/types';
-export { createTrainingPeaksClient } from './training-peaks-client';
-export type { TrainingPeaksClient } from './training-peaks-client';
+// Main client
+export { TrainingPeaksClient } from './training-peaks-client';
 
 // Configuration
-export { DEFAULT_CONFIG, getSDKConfig } from '@/config';
-export type { TrainingPeaksSDKConfig } from '@/config';
+export { getSDKConfig } from './config';
 
-// Domain Entities (Public API)
-export { AuthToken, Credentials, User, Workout, WorkoutFile } from '@/domain';
+// Workout manager
+export { createWorkoutManager } from './workout-manager';
 
-// Domain Errors (Public API)
-export {
-  AuthenticationError,
-  AuthorizationError,
-  NetworkError,
-  RateLimitError,
-  TrainingPeaksError,
-  UploadError,
-  ValidationError,
-} from '@/domain';
+// Domain entities
+export { AuthToken } from './domain/entities/auth-token';
+export { User } from './domain/entities/user';
+export { Workout } from './domain/entities/workout';
 
-// Value Objects and Types
-export type { ApiResponse, LoginCredentials, UserProfile } from '@/types';
+// Domain errors
+export * from './domain/errors';
 
-// Use Cases (for advanced usage)
-export {
-  DeleteWorkoutUseCase,
-  GetCurrentUserUseCase,
-  GetWorkoutUseCase,
-  ListWorkoutsUseCase,
-  LoginUseCase,
-  LogoutUseCase,
-  UploadWorkoutUseCase,
-} from '@/application';
+// Value objects
+export { Credentials } from './domain/value-objects/credentials';
+export { WorkoutFile } from './domain/value-objects/workout-file';
+export { WorkoutLength } from './domain/value-objects/workout-length';
+export { WorkoutStep } from './domain/value-objects/workout-step';
+export { WorkoutStructure } from './domain/value-objects/workout-structure';
+export { WorkoutTarget } from './domain/value-objects/workout-target';
 
-// Repository Interfaces (for advanced usage)
-export type {
-  AuthRepository,
-  UploadResult,
-  WorkoutRepository,
-} from '@/application';
+// Use cases
+export { createStructuredWorkoutUseCase } from './application/use-cases/create-structured-workout';
+export { createDeleteWorkoutUseCase } from './application/use-cases/delete-workout';
+export { createGetCurrentUserUseCase } from './application/use-cases/get-current-user';
+export { createGetWorkoutUseCase } from './application/use-cases/get-workout';
+export { createListWorkoutsUseCase } from './application/use-cases/list-workouts';
+export { createLoginUseCase } from './application/use-cases/login';
+export { createLogoutUseCase } from './application/use-cases/logout';
+export { createUploadWorkoutUseCase } from './application/use-cases/upload-workout';
 
-// Services and Adapters (for advanced usage)
-export {
-  createTrainingPeaksAuthRepository,
-  createTrainingPeaksWorkoutRepository,
-} from '@/infrastructure';
-
-// Workout Management
-export { createWorkoutManager, WorkoutManager } from './workout-manager';
-export type {
-  StructuredWorkoutData,
-  WorkoutData,
-  WorkoutUploadResponse,
-} from './workout-manager';
-
-// Infrastructure Adapters (for custom implementations)
-export {
-  ApiAuthAdapter,
-  FileSystemAdapter,
-  InMemoryStorageAdapter,
-  TrainingPeaksWorkoutApiAdapter,
-  WebBrowserAuthAdapter,
-} from '@/infrastructure';
-
-// Logging System (new structured approach)
-export {
-  BatchLogger,
-  createErrorHandlerService,
-  createLoggerService,
-  createStructuredLogger,
-  LogContextBuilder,
-  LogFormatter,
-  PerformanceTracker,
-  withTiming,
-} from '@/infrastructure';
-// Logger types are now internal - use createLoggerService for logger configuration
-
-// Error Types (if any are exported from types)
-// export { ... } from './types';
-
-// For backward compatibility, export the factory function as the main export
-export { createTrainingPeaksClient as default } from './training-peaks-client';
+// Types
+export * from './types';

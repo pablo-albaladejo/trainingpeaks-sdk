@@ -4,32 +4,10 @@
  */
 
 import type {
-  LoggerConfig as BaseLoggerConfig,
   LogContext,
-  LoggerServiceFactory,
+  LoggerConfig,
   LogLevel,
 } from '@/application/services/logger';
-
-/**
- * Console colors for different log levels
- */
-const LOG_COLORS = {
-  info: '\x1b[36m', // Cyan
-  error: '\x1b[31m', // Red
-  warn: '\x1b[33m', // Yellow
-  debug: '\x1b[90m', // Gray
-  reset: '\x1b[0m', // Reset
-};
-
-/**
- * Log level priorities for filtering
- */
-const LOG_LEVELS = {
-  debug: 0,
-  info: 1,
-  warn: 2,
-  error: 3,
-};
 
 /**
  * Output target interface for configurable logging
@@ -71,151 +49,199 @@ export const silentOutputTarget: LogOutputTarget = {
 };
 
 /**
- * Format timestamp for logging
- */
-const formatTimestamp = (): string => {
-  return new Date().toISOString();
-};
-
-/**
- * Format log message with colors and timestamp
- */
-const formatMessage = (
-  level: LogLevel,
-  message: string,
-  context?: LogContext,
-  options?: {
-    enableTimestamp?: boolean;
-    enableColors?: boolean;
-    format?: 'json' | 'text';
-  }
-): string => {
-  const timestamp = options?.enableTimestamp ? formatTimestamp() : '';
-  const levelUpper = level.toUpperCase();
-
-  if (options?.format === 'json') {
-    return JSON.stringify({
-      timestamp,
-      level: levelUpper,
-      message,
-      context,
-    });
-  }
-
-  // Text format
-  const color = options?.enableColors ? LOG_COLORS[level] : '';
-  const reset = options?.enableColors ? LOG_COLORS.reset : '';
-  const timePrefix = timestamp ? `${timestamp} ` : '';
-  const contextSuffix = context ? ` ${JSON.stringify(context)}` : '';
-
-  return `${timePrefix}${color}[${levelUpper}]${reset} ${message}${contextSuffix}`;
-};
-
-/**
- * Enhanced logger configuration interface
- * Extends the application layer contract with infrastructure-specific options
- */
-export interface LoggerConfig extends BaseLoggerConfig {
-  outputTarget?: LogOutputTarget;
-}
-
-/**
  * IMPLEMENTATION of LoggerService
  * This is an ADAPTER - implements the port defined in application layer
- * Now with configurable output targets for package consumers
  */
-export const createLoggerService: LoggerServiceFactory = (
-  config: BaseLoggerConfig = {}
-) => {
-  // Cast to extended config for infrastructure-specific options
-  const extendedConfig = config as LoggerConfig;
+export const createLoggerService = (config: LoggerConfig = {}) => {
+  const logLevel = config.level || 'info';
+  const enableTimestamp = config.enableTimestamp ?? true;
+  const enableColors = config.enableColors ?? true;
+  const format = config.format || 'text';
+  const prefix = config.prefix || '';
 
-  const {
-    level = 'info',
-    enableTimestamp = true,
-    enableColors = true,
-    format = 'text',
-    outputTarget = consoleOutputTarget,
-    prefix = '',
-  } = extendedConfig;
+  const colors = {
+    info: '\x1b[36m',
+    error: '\x1b[31m',
+    warn: '\x1b[33m',
+    debug: '\x1b[35m',
+    reset: '\x1b[0m',
+  };
 
-  const shouldLog = (logLevel: LogLevel): boolean => {
-    return LOG_LEVELS[logLevel] >= LOG_LEVELS[level];
+  const levelPriority = {
+    debug: 0,
+    info: 1,
+    warn: 2,
+    error: 3,
+  };
+
+  const shouldLog = (level: LogLevel): boolean => {
+    return levelPriority[level] >= levelPriority[logLevel];
+  };
+
+  const formatMessage = (
+    level: LogLevel,
+    message: string,
+    context?: LogContext
+  ): string => {
+    const timestamp = enableTimestamp ? new Date().toISOString() : '';
+    const color = enableColors ? colors[level] : '';
+    const reset = enableColors ? colors.reset : '';
+    const prefixStr = prefix ? `[${prefix}] ` : '';
+
+    if (format === 'json') {
+      return JSON.stringify({
+        timestamp,
+        level,
+        message,
+        context,
+        prefix: prefix || undefined,
+      });
+    }
+
+    const contextStr = context ? ` ${JSON.stringify(context)}` : '';
+    return `${color}${timestamp} ${prefixStr}[${level.toUpperCase()}] ${message}${contextStr}${reset}`;
   };
 
   const logMessage = (
-    logLevel: LogLevel,
+    level: LogLevel,
     message: string,
     context?: LogContext
-  ) => {
-    if (!shouldLog(logLevel)) {
+  ): void => {
+    if (!shouldLog(level)) {
       return;
     }
 
-    const prefixedMessage = prefix ? `[${prefix}] ${message}` : message;
-    const formattedMessage = formatMessage(logLevel, prefixedMessage, context, {
-      enableTimestamp,
-      enableColors,
-      format,
-    });
+    const formatted = formatMessage(level, message, context);
 
-    // Use configurable output target instead of direct console calls
-    outputTarget.write(logLevel, formattedMessage);
+    if (level === 'error') {
+      console.error(formatted);
+    } else if (level === 'warn') {
+      console.warn(formatted);
+    } else if (level === 'debug') {
+      console.debug(formatted);
+    } else {
+      console.log(formatted);
+    }
   };
 
   return {
-    info: (message: string, context?: LogContext) => {
+    info: (message: string, context?: LogContext): void => {
       logMessage('info', message, context);
     },
 
-    error: (message: string, context?: LogContext) => {
+    error: (message: string, context?: LogContext): void => {
       logMessage('error', message, context);
     },
 
-    warn: (message: string, context?: LogContext) => {
+    warn: (message: string, context?: LogContext): void => {
       logMessage('warn', message, context);
     },
 
-    debug: (message: string, context?: LogContext) => {
+    debug: (message: string, context?: LogContext): void => {
       logMessage('debug', message, context);
     },
 
-    log: (level: LogLevel, message: string, context?: LogContext) => {
+    log: (level: LogLevel, message: string, context?: LogContext): void => {
       logMessage(level, message, context);
     },
   };
 };
 
 /**
- * Default logger instance for immediate use
- */
-export const defaultLogger = createLoggerService();
-
-/**
- * Create a logger with custom configuration for package consumers
- */
-export const createCustomLogger = (config: LoggerConfig) => {
-  return createLoggerService(config);
-};
-
-/**
- * Create a logger with custom output target (for advanced use cases)
+ * Create a logger with custom output target
  */
 export const createLoggerWithTarget = (
   outputTarget: LogOutputTarget,
-  config: Omit<BaseLoggerConfig, 'outputTarget'> = {}
+  config: LoggerConfig = {}
 ) => {
-  const extendedConfig: LoggerConfig = {
-    ...config,
-    outputTarget,
+  const logLevel = config.level || 'info';
+  const enableTimestamp = config.enableTimestamp ?? true;
+  const enableColors = config.enableColors ?? true;
+  const format = config.format || 'text';
+  const prefix = config.prefix || '';
+
+  const colors = {
+    info: '\x1b[36m',
+    error: '\x1b[31m',
+    warn: '\x1b[33m',
+    debug: '\x1b[35m',
+    reset: '\x1b[0m',
   };
-  return createLoggerService(extendedConfig);
+
+  const levelPriority = {
+    debug: 0,
+    info: 1,
+    warn: 2,
+    error: 3,
+  };
+
+  const shouldLog = (level: LogLevel): boolean => {
+    return levelPriority[level] >= levelPriority[logLevel];
+  };
+
+  const formatMessage = (
+    level: LogLevel,
+    message: string,
+    context?: LogContext
+  ): string => {
+    const timestamp = enableTimestamp ? new Date().toISOString() : '';
+    const color = enableColors ? colors[level] : '';
+    const reset = enableColors ? colors.reset : '';
+    const prefixStr = prefix ? `[${prefix}] ` : '';
+
+    if (format === 'json') {
+      return JSON.stringify({
+        timestamp,
+        level,
+        message,
+        context,
+        prefix: prefix || undefined,
+      });
+    }
+
+    const contextStr = context ? ` ${JSON.stringify(context)}` : '';
+    return `${color}${timestamp} ${prefixStr}[${level.toUpperCase()}] ${message}${contextStr}${reset}`;
+  };
+
+  const logMessage = (
+    level: LogLevel,
+    message: string,
+    context?: LogContext
+  ): void => {
+    if (!shouldLog(level)) {
+      return;
+    }
+
+    const formatted = formatMessage(level, message, context);
+    outputTarget.write(level, formatted);
+  };
+
+  return {
+    info: (message: string, context?: LogContext): void => {
+      logMessage('info', message, context);
+    },
+
+    error: (message: string, context?: LogContext): void => {
+      logMessage('error', message, context);
+    },
+
+    warn: (message: string, context?: LogContext): void => {
+      logMessage('warn', message, context);
+    },
+
+    debug: (message: string, context?: LogContext): void => {
+      logMessage('debug', message, context);
+    },
+
+    log: (level: LogLevel, message: string, context?: LogContext): void => {
+      logMessage(level, message, context);
+    },
+  };
 };
 
 /**
  * Create a silent logger (useful for testing)
  */
 export const createSilentLogger = () => {
-  const extendedConfig: LoggerConfig = { outputTarget: silentOutputTarget };
-  return createLoggerService(extendedConfig);
+  return createLoggerWithTarget(silentOutputTarget);
 };

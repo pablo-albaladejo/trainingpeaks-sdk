@@ -3,7 +3,7 @@
  * Handles workout deletion
  */
 
-import type { deleteWorkout } from '@/application/services/workout-management';
+import type { DeleteWorkout } from '@/application/services/workout-management';
 
 export interface DeleteWorkoutRequest {
   workoutId: string;
@@ -13,7 +13,7 @@ export interface DeleteWorkoutRequest {
  * Delete Workout Use Case Factory
  * Creates a delete workout use case with dependency injection
  */
-export const createDeleteWorkoutUseCase = (deleteWorkoutFn: deleteWorkout) => {
+export const createDeleteWorkoutUseCase = (deleteWorkoutFn: DeleteWorkout) => {
   /**
    * Execute delete workout process
    */

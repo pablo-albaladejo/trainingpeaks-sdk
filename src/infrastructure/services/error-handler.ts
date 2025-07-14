@@ -94,20 +94,20 @@ const defaultDelayFn = (ms: number): Promise<void> =>
  * Error Handler Service Factory
  */
 import type {
-  logDebug,
-  logError,
-  logInfo,
-  logWarn,
-  logWithLevel,
+  LogDebug,
+  LogError,
+  LogInfo,
+  LogWarn,
+  LogWithLevel,
 } from '@/application/services/logger';
 
 export const createErrorHandlerService = (
   logger: {
-    info: logInfo;
-    error: logError;
-    warn: logWarn;
-    debug: logDebug;
-    log: logWithLevel;
+    info: LogInfo;
+    error: LogError;
+    warn: LogWarn;
+    debug: LogDebug;
+    log: LogWithLevel;
   },
   config: Partial<ErrorHandlerConfig> = {}
 ) => {

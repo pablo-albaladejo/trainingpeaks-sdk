@@ -5,21 +5,11 @@
 
 import type { AuthRepository } from '@/application/ports/auth';
 import type {
-  getCurrentToken,
-  getCurrentUser,
-  getUserId,
-  isAuthenticated,
-  login,
-  logout,
-} from '@/application/services/auth-application';
-import { createGetCurrentUserUseCase } from '@/application/use-cases/get-current-user';
-import {
-  createLoginUseCase,
   LoginRequest,
   LoginResponse,
-} from '@/application/use-cases/login';
-import { createLogoutUseCase } from '@/application/use-cases/logout';
-import { AuthToken, User } from '@/domain';
+} from '@/application/services/auth-application';
+import type { AuthToken } from '@/domain/entities/auth-token';
+import type { User } from '@/domain/entities/user';
 
 /**
  * IMPLEMENTATION of AuthApplicationService
@@ -27,30 +17,28 @@ import { AuthToken, User } from '@/domain';
  */
 export const createAuthApplicationService = (
   authRepository: AuthRepository
-): {
-  login: login;
-  logout: logout;
-  getCurrentUser: getCurrentUser;
-  isAuthenticated: isAuthenticated;
-  getCurrentToken: getCurrentToken;
-  getUserId: getUserId;
-} => {
-  // Create use cases with dependency injection
-  const loginUseCase = createLoginUseCase(authRepository);
-  const logoutUseCase = createLogoutUseCase(authRepository);
-  const getCurrentUserUseCase = createGetCurrentUserUseCase(authRepository);
-
+) => {
   return {
     login: async (request: LoginRequest): Promise<LoginResponse> => {
-      return await loginUseCase.execute(request);
+      const token = await authRepository.authenticate(request.credentials);
+      const user = await authRepository.getCurrentUser();
+
+      if (user) {
+        return {
+          token,
+          user,
+        };
+      }
+
+      throw new Error('Failed to get user after authentication');
     },
 
     logout: async (): Promise<void> => {
-      await logoutUseCase.execute();
+      await authRepository.clearAuth();
     },
 
-    getCurrentUser: async (): Promise<User> => {
-      return await getCurrentUserUseCase.execute();
+    getCurrentUser: async (): Promise<User | null> => {
+      return await authRepository.getCurrentUser();
     },
 
     isAuthenticated: (): boolean => {

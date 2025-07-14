@@ -3,135 +3,151 @@
  * Defines the interface for workout creation operations
  */
 
-import { WorkoutStructure } from '@/domain/value-objects/workout-structure';
-import { CreateStructuredWorkoutResponse } from '@/types';
+import type { WorkoutFile } from '@/domain/value-objects/workout-file';
+import type { WorkoutStructure } from '@/domain/value-objects/workout-structure';
+import type { WorkoutData } from '@/types';
 
 /**
- * Metadata for workout creation
+ * Request parameters for creating a structured workout
  */
-export type WorkoutCreationMetadata = {
-  code?: string;
+export type CreateStructuredWorkoutRequest = {
+  name: string;
   description?: string;
-  userTags?: string;
-  coachComments?: string;
-  publicSettingValue?: number;
-  plannedMetrics?: {
-    totalTimePlanned?: number;
-    tssPlanned?: number;
-    ifPlanned?: number;
-    velocityPlanned?: number;
-    caloriesPlanned?: number;
-    distancePlanned?: number;
-    elevationGainPlanned?: number;
-    energyPlanned?: number;
-  };
-  equipment?: {
-    bikeId?: number;
-    shoeId?: number;
-  };
+  structure: WorkoutStructure;
+  tags?: string[];
+  notes?: string;
+  targetDate?: Date;
+  estimatedDuration?: number;
+  estimatedDistance?: number;
+  estimatedCalories?: number;
+  difficulty?: 'easy' | 'moderate' | 'hard' | 'extreme';
+  activityType?: 'run' | 'bike' | 'swim' | 'strength' | 'other';
+  equipment?: string[];
+  location?: string;
+  weatherConditions?: string;
+  personalBest?: boolean;
+  coachNotes?: string;
+  publiclyVisible?: boolean;
+  allowComments?: boolean;
+  category?: string;
+  subcategory?: string;
+  season?: string;
+  trainingPhase?: string;
+  intensityZone?: number;
+  rpeScale?: number;
+  heartRateZones?: number[];
+  powerZones?: number[];
+  paceZones?: number[];
+  customFields?: Record<string, unknown>;
 };
 
 /**
- * Simple workout element for creating workouts from simple structures
+ * Response from creating a structured workout
  */
-export type SimpleWorkoutElementForCreation = {
-  type: 'step' | 'repetition';
-  repetitions?: number;
-  steps: {
-    name: string;
-    duration: number; // in seconds
-    intensityMin: number;
-    intensityMax: number;
-    intensityClass: 'active' | 'rest' | 'warmUp' | 'coolDown';
-  }[];
+export type CreateStructuredWorkoutResponse = {
+  workoutId: string;
+  success: boolean;
+  message?: string;
+  url?: string;
+  createdAt?: Date;
+  estimatedDuration?: number;
+  estimatedDistance?: number;
+  estimatedCalories?: number;
+  structure?: WorkoutStructure;
+  validationWarnings?: string[];
+  uploadStatus?: 'pending' | 'processing' | 'completed' | 'failed';
+  processingTime?: number;
+  metadata?: Record<string, unknown>;
 };
 
 /**
- * Metadata for workout upload
+ * Simple workout structure for basic workout creation
  */
-export type WorkoutUploadMetadata = {
+export type SimpleWorkoutStructure = {
+  warmup?: { duration: number; intensity: string };
+  main: Array<{
+    duration: number;
+    intensity: string;
+    description?: string;
+    repetitions?: number;
+    restBetween?: number;
+  }>;
+  cooldown?: { duration: number; intensity: string };
+};
+
+/**
+ * Request parameters for uploading a workout file
+ */
+export type UploadWorkoutRequest = {
+  file: WorkoutFile;
   name?: string;
   description?: string;
-  activityType?: string;
   tags?: string[];
-  date?: Date;
-  duration?: number;
-  distance?: number;
+  activityType?: string;
+  plannedDate?: Date;
+  notes?: string;
+  isPrivate?: boolean;
+  category?: string;
+  subcategory?: string;
+  equipment?: string[];
+  location?: string;
+  weatherConditions?: string;
+  personalBest?: boolean;
+  coachNotes?: string;
+  customFields?: Record<string, unknown>;
 };
 
 /**
- * Response for workout upload operation
+ * Response from uploading a workout file
  */
-export type WorkoutUploadResponse = {
+export type UploadWorkoutResponse = {
+  workoutId: string;
   success: boolean;
-  workoutId?: string;
-  message: string;
-  errors?: string[];
+  message?: string;
+  url?: string;
+  processedData?: WorkoutData;
+  fileInfo?: {
+    originalName: string;
+    size: number;
+    type: string;
+    uploadedAt: Date;
+  };
+  validationErrors?: string[];
+  validationWarnings?: string[];
+  processingTime?: number;
+  metadata?: Record<string, unknown>;
 };
 
 /**
  * Contract for workout creation operations
  * Defines what creation capabilities the system needs
  */
+
 /**
- * Create a structured workout with business logic validation
- * @param athleteId - The athlete ID associated with the workout
- * @param title - The workout title
- * @param workoutTypeValueId - The workout type ID
- * @param workoutDay - The workout day
- * @param structure - The workout structure
- * @param metadata - Optional metadata for the workout
- * @returns Promise resolving to creation response
+ * Create a structured workout with detailed specification
+ * @param request - The structured workout creation request
+ * @returns Promise resolving to workout creation response
  */
-export type createStructuredWorkout = (
-  athleteId: number,
-  title: string,
-  workoutTypeValueId: number,
-  workoutDay: string,
-  structure: WorkoutStructure,
-  metadata?: WorkoutCreationMetadata
+export type CreateStructuredWorkout = (
+  request: CreateStructuredWorkoutRequest
 ) => Promise<CreateStructuredWorkoutResponse>;
 
 /**
- * Create a structured workout from simple elements
- * @param athleteId - The athlete ID associated with the workout
- * @param title - The workout title
- * @param workoutTypeValueId - The workout type ID
- * @param workoutDay - The workout day
- * @param elements - Array of simple workout elements
- * @returns Promise resolving to creation response
+ * Create a structured workout from simple structure
+ * @param name - Workout name
+ * @param structure - Simple workout structure
+ * @returns Promise resolving to workout creation response
  */
-export type createStructuredWorkoutFromSimpleStructure = (
-  athleteId: number,
-  title: string,
-  workoutTypeValueId: number,
-  workoutDay: string,
-  elements: SimpleWorkoutElementForCreation[]
+export type CreateStructuredWorkoutFromSimpleStructure = (
+  name: string,
+  structure: SimpleWorkoutStructure
 ) => Promise<CreateStructuredWorkoutResponse>;
 
 /**
- * Upload a workout file with metadata
- * @param fileContent - The file content to upload
- * @param fileName - The name of the file
- * @param metadata - Optional metadata for the workout
+ * Upload a workout from file
+ * @param request - The workout upload request
  * @returns Promise resolving to upload response
  */
-export type uploadWorkout = (
-  fileContent: string,
-  fileName: string,
-  metadata?: WorkoutUploadMetadata
-) => Promise<WorkoutUploadResponse>;
-
-/**
- * Factory function signature for creating workout creation service
- * This defines the contract for how the service should be instantiated
- */
-export type WorkoutCreationServiceFactory = (
-  workoutRepository: unknown,
-  validationService: unknown,
-  utilityService: unknown
-) => {
-  createStructuredWorkout: createStructuredWorkout;
-  createStructuredWorkoutFromSimpleStructure: createStructuredWorkoutFromSimpleStructure;
-  uploadWorkout: uploadWorkout;
-};
+export type UploadWorkout = (
+  request: UploadWorkoutRequest
+) => Promise<UploadWorkoutResponse>;

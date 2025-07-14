@@ -1,59 +1,70 @@
 /**
  * Authentication Validation Service Contract
- * Defines the interface for authentication token validation and calculations
+ * Defines the interface for authentication validation operations
  */
 
-import { AuthToken } from '@/domain/entities/auth-token';
+import type { AuthToken } from '@/domain/entities/auth-token';
+
+/**
+ * Token validation configuration
+ */
+export type TokenValidationConfig = {
+  refreshThreshold?: number; // Minutes before expiration to refresh
+  clockSkew?: number; // Seconds to account for clock differences
+};
 
 /**
  * Contract for authentication validation operations
- * Defines what validation capabilities the system needs
+ * Defines what validation capabilities the system needs for authentication
  */
 
 /**
- * Check if token needs refresh
- * Returns true if token will expire within the configured refresh window
+ * Determine if token should be refreshed based on expiration time
  * @param token - The authentication token to check
+ * @param config - Optional validation configuration
  * @returns Boolean indicating if token should be refreshed
  */
-export type shouldRefreshToken = (token: AuthToken) => boolean;
+export type ShouldRefreshToken = (
+  token: AuthToken,
+  config?: TokenValidationConfig
+) => boolean;
 
 /**
- * Validate token is still valid
+ * Validate if token is still valid (not expired)
  * @param token - The authentication token to validate
+ * @param config - Optional validation configuration
  * @returns Boolean indicating if token is valid
  */
-export type isTokenValid = (token: AuthToken) => boolean;
+export type IsTokenValid = (
+  token: AuthToken,
+  config?: TokenValidationConfig
+) => boolean;
 
 /**
  * Check if token is expired
  * @param token - The authentication token to check
+ * @param config - Optional validation configuration
  * @returns Boolean indicating if token is expired
  */
-export type isTokenExpired = (token: AuthToken) => boolean;
+export type IsTokenExpired = (
+  token: AuthToken,
+  config?: TokenValidationConfig
+) => boolean;
 
 /**
- * Get time until token expiration in milliseconds
+ * Get time until token expiration
  * @param token - The authentication token to check
- * @returns Number of milliseconds until expiration (0 if no expiration)
+ * @returns Number of milliseconds until expiration (negative if already expired)
  */
-export type getTimeUntilExpiration = (token: AuthToken) => number;
+export type GetTimeUntilExpiration = (token: AuthToken) => number;
 
 /**
- * Get time until token refresh in milliseconds
+ * Get time until token should be refreshed
  * @param token - The authentication token to check
- * @returns Number of milliseconds until refresh should happen (0 if no expiration)
+ * @param config - Optional validation configuration
+ * @returns Number of milliseconds until refresh is recommended
  */
-export type getTimeUntilRefresh = (token: AuthToken) => number;
-
-/**
- * Factory function signature for creating authentication validation service
- * This defines the contract for how the service should be instantiated
- */
-export type AuthValidationServiceFactory = () => {
-  shouldRefreshToken: shouldRefreshToken;
-  isTokenValid: isTokenValid;
-  isTokenExpired: isTokenExpired;
-  getTimeUntilExpiration: getTimeUntilExpiration;
-  getTimeUntilRefresh: getTimeUntilRefresh;
-};
+export type GetTimeUntilRefresh = (
+  token: AuthToken,
+  config?: TokenValidationConfig
+) => number;

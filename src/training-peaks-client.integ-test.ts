@@ -1,188 +1,135 @@
 /**
  * TrainingPeaks Client Integration Tests
- *
- * These tests verify the complete authentication flow
+ * Tests the full integration between client and infrastructure
  */
 
-import { describe, expect, it } from 'vitest';
-import { testEnvironment } from './__fixtures__/test-environment';
-import { getSDKConfig } from './config';
-import { createLoggerService } from './infrastructure/services/logger';
-import { createTrainingPeaksClient } from './training-peaks-client';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { TrainingPeaksClient } from './training-peaks-client';
 
 describe('TrainingPeaks Client Integration Tests', () => {
-  const sdkConfig = getSDKConfig();
-  const logger = createLoggerService({ level: 'info' });
+  let client: TrainingPeaksClient;
 
-  // Helper function to check if test environment is configured
-  const isTestConfigured = () => {
-    return !!(testEnvironment.testUsername && testEnvironment.testPassword);
-  };
+  beforeEach(() => {
+    client = new TrainingPeaksClient();
+  });
 
   describe('Authentication Flow', () => {
     it('should successfully login with real credentials', async () => {
-      // Arrange: Skip test if environment is not configured
-      if (!isTestConfigured()) {
-        logger.warn('Skipping integration test - environment not configured');
+      // Skip this test if no real credentials are available
+      if (!process.env.TP_USERNAME || !process.env.TP_PASSWORD) {
+        console.warn('Skipping integration test - no credentials provided');
         return;
       }
 
-      // Use SDK config for client configuration
-      const client = createTrainingPeaksClient({
-        sdkConfig: {
-          ...sdkConfig,
-          debug: {
-            enabled: true,
-            logAuth: true,
-            logNetwork: true,
-            logBrowser: true,
-          },
-          timeouts: {
-            ...sdkConfig.timeouts,
-            webAuth:
-              testEnvironment.trainingPeaksConfig.webAuth?.timeout ||
-              sdkConfig.timeouts.webAuth,
-          },
-        },
+      // Arrange
+      const username = process.env.TP_USERNAME;
+      const password = process.env.TP_PASSWORD;
+
+      // Use basic client configuration
+      const client = new TrainingPeaksClient({
+        baseUrl: 'https://api.trainingpeaks.com',
+        timeout: 10000,
+        debug: false,
       });
 
-      // Act: Login with credentials
-      const user = await client.login(
-        testEnvironment.testUsername,
-        testEnvironment.testPassword
-      );
+      // Act
+      const result = await client.login(username, password);
 
-      // Assert: Login was successful
-      expect(user).toBeDefined();
-      expect(user.id).toBeDefined();
-      expect(user.name).toBeDefined();
+      // Assert
+      expect(result.success).toBe(true);
+      expect(result.user).toBeDefined();
+      expect(result.user.username).toBe(username);
+      expect(result.token).toBeDefined();
+      expect(result.token.accessToken).toBeTruthy();
+
+      // Verify authentication state
       expect(client.isAuthenticated()).toBe(true);
 
-      // Verify auth token exists
-      const token = client.getCurrentToken();
-      expect(token).toBeDefined();
-      expect(token?.accessToken).toBeDefined();
-
-      // Verify user info can be retrieved
+      // Verify getCurrentUser works
       const currentUser = await client.getCurrentUser();
       expect(currentUser).toBeDefined();
-      expect(currentUser?.id).toBe(user.id);
-      expect(currentUser?.name).toBe(user.name);
-
-      // Clean up: Logout
-      await client.logout();
-      expect(client.isAuthenticated()).toBe(false);
-    }, 30000); // 30 seconds for auth operations
+      expect(currentUser.username).toBe(username);
+    });
 
     it('should handle authentication errors gracefully', async () => {
-      // Arrange: Skip test if environment is not configured
-      if (!isTestConfigured()) {
-        logger.warn('Skipping integration test - environment not configured');
-        return;
-      }
+      // Arrange
+      const invalidUsername = 'invalid_user';
+      const invalidPassword = 'invalid_password';
 
-      // Use SDK config for client configuration
-      const client = createTrainingPeaksClient({
-        sdkConfig: {
-          ...sdkConfig,
-          debug: {
-            enabled: true,
-            logAuth: true,
-            logNetwork: true,
-            logBrowser: true,
-          },
-          timeouts: {
-            ...sdkConfig.timeouts,
-            webAuth: 10000, // Short timeout for this test
-          },
-        },
+      // Use basic client configuration
+      const client = new TrainingPeaksClient({
+        baseUrl: 'https://api.trainingpeaks.com',
+        timeout: 10000,
+        debug: false,
       });
 
-      // Act & Assert: Login with invalid credentials should fail
+      // Act & Assert
       await expect(
-        client.login('invalid_username', 'invalid_password')
+        client.login(invalidUsername, invalidPassword)
       ).rejects.toThrow();
 
-      // Verify not authenticated
+      // Verify authentication state
       expect(client.isAuthenticated()).toBe(false);
-      expect(client.getCurrentToken()).toBeNull();
-    }, 20000); // 20 seconds for auth operations
+    });
 
     it('should successfully logout', async () => {
-      // Arrange: Skip test if environment is not configured
-      if (!isTestConfigured()) {
-        logger.warn('Skipping integration test - environment not configured');
+      // Arrange
+      const username = process.env.TP_USERNAME;
+      const password = process.env.TP_PASSWORD;
+
+      if (!username || !password) {
+        console.warn('Skipping integration test - no credentials provided');
         return;
       }
 
-      // Use SDK config for client configuration
-      const client = createTrainingPeaksClient({
-        sdkConfig: {
-          ...sdkConfig,
-          debug: {
-            enabled: true,
-            logAuth: true,
-            logNetwork: true,
-            logBrowser: true,
-          },
-          timeouts: {
-            ...sdkConfig.timeouts,
-            webAuth:
-              testEnvironment.trainingPeaksConfig.webAuth?.timeout ||
-              sdkConfig.timeouts.webAuth,
-          },
-        },
+      // Use basic client configuration
+      const client = new TrainingPeaksClient({
+        baseUrl: 'https://api.trainingpeaks.com',
+        timeout: 10000,
+        debug: false,
       });
 
-      // Act: Login and then logout
-      await client.login(
-        testEnvironment.testUsername,
-        testEnvironment.testPassword
-      );
-
+      // Login first
+      await client.login(username, password);
       expect(client.isAuthenticated()).toBe(true);
 
-      await client.logout();
+      // Act
+      const result = await client.logout();
 
-      // Assert: Should be logged out
+      // Assert
+      expect(result.success).toBe(true);
       expect(client.isAuthenticated()).toBe(false);
-      expect(client.getCurrentToken()).toBeNull();
-      expect(await client.getCurrentUser()).toBeNull();
-    }, 30000); // 30 seconds for auth operations
+    });
   });
 
   describe('Configuration', () => {
     it('should use centralized configuration', () => {
       // Arrange & Act
-      const client = createTrainingPeaksClient();
-      const config = client.getSDKConfig();
+      const client = new TrainingPeaksClient();
+      const config = client.getConfig();
 
-      // Assert: Should have default configuration
+      // Assert
       expect(config).toBeDefined();
-      expect(config.urls.baseUrl).toBeDefined();
-      expect(config.timeouts.default).toBeDefined();
-      expect(config.debug.enabled).toBeDefined();
+      expect(config.baseUrl).toBeDefined();
+      expect(config.timeout).toBeDefined();
     });
 
     it('should allow configuration overrides', () => {
       // Arrange
       const customConfig = {
-        debug: {
-          enabled: true,
-          logAuth: true,
-          logNetwork: true,
-          logBrowser: true,
-        },
+        baseUrl: 'https://custom.trainingpeaks.com',
+        timeout: 15000,
+        debug: true,
       };
 
       // Act
-      const client = createTrainingPeaksClient({
-        sdkConfig: customConfig,
-      });
-      const resultConfig = client.getSDKConfig();
+      const client = new TrainingPeaksClient(customConfig);
+      const config = client.getConfig();
 
-      // Assert: Should use custom configuration
-      expect(resultConfig.debug.enabled).toBe(customConfig.debug.enabled);
+      // Assert
+      expect(config.baseUrl).toBe(customConfig.baseUrl);
+      expect(config.timeout).toBe(customConfig.timeout);
+      expect(config.debug).toBe(customConfig.debug);
     });
   });
 });

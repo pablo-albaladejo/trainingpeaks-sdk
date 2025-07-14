@@ -1,62 +1,65 @@
 /**
  * Authentication Application Service Contract
- * Defines the interface for authentication orchestration operations
+ * Defines the interface for authentication operations across the application
  */
 
-import { LoginRequest, LoginResponse } from '@/application/use-cases/login';
-import { AuthToken, User } from '@/domain';
+import type { AuthToken } from '@/domain/entities/auth-token';
+import type { User } from '@/domain/entities/user';
+import type { Credentials } from '@/domain/value-objects/credentials';
 
 /**
- * Contract for authentication application operations
+ * Standard authentication request with credentials
+ */
+export type LoginRequest = {
+  credentials: Credentials;
+};
+
+/**
+ * Authentication response with token and user data
+ */
+export type LoginResponse = {
+  token: AuthToken;
+  user: User;
+};
+
+/**
+ * Contract for authentication operations
  * Defines what authentication capabilities the system needs
  */
 
 /**
  * Authenticate user with credentials
- * @param request - The login request containing credentials
- * @returns Promise resolving to login response
+ * @param request - Login request with credentials
+ * @returns Promise resolving to authentication response
  */
-export type login = (request: LoginRequest) => Promise<LoginResponse>;
+export type Login = (request: LoginRequest) => Promise<LoginResponse>;
 
 /**
- * Logout current user
+ * End user session
  * @returns Promise resolving when logout is complete
  */
-export type logout = () => Promise<void>;
+export type Logout = () => Promise<void>;
 
 /**
  * Get current authenticated user
- * @returns Promise resolving to current user
+ * @returns Promise resolving to current user or null if not authenticated
  */
-export type getCurrentUser = () => Promise<User>;
+export type GetCurrentUser = () => Promise<User | null>;
 
 /**
  * Check if user is currently authenticated
- * @returns Boolean indicating if user is authenticated
+ * @returns Boolean indicating authentication status
  */
-export type isAuthenticated = () => boolean;
+export type IsAuthenticated = () => boolean;
 
 /**
  * Get current authentication token
  * @returns Current auth token or null if not authenticated
  */
-export type getCurrentToken = () => AuthToken | null;
+export type GetCurrentToken = () => AuthToken | null;
 
 /**
  * Get current user ID
  * @returns Current user ID or null if not authenticated
  */
-export type getUserId = () => string | null;
-
-/**
- * Factory function signature for creating authentication application service
- * This defines the contract for how the service should be instantiated
- */
-export type AuthApplicationServiceFactory = (authRepository: unknown) => {
-  login: login;
-  logout: logout;
-  getCurrentUser: getCurrentUser;
-  isAuthenticated: isAuthenticated;
-  getCurrentToken: getCurrentToken;
-  getUserId: getUserId;
-};
+export type GetUserId = () => string | null;

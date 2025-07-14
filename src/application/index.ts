@@ -1,126 +1,125 @@
 /**
  * Application Layer Exports
- * Use cases and ports
+ * Central export point for all application-layer contracts and types
  */
 
-// Authentication Use Cases
-export { GetCurrentUserUseCase } from './use-cases/get-current-user';
-export { LoginUseCase } from './use-cases/login';
-export { LogoutUseCase } from './use-cases/logout';
+// Authentication Services
+export {
+  type LoginRequest,
+  type LoginResponse,
+} from './services/auth-application';
 
-// Workout Use Cases
 export {
-  DeleteWorkoutUseCase,
-  type DeleteWorkoutRequest,
-} from './use-cases/delete-workout';
+  type GetTimeUntilExpiration,
+  type GetTimeUntilRefresh,
+  type IsTokenExpired,
+  type IsTokenValid,
+  type ShouldRefreshToken,
+  type TokenValidationConfig,
+} from './services/auth-validation';
+
+// Logger Services
 export {
-  GetWorkoutUseCase,
-  type GetWorkoutRequest,
-} from './use-cases/get-workout';
+  type LogContext,
+  type LogDebug,
+  type LogError,
+  type LoggerConfig,
+  type LogInfo,
+  type LogLevel,
+  type LogWarn,
+  type LogWithLevel,
+} from './services/logger';
+
+// Auth Application Services - Individual Functions
 export {
-  ListWorkoutsUseCase,
-  type ListWorkoutsRequest,
-} from './use-cases/list-workouts';
-export { UploadWorkoutUseCase } from './use-cases/upload-workout';
+  type LoginRequest as AuthLoginRequest,
+  type LoginResponse as AuthLoginResponse,
+  type GetCurrentToken,
+  type GetCurrentUser,
+  type GetUserId,
+  type IsAuthenticated,
+  type Login,
+  type Logout,
+} from './services/auth-application';
+
+// Workout Creation Services
+export {
+  type CreateStructuredWorkout,
+  type CreateStructuredWorkoutFromSimpleStructure,
+  type CreateStructuredWorkoutRequest,
+  type CreateStructuredWorkoutResponse,
+  type SimpleWorkoutStructure,
+  type UploadWorkout,
+  type UploadWorkoutRequest,
+  type UploadWorkoutResponse,
+} from './services/workout-creation';
+
+// Workout Management Services
+export { type DeleteWorkout } from './services/workout-management';
+
+// Workout Manager Services
+export {
+  type CreateStructuredWorkout as CreateStructuredWorkoutManager,
+  type CreateStructuredWorkoutRequest as CreateStructuredWorkoutManagerRequest,
+  type CreateStructuredWorkoutResponse as CreateStructuredWorkoutManagerResponse,
+  type DeleteWorkout as DeleteWorkoutManager,
+  type GetWorkout as GetWorkoutManager,
+  type GetWorkoutRepository,
+  type GetWorkoutStats,
+  type ListWorkouts as ListWorkoutsManager,
+  type ListWorkoutsParams as ListWorkoutsManagerParams,
+  type ListWorkoutsResponse as ListWorkoutsManagerResponse,
+  type SearchWorkouts,
+  type SearchWorkoutsParams,
+  type SearchWorkoutsResponse,
+  type UploadWorkoutFromFile,
+  type UploadWorkoutFromFileRequest,
+  type UploadWorkoutFromFileResponse,
+  type UploadWorkout as UploadWorkoutManager,
+  type WorkoutStats,
+} from './services/workout-manager';
+
+// Workout Query Services
+export {
+  type GetWorkout as GetWorkoutQuery,
+  type ListWorkoutsParams,
+  type ListWorkouts as ListWorkoutsQuery,
+  type ListWorkoutsResponse,
+} from './services/workout-query';
+
+// Workout Utility Services
+export {
+  type ActivityType,
+  type BuildStructureFromSimpleElements,
+  type GenerateWorkoutId,
+  type GetMimeTypeFromFileName,
+  type MapWorkoutTypeToActivityType,
+  type SimpleWorkoutElement,
+  type WorkoutType,
+} from './services/workout-utility';
+
+// Workout Validation Services
+export {
+  type ValidateListWorkoutsFilters,
+  type ValidateStructuredWorkoutBusinessRules,
+  type ValidateWorkoutCanBeDeleted,
+  type ValidateWorkoutFile,
+  type ValidateWorkoutId,
+  type WorkoutValidationParams,
+} from './services/workout-validation';
+
+// Use Cases
+export { createStructuredWorkoutUseCase } from './use-cases/create-structured-workout';
+export { createDeleteWorkoutUseCase } from './use-cases/delete-workout';
+export { createGetCurrentUserUseCase } from './use-cases/get-current-user';
+export { createGetWorkoutUseCase } from './use-cases/get-workout';
+export { createListWorkoutsUseCase } from './use-cases/list-workouts';
+export { createLoginUseCase } from './use-cases/login';
+export { createLogoutUseCase } from './use-cases/logout';
+export { createUploadWorkoutUseCase } from './use-cases/upload-workout';
 
 // Ports
-export type {
-  AuthenticationConfig,
-  AuthenticationPort,
-} from './ports/authentication';
-export type { StoragePort } from './ports/storage';
-export type {
-  FileSystemPort,
-  WorkoutServiceConfig,
-  WorkoutServicePort,
-} from './ports/workout';
-
-// Repository Interfaces
 export type { AuthRepository } from './ports/auth';
-export type { UploadResult, WorkoutRepository } from './ports/workout';
-
-// Services - Export only TYPES/CONTRACTS from application layer
-export type {
-  AuthApplicationServiceFactory,
-  getCurrentToken,
-  getCurrentUser,
-  getUserId,
-  isAuthenticated,
-  login,
-  logout,
-} from './services/auth-application';
-export type {
-  AuthValidationServiceFactory,
-  getTimeUntilExpiration,
-  getTimeUntilRefresh,
-  isTokenExpired,
-  isTokenValid,
-  shouldRefreshToken,
-} from './services/auth-validation';
-export type {
-  LogContext,
-  logDebug,
-  logError,
-  LoggerServiceFactory,
-  logInfo,
-  LogLevel,
-  logWarn,
-  logWithLevel,
-} from './services/logger';
-// Note: WorkoutDomainService has been deprecated and removed.
-// Use individual workout function types instead for all new code.
-
-// New modular workout services
-export type {
-  createStructuredWorkout,
-  createStructuredWorkoutFromSimpleStructure,
-  SimpleWorkoutElementForCreation,
-  uploadWorkout,
-  WorkoutCreationMetadata,
-  WorkoutCreationServiceFactory,
-  WorkoutUploadMetadata,
-  WorkoutUploadResponse,
-} from './services/workout-creation';
-export type {
-  deleteWorkout,
-  WorkoutManagementServiceFactory,
-} from './services/workout-management';
-export type {
-  createStructuredWorkout as createStructuredWorkoutManager,
-  deleteWorkout as deleteWorkoutManager,
-  getWorkout,
-  getWorkoutRepository,
-  getWorkoutStats,
-  listWorkouts,
-  searchWorkouts,
-  uploadWorkoutFromFile,
-  uploadWorkout as uploadWorkoutManager,
-  WorkoutManagerConfig,
-  WorkoutManagerServiceFactory,
-  WorkoutSearchCriteria,
-  WorkoutStatsFilters,
-  WorkoutStatsResponse,
-} from './services/workout-manager';
-export type {
-  getWorkout as getWorkoutQuery,
-  listWorkouts as listWorkoutsQuery,
-  WorkoutListFilters,
-  WorkoutQueryServiceFactory,
-} from './services/workout-query';
-export type {
-  buildStructureFromSimpleElements,
-  generateWorkoutId,
-  getMimeTypeFromFileName,
-  mapWorkoutTypeToActivityType,
-  SimpleWorkoutElement,
-  WorkoutUtilityServiceFactory,
-} from './services/workout-utility';
-export type {
-  validateListWorkoutsFilters,
-  validateStructuredWorkoutBusinessRules,
-  validateWorkoutCanBeDeleted,
-  validateWorkoutFile,
-  validateWorkoutId,
-  WorkoutValidationParams,
-  WorkoutValidationServiceFactory,
-} from './services/workout-validation';
+export type { AuthenticationPort } from './ports/authentication';
+export type { StoragePort } from './ports/storage';
+export type { WorkoutRepository } from './ports/workout';

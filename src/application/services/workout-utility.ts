@@ -3,22 +3,29 @@
  * Defines the interface for workout utility operations
  */
 
-import { WorkoutStructure } from '@/domain/value-objects/workout-structure';
+import type { WorkoutStructure } from '@/domain/value-objects/workout-structure';
 
 /**
- * Input parameters for building workout structure from simple elements
+ * Simple workout element for utility operations
  */
 export type SimpleWorkoutElement = {
-  type: 'step' | 'repetition';
+  type: 'warmup' | 'interval' | 'recovery' | 'cooldown' | 'steady';
+  duration: number;
+  intensity: string;
+  description?: string;
   repetitions?: number;
-  steps: {
-    name: string;
-    duration: number;
-    intensityMin: number;
-    intensityMax: number;
-    intensityClass: 'active' | 'rest' | 'warmUp' | 'coolDown';
-  }[];
+  restBetween?: number;
 };
+
+/**
+ * Activity type mapping
+ */
+export type ActivityType = 'run' | 'bike' | 'swim' | 'strength' | 'other';
+
+/**
+ * Workout type for internal operations
+ */
+export type WorkoutType = 'structured' | 'file' | 'manual';
 
 /**
  * Contract for workout utility operations
@@ -26,43 +33,32 @@ export type SimpleWorkoutElement = {
  */
 
 /**
- * Generate unique workout ID
- * @returns A unique workout identifier string
+ * Generate a unique workout ID
+ * @returns String representing a unique workout identifier
  */
-export type generateWorkoutId = () => string;
-
-/**
- * Map workout type ID to activity type
- * @param workoutTypeValueId - The workout type ID to map
- * @returns The corresponding activity type string
- */
-export type mapWorkoutTypeToActivityType = (
-  workoutTypeValueId: number
-) => string;
+export type GenerateWorkoutId = () => string;
 
 /**
  * Get MIME type from file name
- * @param fileName - The file name to analyze
- * @returns The corresponding MIME type string
+ * @param fileName - The name of the file
+ * @returns String representing the MIME type
  */
-export type getMimeTypeFromFileName = (fileName: string) => string;
+export type GetMimeTypeFromFileName = (fileName: string) => string;
 
 /**
- * Build structured workout from simple elements
- * @param elements - Array of simple workout elements
- * @returns A properly structured WorkoutStructure object
+ * Map workout type to activity type
+ * @param workoutType - The workout type to map
+ * @returns Corresponding activity type
  */
-export type buildStructureFromSimpleElements = (
+export type MapWorkoutTypeToActivityType = (
+  workoutType: WorkoutType
+) => ActivityType;
+
+/**
+ * Build workout structure from simple elements
+ * @param elements - Array of simple workout elements
+ * @returns Built workout structure
+ */
+export type BuildStructureFromSimpleElements = (
   elements: SimpleWorkoutElement[]
 ) => WorkoutStructure;
-
-/**
- * Factory function signature for creating workout utility service
- * This defines the contract for how the service should be instantiated
- */
-export type WorkoutUtilityServiceFactory = () => {
-  generateWorkoutId: generateWorkoutId;
-  mapWorkoutTypeToActivityType: mapWorkoutTypeToActivityType;
-  getMimeTypeFromFileName: getMimeTypeFromFileName;
-  buildStructureFromSimpleElements: buildStructureFromSimpleElements;
-};

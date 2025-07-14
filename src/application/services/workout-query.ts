@@ -3,18 +3,32 @@
  * Defines the interface for workout query operations
  */
 
-import { Workout } from '@/domain/entities/workout';
+import type { WorkoutData } from '@/types';
 
 /**
- * Filters for listing workouts
+ * Parameters for listing workouts
  */
-export type WorkoutListFilters = {
-  startDate?: Date;
-  endDate?: Date;
-  activityType?: string;
-  tags?: string[];
+export type ListWorkoutsParams = {
   limit?: number;
   offset?: number;
+  dateFrom?: Date;
+  dateTo?: Date;
+  tags?: string[];
+  activityType?: string;
+  difficulty?: string;
+  sortBy?: 'date' | 'name' | 'duration' | 'distance';
+  sortOrder?: 'asc' | 'desc';
+};
+
+/**
+ * Response from listing workouts
+ */
+export type ListWorkoutsResponse = {
+  workouts: WorkoutData[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
 };
 
 /**
@@ -23,28 +37,17 @@ export type WorkoutListFilters = {
  */
 
 /**
- * Get workout by ID with business logic validation
+ * Get a workout by ID
  * @param workoutId - The ID of the workout to retrieve
- * @returns Promise resolving to the workout
- * @throws WorkoutNotFoundError if workout doesn't exist
+ * @returns Promise resolving to workout data or null if not found
  */
-export type getWorkout = (workoutId: string) => Promise<Workout>;
+export type GetWorkout = (workoutId: string) => Promise<WorkoutData | null>;
 
 /**
- * List workouts with business logic validation
- * @param filters - Optional filters for the workout list
- * @returns Promise resolving to array of workouts
+ * List workouts with filters and pagination
+ * @param params - The query parameters for listing workouts
+ * @returns Promise resolving to list of workouts with pagination info
  */
-export type listWorkouts = (filters?: WorkoutListFilters) => Promise<Workout[]>;
-
-/**
- * Factory function signature for creating workout query service
- * This defines the contract for how the service should be instantiated
- */
-export type WorkoutQueryServiceFactory = (
-  workoutRepository: unknown,
-  validationService: unknown
-) => {
-  getWorkout: getWorkout;
-  listWorkouts: listWorkouts;
-};
+export type ListWorkouts = (
+  params: ListWorkoutsParams
+) => Promise<ListWorkoutsResponse>;

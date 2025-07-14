@@ -1,22 +1,18 @@
 /**
  * Workout Validation Service Contract
- * Defines the interface for workout validation rules
+ * Defines the interface for workout validation operations
  */
 
-import { Workout } from '@/domain/entities/workout';
-import { WorkoutStructure } from '@/domain/value-objects/workout-structure';
+import type { WorkoutFile } from '@/domain/value-objects/workout-file';
+import type { WorkoutStructure } from '@/domain/value-objects/workout-structure';
+import type { WorkoutData } from '@/types';
 
 /**
- * Workout validation parameters for different validation scenarios
+ * Parameters for validating list workouts filters
  */
 export type WorkoutValidationParams = {
   workoutId?: string;
-  fileContent?: string;
-  fileName?: string;
-  athleteId?: number;
-  title?: string;
-  workoutTypeValueId?: number;
-  workoutDay?: string;
+  fileData?: WorkoutFile;
   structure?: WorkoutStructure;
   filters?: {
     startDate?: Date;
@@ -25,13 +21,18 @@ export type WorkoutValidationParams = {
     tags?: string[];
     limit?: number;
     offset?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   };
   metadata?: {
-    code?: string;
+    name?: string;
     description?: string;
-    userTags?: string;
-    coachComments?: string;
-    publicSettingValue?: number;
+    plannedDate?: Date;
+    estimatedDuration?: number;
+    estimatedDistance?: number;
+    difficulty?: string;
+    activityType?: string;
+    tags?: string[];
   };
 };
 
@@ -41,69 +42,42 @@ export type WorkoutValidationParams = {
  */
 
 /**
- * Validates all business rules for structured workout creation
- * @param athleteId - The athlete ID associated with the workout
- * @param title - The workout title
- * @param workoutTypeValueId - The workout type ID
- * @param workoutDay - The workout day
- * @param structure - The workout structure
- * @throws Various domain errors if validation fails
- */
-export type validateStructuredWorkoutBusinessRules = (
-  athleteId: number,
-  title: string,
-  workoutTypeValueId: number,
-  workoutDay: string,
-  structure: WorkoutStructure
-) => void;
-
-/**
- * Validates workout file content and format
- * @param fileContent - The file content to validate
- * @param fileName - The file name to validate
- * @throws InvalidWorkoutFileError if validation fails
- */
-export type validateWorkoutFile = (
-  fileContent: string,
-  fileName: string
-) => void;
-
-/**
- * Validates that a workout ID meets business rules
+ * Validate workout ID meets business rules
  * @param workoutId - The workout ID to validate
  * @throws InvalidWorkoutIdError if validation fails
  */
-export type validateWorkoutId = (workoutId: string) => void;
+export type ValidateWorkoutId = (workoutId: string) => void;
 
 /**
- * Validates filters for listing workouts
+ * Validate workout file format and content
+ * @param fileData - The workout file to validate
+ * @throws InvalidWorkoutFileError if validation fails
+ */
+export type ValidateWorkoutFile = (fileData: WorkoutFile) => void;
+
+/**
+ * Validate filters for listing workouts
  * @param filters - The filters to validate
  * @throws InvalidWorkoutFiltersError if validation fails
  */
-export type validateListWorkoutsFilters = (filters: {
-  startDate?: Date;
-  endDate?: Date;
-  activityType?: string;
-  tags?: string[];
-  limit?: number;
-  offset?: number;
-}) => void;
+export type ValidateListWorkoutsFilters = (
+  filters: WorkoutValidationParams['filters']
+) => void;
 
 /**
- * Validates that a workout can be safely deleted
+ * Validate business rules for structured workout creation
+ * @param structure - The workout structure to validate
+ * @param metadata - Optional metadata to validate
+ * @throws Various domain errors if validation fails
+ */
+export type ValidateStructuredWorkoutBusinessRules = (
+  structure: WorkoutStructure,
+  metadata?: WorkoutValidationParams['metadata']
+) => void;
+
+/**
+ * Validate that a workout can be safely deleted
  * @param workout - The workout to validate for deletion
- * @throws InvalidWorkoutFiltersError if deletion is not allowed
+ * @throws InvalidWorkoutDeletionError if deletion is not allowed
  */
-export type validateWorkoutCanBeDeleted = (workout: Workout) => void;
-
-/**
- * Factory function signature for creating workout validation service
- * This defines the contract for how the service should be instantiated
- */
-export type WorkoutValidationServiceFactory = () => {
-  validateStructuredWorkoutBusinessRules: validateStructuredWorkoutBusinessRules;
-  validateWorkoutFile: validateWorkoutFile;
-  validateWorkoutId: validateWorkoutId;
-  validateListWorkoutsFilters: validateListWorkoutsFilters;
-  validateWorkoutCanBeDeleted: validateWorkoutCanBeDeleted;
-};
+export type ValidateWorkoutCanBeDeleted = (workout: WorkoutData) => void;

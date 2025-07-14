@@ -1,220 +1,270 @@
 /**
  * Workout Manager Service Contract
- * Application Layer - ONLY TYPE DEFINITIONS & CONTRACTS
- *
- * This defines what the workout manager capabilities the system needs
+ * Defines the interface for complete workout management operations
  */
 
 import type { WorkoutRepository } from '@/application/ports/workout';
-import type {
-  logDebug,
-  logError,
-  logInfo,
-  logWarn,
-  logWithLevel,
-} from '@/application/services/logger';
-import type { ListWorkoutsRequest } from '@/application/use-cases/list-workouts';
-import type { Workout } from '@/domain/entities/workout';
+import type { WorkoutFile } from '@/domain/value-objects/workout-file';
 import type { WorkoutStructure } from '@/domain/value-objects/workout-structure';
-import type { CreateStructuredWorkoutResponse } from '@/types';
+import type { WorkoutData } from '@/types';
 
 /**
- * Workout data for uploading
+ * Request parameters for uploading workout from file
  */
-export type WorkoutData = {
-  /** The workout file content (TCX, GPX, FIT, etc.) */
-  fileContent: string;
-  /** The workout file name */
-  fileName: string;
-  /** Optional workout metadata */
-  metadata?: {
-    title?: string;
-    description?: string;
+export type UploadWorkoutFromFileRequest = {
+  file: WorkoutFile;
+  name?: string;
+  description?: string;
+  tags?: string[];
+  activityType?: string;
+  plannedDate?: Date;
+  notes?: string;
+  isPrivate?: boolean;
+  category?: string;
+  subcategory?: string;
+  equipment?: string[];
+  location?: string;
+  weatherConditions?: string;
+  personalBest?: boolean;
+  coachNotes?: string;
+  customFields?: Record<string, unknown>;
+};
+
+/**
+ * Response from uploading workout from file
+ */
+export type UploadWorkoutFromFileResponse = {
+  workoutId: string;
+  success: boolean;
+  message?: string;
+  url?: string;
+  processedData?: WorkoutData;
+  fileInfo?: {
+    originalName: string;
+    size: number;
+    type: string;
+    uploadedAt: Date;
+  };
+  validationErrors?: string[];
+  validationWarnings?: string[];
+  processingTime?: number;
+  metadata?: Record<string, unknown>;
+};
+
+/**
+ * Request parameters for creating structured workout
+ */
+export type CreateStructuredWorkoutRequest = {
+  name: string;
+  description?: string;
+  structure: WorkoutStructure;
+  tags?: string[];
+  notes?: string;
+  targetDate?: Date;
+  estimatedDuration?: number;
+  estimatedDistance?: number;
+  estimatedCalories?: number;
+  difficulty?: 'easy' | 'moderate' | 'hard' | 'extreme';
+  activityType?: 'run' | 'bike' | 'swim' | 'strength' | 'other';
+  equipment?: string[];
+  location?: string;
+  weatherConditions?: string;
+  personalBest?: boolean;
+  coachNotes?: string;
+  publiclyVisible?: boolean;
+  allowComments?: boolean;
+  category?: string;
+  subcategory?: string;
+  season?: string;
+  trainingPhase?: string;
+  intensityZone?: number;
+  rpeScale?: number;
+  heartRateZones?: number[];
+  powerZones?: number[];
+  paceZones?: number[];
+  customFields?: Record<string, unknown>;
+};
+
+/**
+ * Response from creating structured workout
+ */
+export type CreateStructuredWorkoutResponse = {
+  workoutId: string;
+  success: boolean;
+  message?: string;
+  url?: string;
+  createdAt?: Date;
+  estimatedDuration?: number;
+  estimatedDistance?: number;
+  estimatedCalories?: number;
+  structure?: WorkoutStructure;
+  validationWarnings?: string[];
+  uploadStatus?: 'pending' | 'processing' | 'completed' | 'failed';
+  processingTime?: number;
+  metadata?: Record<string, unknown>;
+};
+
+/**
+ * Parameters for listing workouts
+ */
+export type ListWorkoutsParams = {
+  limit?: number;
+  offset?: number;
+  dateFrom?: Date;
+  dateTo?: Date;
+  tags?: string[];
+  activityType?: string;
+  difficulty?: string;
+  sortBy?: 'date' | 'name' | 'duration' | 'distance';
+  sortOrder?: 'asc' | 'desc';
+};
+
+/**
+ * Response from listing workouts
+ */
+export type ListWorkoutsResponse = {
+  workouts: WorkoutData[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+};
+
+/**
+ * Parameters for searching workouts
+ */
+export type SearchWorkoutsParams = {
+  query: string;
+  limit?: number;
+  offset?: number;
+  filters?: {
+    dateFrom?: Date;
+    dateTo?: Date;
     tags?: string[];
     activityType?: string;
+    difficulty?: string;
   };
 };
 
 /**
- * Response for workout upload operations
+ * Response from searching workouts
  */
-export type WorkoutUploadResponse = {
-  /** Success status */
-  success: boolean;
-  /** Workout ID assigned by TrainingPeaks */
-  workoutId?: string;
-  /** Upload status message */
-  message: string;
-  /** Any upload errors */
-  errors?: string[];
+export type SearchWorkoutsResponse = {
+  workouts: WorkoutData[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+  searchQuery: string;
 };
 
 /**
- * Structured workout data for creation
+ * Workout statistics summary
  */
-export type StructuredWorkoutData = {
-  /** Athlete ID */
-  athleteId: number;
-  /** Workout title */
-  title: string;
-  /** Workout type ID */
-  workoutTypeValueId: number;
-  /** Workout date */
-  workoutDay: string;
-  /** Workout structure */
-  structure: WorkoutStructure;
-  /** Optional workout metadata */
-  metadata?: {
-    code?: string;
-    description?: string;
-    userTags?: string;
-    coachComments?: string;
-    publicSettingValue?: number;
-    plannedMetrics?: {
-      totalTimePlanned?: number;
-      tssPlanned?: number;
-      ifPlanned?: number;
-      velocityPlanned?: number;
-      caloriesPlanned?: number;
-      distancePlanned?: number;
-      elevationGainPlanned?: number;
-      energyPlanned?: number;
-    };
-    equipment?: {
-      bikeId?: number;
-      shoeId?: number;
-    };
-  };
-};
-
-/**
- * Workout search criteria
- */
-export type WorkoutSearchCriteria = {
-  text?: string;
-  activityType?: string;
-  dateRange?: {
-    startDate: Date;
-    endDate: Date;
-  };
-};
-
-/**
- * Workout statistics filters
- */
-export type WorkoutStatsFilters = {
-  activityType?: string;
-  dateRange?: {
-    startDate: Date;
-    endDate: Date;
-  };
-};
-
-/**
- * Workout statistics response
- */
-export type WorkoutStatsResponse = {
+export type WorkoutStats = {
   totalWorkouts: number;
-  avgDuration?: number;
-  avgDistance?: number;
-  totalDistance?: number;
-  totalDuration?: number;
+  totalDuration: number;
+  totalDistance: number;
+  totalCalories: number;
+  averageDuration: number;
+  averageDistance: number;
+  averageCalories: number;
+  byActivityType: Record<
+    string,
+    {
+      count: number;
+      duration: number;
+      distance: number;
+      calories: number;
+    }
+  >;
+  byDifficulty: Record<string, number>;
+  byMonth: Record<string, number>;
+  recentActivity: {
+    lastWorkoutDate?: Date;
+    streakDays: number;
+    workoutsThisWeek: number;
+    workoutsThisMonth: number;
+  };
 };
 
 /**
- * Contract for WorkoutManager operations
- * This is a PORT - defines what the application needs
+ * Contract for workout manager operations
+ * Defines comprehensive workout management capabilities
  */
-/**
- * Upload workout from data
- */
-export type uploadWorkout = (
-  workoutData: WorkoutData
-) => Promise<WorkoutUploadResponse>;
 
 /**
  * Upload workout from file
+ * @param request - The workout upload request
+ * @returns Promise resolving to upload response
  */
-export type uploadWorkoutFromFile = (
-  filePath: string
-) => Promise<WorkoutUploadResponse>;
+export type UploadWorkout = (
+  request: UploadWorkoutFromFileRequest
+) => Promise<UploadWorkoutFromFileResponse>;
+
+/**
+ * Upload workout from file (alias for uploadWorkout)
+ * @param request - The workout upload request
+ * @returns Promise resolving to upload response
+ */
+export type UploadWorkoutFromFile = (
+  request: UploadWorkoutFromFileRequest
+) => Promise<UploadWorkoutFromFileResponse>;
 
 /**
  * Get workout by ID
+ * @param workoutId - The ID of the workout to retrieve
+ * @returns Promise resolving to workout data or null if not found
  */
-export type getWorkout = (workoutId: string) => Promise<Workout>;
+export type GetWorkout = (workoutId: string) => Promise<WorkoutData | null>;
 
 /**
- * List workouts with optional filters
+ * List workouts with filters and pagination
+ * @param params - The query parameters for listing workouts
+ * @returns Promise resolving to list of workouts with pagination info
  */
-export type listWorkouts = (
-  filters?: ListWorkoutsRequest
-) => Promise<Workout[]>;
+export type ListWorkouts = (
+  params: ListWorkoutsParams
+) => Promise<ListWorkoutsResponse>;
 
 /**
  * Delete workout by ID
+ * @param workoutId - The ID of the workout to delete
+ * @returns Promise resolving to boolean indicating success
  */
-export type deleteWorkout = (
-  workoutId: string
-) => Promise<{ success: boolean; message: string }>;
+export type DeleteWorkout = (workoutId: string) => Promise<boolean>;
 
 /**
  * Create structured workout
+ * @param request - The structured workout creation request
+ * @returns Promise resolving to workout creation response
  */
-export type createStructuredWorkout = (
-  workoutData: StructuredWorkoutData
+export type CreateStructuredWorkout = (
+  request: CreateStructuredWorkoutRequest
 ) => Promise<CreateStructuredWorkoutResponse>;
 
 /**
- * Search workouts by criteria
+ * Search workouts by query
+ * @param params - The search parameters
+ * @returns Promise resolving to search results
  */
-export type searchWorkouts = (
-  criteria: WorkoutSearchCriteria
-) => Promise<Workout[]>;
+export type SearchWorkouts = (
+  params: SearchWorkoutsParams
+) => Promise<SearchWorkoutsResponse>;
 
 /**
  * Get workout statistics
+ * @param params - Optional parameters for statistics calculation
+ * @returns Promise resolving to workout statistics
  */
-export type getWorkoutStats = (
-  filters?: WorkoutStatsFilters
-) => Promise<WorkoutStatsResponse>;
+export type GetWorkoutStats = (params?: {
+  dateFrom?: Date;
+  dateTo?: Date;
+  activityType?: string;
+}) => Promise<WorkoutStats>;
 
 /**
- * Get workout repository (for advanced operations)
+ * Get workout repository instance
+ * @returns The workout repository instance
  */
-export type getWorkoutRepository = () => WorkoutRepository;
-
-/**
- * Workout manager configuration
- */
-export type WorkoutManagerConfig = {
-  baseUrl?: string;
-  timeout?: number;
-  debug?: boolean;
-  headers?: Record<string, string>;
-};
-
-/**
- * Factory function signature for creating workout manager service
- * This defines the contract for how the service should be instantiated
- */
-export type WorkoutManagerServiceFactory = (
-  config?: WorkoutManagerConfig,
-  logger?: {
-    info: logInfo;
-    error: logError;
-    warn: logWarn;
-    debug: logDebug;
-    log: logWithLevel;
-  }
-) => {
-  uploadWorkout: uploadWorkout;
-  uploadWorkoutFromFile: uploadWorkoutFromFile;
-  getWorkout: getWorkout;
-  listWorkouts: listWorkouts;
-  deleteWorkout: deleteWorkout;
-  createStructuredWorkout: createStructuredWorkout;
-  searchWorkouts: searchWorkouts;
-  getWorkoutStats: getWorkoutStats;
-  getWorkoutRepository: getWorkoutRepository;
-};
+export type GetWorkoutRepository = () => WorkoutRepository;
