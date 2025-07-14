@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## <small>1.4.3 (2025-07-14)</small>
+
+* refactor: separate application vs domain services ([ee46a87](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/ee46a87))
+
 ## <small>1.4.2 (2025-07-14)</small>
 
 * refactor: move domain services ([ff1dd2a](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/ff1dd2a))
