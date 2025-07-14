@@ -7,16 +7,15 @@
  * Contract for workout management operations
  * Defines what management capabilities the system needs
  */
-export type WorkoutManagementService = {
-  /**
-   * Delete workout with business logic validation
-   * @param workoutId - The ID of the workout to delete
-   * @returns Promise resolving to boolean indicating success
-   * @throws WorkoutNotFoundError if workout doesn't exist
-   * @throws InvalidWorkoutFiltersError if deletion is not allowed
-   */
-  deleteWorkout: (workoutId: string) => Promise<boolean>;
-};
+
+/**
+ * Delete workout with business logic validation
+ * @param workoutId - The ID of the workout to delete
+ * @returns Promise resolving to boolean indicating success
+ * @throws WorkoutNotFoundError if workout doesn't exist
+ * @throws InvalidWorkoutFiltersError if deletion is not allowed
+ */
+export type deleteWorkout = (workoutId: string) => Promise<boolean>;
 
 /**
  * Factory function signature for creating workout management service
@@ -25,4 +24,6 @@ export type WorkoutManagementService = {
 export type WorkoutManagementServiceFactory = (
   workoutRepository: unknown,
   validationService: unknown
-) => WorkoutManagementService;
+) => {
+  deleteWorkout: deleteWorkout;
+};

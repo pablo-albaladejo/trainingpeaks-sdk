@@ -1,14 +1,13 @@
 /**
  * Logging Utilities
- * Advanced utilities for structured logging with performance tracking and context building
+ * Helper functions for structured logging and performance tracking
  */
 
-import type {
-  LogContext,
-  LoggerService,
-  LogLevel,
-} from '@/application/services/logger';
+import { type LogContext, type LogLevel } from '@/application/services/logger';
 import { createLoggerService } from '@/infrastructure/services/logger';
+
+// Type alias for logger service instance
+type LoggerInstance = ReturnType<typeof createLoggerService>;
 
 /**
  * Performance measurement interface
@@ -36,12 +35,13 @@ export interface LogContextBuilderInterface {
 }
 
 /**
- * Timing decorator options
+ * Configuration for timing operations
  */
 export interface TimingOptions {
-  logger?: LoggerService;
+  logger?: LoggerInstance;
   logLevel?: LogLevel;
   operationName?: string;
+  enableAutoLogging?: boolean;
   includeArgs?: boolean;
   includeResult?: boolean;
   threshold?: number; // Log only if duration exceeds threshold (ms)
@@ -68,11 +68,11 @@ export class PerformanceTracker {
   private startTime: number;
   private operationName: string;
   private metadata: Record<string, unknown>;
-  private logger: LoggerService;
+  private logger: LoggerInstance;
 
   constructor(
     operationName: string,
-    logger?: LoggerService,
+    logger?: LoggerInstance,
     metadata?: Record<string, unknown>
   ) {
     this.operationName = operationName;
@@ -487,7 +487,9 @@ export function withTiming<T extends (...args: unknown[]) => Promise<unknown>>(
 export function createStructuredLogger(
   baseContext: LogContext = {},
   options: LogFormatterOptions = {}
-): LoggerService & { withContext: (context: LogContext) => LoggerService } {
+): LoggerInstance & {
+  withContext: (context: LogContext) => LoggerInstance;
+} {
   const logger = createLoggerService({ level: 'info' });
   const formatter = new LogFormatter(options);
 
@@ -534,11 +536,11 @@ export class BatchLogger {
 
   private batchSize: number;
   private flushInterval: number;
-  private logger: LoggerService;
+  private logger: LoggerInstance;
   private timer?: NodeJS.Timeout;
 
   constructor(
-    logger: LoggerService,
+    logger: LoggerInstance,
     batchSize: number = 100,
     flushInterval: number = 5000
   ) {
@@ -610,7 +612,7 @@ export const createContextBuilder = (): LogContextBuilder =>
   new LogContextBuilder();
 export const createPerformanceTracker = (
   operationName: string,
-  logger?: LoggerService,
+  logger?: LoggerInstance,
   metadata?: Record<string, unknown>
 ): PerformanceTracker =>
   new PerformanceTracker(operationName, logger, metadata);
@@ -618,7 +620,7 @@ export const createLogFormatter = (
   options?: LogFormatterOptions
 ): LogFormatter => new LogFormatter(options);
 export const createBatchLogger = (
-  logger: LoggerService,
+  logger: LoggerInstance,
   batchSize?: number,
   flushInterval?: number
 ): BatchLogger => new BatchLogger(logger, batchSize, flushInterval);

@@ -73,56 +73,54 @@ export type WorkoutUploadResponse = {
  * Contract for workout creation operations
  * Defines what creation capabilities the system needs
  */
-export type WorkoutCreationService = {
-  /**
-   * Create a structured workout with business logic validation
-   * @param athleteId - The athlete ID associated with the workout
-   * @param title - The workout title
-   * @param workoutTypeValueId - The workout type ID
-   * @param workoutDay - The workout day
-   * @param structure - The workout structure
-   * @param metadata - Optional metadata for the workout
-   * @returns Promise resolving to creation response
-   */
-  createStructuredWorkout: (
-    athleteId: number,
-    title: string,
-    workoutTypeValueId: number,
-    workoutDay: string,
-    structure: WorkoutStructure,
-    metadata?: WorkoutCreationMetadata
-  ) => Promise<CreateStructuredWorkoutResponse>;
+/**
+ * Create a structured workout with business logic validation
+ * @param athleteId - The athlete ID associated with the workout
+ * @param title - The workout title
+ * @param workoutTypeValueId - The workout type ID
+ * @param workoutDay - The workout day
+ * @param structure - The workout structure
+ * @param metadata - Optional metadata for the workout
+ * @returns Promise resolving to creation response
+ */
+export type createStructuredWorkout = (
+  athleteId: number,
+  title: string,
+  workoutTypeValueId: number,
+  workoutDay: string,
+  structure: WorkoutStructure,
+  metadata?: WorkoutCreationMetadata
+) => Promise<CreateStructuredWorkoutResponse>;
 
-  /**
-   * Create a structured workout from simple elements
-   * @param athleteId - The athlete ID associated with the workout
-   * @param title - The workout title
-   * @param workoutTypeValueId - The workout type ID
-   * @param workoutDay - The workout day
-   * @param elements - Array of simple workout elements
-   * @returns Promise resolving to creation response
-   */
-  createStructuredWorkoutFromSimpleStructure: (
-    athleteId: number,
-    title: string,
-    workoutTypeValueId: number,
-    workoutDay: string,
-    elements: SimpleWorkoutElementForCreation[]
-  ) => Promise<CreateStructuredWorkoutResponse>;
+/**
+ * Create a structured workout from simple elements
+ * @param athleteId - The athlete ID associated with the workout
+ * @param title - The workout title
+ * @param workoutTypeValueId - The workout type ID
+ * @param workoutDay - The workout day
+ * @param elements - Array of simple workout elements
+ * @returns Promise resolving to creation response
+ */
+export type createStructuredWorkoutFromSimpleStructure = (
+  athleteId: number,
+  title: string,
+  workoutTypeValueId: number,
+  workoutDay: string,
+  elements: SimpleWorkoutElementForCreation[]
+) => Promise<CreateStructuredWorkoutResponse>;
 
-  /**
-   * Upload a workout file with metadata
-   * @param fileContent - The file content to upload
-   * @param fileName - The name of the file
-   * @param metadata - Optional metadata for the workout
-   * @returns Promise resolving to upload response
-   */
-  uploadWorkout: (
-    fileContent: string,
-    fileName: string,
-    metadata?: WorkoutUploadMetadata
-  ) => Promise<WorkoutUploadResponse>;
-};
+/**
+ * Upload a workout file with metadata
+ * @param fileContent - The file content to upload
+ * @param fileName - The name of the file
+ * @param metadata - Optional metadata for the workout
+ * @returns Promise resolving to upload response
+ */
+export type uploadWorkout = (
+  fileContent: string,
+  fileName: string,
+  metadata?: WorkoutUploadMetadata
+) => Promise<WorkoutUploadResponse>;
 
 /**
  * Factory function signature for creating workout creation service
@@ -132,4 +130,8 @@ export type WorkoutCreationServiceFactory = (
   workoutRepository: unknown,
   validationService: unknown,
   utilityService: unknown
-) => WorkoutCreationService;
+) => {
+  createStructuredWorkout: createStructuredWorkout;
+  createStructuredWorkoutFromSimpleStructure: createStructuredWorkoutFromSimpleStructure;
+  uploadWorkout: uploadWorkout;
+};

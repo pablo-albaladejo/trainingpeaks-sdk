@@ -4,7 +4,14 @@
  */
 
 import type { AuthRepository } from '@/application/ports/auth';
-import type { AuthApplicationService } from '@/application/services/auth-application';
+import type {
+  getCurrentToken,
+  getCurrentUser,
+  getUserId,
+  isAuthenticated,
+  login,
+  logout,
+} from '@/application/services/auth-application';
 import { createGetCurrentUserUseCase } from '@/application/use-cases/get-current-user';
 import {
   createLoginUseCase,
@@ -20,7 +27,14 @@ import { AuthToken, User } from '@/domain';
  */
 export const createAuthApplicationService = (
   authRepository: AuthRepository
-): AuthApplicationService => {
+): {
+  login: login;
+  logout: logout;
+  getCurrentUser: getCurrentUser;
+  isAuthenticated: isAuthenticated;
+  getCurrentToken: getCurrentToken;
+  getUserId: getUserId;
+} => {
   // Create use cases with dependency injection
   const loginUseCase = createLoginUseCase(authRepository);
   const logoutUseCase = createLogoutUseCase(authRepository);

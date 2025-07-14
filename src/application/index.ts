@@ -41,59 +41,86 @@ export type { UploadResult, WorkoutRepository } from './ports/workout';
 
 // Services - Export only TYPES/CONTRACTS from application layer
 export type {
-  AuthApplicationService,
   AuthApplicationServiceFactory,
+  getCurrentToken,
+  getCurrentUser,
+  getUserId,
+  isAuthenticated,
+  login,
+  logout,
 } from './services/auth-application';
 export type {
-  AuthValidationService,
   AuthValidationServiceFactory,
+  getTimeUntilExpiration,
+  getTimeUntilRefresh,
+  isTokenExpired,
+  isTokenValid,
+  shouldRefreshToken,
 } from './services/auth-validation';
 export type {
   LogContext,
-  LoggerService,
+  logDebug,
+  logError,
   LoggerServiceFactory,
+  logInfo,
   LogLevel,
+  logWarn,
+  logWithLevel,
 } from './services/logger';
 // Note: WorkoutDomainService has been deprecated and removed.
-// Use WorkoutService instead for all new code.
+// Use individual workout function types instead for all new code.
 
 // New modular workout services
 export type {
+  createStructuredWorkout,
+  createStructuredWorkoutFromSimpleStructure,
   SimpleWorkoutElementForCreation,
+  uploadWorkout,
   WorkoutCreationMetadata,
-  WorkoutCreationService,
   WorkoutCreationServiceFactory,
   WorkoutUploadMetadata,
   WorkoutUploadResponse,
 } from './services/workout-creation';
 export type {
-  WorkoutManagementService,
+  deleteWorkout,
   WorkoutManagementServiceFactory,
 } from './services/workout-management';
 export type {
+  createStructuredWorkout as createStructuredWorkoutManager,
+  deleteWorkout as deleteWorkoutManager,
+  getWorkout,
+  getWorkoutRepository,
+  getWorkoutStats,
+  listWorkouts,
+  searchWorkouts,
+  uploadWorkoutFromFile,
+  uploadWorkout as uploadWorkoutManager,
   WorkoutManagerConfig,
-  WorkoutManagerService,
   WorkoutManagerServiceFactory,
   WorkoutSearchCriteria,
   WorkoutStatsFilters,
   WorkoutStatsResponse,
 } from './services/workout-manager';
 export type {
+  getWorkout as getWorkoutQuery,
+  listWorkouts as listWorkoutsQuery,
   WorkoutListFilters,
-  WorkoutQueryService,
   WorkoutQueryServiceFactory,
 } from './services/workout-query';
 export type {
-  WorkoutService,
-  WorkoutServiceFactory,
-} from './services/workout-service';
-export type {
+  buildStructureFromSimpleElements,
+  generateWorkoutId,
+  getMimeTypeFromFileName,
+  mapWorkoutTypeToActivityType,
   SimpleWorkoutElement,
-  WorkoutUtilityService,
   WorkoutUtilityServiceFactory,
 } from './services/workout-utility';
 export type {
+  validateListWorkoutsFilters,
+  validateStructuredWorkoutBusinessRules,
+  validateWorkoutCanBeDeleted,
+  validateWorkoutFile,
+  validateWorkoutId,
   WorkoutValidationParams,
-  WorkoutValidationService,
   WorkoutValidationServiceFactory,
 } from './services/workout-validation';

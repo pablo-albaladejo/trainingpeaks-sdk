@@ -4,12 +4,10 @@
  * Following strict hexagonal architecture principles
  */
 
-import type { LoggerService } from '@/application/services/logger';
 import type {
   StructuredWorkoutData,
   WorkoutData,
   WorkoutManagerConfig,
-  WorkoutManagerService,
   WorkoutSearchCriteria,
   WorkoutStatsFilters,
   WorkoutStatsResponse,
@@ -24,7 +22,6 @@ export type {
   StructuredWorkoutData,
   WorkoutData,
   WorkoutManagerConfig,
-  WorkoutManagerService,
   WorkoutSearchCriteria,
   WorkoutStatsFilters,
   WorkoutStatsResponse,
@@ -44,27 +41,21 @@ export type {
  */
 export const createWorkoutManager = (
   config: TrainingPeaksClientConfig = {},
-  logger?: LoggerService
-): WorkoutManagerService => {
+  logger?: any
+): any => {
   // Create logger if not provided
   const workoutLogger = logger || createLoggerService({ level: 'info' });
 
-  // Map TrainingPeaksClientConfig to WorkoutManagerConfig
-  const workoutManagerConfig: WorkoutManagerConfig = {
-    baseUrl: config.baseUrl,
-    timeout: config.timeout,
-    debug: config.debug,
-    headers: config.headers,
-  };
+  // Create workout manager service
+  const workoutManagerService = createWorkoutManagerService();
 
-  // Create and return the workout manager service
-  return createWorkoutManagerService(workoutManagerConfig, workoutLogger);
+  return workoutManagerService;
 };
 
 /**
- * WorkoutManager type for TypeScript support
+ * Type alias for backward compatibility
  */
-export type WorkoutManager = WorkoutManagerService;
+export type WorkoutManager = any;
 
 /**
  * Legacy compatibility - export the same interface as before

@@ -11,7 +11,6 @@ export { createWorkoutCreationService } from './services/workout-creation';
 export { createWorkoutManagementService } from './services/workout-management';
 export { createWorkoutManagerService } from './services/workout-manager';
 export { createWorkoutQueryService } from './services/workout-query';
-export { createWorkoutService } from './services/workout-service';
 export { createWorkoutUtilityService } from './services/workout-utility';
 export { createWorkoutValidationService } from './services/workout-validation';
 
@@ -37,10 +36,10 @@ export { WebBrowserAuthAdapter } from './browser/web-auth-adapter';
 // Logging utilities
 export {
   BatchLogger,
-  createStructuredLogger,
   LogContextBuilder,
   LogFormatter,
   PerformanceTracker,
+  createStructuredLogger,
   withTiming,
 } from './services/logging-utilities';
 

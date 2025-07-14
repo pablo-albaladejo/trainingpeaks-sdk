@@ -3,30 +3,22 @@
  * Tests for the delete workout use case following @unit-test-rule.mdc
  */
 
-import { faker } from '@faker-js/faker';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { randomNumber, randomString } from '../../__fixtures__/utils.fixture';
-import { WorkoutService } from '../services/workout-service';
+import type { deleteWorkout } from '../services/workout-management';
 import {
   createDeleteWorkoutUseCase,
   DeleteWorkoutRequest,
 } from './delete-workout';
 
 describe('Delete Workout Use Case', () => {
-  let mockWorkoutService: WorkoutService;
+  let mockDeleteWorkout: deleteWorkout;
   let deleteWorkoutUseCase: ReturnType<typeof createDeleteWorkoutUseCase>;
 
   beforeEach(() => {
     // Arrange - Setup mocks
-    mockWorkoutService = {
-      uploadWorkout: vi.fn(),
-      getWorkout: vi.fn(),
-      listWorkouts: vi.fn(),
-      deleteWorkout: vi.fn(),
-      createStructuredWorkout: vi.fn(),
-    };
-
-    deleteWorkoutUseCase = createDeleteWorkoutUseCase(mockWorkoutService);
+    mockDeleteWorkout = vi.fn();
+    deleteWorkoutUseCase = createDeleteWorkoutUseCase(mockDeleteWorkout);
   });
 
   describe('execute', () => {
@@ -36,70 +28,66 @@ describe('Delete Workout Use Case', () => {
       const request: DeleteWorkoutRequest = { workoutId };
       const expectedResult = true;
 
-      mockWorkoutService.deleteWorkout = vi
-        .fn()
-        .mockResolvedValue(expectedResult);
+      mockDeleteWorkout = vi.fn().mockResolvedValue(expectedResult);
+      deleteWorkoutUseCase = createDeleteWorkoutUseCase(mockDeleteWorkout);
 
       // Act
       const result = await deleteWorkoutUseCase.execute(request);
 
       // Assert
       expect(result).toBe(expectedResult);
-      expect(mockWorkoutService.deleteWorkout).toHaveBeenCalledTimes(1);
-      expect(mockWorkoutService.deleteWorkout).toHaveBeenCalledWith(workoutId);
+      expect(mockDeleteWorkout).toHaveBeenCalledTimes(1);
+      expect(mockDeleteWorkout).toHaveBeenCalledWith(workoutId);
     });
 
     it('should handle delete workout with string ID', async () => {
       // Arrange
-      const workoutId = faker.string.uuid();
+      const workoutId = randomString();
       const request: DeleteWorkoutRequest = { workoutId };
       const expectedResult = true;
 
-      mockWorkoutService.deleteWorkout = vi
-        .fn()
-        .mockResolvedValue(expectedResult);
+      mockDeleteWorkout = vi.fn().mockResolvedValue(expectedResult);
+      deleteWorkoutUseCase = createDeleteWorkoutUseCase(mockDeleteWorkout);
 
       // Act
       const result = await deleteWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toBe(true);
-      expect(mockWorkoutService.deleteWorkout).toHaveBeenCalledWith(workoutId);
+      expect(result).toBe(expectedResult);
+      expect(mockDeleteWorkout).toHaveBeenCalledWith(workoutId);
     });
 
     it('should handle delete workout failure', async () => {
       // Arrange
-      const workoutId = randomString(10);
+      const workoutId = randomNumber(1, 1000).toString();
       const request: DeleteWorkoutRequest = { workoutId };
       const expectedResult = false;
 
-      mockWorkoutService.deleteWorkout = vi
-        .fn()
-        .mockResolvedValue(expectedResult);
+      mockDeleteWorkout = vi.fn().mockResolvedValue(expectedResult);
+      deleteWorkoutUseCase = createDeleteWorkoutUseCase(mockDeleteWorkout);
 
       // Act
       const result = await deleteWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toBe(false);
-      expect(mockWorkoutService.deleteWorkout).toHaveBeenCalledTimes(1);
+      expect(result).toBe(expectedResult);
+      expect(mockDeleteWorkout).toHaveBeenCalledWith(workoutId);
     });
 
     it('should handle service errors correctly', async () => {
       // Arrange
       const workoutId = randomNumber(1, 1000).toString();
       const request: DeleteWorkoutRequest = { workoutId };
-      const expectedError = new Error('Delete operation failed');
+      const errorMessage = 'Delete operation failed';
 
-      mockWorkoutService.deleteWorkout = vi
-        .fn()
-        .mockRejectedValue(expectedError);
+      mockDeleteWorkout = vi.fn().mockRejectedValue(new Error(errorMessage));
+      deleteWorkoutUseCase = createDeleteWorkoutUseCase(mockDeleteWorkout);
 
       // Act & Assert
       await expect(deleteWorkoutUseCase.execute(request)).rejects.toThrow(
-        'Delete operation failed'
+        errorMessage
       );
-      expect(mockWorkoutService.deleteWorkout).toHaveBeenCalledTimes(1);
+      expect(mockDeleteWorkout).toHaveBeenCalledWith(workoutId);
     });
 
     it('should work with empty workout ID', async () => {
@@ -108,29 +96,29 @@ describe('Delete Workout Use Case', () => {
       const request: DeleteWorkoutRequest = { workoutId };
       const expectedResult = false;
 
-      mockWorkoutService.deleteWorkout = vi
-        .fn()
-        .mockResolvedValue(expectedResult);
+      mockDeleteWorkout = vi.fn().mockResolvedValue(expectedResult);
+      deleteWorkoutUseCase = createDeleteWorkoutUseCase(mockDeleteWorkout);
 
       // Act
       const result = await deleteWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toBe(false);
-      expect(mockWorkoutService.deleteWorkout).toHaveBeenCalledWith('');
+      expect(result).toBe(expectedResult);
+      expect(mockDeleteWorkout).toHaveBeenCalledWith(workoutId);
     });
 
     it('should handle multiple delete requests', async () => {
       // Arrange
-      const workoutId1 = randomNumber(1, 100).toString();
-      const workoutId2 = randomNumber(101, 200).toString();
+      const workoutId1 = randomString();
+      const workoutId2 = randomString();
       const request1: DeleteWorkoutRequest = { workoutId: workoutId1 };
       const request2: DeleteWorkoutRequest = { workoutId: workoutId2 };
 
-      mockWorkoutService.deleteWorkout = vi
+      mockDeleteWorkout = vi
         .fn()
         .mockResolvedValueOnce(true)
         .mockResolvedValueOnce(false);
+      deleteWorkoutUseCase = createDeleteWorkoutUseCase(mockDeleteWorkout);
 
       // Act
       const result1 = await deleteWorkoutUseCase.execute(request1);
@@ -139,15 +127,9 @@ describe('Delete Workout Use Case', () => {
       // Assert
       expect(result1).toBe(true);
       expect(result2).toBe(false);
-      expect(mockWorkoutService.deleteWorkout).toHaveBeenCalledTimes(2);
-      expect(mockWorkoutService.deleteWorkout).toHaveBeenNthCalledWith(
-        1,
-        workoutId1
-      );
-      expect(mockWorkoutService.deleteWorkout).toHaveBeenNthCalledWith(
-        2,
-        workoutId2
-      );
+      expect(mockDeleteWorkout).toHaveBeenCalledTimes(2);
+      expect(mockDeleteWorkout).toHaveBeenNthCalledWith(1, workoutId1);
+      expect(mockDeleteWorkout).toHaveBeenNthCalledWith(2, workoutId2);
     });
 
     it('should preserve workout ID type', async () => {
@@ -155,15 +137,15 @@ describe('Delete Workout Use Case', () => {
       const workoutId = randomNumber(1, 1000).toString();
       const request: DeleteWorkoutRequest = { workoutId };
 
-      mockWorkoutService.deleteWorkout = vi.fn().mockResolvedValue(true);
+      mockDeleteWorkout = vi.fn().mockImplementation((id: string) => {
+        expect(typeof id).toBe('string');
+        return Promise.resolve(true);
+      });
+      deleteWorkoutUseCase = createDeleteWorkoutUseCase(mockDeleteWorkout);
 
-      // Act
+      // Act & Assert
       await deleteWorkoutUseCase.execute(request);
-
-      // Assert
-      const calledWorkoutId = mockWorkoutService.deleteWorkout.mock.calls[0][0];
-      expect(typeof calledWorkoutId).toBe('string');
-      expect(calledWorkoutId).toBe(workoutId);
+      expect(mockDeleteWorkout).toHaveBeenCalledWith(workoutId);
     });
   });
 });

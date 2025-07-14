@@ -4,8 +4,14 @@
  * Enhanced with Error Handler Service for robust error management
  */
 
-import type { LoggerService } from '@/application/services/logger';
-import { WorkoutService } from '@/application/services/workout-service';
+import type {
+  logDebug,
+  logError,
+  logInfo,
+  logWarn,
+  logWithLevel,
+} from '@/application/services/logger';
+import type { uploadWorkout } from '@/application/services/workout-creation';
 import {
   createErrorHandlerService,
   type ErrorHandlerService,
@@ -18,8 +24,14 @@ import { createLoggerService } from '@/infrastructure/services/logger';
  * Enhanced with comprehensive error handling and context enrichment
  */
 export const createUploadWorkoutUseCase = (
-  workoutService: WorkoutService,
-  logger?: LoggerService
+  uploadWorkoutFn: uploadWorkout,
+  logger?: {
+    info: logInfo;
+    error: logError;
+    warn: logWarn;
+    debug: logDebug;
+    log: logWithLevel;
+  }
 ) => {
   // Setup logger and error handler
   const useCaseLogger =
@@ -58,8 +70,7 @@ export const createUploadWorkoutUseCase = (
       distance?: number;
     }
   ) => {
-    const operation = () =>
-      workoutService.uploadWorkout(fileContent, fileName, metadata);
+    const operation = () => uploadWorkoutFn(fileContent, fileName, metadata);
 
     try {
       useCaseLogger.debug('Executing upload workout use case', {

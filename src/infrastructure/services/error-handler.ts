@@ -3,7 +3,6 @@
  * Provides centralized error handling with context enrichment and structured logging
  */
 
-import type { LoggerService } from '@/application/services/logger';
 import {
   AuthenticationError,
   AuthorizationError,
@@ -94,8 +93,22 @@ const defaultDelayFn = (ms: number): Promise<void> =>
 /**
  * Error Handler Service Factory
  */
+import type {
+  logDebug,
+  logError,
+  logInfo,
+  logWarn,
+  logWithLevel,
+} from '@/application/services/logger';
+
 export const createErrorHandlerService = (
-  logger: LoggerService,
+  logger: {
+    info: logInfo;
+    error: logError;
+    warn: logWarn;
+    debug: logDebug;
+    log: logWithLevel;
+  },
   config: Partial<ErrorHandlerConfig> = {}
 ) => {
   const defaultConfig: ErrorHandlerConfig = {

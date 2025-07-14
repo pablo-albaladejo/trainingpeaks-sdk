@@ -8,7 +8,7 @@
  */
 
 import { AuthenticationConfig } from '@/application';
-import type { AuthApplicationService } from '@/application/services/auth-application';
+import type { AuthApplicationServiceFactory } from '@/application/services/auth-application';
 import { getSDKConfig, TrainingPeaksSDKConfig } from '@/config';
 import { AuthToken, User } from '@/domain';
 import {
@@ -207,7 +207,7 @@ export const createTrainingPeaksClient = (
   /**
    * Get authentication service for advanced operations
    */
-  const getAuthService = (): AuthApplicationService => {
+  const getAuthService = (): ReturnType<AuthApplicationServiceFactory> => {
     return authService;
   };
 

@@ -1,6 +1,5 @@
 /**
  * Workout Utility Service Implementation
- * Implements the WorkoutUtilityService contract with utility functions for workout operations
  */
 
 import {
@@ -10,7 +9,6 @@ import {
 } from '@/application/services/workout-constants';
 import type {
   SimpleWorkoutElement,
-  WorkoutUtilityService,
   WorkoutUtilityServiceFactory,
 } from '@/application/services/workout-utility';
 import { WorkoutLength } from '@/domain/value-objects/workout-length';
@@ -22,8 +20,8 @@ import { WorkoutTarget } from '@/domain/value-objects/workout-target';
  * IMPLEMENTATION of WorkoutUtilityService
  * This is an ADAPTER - implements the port defined in application layer
  */
-export const createWorkoutUtilityService: WorkoutUtilityServiceFactory =
-  (): WorkoutUtilityService => ({
+export const createWorkoutUtilityService: WorkoutUtilityServiceFactory = () => {
+  return {
     generateWorkoutId: (): string => {
       return `workout_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').substring(0, 13)}`;
     },
@@ -265,4 +263,5 @@ export const createWorkoutUtilityService: WorkoutUtilityServiceFactory =
         'range'
       );
     },
-  });
+  };
+};

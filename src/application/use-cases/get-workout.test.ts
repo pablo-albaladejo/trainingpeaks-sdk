@@ -3,26 +3,20 @@
  * Tests for the get workout use case following @unit-test-rule.mdc
  */
 
-import { faker } from '@faker-js/faker';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { randomNumber, randomString } from '../../__fixtures__/utils.fixture';
+import { WorkoutDataFixture } from '../../__fixtures__/workout-data.fixture';
+import type { getWorkout } from '../services/workout-query';
 import { createGetWorkoutUseCase, GetWorkoutRequest } from './get-workout';
 
 describe('Get Workout Use Case', () => {
-  let mockWorkoutService: any;
+  let mockGetWorkout: getWorkout;
   let getWorkoutUseCase: ReturnType<typeof createGetWorkoutUseCase>;
 
   beforeEach(() => {
     // Arrange - Setup mocks
-    mockWorkoutService = {
-      uploadWorkout: vi.fn(),
-      getWorkout: vi.fn(),
-      listWorkouts: vi.fn(),
-      deleteWorkout: vi.fn(),
-      createStructuredWorkout: vi.fn(),
-    };
-
-    getWorkoutUseCase = createGetWorkoutUseCase(mockWorkoutService);
+    mockGetWorkout = vi.fn();
+    getWorkoutUseCase = createGetWorkoutUseCase(mockGetWorkout);
   });
 
   describe('execute', () => {
@@ -30,99 +24,94 @@ describe('Get Workout Use Case', () => {
       // Arrange
       const workoutId = randomNumber(1, 1000).toString();
       const request: GetWorkoutRequest = { workoutId };
-      const expectedWorkout = {
-        id: workoutId,
-        name: faker.lorem.words(),
-        description: faker.lorem.sentence(),
-      };
+      const expectedWorkout = new WorkoutDataFixture()
+        .withName('Test Workout')
+        .build();
 
-      mockWorkoutService.getWorkout.mockResolvedValue(expectedWorkout);
+      mockGetWorkout = vi.fn().mockResolvedValue(expectedWorkout);
+      getWorkoutUseCase = createGetWorkoutUseCase(mockGetWorkout);
 
       // Act
       const result = await getWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toStrictEqual(expectedWorkout);
-      expect(mockWorkoutService.getWorkout).toHaveBeenCalledTimes(1);
-      expect(mockWorkoutService.getWorkout).toHaveBeenCalledWith(workoutId);
+      expect(result).toEqual(expectedWorkout);
+      expect(mockGetWorkout).toHaveBeenCalledTimes(1);
+      expect(mockGetWorkout).toHaveBeenCalledWith(workoutId);
     });
 
     it('should handle workout not found', async () => {
       // Arrange
-      const workoutId = faker.string.uuid();
+      const workoutId = randomString();
       const request: GetWorkoutRequest = { workoutId };
 
-      mockWorkoutService.getWorkout.mockResolvedValue(null);
+      mockGetWorkout = vi.fn().mockResolvedValue(null);
+      getWorkoutUseCase = createGetWorkoutUseCase(mockGetWorkout);
 
       // Act
       const result = await getWorkoutUseCase.execute(request);
 
       // Assert
       expect(result).toBeNull();
-      expect(mockWorkoutService.getWorkout).toHaveBeenCalledWith(workoutId);
+      expect(mockGetWorkout).toHaveBeenCalledWith(workoutId);
     });
 
     it('should handle service errors correctly', async () => {
       // Arrange
       const workoutId = randomNumber(1, 1000).toString();
       const request: GetWorkoutRequest = { workoutId };
-      const expectedError = new Error('Service error');
+      const errorMessage = 'Service error';
 
-      mockWorkoutService.getWorkout.mockRejectedValue(expectedError);
+      mockGetWorkout = vi.fn().mockRejectedValue(new Error(errorMessage));
+      getWorkoutUseCase = createGetWorkoutUseCase(mockGetWorkout);
 
       // Act & Assert
       await expect(getWorkoutUseCase.execute(request)).rejects.toThrow(
-        'Service error'
+        errorMessage
       );
-      expect(mockWorkoutService.getWorkout).toHaveBeenCalledTimes(1);
+      expect(mockGetWorkout).toHaveBeenCalledWith(workoutId);
     });
 
     it('should work with string workout IDs', async () => {
       // Arrange
-      const workoutId = faker.string.alphanumeric(10);
+      const workoutId = randomString();
       const request: GetWorkoutRequest = { workoutId };
-      const expectedWorkout = {
-        id: workoutId,
-        name: faker.lorem.words(),
-      };
+      const expectedWorkout = new WorkoutDataFixture().build();
 
-      mockWorkoutService.getWorkout.mockResolvedValue(expectedWorkout);
+      mockGetWorkout = vi.fn().mockResolvedValue(expectedWorkout);
+      getWorkoutUseCase = createGetWorkoutUseCase(mockGetWorkout);
 
       // Act
       const result = await getWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toStrictEqual(expectedWorkout);
-      expect(mockWorkoutService.getWorkout).toHaveBeenCalledWith(workoutId);
+      expect(result).toEqual(expectedWorkout);
+      expect(mockGetWorkout).toHaveBeenCalledWith(workoutId);
     });
 
     it('should preserve workout data structure', async () => {
       // Arrange
       const workoutId = randomNumber(1, 1000).toString();
       const request: GetWorkoutRequest = { workoutId };
-      const expectedWorkout = {
-        id: workoutId,
-        name: faker.lorem.words(),
-        description: faker.lorem.sentence(),
-        duration: randomNumber(300, 7200),
-        distance: randomNumber(1, 100),
-        activityType: faker.lorem.word(),
-        tags: [faker.lorem.word(), faker.lorem.word()],
-        createdAt: faker.date.recent().toISOString(),
-      };
+      const expectedWorkout = new WorkoutDataFixture()
+        .withName('Complex Workout')
+        .withDescription('A complex workout with multiple phases')
+        .withDuration(3600)
+        .withDistance(10000)
+        .build();
 
-      mockWorkoutService.getWorkout.mockResolvedValue(expectedWorkout);
+      mockGetWorkout = vi.fn().mockResolvedValue(expectedWorkout);
+      getWorkoutUseCase = createGetWorkoutUseCase(mockGetWorkout);
 
       // Act
       const result = await getWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toStrictEqual(expectedWorkout);
-      expect(result.id).toBe(workoutId);
-      expect(result.name).toBe(expectedWorkout.name);
-      expect(result.description).toBe(expectedWorkout.description);
-      expect(result.duration).toBe(expectedWorkout.duration);
-      expect(result.distance).toBe(expectedWorkout.distance);
+      expect(result).toEqual(expectedWorkout);
+      expect(result.name).toBe('Complex Workout');
+      expect(result.description).toBe('A complex workout with multiple phases');
+      expect(result.duration).toBe(3600);
+      expect(result.distance).toBe(10000);
     });
 
     it('should handle empty workout ID', async () => {
@@ -130,66 +119,65 @@ describe('Get Workout Use Case', () => {
       const workoutId = '';
       const request: GetWorkoutRequest = { workoutId };
 
-      mockWorkoutService.getWorkout.mockResolvedValue(null);
+      mockGetWorkout = vi.fn().mockResolvedValue(null);
+      getWorkoutUseCase = createGetWorkoutUseCase(mockGetWorkout);
 
       // Act
       const result = await getWorkoutUseCase.execute(request);
 
       // Assert
       expect(result).toBeNull();
-      expect(mockWorkoutService.getWorkout).toHaveBeenCalledWith('');
+      expect(mockGetWorkout).toHaveBeenCalledWith(workoutId);
     });
 
     it('should work with random workout IDs', async () => {
       // Arrange
-      const workoutId = randomString(randomNumber(5, 20));
+      const workoutId = randomString();
       const request: GetWorkoutRequest = { workoutId };
-      const expectedWorkout = {
-        id: workoutId,
-        name: randomString(10),
-        description: randomString(50),
-      };
+      const expectedWorkout = new WorkoutDataFixture().build();
 
-      mockWorkoutService.getWorkout.mockResolvedValue(expectedWorkout);
+      mockGetWorkout = vi.fn().mockResolvedValue(expectedWorkout);
+      getWorkoutUseCase = createGetWorkoutUseCase(mockGetWorkout);
 
       // Act
       const result = await getWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toStrictEqual(expectedWorkout);
-      expect(typeof result.id).toBe('string');
-      expect(result.id).toBe(workoutId);
+      expect(result).toEqual(expectedWorkout);
+      expect(mockGetWorkout).toHaveBeenCalledWith(workoutId);
     });
 
     it('should handle undefined workout', async () => {
       // Arrange
-      const workoutId = randomNumber(1, 1000).toString();
+      const workoutId = randomString();
       const request: GetWorkoutRequest = { workoutId };
 
-      mockWorkoutService.getWorkout.mockResolvedValue(undefined);
+      mockGetWorkout = vi.fn().mockResolvedValue(undefined);
+      getWorkoutUseCase = createGetWorkoutUseCase(mockGetWorkout);
 
       // Act
       const result = await getWorkoutUseCase.execute(request);
 
       // Assert
       expect(result).toBeUndefined();
-      expect(mockWorkoutService.getWorkout).toHaveBeenCalledWith(workoutId);
+      expect(mockGetWorkout).toHaveBeenCalledWith(workoutId);
     });
 
     it('should pass through workout service response', async () => {
       // Arrange
-      const workoutId = randomNumber(1, 1000).toString();
+      const workoutId = randomString();
       const request: GetWorkoutRequest = { workoutId };
-      const serviceResponse = { id: workoutId, special: 'data' };
+      const serviceResponse = new WorkoutDataFixture().build();
 
-      mockWorkoutService.getWorkout.mockResolvedValue(serviceResponse);
+      mockGetWorkout = vi.fn().mockResolvedValue(serviceResponse);
+      getWorkoutUseCase = createGetWorkoutUseCase(mockGetWorkout);
 
       // Act
       const result = await getWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toBe(serviceResponse); // Same reference
-      expect(mockWorkoutService.getWorkout).toHaveBeenCalledWith(workoutId);
+      expect(result).toBe(serviceResponse); // Should be exact same reference
+      expect(mockGetWorkout).toHaveBeenCalledWith(workoutId);
     });
   });
 });

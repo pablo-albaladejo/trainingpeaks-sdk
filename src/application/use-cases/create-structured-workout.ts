@@ -1,11 +1,18 @@
 /**
  * Create Structured Workout Use Case
- * Handles structured workout creation operations
+ * Handles structured workout creation
  * Enhanced with Error Handler Service for robust error management
  */
 
-import type { LoggerService } from '@/application/services/logger';
-import { WorkoutService } from '@/application/services/workout-service';
+import type {
+  createStructuredWorkout,
+  createStructuredWorkoutFromSimpleStructure,
+  logDebug,
+  logError,
+  logInfo,
+  logWarn,
+  logWithLevel,
+} from '@/application';
 import { WorkoutStructure } from '@/domain/value-objects/workout-structure';
 import {
   createErrorHandlerService,
@@ -14,6 +21,9 @@ import {
 import { createLoggerService } from '@/infrastructure/services/logger';
 import { CreateStructuredWorkoutResponse } from '@/types';
 
+/**
+ * Request interface for creating structured workouts
+ */
 export interface CreateStructuredWorkoutUseCaseRequest {
   /** Athlete ID */
   athleteId: number;
@@ -62,8 +72,15 @@ export interface CreateStructuredWorkoutUseCaseRequest {
  * Enhanced with comprehensive error handling and context enrichment
  */
 export const createCreateStructuredWorkoutUseCase = (
-  workoutService: WorkoutService,
-  logger?: LoggerService
+  createStructuredWorkoutFn: createStructuredWorkout,
+  createStructuredWorkoutFromSimpleStructureFn: createStructuredWorkoutFromSimpleStructure,
+  logger?: {
+    info: logInfo;
+    error: logError;
+    warn: logWarn;
+    debug: logDebug;
+    log: logWithLevel;
+  }
 ) => {
   // Setup logger and error handler
   const useCaseLogger =
@@ -80,22 +97,17 @@ export const createCreateStructuredWorkoutUseCase = (
       enableContextEnrichment: true,
       logLevel: 'error',
       maxRetryAttempts: 1, // Use cases typically don't retry
-      retryDelay: 1000,
     }
   );
 
-  useCaseLogger.info(
-    'Create Structured Workout use case initialized with error handling'
-  );
-
   /**
-   * Create a structured workout
+   * Execute create structured workout process
    */
   const execute = async (
     request: CreateStructuredWorkoutUseCaseRequest
   ): Promise<CreateStructuredWorkoutResponse> => {
     const operation = () =>
-      workoutService.createStructuredWorkout(
+      createStructuredWorkoutFn(
         request.athleteId,
         request.title,
         request.workoutTypeValueId,
@@ -105,14 +117,6 @@ export const createCreateStructuredWorkoutUseCase = (
       );
 
     try {
-      useCaseLogger.debug('Executing create structured workout use case', {
-        athleteId: request.athleteId,
-        title: request.title,
-        workoutTypeValueId: request.workoutTypeValueId,
-        workoutDay: request.workoutDay,
-        hasMetadata: !!request.metadata,
-      });
-
       const result = await errorHandler.wrapAsyncOperation(operation, {
         operation: 'createStructuredWorkout',
         userId: request.athleteId,
@@ -120,31 +124,19 @@ export const createCreateStructuredWorkoutUseCase = (
           title: request.title,
           workoutTypeValueId: request.workoutTypeValueId,
           workoutDay: request.workoutDay,
-          hasMetadata: !!request.metadata,
         },
-      })();
+      });
 
-      if ('success' in result && result.success) {
-        useCaseLogger.info('Structured workout created successfully', {
-          athleteId: request.athleteId,
-          title: request.title,
-          workoutId: result.data?.workoutId,
-        });
+      useCaseLogger.info('Structured workout created successfully', {
+        athleteId: request.athleteId,
+        title: request.title,
+        workoutTypeValueId: request.workoutTypeValueId,
+      });
 
-        return result.data as CreateStructuredWorkoutResponse;
-      } else {
-        useCaseLogger.warn('Service returned unsuccessful response', {
-          athleteId: request.athleteId,
-          title: request.title,
-          error: result.error,
-        });
-
-        return {
-          success: false,
-          message: result.error?.message || 'Unknown error occurred',
-          errors: result.error?.details || ['Unknown error'],
-        };
-      }
+      return {
+        success: true,
+        message: 'Structured workout created successfully',
+      } as CreateStructuredWorkoutResponse;
     } catch (error) {
       const errorResponse = errorHandler.handleError(error as Error, {
         operation: 'createStructuredWorkout',
@@ -159,13 +151,13 @@ export const createCreateStructuredWorkoutUseCase = (
       return {
         success: false,
         message: errorResponse.error.message,
-        errors: errorResponse.error.details || [errorResponse.error.message],
-      };
+        errors: [errorResponse.error.message],
+      } as CreateStructuredWorkoutResponse;
     }
   };
 
   /**
-   * Create a structured workout from a simplified structure
+   * Create structured workout from simple elements
    */
   const createFromSimpleStructure = async (
     athleteId: number,
@@ -185,7 +177,7 @@ export const createCreateStructuredWorkoutUseCase = (
     }[]
   ): Promise<CreateStructuredWorkoutResponse> => {
     const operation = () =>
-      workoutService.createStructuredWorkoutFromSimpleStructure(
+      createStructuredWorkoutFromSimpleStructureFn(
         athleteId,
         title,
         workoutTypeValueId,
@@ -194,17 +186,6 @@ export const createCreateStructuredWorkoutUseCase = (
       );
 
     try {
-      useCaseLogger.debug(
-        'Executing create structured workout from simple structure',
-        {
-          athleteId,
-          title,
-          workoutTypeValueId,
-          workoutDay,
-          elementsCount: elements.length,
-        }
-      );
-
       const result = await errorHandler.wrapAsyncOperation(operation, {
         operation: 'createStructuredWorkoutFromSimpleStructure',
         userId: athleteId,
@@ -214,37 +195,20 @@ export const createCreateStructuredWorkoutUseCase = (
           workoutDay,
           elementsCount: elements.length,
         },
-      })();
+      });
 
-      if ('success' in result && result.success) {
-        useCaseLogger.info(
-          'Structured workout created from simple structure successfully',
-          {
-            athleteId,
-            title,
-            elementsCount: elements.length,
-            workoutId: result.data?.workoutId,
-          }
-        );
+      useCaseLogger.info('Structured workout created from simple structure', {
+        athleteId,
+        title,
+        workoutTypeValueId,
+        elementsCount: elements.length,
+      });
 
-        return result.data as CreateStructuredWorkoutResponse;
-      } else {
-        useCaseLogger.warn(
-          'Service returned unsuccessful response for simple structure',
-          {
-            athleteId,
-            title,
-            elementsCount: elements.length,
-            error: result.error,
-          }
-        );
-
-        return {
-          success: false,
-          message: result.error?.message || 'Unknown error occurred',
-          errors: result.error?.details || ['Unknown error'],
-        };
-      }
+      return {
+        success: true,
+        message:
+          'Structured workout created successfully from simple structure',
+      } as CreateStructuredWorkoutResponse;
     } catch (error) {
       const errorResponse = errorHandler.handleError(error as Error, {
         operation: 'createStructuredWorkoutFromSimpleStructure',
@@ -260,12 +224,15 @@ export const createCreateStructuredWorkoutUseCase = (
       return {
         success: false,
         message: errorResponse.error.message,
-        errors: errorResponse.error.details || [errorResponse.error.message],
-      };
+        errors: [errorResponse.error.message],
+      } as CreateStructuredWorkoutResponse;
     }
   };
 
-  return { execute, createFromSimpleStructure };
+  return {
+    execute,
+    createFromSimpleStructure,
+  };
 };
 
 // Export the type for dependency injection

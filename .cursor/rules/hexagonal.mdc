@@ -27,6 +27,126 @@ This enforces proper **Dependency Inversion Principle** and ensures true **hexag
 
 #### **📋 Application Layer: ONLY Definitions & Contracts**
 
+### 🚨 **CRITICAL: Individual Function Types Pattern**
+
+**IMPORTANT RULE FOR APPLICATION SERVICES:**
+
+All services in `src/application/services/` MUST use **individual function types** instead of grouped interface patterns.
+
+This enforces **Interface Segregation Principle** and provides better composition flexibility.
+
+#### **✅ CORRECT: Individual Function Types**
+
+```typescript
+// ✅ CORRECT: src/application/services/user-validation.ts
+// EXPORT INDIVIDUAL FUNCTION TYPES - NOT GROUPED INTERFACES
+
+/**
+ * Validates that a user ID meets business rules
+ * @throws InvalidUserIdError if validation fails
+ */
+export type validateUserId = (userId: string) => void;
+
+/**
+ * Validates user email format and business rules
+ * @throws InvalidEmailError if validation fails
+ */
+export type validateEmail = (email: string) => void;
+
+/**
+ * Validates filters for listing users
+ * @throws InvalidFiltersError if validation fails
+ */
+export type validateListUsersFilters = (
+  filters: UserValidationParams['filters']
+) => void;
+
+/**
+ * Validates all business rules for user creation
+ * @throws Various domain errors if validation fails
+ */
+export type validateUserCreationRules = (
+  name: string,
+  email: string,
+  companyId: number,
+  role: string
+) => void;
+
+/**
+ * Validates that a user can be safely deleted
+ * @throws InvalidUserDeletionError if deletion is not allowed
+ */
+export type validateUserCanBeDeleted = (user: User) => void;
+
+/**
+ * Factory function signature for creating user validation service
+ * This defines the contract for how the service should be instantiated
+ */
+export type UserValidationServiceFactory = () => {
+  validateUserId: validateUserId;
+  validateEmail: validateEmail;
+  validateListUsersFilters: validateListUsersFilters;
+  validateUserCreationRules: validateUserCreationRules;
+  validateUserCanBeDeleted: validateUserCanBeDeleted;
+};
+```
+
+#### **❌ INCORRECT: Grouped Interface Pattern**
+
+```typescript
+// ❌ WRONG: src/application/services/user-validation.ts
+// DON'T USE GROUPED INTERFACES - USE INDIVIDUAL FUNCTION TYPES
+
+/**
+ * Contract for user validation operations
+ * Defines what validation capabilities the system needs
+ */
+export type UserValidationService = {
+  /**
+   * Validates that a user ID meets business rules
+   * @throws InvalidUserIdError if validation fails
+   */
+  validateUserId: (userId: string) => void;
+
+  /**
+   * Validates user email format and business rules
+   * @throws InvalidEmailError if validation fails
+   */
+  validateEmail: (email: string) => void;
+
+  /**
+   * Validates filters for listing users
+   * @throws InvalidFiltersError if validation fails
+   */
+  validateListUsersFilters: (filters: UserValidationParams['filters']) => void;
+
+  /**
+   * Validates all business rules for user creation
+   * @throws Various domain errors if validation fails
+   */
+  validateUserCreationRules: (
+    name: string,
+    email: string,
+    companyId: number,
+    role: string
+  ) => void;
+
+  /**
+   * Validates that a user can be safely deleted
+   * @throws InvalidUserDeletionError if deletion is not allowed
+   */
+  validateUserCanBeDeleted: (user: User) => void;
+};
+```
+
+#### **🎯 Benefits of Individual Function Types**
+
+1. **Interface Segregation**: Each function is independently typed
+2. **Better Composition**: Functions can be injected individually
+3. **Testing Flexibility**: Mock individual functions easily
+4. **Dependency Clarity**: Clear what each use case depends on
+5. **Future Extensibility**: Easy to add/remove functions without breaking changes
+
 ```typescript
 // ✅ CORRECT: src/application/services/user-validation.ts
 // THIS FILE CONTAINS ONLY TYPE DEFINITIONS - NO IMPLEMENTATIONS

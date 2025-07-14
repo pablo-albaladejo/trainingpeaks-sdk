@@ -3,7 +3,7 @@
  * Handles retrieving workout information
  */
 
-import { WorkoutService } from '@/application/services/workout-service';
+import type { getWorkout } from '@/application/services/workout-query';
 import { Workout } from '@/domain/entities/workout';
 
 export interface GetWorkoutRequest {
@@ -14,13 +14,13 @@ export interface GetWorkoutRequest {
  * Get Workout Use Case Factory
  * Creates a get workout use case with dependency injection
  */
-export const createGetWorkoutUseCase = (workoutService: WorkoutService) => {
+export const createGetWorkoutUseCase = (getWorkoutFn: getWorkout) => {
   /**
    * Execute get workout process
    */
   const execute = async (request: GetWorkoutRequest): Promise<Workout> => {
     // Delegate to domain service
-    return await workoutService.getWorkout(request.workoutId);
+    return await getWorkoutFn(request.workoutId);
   };
 
   return { execute };

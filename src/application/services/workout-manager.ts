@@ -6,7 +6,13 @@
  */
 
 import type { WorkoutRepository } from '@/application/ports/workout';
-import type { LoggerService } from '@/application/services/logger';
+import type {
+  logDebug,
+  logError,
+  logInfo,
+  logWarn,
+  logWithLevel,
+} from '@/application/services/logger';
 import type { ListWorkoutsRequest } from '@/application/use-cases/list-workouts';
 import type { Workout } from '@/domain/entities/workout';
 import type { WorkoutStructure } from '@/domain/value-objects/workout-structure';
@@ -119,58 +125,64 @@ export type WorkoutStatsResponse = {
  * Contract for WorkoutManager operations
  * This is a PORT - defines what the application needs
  */
-export type WorkoutManagerService = {
-  /**
-   * Upload workout from data
-   */
-  uploadWorkout: (workoutData: WorkoutData) => Promise<WorkoutUploadResponse>;
+/**
+ * Upload workout from data
+ */
+export type uploadWorkout = (
+  workoutData: WorkoutData
+) => Promise<WorkoutUploadResponse>;
 
-  /**
-   * Upload workout from file
-   */
-  uploadWorkoutFromFile: (filePath: string) => Promise<WorkoutUploadResponse>;
+/**
+ * Upload workout from file
+ */
+export type uploadWorkoutFromFile = (
+  filePath: string
+) => Promise<WorkoutUploadResponse>;
 
-  /**
-   * Get workout by ID
-   */
-  getWorkout: (workoutId: string) => Promise<Workout>;
+/**
+ * Get workout by ID
+ */
+export type getWorkout = (workoutId: string) => Promise<Workout>;
 
-  /**
-   * List workouts with optional filters
-   */
-  listWorkouts: (filters?: ListWorkoutsRequest) => Promise<Workout[]>;
+/**
+ * List workouts with optional filters
+ */
+export type listWorkouts = (
+  filters?: ListWorkoutsRequest
+) => Promise<Workout[]>;
 
-  /**
-   * Delete workout by ID
-   */
-  deleteWorkout: (
-    workoutId: string
-  ) => Promise<{ success: boolean; message: string }>;
+/**
+ * Delete workout by ID
+ */
+export type deleteWorkout = (
+  workoutId: string
+) => Promise<{ success: boolean; message: string }>;
 
-  /**
-   * Create structured workout
-   */
-  createStructuredWorkout: (
-    workoutData: StructuredWorkoutData
-  ) => Promise<CreateStructuredWorkoutResponse>;
+/**
+ * Create structured workout
+ */
+export type createStructuredWorkout = (
+  workoutData: StructuredWorkoutData
+) => Promise<CreateStructuredWorkoutResponse>;
 
-  /**
-   * Search workouts by criteria
-   */
-  searchWorkouts: (criteria: WorkoutSearchCriteria) => Promise<Workout[]>;
+/**
+ * Search workouts by criteria
+ */
+export type searchWorkouts = (
+  criteria: WorkoutSearchCriteria
+) => Promise<Workout[]>;
 
-  /**
-   * Get workout statistics
-   */
-  getWorkoutStats: (
-    filters?: WorkoutStatsFilters
-  ) => Promise<WorkoutStatsResponse>;
+/**
+ * Get workout statistics
+ */
+export type getWorkoutStats = (
+  filters?: WorkoutStatsFilters
+) => Promise<WorkoutStatsResponse>;
 
-  /**
-   * Get workout repository (for advanced operations)
-   */
-  getWorkoutRepository: () => WorkoutRepository;
-};
+/**
+ * Get workout repository (for advanced operations)
+ */
+export type getWorkoutRepository = () => WorkoutRepository;
 
 /**
  * Workout manager configuration
@@ -188,5 +200,21 @@ export type WorkoutManagerConfig = {
  */
 export type WorkoutManagerServiceFactory = (
   config?: WorkoutManagerConfig,
-  logger?: LoggerService
-) => WorkoutManagerService;
+  logger?: {
+    info: logInfo;
+    error: logError;
+    warn: logWarn;
+    debug: logDebug;
+    log: logWithLevel;
+  }
+) => {
+  uploadWorkout: uploadWorkout;
+  uploadWorkoutFromFile: uploadWorkoutFromFile;
+  getWorkout: getWorkout;
+  listWorkouts: listWorkouts;
+  deleteWorkout: deleteWorkout;
+  createStructuredWorkout: createStructuredWorkout;
+  searchWorkouts: searchWorkouts;
+  getWorkoutStats: getWorkoutStats;
+  getWorkoutRepository: getWorkoutRepository;
+};
