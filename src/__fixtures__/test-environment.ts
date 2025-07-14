@@ -1,3 +1,4 @@
+import { createLoggerService } from '@/infrastructure/services/logger';
 import { TrainingPeaksConfig } from '@/types';
 
 export interface TestEnvironment {
@@ -40,6 +41,8 @@ export const testEnvironment: TestEnvironment = {
 
 // Helper function to skip tests if environment is not configured
 export function skipIfNotConfigured(): void {
+  const logger = createLoggerService({ level: 'info' });
+
   if (!testEnvironment.testUsername || !testEnvironment.testPassword) {
     throw new Error(
       'Integration tests require TRAININGPEAKS_TEST_USERNAME and TRAININGPEAKS_TEST_PASSWORD environment variables. ' +
@@ -48,11 +51,11 @@ export function skipIfNotConfigured(): void {
   }
 
   if (testEnvironment.trainingPeaksConfig.authMethod === 'web') {
-    console.log('🌐 Using web authentication - this will launch a browser');
-    console.log(`🔗 Login URL: ${testEnvironment.loginUrl}`);
-    console.log(`🏠 Base URL: ${testEnvironment.trainingPeaksConfig.baseUrl}`);
+    logger.info('🌐 Using web authentication - this will launch a browser');
+    logger.info(`🔗 Login URL: ${testEnvironment.loginUrl}`);
+    logger.info(`🏠 Base URL: ${testEnvironment.trainingPeaksConfig.baseUrl}`);
   } else {
-    console.log(
+    logger.info(
       '📡 Using API authentication - this uses placeholder endpoints'
     );
   }

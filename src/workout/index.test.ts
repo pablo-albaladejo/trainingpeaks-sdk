@@ -3,24 +3,24 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { WorkoutManager } from './index';
+import { createWorkoutManager, WorkoutManager } from './index';
 
 describe('WorkoutManager', () => {
   let workoutManager: WorkoutManager;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    workoutManager = new WorkoutManager();
+    workoutManager = createWorkoutManager();
   });
 
   describe('constructor', () => {
     it('should create workout manager with default config', () => {
       // Arrange & Act
-      const manager = new WorkoutManager();
+      const manager = createWorkoutManager();
 
       // Assert
       expect(manager).toBeDefined();
-      expect(manager).toBeInstanceOf(WorkoutManager);
+      expect(typeof manager.uploadWorkout).toBe('function');
       expect(manager.getWorkoutRepository()).toBeDefined();
     });
 
@@ -33,11 +33,11 @@ describe('WorkoutManager', () => {
       };
 
       // Act
-      const manager = new WorkoutManager(customConfig);
+      const manager = createWorkoutManager(customConfig);
 
       // Assert
       expect(manager).toBeDefined();
-      expect(manager).toBeInstanceOf(WorkoutManager);
+      expect(typeof manager.uploadWorkout).toBe('function');
     });
   });
 

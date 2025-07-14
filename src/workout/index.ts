@@ -1,44 +1,37 @@
 /**
- * Workout Management
- * Handles all workout-related operations including upload, creation, and retrieval
+ * Workout Management (Function-First Architecture)
+ * Handles all workout-related operations following hexagonal architecture principles
  */
 
-import type { WorkoutDomainService } from '@/application/services/workout-domain';
+import type { LoggerService } from '@/application/services/logger';
 import {
   createCreateStructuredWorkoutUseCase,
-  CreateStructuredWorkoutUseCase,
   CreateStructuredWorkoutUseCaseRequest,
 } from '@/application/use-cases/create-structured-workout';
 import {
   createDeleteWorkoutUseCase,
   DeleteWorkoutRequest,
-  DeleteWorkoutUseCase,
 } from '@/application/use-cases/delete-workout';
 import {
   createGetWorkoutUseCase,
   GetWorkoutRequest,
-  GetWorkoutUseCase,
 } from '@/application/use-cases/get-workout';
 import {
   createListWorkoutsUseCase,
   ListWorkoutsRequest,
-  ListWorkoutsUseCase,
 } from '@/application/use-cases/list-workouts';
 import {
   createUploadWorkoutUseCase,
   UploadWorkoutFromFileRequest,
   UploadWorkoutRequest,
-  UploadWorkoutUseCase,
 } from '@/application/use-cases/upload-workout';
 import { getSDKConfig } from '@/config';
 import { Workout } from '@/domain/entities/workout';
 import { WorkoutStructure } from '@/domain/value-objects/workout-structure';
 import { FileSystemAdapter } from '@/infrastructure/filesystem/file-system-adapter';
-import {
-  createTrainingPeaksWorkoutRepository,
-  TrainingPeaksWorkoutRepository,
-} from '@/infrastructure/repositories/training-peaks-workout';
-import { createWorkoutDomainService } from '@/infrastructure/services/workout-domain';
+import { createTrainingPeaksWorkoutRepository } from '@/infrastructure/repositories/training-peaks-workout';
+import { createLoggerService } from '@/infrastructure/services/logger';
+import { createWorkoutService } from '@/infrastructure/services/workout-service';
 import { TrainingPeaksWorkoutApiAdapter } from '@/infrastructure/workout/trainingpeaks-api-adapter';
 import {
   CreateStructuredWorkoutResponse,
@@ -105,225 +98,411 @@ export interface StructuredWorkoutData {
   };
 }
 
-export class WorkoutManager {
-  private readonly sdkConfig = getSDKConfig();
-  private readonly workoutRepository!: TrainingPeaksWorkoutRepository['repository'];
-  private readonly workoutDomainService!: WorkoutDomainService;
-  private readonly uploadWorkoutUseCase!: UploadWorkoutUseCase;
-  private readonly getWorkoutUseCase!: GetWorkoutUseCase;
-  private readonly listWorkoutsUseCase!: ListWorkoutsUseCase;
-  private readonly deleteWorkoutUseCase!: DeleteWorkoutUseCase;
-  private readonly createStructuredWorkoutUseCase!: CreateStructuredWorkoutUseCase;
+/**
+ * Setup workout dependencies following hexagonal architecture
+ */
+const setupWorkoutDependencies = (
+  config: TrainingPeaksClientConfig,
+  logger: LoggerService
+) => {
+  const sdkConfig = getSDKConfig();
 
-  constructor(config: TrainingPeaksClientConfig = {}) {
-    this.setupDependencies(config);
-  }
+  const workoutServiceConfig = {
+    baseUrl: config.baseUrl || sdkConfig.urls.baseUrl,
+    timeout: config.timeout || sdkConfig.timeouts.default,
+    debug: config.debug ?? sdkConfig.debug.enabled,
+    headers: config.headers || sdkConfig.requests.defaultHeaders,
+  };
 
-  private setupDependencies(config: TrainingPeaksClientConfig): void {
-    const workoutServiceConfig = {
-      baseUrl: config.baseUrl || this.sdkConfig.urls.baseUrl,
-      timeout: config.timeout || this.sdkConfig.timeouts.default,
-      debug: config.debug ?? this.sdkConfig.debug.enabled,
-      headers: config.headers || this.sdkConfig.requests.defaultHeaders,
-    };
+  logger.debug('Setting up workout dependencies', { workoutServiceConfig });
 
-    // Infrastructure Layer - External adapters
-    const fileSystemAdapter = new FileSystemAdapter();
-    const workoutApiAdapter = new TrainingPeaksWorkoutApiAdapter();
+  // Infrastructure Layer - External adapters
+  const fileSystemAdapter = new FileSystemAdapter();
+  const workoutApiAdapter = new TrainingPeaksWorkoutApiAdapter();
 
-    // Adapters Layer - Repository implementations
-    const workoutRepositoryFactory = createTrainingPeaksWorkoutRepository(
-      fileSystemAdapter,
-      workoutServiceConfig
-    );
+  // Adapters Layer - Repository implementations
+  const workoutRepositoryFactory = createTrainingPeaksWorkoutRepository(
+    fileSystemAdapter,
+    workoutServiceConfig
+  );
 
-    // Register adapters with the repository
-    workoutRepositoryFactory.registerWorkoutService(workoutApiAdapter);
+  // Register adapters with the repository
+  workoutRepositoryFactory.registerWorkoutService(workoutApiAdapter);
 
-    // Domain Layer - Domain service
-    const workoutDomainService = createWorkoutDomainService(
-      workoutRepositoryFactory.repository
-    );
+  // Infrastructure Layer - Service implementations
+  const workoutRepository = workoutRepositoryFactory.repository;
+  const workoutService = createWorkoutService(workoutRepository);
 
-    // Store references
-    (
-      this as unknown as {
-        workoutRepository: TrainingPeaksWorkoutRepository['repository'];
+  // Application Layer - Use Cases with proper dependency injection
+  const uploadWorkoutUseCase = createUploadWorkoutUseCase(workoutService);
+  const getWorkoutUseCase = createGetWorkoutUseCase(workoutService);
+  const listWorkoutsUseCase = createListWorkoutsUseCase(workoutService);
+  const deleteWorkoutUseCase = createDeleteWorkoutUseCase(workoutService);
+  const createStructuredWorkoutUseCase =
+    createCreateStructuredWorkoutUseCase(workoutService);
+
+  logger.info('Workout dependencies setup completed');
+
+  return {
+    workoutRepository,
+    workoutService,
+    uploadWorkoutUseCase,
+    getWorkoutUseCase,
+    listWorkoutsUseCase,
+    deleteWorkoutUseCase,
+    createStructuredWorkoutUseCase,
+  };
+};
+
+/**
+ * Create Workout Manager following function-first architecture
+ *
+ * @param config - TrainingPeaks client configuration
+ * @param logger - Optional logger implementation
+ * @returns WorkoutManager instance with all workout operations
+ */
+export const createWorkoutManager = (
+  config: TrainingPeaksClientConfig = {},
+  logger: LoggerService = createLoggerService({ level: 'info' })
+) => {
+  logger.info('Creating workout manager', { config });
+
+  // Setup all dependencies using proper dependency injection
+  const dependencies = setupWorkoutDependencies(config, logger);
+
+  return {
+    /**
+     * Upload workout from data
+     */
+    uploadWorkout: async (
+      workoutData: WorkoutData
+    ): Promise<WorkoutUploadResponse> => {
+      logger.info('Starting workout upload', {
+        fileName: workoutData.fileName,
+      });
+
+      try {
+        const request: UploadWorkoutRequest = {
+          fileContent: workoutData.fileContent,
+          fileName: workoutData.fileName,
+          metadata: workoutData.metadata
+            ? {
+                name: workoutData.metadata.title,
+                description: workoutData.metadata.description,
+                tags: workoutData.metadata.tags,
+                activityType: workoutData.metadata.activityType,
+              }
+            : undefined,
+        };
+
+        const result = await dependencies.uploadWorkoutUseCase.execute(request);
+
+        logger.info('Workout upload completed', {
+          success: result.success,
+          workoutId: result.workoutId,
+        });
+
+        return {
+          success: result.success,
+          workoutId: result.workoutId,
+          message: result.message,
+          errors: result.errors,
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        logger.error('Workout upload failed', { error: errorMessage });
+        throw error;
       }
-    ).workoutRepository = workoutRepositoryFactory.repository;
-    (
-      this as unknown as { workoutDomainService: WorkoutDomainService }
-    ).workoutDomainService = workoutDomainService;
+    },
 
-    // Application Layer - Use Cases
-    (
-      this as unknown as {
-        uploadWorkoutUseCase: UploadWorkoutUseCase;
+    /**
+     * Upload workout from file
+     */
+    uploadWorkoutFromFile: async (
+      filePath: string
+    ): Promise<WorkoutUploadResponse> => {
+      logger.info('Starting workout upload from file', { filePath });
+
+      try {
+        const request: UploadWorkoutFromFileRequest = { filePath };
+        const result =
+          await dependencies.uploadWorkoutUseCase.executeFromFile(request);
+
+        logger.info('Workout file upload completed', {
+          success: result.success,
+          workoutId: result.workoutId,
+        });
+
+        return {
+          success: result.success,
+          workoutId: result.workoutId,
+          message: result.message,
+          errors: result.errors,
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        logger.error('Workout file upload failed', { error: errorMessage });
+        throw error;
       }
-    ).uploadWorkoutUseCase = createUploadWorkoutUseCase(workoutDomainService);
-    (
-      this as unknown as {
-        getWorkoutUseCase: GetWorkoutUseCase;
+    },
+
+    /**
+     * Create structured workout
+     */
+    createStructuredWorkout: async (
+      workoutData: StructuredWorkoutData
+    ): Promise<CreateStructuredWorkoutResponse> => {
+      logger.info('Starting structured workout creation', {
+        athleteId: workoutData.athleteId,
+        title: workoutData.title,
+      });
+
+      try {
+        const request: CreateStructuredWorkoutUseCaseRequest = {
+          athleteId: workoutData.athleteId,
+          title: workoutData.title,
+          workoutTypeValueId: workoutData.workoutTypeValueId,
+          workoutDay: workoutData.workoutDay,
+          structure: workoutData.structure,
+          metadata: workoutData.metadata,
+        };
+
+        const result =
+          await dependencies.createStructuredWorkoutUseCase.execute(request);
+
+        logger.info('Structured workout created successfully', {
+          success: result.success,
+          workoutId: result.workoutId,
+        });
+
+        return result;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        logger.error('Structured workout creation failed', {
+          error: errorMessage,
+        });
+        throw error;
       }
-    ).getWorkoutUseCase = createGetWorkoutUseCase(workoutDomainService);
-    (
-      this as unknown as {
-        listWorkoutsUseCase: ListWorkoutsUseCase;
+    },
+
+    /**
+     * Create structured workout from simple structure
+     */
+    createStructuredWorkoutFromSimpleStructure: async (
+      athleteId: number,
+      title: string,
+      workoutTypeValueId: number,
+      workoutDay: string,
+      elements: {
+        type: 'step' | 'repetition';
+        repetitions?: number;
+        steps: {
+          name: string;
+          duration: number; // in seconds
+          intensityMin: number;
+          intensityMax: number;
+          intensityClass: 'active' | 'rest' | 'warmUp' | 'coolDown';
+        }[];
+      }[]
+    ): Promise<CreateStructuredWorkoutResponse> => {
+      logger.info('Creating structured workout from simple structure', {
+        athleteId,
+        title,
+        elementsCount: elements.length,
+      });
+
+      try {
+        const result =
+          await dependencies.createStructuredWorkoutUseCase.createFromSimpleStructure(
+            athleteId,
+            title,
+            workoutTypeValueId,
+            workoutDay,
+            elements
+          );
+
+        logger.info('Simple structured workout created successfully', {
+          success: result.success,
+          workoutId: result.workoutId,
+        });
+
+        return result;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        logger.error('Simple structured workout creation failed', {
+          error: errorMessage,
+        });
+        throw error;
       }
-    ).listWorkoutsUseCase = createListWorkoutsUseCase(workoutDomainService);
-    (
-      this as unknown as {
-        deleteWorkoutUseCase: DeleteWorkoutUseCase;
+    },
+
+    /**
+     * Get workout by ID
+     */
+    getWorkout: async (workoutId: string): Promise<Workout> => {
+      logger.info('Fetching workout', { workoutId });
+
+      try {
+        const request: GetWorkoutRequest = { workoutId };
+        const result = await dependencies.getWorkoutUseCase.execute(request);
+
+        logger.info('Workout fetched successfully', { workoutId });
+        return result;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        logger.error('Failed to fetch workout', {
+          workoutId,
+          error: errorMessage,
+        });
+        throw error;
       }
-    ).deleteWorkoutUseCase = createDeleteWorkoutUseCase(workoutDomainService);
-    (
-      this as unknown as {
-        createStructuredWorkoutUseCase: CreateStructuredWorkoutUseCase;
+    },
+
+    /**
+     * List workouts with filters
+     */
+    listWorkouts: async (filters?: {
+      startDate?: Date;
+      endDate?: Date;
+      activityType?: string;
+      tags?: string[];
+      limit?: number;
+      offset?: number;
+    }): Promise<Workout[]> => {
+      logger.info('Listing workouts', { filters });
+
+      try {
+        const request: ListWorkoutsRequest = filters || {};
+        const result = await dependencies.listWorkoutsUseCase.execute(request);
+
+        logger.info('Workouts listed successfully', { count: result.length });
+        return result;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        logger.error('Failed to list workouts', { error: errorMessage });
+        throw error;
       }
-    ).createStructuredWorkoutUseCase =
-      createCreateStructuredWorkoutUseCase(workoutDomainService);
-  }
+    },
 
-  public async uploadWorkout(
-    workoutData: WorkoutData
-  ): Promise<WorkoutUploadResponse> {
-    const request: UploadWorkoutRequest = {
-      fileContent: workoutData.fileContent,
-      fileName: workoutData.fileName,
-      metadata: workoutData.metadata
-        ? {
-            name: workoutData.metadata.title,
-            description: workoutData.metadata.description,
-            tags: workoutData.metadata.tags,
-            activityType: workoutData.metadata.activityType,
-          }
-        : undefined,
-    };
+    /**
+     * Delete workout by ID
+     */
+    deleteWorkout: async (workoutId: string): Promise<boolean> => {
+      logger.info('Deleting workout', { workoutId });
 
-    const result = await this.uploadWorkoutUseCase.execute(request);
+      try {
+        const request: DeleteWorkoutRequest = { workoutId };
+        const result = await dependencies.deleteWorkoutUseCase.execute(request);
 
-    return {
-      success: result.success,
-      workoutId: result.workoutId,
-      message: result.message,
-      errors: result.errors,
-    };
-  }
+        logger.info('Workout deleted successfully', {
+          workoutId,
+          success: result,
+        });
+        return result;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        logger.error('Failed to delete workout', {
+          workoutId,
+          error: errorMessage,
+        });
+        throw error;
+      }
+    },
 
-  public async uploadWorkoutFromFile(
-    filePath: string
-  ): Promise<WorkoutUploadResponse> {
-    const request: UploadWorkoutFromFileRequest = {
-      filePath,
-    };
+    /**
+     * Search workouts by criteria
+     */
+    searchWorkouts: async (query: {
+      text?: string;
+      activityType?: string;
+      dateRange?: {
+        start: Date;
+        end: Date;
+      };
+      durationRange?: {
+        min: number;
+        max: number;
+      };
+      distanceRange?: {
+        min: number;
+        max: number;
+      };
+    }): Promise<Workout[]> => {
+      logger.info('Searching workouts', { query });
 
-    const result = await this.uploadWorkoutUseCase.executeFromFile(request);
+      try {
+        const result =
+          await dependencies.workoutRepository.searchWorkouts(query);
 
-    return {
-      success: result.success,
-      workoutId: result.workoutId,
-      message: result.message,
-      errors: result.errors,
-    };
-  }
+        logger.info('Workout search completed', { count: result.length });
+        return result;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        logger.error('Workout search failed', { error: errorMessage });
+        throw error;
+      }
+    },
 
-  public async createStructuredWorkout(
-    workoutData: StructuredWorkoutData
-  ): Promise<CreateStructuredWorkoutResponse> {
-    const request: CreateStructuredWorkoutUseCaseRequest = {
-      athleteId: workoutData.athleteId,
-      title: workoutData.title,
-      workoutTypeValueId: workoutData.workoutTypeValueId,
-      workoutDay: workoutData.workoutDay,
-      structure: workoutData.structure,
-      metadata: workoutData.metadata,
-    };
+    /**
+     * Get workout statistics
+     */
+    getWorkoutStats: async (filters?: {
+      startDate?: Date;
+      endDate?: Date;
+      activityType?: string;
+    }): Promise<{
+      totalWorkouts: number;
+      totalDuration: number;
+      totalDistance: number;
+      averageDuration: number;
+      averageDistance: number;
+    }> => {
+      logger.info('Getting workout statistics', { filters });
 
-    return await this.createStructuredWorkoutUseCase.execute(request);
-  }
+      try {
+        const result =
+          await dependencies.workoutRepository.getWorkoutStats(filters);
 
-  public async createStructuredWorkoutFromSimpleStructure(
-    athleteId: number,
-    title: string,
-    workoutTypeValueId: number,
-    workoutDay: string,
-    elements: {
-      type: 'step' | 'repetition';
-      repetitions?: number;
-      steps: {
-        name: string;
-        duration: number; // in seconds
-        intensityMin: number;
-        intensityMax: number;
-        intensityClass: 'active' | 'rest' | 'warmUp' | 'coolDown';
-      }[];
-    }[]
-  ): Promise<CreateStructuredWorkoutResponse> {
-    return await this.createStructuredWorkoutUseCase.createFromSimpleStructure(
-      athleteId,
-      title,
-      workoutTypeValueId,
-      workoutDay,
-      elements
-    );
-  }
+        logger.info('Workout statistics retrieved', {
+          totalWorkouts: result.totalWorkouts,
+        });
+        return result;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        logger.error('Failed to get workout statistics', {
+          error: errorMessage,
+        });
+        throw error;
+      }
+    },
 
-  public async getWorkout(workoutId: string): Promise<Workout> {
-    const request: GetWorkoutRequest = { workoutId };
-    return await this.getWorkoutUseCase.execute(request);
-  }
+    /**
+     * Get workout repository for advanced operations
+     */
+    getWorkoutRepository: () => dependencies.workoutRepository,
 
-  public async listWorkouts(filters?: {
-    startDate?: Date;
-    endDate?: Date;
-    activityType?: string;
-    tags?: string[];
-    limit?: number;
-    offset?: number;
-  }): Promise<Workout[]> {
-    const request: ListWorkoutsRequest = filters || {};
-    return await this.listWorkoutsUseCase.execute(request);
-  }
+    /**
+     * Get workout service for advanced operations
+     */
+    getWorkoutService: () => dependencies.workoutService,
 
-  public async deleteWorkout(workoutId: string): Promise<boolean> {
-    const request: DeleteWorkoutRequest = { workoutId };
-    return await this.deleteWorkoutUseCase.execute(request);
-  }
+    /**
+     * Get configuration
+     */
+    getConfig: () => config,
+  };
+};
 
-  public async searchWorkouts(query: {
-    text?: string;
-    activityType?: string;
-    dateRange?: {
-      start: Date;
-      end: Date;
-    };
-    durationRange?: {
-      min: number;
-      max: number;
-    };
-    distanceRange?: {
-      min: number;
-      max: number;
-    };
-  }): Promise<Workout[]> {
-    return await this.workoutRepository.searchWorkouts(query);
-  }
-
-  public async getWorkoutStats(filters?: {
-    startDate?: Date;
-    endDate?: Date;
-    activityType?: string;
-  }): Promise<{
-    totalWorkouts: number;
-    totalDuration: number;
-    totalDistance: number;
-    averageDuration: number;
-    averageDistance: number;
-  }> {
-    return await this.workoutRepository.getWorkoutStats(filters);
-  }
-
-  public getWorkoutRepository(): TrainingPeaksWorkoutRepository['repository'] {
-    return this.workoutRepository;
-  }
-}
+/**
+ * Type definition for the workout manager
+ */
+export type WorkoutManager = ReturnType<typeof createWorkoutManager>;

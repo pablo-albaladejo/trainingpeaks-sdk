@@ -3,7 +3,7 @@
  * Handles workout upload operations
  */
 
-import { WorkoutDomainService } from '@/application/services/workout-domain';
+import { WorkoutService } from '@/application/services/workout-service';
 import { readFileSync } from 'fs';
 
 export interface UploadWorkoutRequest {
@@ -34,9 +34,7 @@ export interface UploadWorkoutFromFileRequest {
  * Upload Workout Use Case Factory
  * Creates an upload workout use case with dependency injection
  */
-export const createUploadWorkoutUseCase = (
-  workoutDomainService: WorkoutDomainService
-) => {
+export const createUploadWorkoutUseCase = (workoutService: WorkoutService) => {
   /**
    * Upload workout from data
    */
@@ -49,8 +47,8 @@ export const createUploadWorkoutUseCase = (
     errors?: string[];
   }> => {
     try {
-      // Delegate to domain service
-      return await workoutDomainService.uploadWorkout(
+      // Delegate to workout service
+      return await workoutService.uploadWorkout(
         request.fileContent,
         request.fileName,
         request.metadata
@@ -80,8 +78,8 @@ export const createUploadWorkoutUseCase = (
       const fileContent = readFileSync(request.filePath, 'utf8');
       const fileName = request.filePath.split('/').pop() || 'workout.tcx';
 
-      // Delegate to domain service
-      return await workoutDomainService.uploadWorkout(
+      // Delegate to workout service
+      return await workoutService.uploadWorkout(
         fileContent,
         fileName,
         request.metadata

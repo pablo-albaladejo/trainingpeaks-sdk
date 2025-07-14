@@ -3,7 +3,7 @@
  * Handles retrieving a list of workouts
  */
 
-import { WorkoutDomainService } from '@/application/services/workout-domain';
+import { WorkoutService } from '@/application/services/workout-service';
 import { Workout } from '@/domain/entities/workout';
 
 export interface ListWorkoutsRequest {
@@ -19,17 +19,15 @@ export interface ListWorkoutsRequest {
  * List Workouts Use Case Factory
  * Creates a list workouts use case with dependency injection
  */
-export const createListWorkoutsUseCase = (
-  workoutDomainService: WorkoutDomainService
-) => {
+export const createListWorkoutsUseCase = (workoutService: WorkoutService) => {
   /**
    * Execute list workouts process
    */
   const execute = async (
     request: ListWorkoutsRequest = {}
   ): Promise<Workout[]> => {
-    // Delegate to domain service
-    return await workoutDomainService.listWorkouts(request);
+    // Delegate to workout service
+    return await workoutService.listWorkouts(request);
   };
 
   return { execute };

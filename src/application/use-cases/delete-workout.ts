@@ -3,7 +3,7 @@
  * Handles workout deletion
  */
 
-import { WorkoutDomainService } from '@/application/services/workout-domain';
+import { WorkoutService } from '@/application/services/workout-service';
 
 export interface DeleteWorkoutRequest {
   workoutId: string;
@@ -13,15 +13,13 @@ export interface DeleteWorkoutRequest {
  * Delete Workout Use Case Factory
  * Creates a delete workout use case with dependency injection
  */
-export const createDeleteWorkoutUseCase = (
-  workoutDomainService: WorkoutDomainService
-) => {
+export const createDeleteWorkoutUseCase = (workoutService: WorkoutService) => {
   /**
    * Execute delete workout process
    */
   const execute = async (request: DeleteWorkoutRequest): Promise<boolean> => {
     // Delegate to domain service
-    return await workoutDomainService.deleteWorkout(request.workoutId);
+    return await workoutService.deleteWorkout(request.workoutId);
   };
 
   return { execute };

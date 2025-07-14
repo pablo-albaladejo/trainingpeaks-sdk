@@ -3,7 +3,7 @@
  * Handles structured workout creation operations
  */
 
-import { WorkoutDomainService } from '@/application/services/workout-domain';
+import { WorkoutService } from '@/application/services/workout-service';
 import { WorkoutStructure } from '@/domain/value-objects/workout-structure';
 import { CreateStructuredWorkoutResponse } from '@/types';
 
@@ -54,7 +54,7 @@ export interface CreateStructuredWorkoutUseCaseRequest {
  * Creates a create structured workout use case with dependency injection
  */
 export const createCreateStructuredWorkoutUseCase = (
-  workoutDomainService: WorkoutDomainService
+  workoutService: WorkoutService
 ) => {
   /**
    * Create a structured workout
@@ -63,8 +63,8 @@ export const createCreateStructuredWorkoutUseCase = (
     request: CreateStructuredWorkoutUseCaseRequest
   ): Promise<CreateStructuredWorkoutResponse> => {
     try {
-      // Delegate to domain service
-      return await workoutDomainService.createStructuredWorkout(
+      // Delegate to workout service
+      return await workoutService.createStructuredWorkout(
         request.athleteId,
         request.title,
         request.workoutTypeValueId,
@@ -102,8 +102,8 @@ export const createCreateStructuredWorkoutUseCase = (
     }[]
   ): Promise<CreateStructuredWorkoutResponse> => {
     try {
-      // Delegate to domain service
-      return await workoutDomainService.createStructuredWorkoutFromSimpleStructure(
+      // Delegate to workout service
+      return await workoutService.createStructuredWorkoutFromSimpleStructure(
         athleteId,
         title,
         workoutTypeValueId,

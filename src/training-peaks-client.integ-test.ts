@@ -7,10 +7,12 @@
 import { describe, expect, it } from 'vitest';
 import { testEnvironment } from './__fixtures__/test-environment';
 import { getSDKConfig } from './config';
+import { createLoggerService } from './infrastructure/services/logger';
 import { createTrainingPeaksClient } from './training-peaks-client';
 
 describe('TrainingPeaks Client Integration Tests', () => {
   const sdkConfig = getSDKConfig();
+  const logger = createLoggerService({ level: 'info' });
 
   // Helper function to check if test environment is configured
   const isTestConfigured = () => {
@@ -21,9 +23,7 @@ describe('TrainingPeaks Client Integration Tests', () => {
     it('should successfully login with real credentials', async () => {
       // Arrange: Skip test if environment is not configured
       if (!isTestConfigured()) {
-        console.log(
-          '⚠️  Skipping integration test - environment not configured'
-        );
+        logger.warn('Skipping integration test - environment not configured');
         return;
       }
 
@@ -77,9 +77,7 @@ describe('TrainingPeaks Client Integration Tests', () => {
     it('should handle authentication errors gracefully', async () => {
       // Arrange: Skip test if environment is not configured
       if (!isTestConfigured()) {
-        console.log(
-          '⚠️  Skipping integration test - environment not configured'
-        );
+        logger.warn('Skipping integration test - environment not configured');
         return;
       }
 
@@ -113,9 +111,7 @@ describe('TrainingPeaks Client Integration Tests', () => {
     it('should successfully logout', async () => {
       // Arrange: Skip test if environment is not configured
       if (!isTestConfigured()) {
-        console.log(
-          '⚠️  Skipping integration test - environment not configured'
-        );
+        logger.warn('Skipping integration test - environment not configured');
         return;
       }
 

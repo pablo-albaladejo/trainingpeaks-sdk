@@ -52,11 +52,14 @@ export type {
   AuthValidationService,
   AuthValidationServiceFactory,
 } from './services/auth-validation';
-// Legacy workout domain service (deprecated - use WorkoutService instead)
 export type {
-  WorkoutDomainService,
-  WorkoutDomainServiceFactory,
-} from './services/workout-domain';
+  LogContext,
+  LoggerService,
+  LoggerServiceFactory,
+  LogLevel,
+} from './services/logger';
+// Note: WorkoutDomainService has been deprecated and removed.
+// Use WorkoutService instead for all new code.
 
 // New modular workout services
 export type {
