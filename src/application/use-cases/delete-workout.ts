@@ -3,29 +3,31 @@
  * Handles workout deletion
  */
 
-import { WorkoutRepository } from '@/domain/repositories/workout';
+import { WorkoutDomainService } from '@/domain/services/workout-domain';
 
 export interface DeleteWorkoutRequest {
   workoutId: string;
 }
 
-export class DeleteWorkoutUseCase {
-  constructor(private readonly workoutRepository: WorkoutRepository) {}
+/**
+ * Delete Workout Use Case Factory
+ * Creates a delete workout use case with dependency injection
+ */
+export const createDeleteWorkoutUseCase = (
+  workoutDomainService: WorkoutDomainService
+) => {
+  /**
+   * Execute delete workout process
+   */
+  const execute = async (request: DeleteWorkoutRequest): Promise<boolean> => {
+    // Delegate to domain service
+    return await workoutDomainService.deleteWorkout(request.workoutId);
+  };
 
-  public async execute(request: DeleteWorkoutRequest): Promise<boolean> {
-    if (!request.workoutId || request.workoutId.trim().length === 0) {
-      throw new Error('Workout ID is required');
-    }
+  return { execute };
+};
 
-    // First check if workout exists
-    const existingWorkout = await this.workoutRepository.getWorkout(
-      request.workoutId
-    );
-    if (!existingWorkout) {
-      throw new Error(`Workout not found: ${request.workoutId}`);
-    }
-
-    // Delete the workout
-    return await this.workoutRepository.deleteWorkout(request.workoutId);
-  }
-}
+// Export the type for dependency injection
+export type DeleteWorkoutUseCase = ReturnType<
+  typeof createDeleteWorkoutUseCase
+>;

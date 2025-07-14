@@ -12,9 +12,12 @@ export { Workout } from './entities/workout';
 export { Credentials } from './value-objects/credentials';
 export { WorkoutFile } from './value-objects/workout-file';
 
-// Repositories (interfaces)
-export type { AuthRepository } from './repositories/auth';
-export type { UploadResult, WorkoutRepository } from './repositories/workout';
+// Errors
+export * from './errors';
+
+// Events
+export * from './events';
 
 // Services
 export { AuthDomainService } from './services/auth-domain';
+export { WorkoutDomainService } from './services/workout-domain';

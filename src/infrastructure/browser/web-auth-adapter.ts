@@ -11,6 +11,7 @@ import { getSDKConfig } from '@/config';
 import { AuthToken } from '@/domain/entities/auth-token';
 import { User } from '@/domain/entities/user';
 import { Credentials } from '@/domain/value-objects/credentials';
+import { authLogger, browserLogger } from '@/infrastructure/logging/logger';
 import { Browser, chromium, Page, Response } from 'playwright-core';
 
 interface InterceptedData {
@@ -113,9 +114,9 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
 
     const page = await context.newPage();
 
-    if (config.debug) {
-      page.on('console', (msg) => console.log('Browser:', msg.text()));
-    }
+    page.on('console', (msg) =>
+      browserLogger.debug('Browser console', { message: msg.text() })
+    );
 
     return page;
   }
@@ -133,9 +134,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     // Navigate to login page
     const loginUrl = this.sdkConfig.urls.loginUrl;
 
-    if (config.debug) {
-      console.log(`Navigating to TrainingPeaks login page: ${loginUrl}`);
-    }
+    authLogger.info('Navigating to TrainingPeaks login page', { loginUrl });
 
     await page.goto(loginUrl, {
       waitUntil: 'networkidle',
@@ -165,8 +164,8 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     page.on('response', async (response) => {
       const url = response.url();
 
-      if (config.debug && (url.includes('/api/') || url.includes('/users/'))) {
-        console.log(`API Response: ${response.status()} ${url}`);
+      if (url.includes('/api/') || url.includes('/users/')) {
+        authLogger.debug('API Response', { status: response.status(), url });
       }
 
       if (url.includes('/users/v3/token')) {
@@ -188,13 +187,9 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
       });
       await page.click('#onetrust-accept-btn-handler');
 
-      if (config.debug) {
-        console.log('Accepted cookies');
-      }
+      browserLogger.debug('Accepted cookies');
     } catch {
-      if (config.debug) {
-        console.log('No cookies banner found, continuing...');
-      }
+      browserLogger.debug('No cookies banner found, continuing...');
     }
   }
 
@@ -203,9 +198,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     credentials: Credentials,
     config: Required<AuthenticationConfig>
   ): Promise<void> {
-    if (config.debug) {
-      console.log('Entering credentials...');
-    }
+    authLogger.debug('Entering credentials');
 
     await page.waitForSelector('[data-cy="username"]', {
       state: 'visible',
@@ -224,9 +217,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     page: Page,
     config: Required<AuthenticationConfig>
   ): Promise<void> {
-    if (config.debug) {
-      console.log('Submitting login form...');
-    }
+    authLogger.debug('Submitting login form');
 
     await page.click('#btnSubmit');
 
@@ -263,9 +254,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     const appUrl = this.sdkConfig.urls.appUrl;
     const appUrlPattern = appUrl + '/**';
 
-    if (config.debug) {
-      console.log(`Waiting for app URL pattern: ${appUrlPattern}`);
-    }
+    authLogger.debug('Waiting for app URL pattern', { appUrlPattern });
 
     await page.waitForURL(appUrlPattern, {
       timeout: config.webAuth.timeout,
@@ -274,9 +263,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     // Give time for API calls to complete
     await page.waitForTimeout(this.sdkConfig.browser.pageWaitTimeout);
 
-    if (config.debug) {
-      console.log('Successfully authenticated with TrainingPeaks');
-    }
+    authLogger.info('Successfully authenticated with TrainingPeaks');
   }
 
   private async handleTokenResponse(
@@ -310,13 +297,9 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
         json.token.refresh_token
       );
 
-      if (config.debug) {
-        console.log('Successfully intercepted auth token');
-      }
+      authLogger.info('Successfully intercepted auth token');
     } catch (error) {
-      if (config.debug) {
-        console.error('Error processing token response:', error);
-      }
+      authLogger.error('Error processing token response', { error });
     }
   }
 
@@ -341,13 +324,9 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
       // Store user ID as string
       interceptedData.userId = String(json.user.userId);
 
-      if (config.debug) {
-        console.log('Successfully intercepted user ID');
-      }
+      authLogger.info('Successfully intercepted user ID');
     } catch (error) {
-      if (config.debug) {
-        console.error('Error processing user response:', error);
-      }
+      authLogger.error('Error processing user response', { error });
     }
   }
 

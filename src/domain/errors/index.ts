@@ -1,5 +1,8 @@
 /**
- * TrainingPeaks SDK Error Classes
+ * Domain Layer - Error Classes
+ *
+ * Domain-specific errors that represent business rule violations
+ * and domain logic failures.
  */
 
 export class TrainingPeaksError extends Error {
@@ -31,14 +34,6 @@ export class AuthorizationError extends TrainingPeaksError {
   }
 }
 
-export class NetworkError extends TrainingPeaksError {
-  constructor(message: string = 'Network request failed') {
-    super(message, 'NETWORK_ERROR');
-    this.name = 'NetworkError';
-    Object.setPrototypeOf(this, NetworkError.prototype);
-  }
-}
-
 export class ValidationError extends TrainingPeaksError {
   constructor(message: string = 'Validation failed') {
     super(message, 'VALIDATION_ERROR', 400);
@@ -60,5 +55,13 @@ export class RateLimitError extends TrainingPeaksError {
     super(message, 'RATE_LIMIT_ERROR', 429);
     this.name = 'RateLimitError';
     Object.setPrototypeOf(this, RateLimitError.prototype);
+  }
+}
+
+export class NetworkError extends TrainingPeaksError {
+  constructor(message: string = 'Network request failed') {
+    super(message, 'NETWORK_ERROR');
+    this.name = 'NetworkError';
+    Object.setPrototypeOf(this, NetworkError.prototype);
   }
 }

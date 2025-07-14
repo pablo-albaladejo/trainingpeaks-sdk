@@ -3,27 +3,39 @@
  * Retrieves the currently authenticated user
  */
 
+import { AuthRepository } from '@/application/ports/auth';
 import { User } from '@/domain/entities/user';
-import { AuthRepository } from '@/domain/repositories/auth';
-import { AuthDomainService } from '@/domain/services/auth-domain';
+import { createAuthDomainService } from '@/domain/services/auth-domain';
 
-export class GetCurrentUserUseCase {
-  private readonly authDomainService = new AuthDomainService();
+/**
+ * Get Current User Use Case Factory
+ * Creates a get current user use case with dependency injection
+ */
+export const createGetCurrentUserUseCase = (authRepository: AuthRepository) => {
+  const authDomainService = createAuthDomainService();
 
-  constructor(private readonly authRepository: AuthRepository) {}
+  /**
+   * Execute get current user process
+   */
+  const execute = async (): Promise<User> => {
+    const currentToken = authRepository.getCurrentToken();
 
-  public async execute(): Promise<User> {
-    const currentToken = this.authRepository.getCurrentToken();
-
-    if (!currentToken || this.authDomainService.isTokenExpired(currentToken)) {
+    if (!currentToken || authDomainService.isTokenExpired(currentToken)) {
       throw new Error('No valid authentication token available');
     }
 
-    const currentUser = await this.authRepository.getCurrentUser();
+    const currentUser = await authRepository.getCurrentUser();
     if (!currentUser) {
       throw new Error('No current user found');
     }
 
     return currentUser;
-  }
-}
+  };
+
+  return { execute };
+};
+
+// Export the type for dependency injection
+export type GetCurrentUserUseCase = ReturnType<
+  typeof createGetCurrentUserUseCase
+>;

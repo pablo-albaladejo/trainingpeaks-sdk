@@ -4,26 +4,29 @@
  */
 
 import { Workout } from '@/domain/entities/workout';
-import { WorkoutRepository } from '@/domain/repositories/workout';
+import { WorkoutDomainService } from '@/domain/services/workout-domain';
 
 export interface GetWorkoutRequest {
   workoutId: string;
 }
 
-export class GetWorkoutUseCase {
-  constructor(private readonly workoutRepository: WorkoutRepository) {}
+/**
+ * Get Workout Use Case Factory
+ * Creates a get workout use case with dependency injection
+ */
+export const createGetWorkoutUseCase = (
+  workoutDomainService: WorkoutDomainService
+) => {
+  /**
+   * Execute get workout process
+   */
+  const execute = async (request: GetWorkoutRequest): Promise<Workout> => {
+    // Delegate to domain service
+    return await workoutDomainService.getWorkout(request.workoutId);
+  };
 
-  public async execute(request: GetWorkoutRequest): Promise<Workout> {
-    if (!request.workoutId || request.workoutId.trim().length === 0) {
-      throw new Error('Workout ID is required');
-    }
+  return { execute };
+};
 
-    const workout = await this.workoutRepository.getWorkout(request.workoutId);
-
-    if (!workout) {
-      throw new Error(`Workout not found: ${request.workoutId}`);
-    }
-
-    return workout;
-  }
-}
+// Export the type for dependency injection
+export type GetWorkoutUseCase = ReturnType<typeof createGetWorkoutUseCase>;

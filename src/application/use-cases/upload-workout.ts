@@ -3,9 +3,7 @@
  * Handles workout upload operations
  */
 
-import { Workout } from '@/domain/entities/workout';
-import { UploadResult, WorkoutRepository } from '@/domain/repositories/workout';
-import { WorkoutFile } from '@/domain/value-objects/workout-file';
+import { WorkoutDomainService } from '@/domain/services/workout-domain';
 import { readFileSync } from 'fs';
 
 export interface UploadWorkoutRequest {
@@ -32,34 +30,31 @@ export interface UploadWorkoutFromFileRequest {
   };
 }
 
-export class UploadWorkoutUseCase {
-  constructor(private readonly workoutRepository: WorkoutRepository) {}
-
+/**
+ * Upload Workout Use Case Factory
+ * Creates an upload workout use case with dependency injection
+ */
+export const createUploadWorkoutUseCase = (
+  workoutDomainService: WorkoutDomainService
+) => {
   /**
    * Upload workout from data
    */
-  public async execute(request: UploadWorkoutRequest): Promise<UploadResult> {
+  const execute = async (
+    request: UploadWorkoutRequest
+  ): Promise<{
+    success: boolean;
+    workoutId?: string;
+    message: string;
+    errors?: string[];
+  }> => {
     try {
-      // Create workout file value object
-      const workoutFile = WorkoutFile.create(
-        request.fileName,
+      // Delegate to domain service
+      return await workoutDomainService.uploadWorkout(
         request.fileContent,
-        this.getMimeTypeFromFileName(request.fileName)
-      );
-
-      // Generate unique ID for the workout
-      const workoutId = this.generateWorkoutId();
-
-      // Create workout entity
-      const workout = Workout.fromFile(
-        workoutId,
         request.fileName,
-        request.fileContent,
         request.metadata
       );
-
-      // Upload through repository
-      return await this.workoutRepository.uploadWorkout(workout);
     } catch (error) {
       return {
         success: false,
@@ -67,29 +62,28 @@ export class UploadWorkoutUseCase {
         errors: [error instanceof Error ? error.message : 'Unknown error'],
       };
     }
-  }
+  };
 
   /**
    * Upload workout from file path
    */
-  public async executeFromFile(
+  const executeFromFile = async (
     request: UploadWorkoutFromFileRequest
-  ): Promise<UploadResult> {
+  ): Promise<{
+    success: boolean;
+    workoutId?: string;
+    message: string;
+    errors?: string[];
+  }> => {
     try {
       // Read file content (this would be handled by infrastructure)
       const fileContent = readFileSync(request.filePath, 'utf8');
       const fileName = request.filePath.split('/').pop() || 'workout.tcx';
 
-      // Create workout file value object
-      const workoutFile = WorkoutFile.create(
-        fileName,
+      // Delegate to domain service
+      return await workoutDomainService.uploadWorkout(
         fileContent,
-        this.getMimeTypeFromFileName(fileName)
-      );
-
-      // Upload through repository
-      return await this.workoutRepository.uploadWorkoutFromFile(
-        workoutFile,
+        fileName,
         request.metadata
       );
     } catch (error) {
@@ -99,28 +93,12 @@ export class UploadWorkoutUseCase {
         errors: [error instanceof Error ? error.message : 'Unknown error'],
       };
     }
-  }
+  };
 
-  private generateWorkoutId(): string {
-    return `workout_${Date.now()}_${Math.random()
-      .toString(36)
-      .substring(2, 15)}`;
-  }
+  return { execute, executeFromFile };
+};
 
-  private getMimeTypeFromFileName(fileName: string): string {
-    const extension = fileName.toLowerCase().split('.').pop();
-
-    switch (extension) {
-      case 'tcx':
-        return 'application/tcx+xml';
-      case 'gpx':
-        return 'application/gpx+xml';
-      case 'fit':
-        return 'application/fit';
-      case 'xml':
-        return 'application/xml';
-      default:
-        return 'application/octet-stream';
-    }
-  }
-}
+// Export the type for dependency injection
+export type UploadWorkoutUseCase = ReturnType<
+  typeof createUploadWorkoutUseCase
+>;

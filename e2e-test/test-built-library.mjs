@@ -7,7 +7,7 @@
  * in an ES modules environment.
  */
 
-import { TrainingPeaksClient } from '../dist/index.js';
+import { createTrainingPeaksClient } from '../dist/index.js';
 
 console.log('🧪 Testing TrainingPeaks SDK (ES Modules)...\n');
 
@@ -16,7 +16,7 @@ async function runE2ETests() {
     console.log('✅ Step 1: Import successful');
 
     // Test client instantiation
-    const client = new TrainingPeaksClient({
+    const client = createTrainingPeaksClient({
       debug: true,
       timeout: 5000,
       webAuth: {

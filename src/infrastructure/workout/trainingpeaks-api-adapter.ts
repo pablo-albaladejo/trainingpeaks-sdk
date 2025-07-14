@@ -1,9 +1,8 @@
 /**
- * TrainingPeaks API Workout Adapter
- * Implements workout operations using TrainingPeaks API
+ * TrainingPeaks Workout API Adapter
+ * Handles workout operations via TrainingPeaks API
  */
 
-import axios, { AxiosInstance } from 'axios';
 import {
   WorkoutServiceConfig,
   WorkoutServicePort,
@@ -11,6 +10,15 @@ import {
 import { getSDKConfig } from '@/config';
 import { Workout } from '@/domain/entities/workout';
 import { WorkoutFile } from '@/domain/value-objects/workout-file';
+import { networkLogger, workoutLogger } from '@/infrastructure/logging/logger';
+import {
+  CreateStructuredWorkoutRequest,
+  CreateStructuredWorkoutResponse,
+  StructuredWorkoutRequest,
+  StructuredWorkoutResponse,
+  WorkoutStructure,
+} from '@/types';
+import axios, { AxiosInstance } from 'axios';
 
 export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
   private readonly sdkConfig = getSDKConfig();
@@ -30,7 +38,7 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
 
   public canHandle(config: WorkoutServiceConfig): boolean {
     // This adapter handles TrainingPeaks API operations
-    return config.baseUrl.includes('trainingpeaks.com');
+    return config.baseUrl?.includes('trainingpeaks.com') || false;
   }
 
   public async uploadWorkout(
@@ -43,9 +51,9 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
     errors?: string[];
   }> {
     try {
-      if (config.debug) {
-        console.log('Uploading workout via TrainingPeaks API:', workout.name);
-      }
+      workoutLogger.info('Uploading workout via TrainingPeaks API', {
+        name: workout.name,
+      });
 
       // In a real implementation, this would make actual API calls
       // For now, simulate the upload
@@ -81,12 +89,9 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
     errors?: string[];
   }> {
     try {
-      if (config.debug) {
-        console.log(
-          'Uploading workout file via TrainingPeaks API:',
-          workoutFile.fileName
-        );
-      }
+      workoutLogger.info('Uploading workout file via TrainingPeaks API', {
+        fileName: workoutFile.fileName,
+      });
 
       // In a real implementation, this would make actual API calls with FormData
       await this.simulateApiCall(
@@ -110,28 +115,165 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
     }
   }
 
+  public async createStructuredWorkout(
+    request: CreateStructuredWorkoutRequest,
+    config: Required<WorkoutServiceConfig>
+  ): Promise<CreateStructuredWorkoutResponse> {
+    try {
+      workoutLogger.info('Creating structured workout via TrainingPeaks API', {
+        title: request.title,
+        athleteId: request.athleteId,
+      });
+
+      // Build the full API request payload
+      const apiRequest: StructuredWorkoutRequest = {
+        athleteId: request.athleteId,
+        title: request.title,
+        workoutTypeValueId: request.workoutTypeValueId,
+        code: request.metadata?.code || null,
+        workoutDay: request.workoutDay,
+        startTime: null,
+        startTimePlanned: null,
+        isItAnOr: false,
+        isHidden: null,
+        completed: null,
+        description: request.metadata?.description || null,
+        userTags: request.metadata?.userTags || '',
+        coachComments: request.metadata?.coachComments || null,
+        workoutComments: [],
+        newComment: null,
+        hasPrivateWorkoutCommentForCaller: false,
+        hasPrivateWorkoutNoteForCaller: false,
+        publicSettingValue: request.metadata?.publicSettingValue || 2,
+        distance: null,
+        distancePlanned:
+          request.metadata?.plannedMetrics?.distancePlanned || null,
+        distanceCustomized: null,
+        distanceUnitsCustomized: null,
+        totalTime: null,
+        totalTimePlanned:
+          request.metadata?.plannedMetrics?.totalTimePlanned || null,
+        heartRateMinimum: null,
+        heartRateMaximum: null,
+        heartRateAverage: null,
+        calories: null,
+        caloriesPlanned:
+          request.metadata?.plannedMetrics?.caloriesPlanned || null,
+        tssActual: null,
+        tssPlanned: request.metadata?.plannedMetrics?.tssPlanned || null,
+        tssSource: 0,
+        if: null,
+        ifPlanned: request.metadata?.plannedMetrics?.ifPlanned || null,
+        velocityAverage: null,
+        velocityPlanned:
+          request.metadata?.plannedMetrics?.velocityPlanned || null,
+        velocityMaximum: null,
+        normalizedSpeedActual: null,
+        normalizedPowerActual: null,
+        powerAverage: null,
+        powerMaximum: null,
+        energy: null,
+        energyPlanned: request.metadata?.plannedMetrics?.energyPlanned || null,
+        elevationGain: null,
+        elevationGainPlanned:
+          request.metadata?.plannedMetrics?.elevationGainPlanned || null,
+        elevationLoss: null,
+        elevationMinimum: null,
+        elevationAverage: null,
+        elevationMaximum: null,
+        torqueAverage: null,
+        torqueMaximum: null,
+        tempMin: null,
+        tempAvg: null,
+        tempMax: null,
+        cadenceAverage: null,
+        cadenceMaximum: null,
+        lastModifiedDate: new Date().toISOString(),
+        equipmentBikeId: request.metadata?.equipment?.bikeId || null,
+        equipmentShoeId: request.metadata?.equipment?.shoeId || null,
+        isLocked: null,
+        complianceDurationPercent: null,
+        complianceDistancePercent: null,
+        complianceTssPercent: null,
+        rpe: null,
+        feeling: null,
+        structure: request.structure.toApiFormat() as WorkoutStructure,
+        orderOnDay: null,
+        personalRecordCount: 0,
+        syncedTo: null,
+        poolLengthOptionId: null,
+        workoutSubTypeId: null,
+      };
+
+      // Make the actual API call
+      const response = await this.httpClient.post<StructuredWorkoutResponse>(
+        `/fitness/v6/athletes/${request.athleteId}/workouts`,
+        apiRequest,
+        {
+          headers: {
+            ...config.headers,
+            'Content-Type': 'application/json',
+          },
+          timeout: config.timeout,
+        }
+      );
+
+      workoutLogger.info('Structured workout created successfully', {
+        workoutId: response.data.workoutId,
+      });
+
+      return {
+        success: true,
+        workoutId: response.data.workoutId,
+        message: 'Structured workout created successfully',
+        workout: response.data,
+      };
+    } catch (error) {
+      if (config.debug) {
+        console.error('Failed to create structured workout:', error);
+      }
+
+      let errorMessage = 'Failed to create structured workout';
+      let errors: string[] = [];
+
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message;
+        errors = error.response?.data?.errors || [error.message];
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+        errors = [error.message];
+      }
+
+      return {
+        success: false,
+        message: errorMessage,
+        errors,
+      };
+    }
+  }
+
   public async getWorkout(
     workoutId: string,
     config: Required<WorkoutServiceConfig>
   ): Promise<Workout | null> {
     try {
-      if (config.debug) {
-        console.log('Getting workout via TrainingPeaks API:', workoutId);
-      }
+      workoutLogger.info('Getting workout via TrainingPeaks API', {
+        workoutId,
+      });
 
-      // In a real implementation, this would make actual API calls
+      // In a real implementation, this would make actual GET API calls
       await this.simulateApiCall('get', workoutId, config);
 
       // Return mock workout
       return Workout.create(
         workoutId,
-        'Sample Workout from API',
-        'A workout retrieved from TrainingPeaks API',
+        'API Retrieved Workout',
+        'Retrieved from TrainingPeaks API',
         new Date(),
         3600, // 1 hour
-        10000, // 10km
+        5000, // 5km
         'Running',
-        ['api', 'sample']
+        ['api', 'retrieved']
       );
     } catch (error) {
       if (config.debug) {
@@ -153,12 +295,7 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
     config: Required<WorkoutServiceConfig>
   ): Promise<Workout[]> {
     try {
-      if (config.debug) {
-        console.log(
-          'Listing workouts via TrainingPeaks API with filters:',
-          filters
-        );
-      }
+      workoutLogger.info('Listing workouts via TrainingPeaks API', { filters });
 
       // In a real implementation, this would make actual API calls with query parameters
       await this.simulateApiCall('list', filters, config);
@@ -199,18 +336,16 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
     config: Required<WorkoutServiceConfig>
   ): Promise<boolean> {
     try {
-      if (config.debug) {
-        console.log('Deleting workout via TrainingPeaks API:', workoutId);
-      }
+      workoutLogger.info('Deleting workout via TrainingPeaks API', {
+        workoutId,
+      });
 
       // In a real implementation, this would make actual DELETE API calls
       await this.simulateApiCall('delete', workoutId, config);
 
       return true;
     } catch (error) {
-      if (config.debug) {
-        console.error('Failed to delete workout:', error);
-      }
+      workoutLogger.error('Failed to delete workout', { workoutId, error });
       return false;
     }
   }
@@ -221,19 +356,13 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
     config: Required<WorkoutServiceConfig>
   ): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (config.debug) {
-        console.log(`Simulating TrainingPeaks API call: ${operation}`, data);
-      }
+      networkLogger.debug(`Simulating TrainingPeaks API call: ${operation}`, {
+        data,
+      });
 
       // Simulate network delay
       setTimeout(() => {
-        // Simulate occasional failures for testing
-        if (Math.random() < 0.05) {
-          // 5% failure rate
-          reject(new Error(`Simulated API failure for ${operation}`));
-        } else {
-          resolve();
-        }
+        resolve();
       }, 100); // 100ms delay
     });
   }

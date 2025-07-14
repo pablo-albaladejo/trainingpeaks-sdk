@@ -7,7 +7,7 @@
  * in a CommonJS environment.
  */
 
-const { TrainingPeaksClient } = require('../dist/index.cjs');
+const { createTrainingPeaksClient } = require('../dist/index.cjs');
 
 console.log('🧪 Testing TrainingPeaks SDK (CommonJS)...\n');
 
@@ -16,7 +16,7 @@ async function runE2ETests() {
     console.log('✅ Step 1: Require successful');
 
     // Test client instantiation
-    const client = new TrainingPeaksClient({
+    const client = createTrainingPeaksClient({
       debug: true,
       timeout: 5000,
       webAuth: {

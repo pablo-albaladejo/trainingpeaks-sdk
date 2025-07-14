@@ -39,5 +39,9 @@ export type {
   WorkoutServicePort,
 } from './ports/workout';
 
+// Repository Interfaces
+export type { AuthRepository } from './ports/auth';
+export type { UploadResult, WorkoutRepository } from './ports/workout';
+
 // Services
 export { AuthApplicationService } from './services/auth-application';

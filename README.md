@@ -8,6 +8,18 @@ A TypeScript SDK for TrainingPeaks API integration with authentication and worko
 [![codecov](https://codecov.io/gh/pablo-albaladejo/trainingpeaks-sdk/branch/main/graph/badge.svg)](https://codecov.io/gh/pablo-albaladejo/trainingpeaks-sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## 🚨 Migration Notice
+
+**Version 2.0.0 introduces Function-First Architecture with breaking changes.**
+
+If you're upgrading from v1.x, please see the [Migration Guide](MIGRATION.md) for detailed instructions on updating your code.
+
+**Quick Migration Summary:**
+
+- Replace `new TrainingPeaksClient()` with `createTrainingPeaksClient()`
+- Update imports: `import { createTrainingPeaksClient } from 'trainingpeaks-sdk'`
+- See [MIGRATION.md](MIGRATION.md) for complete migration instructions
+
 ## Features
 
 - 🔐 **Web-based Authentication** - Real browser simulation for TrainingPeaks login
@@ -18,6 +30,7 @@ A TypeScript SDK for TrainingPeaks API integration with authentication and worko
 - 📊 **Multiple Auth Patterns** - Simple and advanced authentication patterns
 - ✅ **Comprehensive Tests** - Unit and integration test coverage
 - 🛠️ **Developer-friendly** - Full ESLint/Prettier setup with commit hooks
+- 🏗️ **Clean Architecture** - Hexagonal architecture with Function-First patterns
 
 ## Installation
 
@@ -38,9 +51,9 @@ npx playwright install chromium
 The SDK uses browser simulation to authenticate with TrainingPeaks, which is the most reliable method:
 
 ```typescript
-import { TrainingPeaksClient } from 'trainingpeaks-sdk';
+import { createTrainingPeaksClient } from 'trainingpeaks-sdk';
 
-const client = new TrainingPeaksClient({
+const client = createTrainingPeaksClient({
   authMethod: 'web', // Uses browser simulation
   webAuth: {
     headless: true, // Set to false to see the browser
@@ -82,7 +95,7 @@ console.log('Upload result:', result);
 For testing or when browsers are not available:
 
 ```typescript
-const client = new TrainingPeaksClient({
+const client = createTrainingPeaksClient({
   authMethod: 'api', // Direct API calls
   baseUrl: 'https://api.trainingpeaks.com',
 });
@@ -95,9 +108,9 @@ const client = new TrainingPeaksClient({
 Perfect for straightforward use cases:
 
 ```typescript
-import { TrainingPeaksClient } from 'trainingpeaks-sdk';
+import { createTrainingPeaksClient } from 'trainingpeaks-sdk';
 
-const client = new TrainingPeaksClient({
+const client = createTrainingPeaksClient({
   authMethod: 'web',
   debug: true,
 });
@@ -118,9 +131,9 @@ await uploader.uploadWorkout(workoutData);
 For more control over token management:
 
 ```typescript
-import { TrainingPeaksClient } from 'trainingpeaks-sdk';
+import { createTrainingPeaksClient } from 'trainingpeaks-sdk';
 
-const client = new TrainingPeaksClient({
+const client = createTrainingPeaksClient({
   authMethod: 'web',
   webAuth: { headless: false }, // Show browser for debugging
 });
@@ -135,7 +148,7 @@ console.log('Access token:', token.accessToken);
 console.log('Expires at:', new Date(token.expiresAt));
 
 // Set up event listeners
-client.onAuthLogin(token => {
+client.onAuthLogin((token) => {
   console.log(
     'Logged in with token:',
     token.accessToken.substring(0, 10) + '...'
@@ -146,7 +159,7 @@ client.onAuthLogout(() => {
   console.log('Logged out');
 });
 
-client.onAuthError(error => {
+client.onAuthError((error) => {
   console.error('Auth error:', error.message);
 });
 ```
@@ -157,12 +170,12 @@ Share tokens between multiple client instances:
 
 ```typescript
 // Client 1 - performs authentication
-const authClient = new TrainingPeaksClient({ authMethod: 'web' });
+const authClient = createTrainingPeaksClient({ authMethod: 'web' });
 await authClient.login(credentials);
 const token = authClient.getAuthToken();
 
 // Client 2 - uses existing token
-const uploadClient = new TrainingPeaksClient({ authMethod: 'api' });
+const uploadClient = createTrainingPeaksClient({ authMethod: 'api' });
 uploadClient.setAuthToken(token);
 
 // Both clients are now authenticated
@@ -257,7 +270,7 @@ TRAININGPEAKS_WEB_TIMEOUT=30000
 ### Client Configuration
 
 ```typescript
-const client = new TrainingPeaksClient({
+const client = createTrainingPeaksClient({
   // Authentication method
   authMethod: 'web', // 'web' | 'api'
 
@@ -359,17 +372,21 @@ npm run release:major  # Major version (1.0.0 -> 2.0.0)
 
 ## API Reference
 
-### TrainingPeaksClient
+### createTrainingPeaksClient
 
-Main client class for TrainingPeaks SDK.
+Factory function that creates a TrainingPeaks client instance with hexagonal architecture patterns.
 
-#### Constructor
+#### Usage
 
 ```typescript
-new TrainingPeaksClient(config?: TrainingPeaksConfig)
+import { createTrainingPeaksClient } from 'trainingpeaks-sdk';
+
+const client = createTrainingPeaksClient(config?: TrainingPeaksConfig);
 ```
 
-#### Methods
+#### Returns
+
+Returns a `TrainingPeaksClient` object with the following methods:
 
 - `login(credentials)` - Simple authentication
 - `loginAdvanced(credentials)` - Advanced authentication with token return
@@ -405,6 +422,46 @@ Handle workout uploads to TrainingPeaks.
 
 ## Architecture
 
+### Hexagonal Architecture (Clean Architecture)
+
+This SDK follows **hexagonal architecture** principles with a **Function-First** approach:
+
+#### Core Principles
+
+- **Function-First**: Uses factory functions instead of classes for services, use cases, and repositories
+- **Dependency Injection**: Function-based dependency injection for clean separation of concerns
+- **Immutability**: Promotes immutable data patterns and pure functions
+- **Type Safety**: Full TypeScript support with interface contracts
+
+#### Layer Structure
+
+```
+src/
+├── domain/                 # Pure business logic
+│   ├── entities/          # Domain entities (classes with behavior)
+│   ├── value-objects/     # Immutable value objects
+│   ├── events/            # Domain events
+│   └── errors/            # Domain-specific errors
+├── application/           # Use cases and orchestration
+│   ├── use-cases/         # Business use-case implementations (functions)
+│   ├── services/          # Application services (functions)
+│   └── ports/             # Interfaces for repositories
+├── infrastructure/        # External adapters
+│   ├── repositories/      # Data access (factory functions)
+│   ├── auth/              # Authentication adapters
+│   ├── workout/           # Workout service adapters
+│   └── storage/           # Storage adapters
+└── interfaces/            # Entry points (controllers, handlers)
+```
+
+#### Key Benefits
+
+1. **Testability**: Easy to mock dependencies with function-based patterns
+2. **Flexibility**: Can swap implementations without changing business logic
+3. **Maintainability**: Clear separation of concerns
+4. **Performance**: No class instantiation overhead
+5. **Composability**: Functions can be easily composed and combined
+
 ### Web Authentication Flow
 
 1. **Browser Launch**: Playwright launches Chromium browser
@@ -413,20 +470,24 @@ Handle workout uploads to TrainingPeaks.
 4. **Token Interception**: Listen for API calls and extract tokens
 5. **Token Storage**: Store tokens for API calls
 
-### Component Structure
+### Function-First Patterns
 
-```
-src/
-├── auth/              # Authentication modules
-│   ├── index.ts       # TrainingPeaksAuth
-│   ├── web-auth.ts    # WebAuthService (browser simulation)
-│   ├── auth-manager.ts # AuthManager (advanced management)
-│   └── simple-auth-manager.ts # SimpleAuthManager (wrapper)
-├── client/            # Main client
-├── workout/           # Workout upload
-├── types/             # TypeScript definitions
-├── errors/            # Custom error classes
-└── __fixtures__/      # Test utilities
+```typescript
+// ✅ Use factory functions for services
+export const createUserService = (userRepository: UserRepository) => ({
+  getUser: async (id: string) => {
+    return await userRepository.findById(id);
+  },
+  createUser: async (userData: CreateUserData) => {
+    return await userRepository.create(userData);
+  },
+});
+
+// ✅ Use cases are also factory functions
+export const createLoginUseCase =
+  (authRepository: AuthRepository) => async (credentials: LoginCredentials) => {
+    return await authRepository.authenticate(credentials);
+  };
 ```
 
 ## Contributing
@@ -448,5 +509,6 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 ## Support
 
 - 📖 [Documentation](https://github.com/pablo-albaladejo/trainingpeaks-sdk#readme)
+- 🔄 [Migration Guide](MIGRATION.md) - Upgrade from v1.x to v2.x
 - 🐛 [Issue Tracker](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues)
 - 💬 [Discussions](https://github.com/pablo-albaladejo/trainingpeaks-sdk/discussions)

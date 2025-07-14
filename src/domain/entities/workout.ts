@@ -3,6 +3,8 @@
  * Represents a workout in the domain
  */
 
+import { WorkoutStructure } from '@/domain/value-objects/workout-structure';
+
 export class Workout {
   private constructor(
     private readonly _id: string,
@@ -16,13 +18,15 @@ export class Workout {
     private readonly _fileContent?: string,
     private readonly _fileName?: string,
     private readonly _createdAt?: Date,
-    private readonly _updatedAt?: Date
+    private readonly _updatedAt?: Date,
+    private readonly _structure?: WorkoutStructure
   ) {
     this.validateId();
     this.validateName();
     this.validateDate();
     this.validateDuration();
     this.validateDistance();
+    this.validateStructure();
   }
 
   public static create(
@@ -37,7 +41,8 @@ export class Workout {
     fileContent?: string,
     fileName?: string,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
+    structure?: WorkoutStructure
   ): Workout {
     return new Workout(
       id,
@@ -51,7 +56,8 @@ export class Workout {
       fileContent,
       fileName,
       createdAt || new Date(),
-      updatedAt || new Date()
+      updatedAt || new Date(),
+      structure
     );
   }
 
@@ -82,6 +88,40 @@ export class Workout {
       fileName,
       new Date(),
       new Date()
+    );
+  }
+
+  /**
+   * Create a structured workout
+   */
+  public static createStructured(
+    id: string,
+    name: string,
+    description: string,
+    date: Date,
+    structure: WorkoutStructure,
+    activityType?: string,
+    tags?: string[],
+    createdAt?: Date,
+    updatedAt?: Date
+  ): Workout {
+    // Calculate duration from structure
+    const duration = structure.getTotalDuration();
+
+    return new Workout(
+      id,
+      name,
+      description,
+      date,
+      duration,
+      undefined, // Distance calculated from structure if needed
+      activityType,
+      tags,
+      undefined, // No file content for structured workouts
+      undefined, // No file name for structured workouts
+      createdAt || new Date(),
+      updatedAt || new Date(),
+      structure
     );
   }
 
@@ -134,9 +174,25 @@ export class Workout {
     return this._updatedAt;
   }
 
+  public get structure(): WorkoutStructure | undefined {
+    return this._structure;
+  }
+
   // Business logic methods
   public hasFile(): boolean {
     return !!(this._fileContent && this._fileName);
+  }
+
+  public hasStructure(): boolean {
+    return !!this._structure;
+  }
+
+  public isStructured(): boolean {
+    return this.hasStructure();
+  }
+
+  public isFileBasedWorkout(): boolean {
+    return this.hasFile() && !this.hasStructure();
   }
 
   public isRecent(): boolean {
@@ -166,6 +222,54 @@ export class Workout {
     return `${this._distance} m`;
   }
 
+  /**
+   * Get the workout type (structured or file-based)
+   */
+  public getWorkoutType(): 'structured' | 'file-based' | 'simple' {
+    if (this.hasStructure()) {
+      return 'structured';
+    }
+    if (this.hasFile()) {
+      return 'file-based';
+    }
+    return 'simple';
+  }
+
+  /**
+   * Get structure steps count
+   */
+  public getStructureStepsCount(): number {
+    return this._structure ? this._structure.getAllSteps().length : 0;
+  }
+
+  /**
+   * Get structure active steps count
+   */
+  public getStructureActiveStepsCount(): number {
+    return this._structure ? this._structure.getActiveSteps().length : 0;
+  }
+
+  /**
+   * Get structure repetitions count
+   */
+  public getStructureRepetitionsCount(): number {
+    return this._structure ? this._structure.getRepetitions().length : 0;
+  }
+
+  /**
+   * Check if workout is time-based (from structure)
+   */
+  public isTimeBased(): boolean {
+    return this._structure ? this._structure.isTimeBased() : true; // Default to time-based
+  }
+
+  /**
+   * Check if workout is distance-based (from structure)
+   */
+  public isDistanceBased(): boolean {
+    return this._structure ? this._structure.isDistanceBased() : false;
+  }
+
   public equals(other: Workout): boolean {
     return this._id === other._id;
   }
@@ -188,7 +292,53 @@ export class Workout {
       this._fileContent,
       this._fileName,
       this._createdAt,
-      new Date() // Update timestamp
+      new Date(), // Update timestamp
+      this._structure
+    );
+  }
+
+  /**
+   * Create a new workout with updated structure
+   */
+  public withStructure(structure: WorkoutStructure): Workout {
+    // Update duration based on new structure
+    const newDuration = structure.getTotalDuration();
+
+    return new Workout(
+      this._id,
+      this._name,
+      this._description,
+      this._date,
+      newDuration,
+      this._distance,
+      this._activityType,
+      this._tags,
+      this._fileContent,
+      this._fileName,
+      this._createdAt,
+      new Date(), // Update timestamp
+      structure
+    );
+  }
+
+  /**
+   * Create a new workout without structure (convert to simple workout)
+   */
+  public withoutStructure(): Workout {
+    return new Workout(
+      this._id,
+      this._name,
+      this._description,
+      this._date,
+      this._duration,
+      this._distance,
+      this._activityType,
+      this._tags,
+      this._fileContent,
+      this._fileName,
+      this._createdAt,
+      new Date(), // Update timestamp
+      undefined // Remove structure
     );
   }
 
@@ -231,6 +381,21 @@ export class Workout {
     if (this._distance !== undefined && this._distance > 1000000) {
       // More than 1000km
       throw new Error('Workout distance cannot exceed 1000km');
+    }
+  }
+
+  private validateStructure(): void {
+    if (this._structure) {
+      // If structure is provided, validate consistency
+      const structureDuration = this._structure.getTotalDuration();
+
+      // Allow some tolerance for floating point differences
+      const tolerance = 1; // 1 second tolerance
+      if (Math.abs(this._duration - structureDuration) > tolerance) {
+        console.warn(
+          `Workout duration (${this._duration}s) doesn't match structure duration (${structureDuration}s)`
+        );
+      }
     }
   }
 }

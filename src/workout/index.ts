@@ -1,36 +1,51 @@
 /**
- * Workout Management Module
- *
- * This module provides a facade for workout operations:
- * - Domain: Workout entities and business rules
- * - Application: Use cases and ports
- * - Infrastructure: External adapters
- * - Adapters: Repository implementations
+ * Workout Management
+ * Handles all workout-related operations including upload, creation, and retrieval
  */
 
-import { TrainingPeaksWorkoutRepository } from '@/adapters/training-peaks-workout-repository';
 import {
+  createCreateStructuredWorkoutUseCase,
+  CreateStructuredWorkoutUseCase,
+  CreateStructuredWorkoutUseCaseRequest,
+} from '@/application/use-cases/create-structured-workout';
+import {
+  createDeleteWorkoutUseCase,
   DeleteWorkoutRequest,
   DeleteWorkoutUseCase,
 } from '@/application/use-cases/delete-workout';
 import {
+  createGetWorkoutUseCase,
   GetWorkoutRequest,
   GetWorkoutUseCase,
 } from '@/application/use-cases/get-workout';
 import {
+  createListWorkoutsUseCase,
   ListWorkoutsRequest,
   ListWorkoutsUseCase,
 } from '@/application/use-cases/list-workouts';
 import {
+  createUploadWorkoutUseCase,
   UploadWorkoutFromFileRequest,
   UploadWorkoutRequest,
   UploadWorkoutUseCase,
 } from '@/application/use-cases/upload-workout';
 import { getSDKConfig } from '@/config';
 import { Workout } from '@/domain/entities/workout';
+import {
+  createWorkoutDomainService,
+  WorkoutDomainService,
+} from '@/domain/services/workout-domain';
+import { WorkoutStructure } from '@/domain/value-objects/workout-structure';
 import { FileSystemAdapter } from '@/infrastructure/filesystem/file-system-adapter';
+import {
+  createTrainingPeaksWorkoutRepository,
+  TrainingPeaksWorkoutRepository,
+} from '@/infrastructure/repositories/training-peaks-workout';
 import { TrainingPeaksWorkoutApiAdapter } from '@/infrastructure/workout/trainingpeaks-api-adapter';
-import { TrainingPeaksClientConfig } from '@/types';
+import {
+  CreateStructuredWorkoutResponse,
+  TrainingPeaksClientConfig,
+} from '@/types';
 
 export interface WorkoutData {
   /** The workout file content (TCX, GPX, FIT, etc.) */
@@ -57,24 +72,56 @@ export interface WorkoutUploadResponse {
   errors?: string[];
 }
 
+export interface StructuredWorkoutData {
+  /** Athlete ID */
+  athleteId: number;
+  /** Workout title */
+  title: string;
+  /** Workout type ID */
+  workoutTypeValueId: number;
+  /** Workout date */
+  workoutDay: string;
+  /** Workout structure */
+  structure: WorkoutStructure;
+  /** Optional workout metadata */
+  metadata?: {
+    code?: string;
+    description?: string;
+    userTags?: string;
+    coachComments?: string;
+    publicSettingValue?: number;
+    plannedMetrics?: {
+      totalTimePlanned?: number;
+      tssPlanned?: number;
+      ifPlanned?: number;
+      velocityPlanned?: number;
+      caloriesPlanned?: number;
+      distancePlanned?: number;
+      elevationGainPlanned?: number;
+      energyPlanned?: number;
+    };
+    equipment?: {
+      bikeId?: number;
+      shoeId?: number;
+    };
+  };
+}
+
 export class WorkoutManager {
   private readonly sdkConfig = getSDKConfig();
-  private readonly workoutRepository!: TrainingPeaksWorkoutRepository;
+  private readonly workoutRepository!: TrainingPeaksWorkoutRepository['repository'];
+  private readonly workoutDomainService!: WorkoutDomainService;
   private readonly uploadWorkoutUseCase!: UploadWorkoutUseCase;
   private readonly getWorkoutUseCase!: GetWorkoutUseCase;
   private readonly listWorkoutsUseCase!: ListWorkoutsUseCase;
   private readonly deleteWorkoutUseCase!: DeleteWorkoutUseCase;
+  private readonly createStructuredWorkoutUseCase!: CreateStructuredWorkoutUseCase;
 
   constructor(config: TrainingPeaksClientConfig = {}) {
-    // Setup dependency injection following hexagonal architecture
     this.setupDependencies(config);
   }
 
-  /**
-   * Setup dependency injection for hexagonal architecture
-   */
   private setupDependencies(config: TrainingPeaksClientConfig): void {
-    // Create workout service configuration
     const workoutServiceConfig = {
       baseUrl: config.baseUrl || this.sdkConfig.urls.baseUrl,
       timeout: config.timeout || this.sdkConfig.timeouts.default,
@@ -82,127 +129,152 @@ export class WorkoutManager {
       headers: config.headers || this.sdkConfig.requests.defaultHeaders,
     };
 
-    // Infrastructure Layer - File system adapter
+    // Infrastructure Layer - External adapters
     const fileSystemAdapter = new FileSystemAdapter();
+    const workoutApiAdapter = new TrainingPeaksWorkoutApiAdapter();
 
-    // Adapters Layer - Repository implementation
-    const workoutRepository = new TrainingPeaksWorkoutRepository(
+    // Adapters Layer - Repository implementations
+    const workoutRepositoryFactory = createTrainingPeaksWorkoutRepository(
       fileSystemAdapter,
       workoutServiceConfig
     );
 
-    // Infrastructure Layer - Workout service adapters
-    const trainingPeaksApiAdapter = new TrainingPeaksWorkoutApiAdapter();
-
     // Register adapters with the repository
-    workoutRepository.registerWorkoutService(trainingPeaksApiAdapter);
+    workoutRepositoryFactory.registerWorkoutService(workoutApiAdapter);
 
-    // Store repository reference
+    // Domain Layer - Domain service
+    const workoutDomainService = createWorkoutDomainService(
+      workoutRepositoryFactory.repository
+    );
+
+    // Store references
     (
       this as unknown as {
-        workoutRepository: TrainingPeaksWorkoutRepository;
+        workoutRepository: TrainingPeaksWorkoutRepository['repository'];
       }
-    ).workoutRepository = workoutRepository;
+    ).workoutRepository = workoutRepositoryFactory.repository;
+    (
+      this as unknown as { workoutDomainService: WorkoutDomainService }
+    ).workoutDomainService = workoutDomainService;
 
     // Application Layer - Use Cases
     (
       this as unknown as {
         uploadWorkoutUseCase: UploadWorkoutUseCase;
       }
-    ).uploadWorkoutUseCase = new UploadWorkoutUseCase(workoutRepository);
+    ).uploadWorkoutUseCase = createUploadWorkoutUseCase(workoutDomainService);
     (
       this as unknown as {
         getWorkoutUseCase: GetWorkoutUseCase;
       }
-    ).getWorkoutUseCase = new GetWorkoutUseCase(workoutRepository);
+    ).getWorkoutUseCase = createGetWorkoutUseCase(workoutDomainService);
     (
       this as unknown as {
         listWorkoutsUseCase: ListWorkoutsUseCase;
       }
-    ).listWorkoutsUseCase = new ListWorkoutsUseCase(workoutRepository);
+    ).listWorkoutsUseCase = createListWorkoutsUseCase(workoutDomainService);
     (
       this as unknown as {
         deleteWorkoutUseCase: DeleteWorkoutUseCase;
       }
-    ).deleteWorkoutUseCase = new DeleteWorkoutUseCase(workoutRepository);
+    ).deleteWorkoutUseCase = createDeleteWorkoutUseCase(workoutDomainService);
+    (
+      this as unknown as {
+        createStructuredWorkoutUseCase: CreateStructuredWorkoutUseCase;
+      }
+    ).createStructuredWorkoutUseCase =
+      createCreateStructuredWorkoutUseCase(workoutDomainService);
   }
 
-  /**
-   * Upload a workout file to TrainingPeaks
-   */
   public async uploadWorkout(
     workoutData: WorkoutData
   ): Promise<WorkoutUploadResponse> {
-    try {
-      const request: UploadWorkoutRequest = {
-        fileContent: workoutData.fileContent,
-        fileName: workoutData.fileName,
-        metadata: workoutData.metadata
-          ? {
-              name: workoutData.metadata.title,
-              description: workoutData.metadata.description,
-              activityType: workoutData.metadata.activityType,
-              tags: workoutData.metadata.tags,
-            }
-          : undefined,
-      };
+    const request: UploadWorkoutRequest = {
+      fileContent: workoutData.fileContent,
+      fileName: workoutData.fileName,
+      metadata: workoutData.metadata
+        ? {
+            name: workoutData.metadata.title,
+            description: workoutData.metadata.description,
+            tags: workoutData.metadata.tags,
+            activityType: workoutData.metadata.activityType,
+          }
+        : undefined,
+    };
 
-      const result = await this.uploadWorkoutUseCase.execute(request);
+    const result = await this.uploadWorkoutUseCase.execute(request);
 
-      return {
-        success: result.success,
-        workoutId: result.workoutId,
-        message: result.message,
-        errors: result.errors,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Upload failed',
-        errors: [error instanceof Error ? error.message : 'Unknown error'],
-      };
-    }
+    return {
+      success: result.success,
+      workoutId: result.workoutId,
+      message: result.message,
+      errors: result.errors,
+    };
   }
 
-  /**
-   * Upload a workout file from disk
-   */
   public async uploadWorkoutFromFile(
     filePath: string
   ): Promise<WorkoutUploadResponse> {
-    try {
-      const request: UploadWorkoutFromFileRequest = {
-        filePath,
-      };
+    const request: UploadWorkoutFromFileRequest = {
+      filePath,
+    };
 
-      const result = await this.uploadWorkoutUseCase.executeFromFile(request);
+    const result = await this.uploadWorkoutUseCase.executeFromFile(request);
 
-      return {
-        success: result.success,
-        workoutId: result.workoutId,
-        message: result.message,
-        errors: result.errors,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Failed to read workout file',
-        errors: [error instanceof Error ? error.message : 'Unknown error'],
-      };
-    }
+    return {
+      success: result.success,
+      workoutId: result.workoutId,
+      message: result.message,
+      errors: result.errors,
+    };
   }
 
-  /**
-   * Get workout details by ID
-   */
+  public async createStructuredWorkout(
+    workoutData: StructuredWorkoutData
+  ): Promise<CreateStructuredWorkoutResponse> {
+    const request: CreateStructuredWorkoutUseCaseRequest = {
+      athleteId: workoutData.athleteId,
+      title: workoutData.title,
+      workoutTypeValueId: workoutData.workoutTypeValueId,
+      workoutDay: workoutData.workoutDay,
+      structure: workoutData.structure,
+      metadata: workoutData.metadata,
+    };
+
+    return await this.createStructuredWorkoutUseCase.execute(request);
+  }
+
+  public async createStructuredWorkoutFromSimpleStructure(
+    athleteId: number,
+    title: string,
+    workoutTypeValueId: number,
+    workoutDay: string,
+    elements: {
+      type: 'step' | 'repetition';
+      repetitions?: number;
+      steps: {
+        name: string;
+        duration: number; // in seconds
+        intensityMin: number;
+        intensityMax: number;
+        intensityClass: 'active' | 'rest' | 'warmUp' | 'coolDown';
+      }[];
+    }[]
+  ): Promise<CreateStructuredWorkoutResponse> {
+    return await this.createStructuredWorkoutUseCase.createFromSimpleStructure(
+      athleteId,
+      title,
+      workoutTypeValueId,
+      workoutDay,
+      elements
+    );
+  }
+
   public async getWorkout(workoutId: string): Promise<Workout> {
     const request: GetWorkoutRequest = { workoutId };
     return await this.getWorkoutUseCase.execute(request);
   }
 
-  /**
-   * List user's workouts
-   */
   public async listWorkouts(filters?: {
     startDate?: Date;
     endDate?: Date;
@@ -215,17 +287,11 @@ export class WorkoutManager {
     return await this.listWorkoutsUseCase.execute(request);
   }
 
-  /**
-   * Delete a workout by ID
-   */
   public async deleteWorkout(workoutId: string): Promise<boolean> {
     const request: DeleteWorkoutRequest = { workoutId };
     return await this.deleteWorkoutUseCase.execute(request);
   }
 
-  /**
-   * Search workouts by criteria
-   */
   public async searchWorkouts(query: {
     text?: string;
     activityType?: string;
@@ -245,9 +311,6 @@ export class WorkoutManager {
     return await this.workoutRepository.searchWorkouts(query);
   }
 
-  /**
-   * Get workout statistics
-   */
   public async getWorkoutStats(filters?: {
     startDate?: Date;
     endDate?: Date;
@@ -262,13 +325,7 @@ export class WorkoutManager {
     return await this.workoutRepository.getWorkoutStats(filters);
   }
 
-  /**
-   * Get workout repository for advanced operations
-   */
-  public getWorkoutRepository(): TrainingPeaksWorkoutRepository {
+  public getWorkoutRepository(): TrainingPeaksWorkoutRepository['repository'] {
     return this.workoutRepository;
   }
 }
-
-// Export the WorkoutManager class as the default export
-export default WorkoutManager;

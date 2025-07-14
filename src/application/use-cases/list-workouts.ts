@@ -4,7 +4,7 @@
  */
 
 import { Workout } from '@/domain/entities/workout';
-import { WorkoutRepository } from '@/domain/repositories/workout';
+import { WorkoutDomainService } from '@/domain/services/workout-domain';
 
 export interface ListWorkoutsRequest {
   startDate?: Date;
@@ -15,35 +15,25 @@ export interface ListWorkoutsRequest {
   offset?: number;
 }
 
-export class ListWorkoutsUseCase {
-  constructor(private readonly workoutRepository: WorkoutRepository) {}
+/**
+ * List Workouts Use Case Factory
+ * Creates a list workouts use case with dependency injection
+ */
+export const createListWorkoutsUseCase = (
+  workoutDomainService: WorkoutDomainService
+) => {
+  /**
+   * Execute list workouts process
+   */
+  const execute = async (
+    request: ListWorkoutsRequest = {}
+  ): Promise<Workout[]> => {
+    // Delegate to domain service
+    return await workoutDomainService.listWorkouts(request);
+  };
 
-  public async execute(request: ListWorkoutsRequest = {}): Promise<Workout[]> {
-    // Apply default pagination
-    const filters = {
-      ...request,
-      limit: request.limit || 20,
-      offset: request.offset || 0,
-    };
+  return { execute };
+};
 
-    // Validate date range
-    if (
-      filters.startDate &&
-      filters.endDate &&
-      filters.startDate > filters.endDate
-    ) {
-      throw new Error('Start date must be before end date');
-    }
-
-    // Validate pagination
-    if (filters.limit && filters.limit > 100) {
-      throw new Error('Limit cannot exceed 100 workouts');
-    }
-
-    if (filters.offset && filters.offset < 0) {
-      throw new Error('Offset cannot be negative');
-    }
-
-    return await this.workoutRepository.listWorkouts(filters);
-  }
-}
+// Export the type for dependency injection
+export type ListWorkoutsUseCase = ReturnType<typeof createListWorkoutsUseCase>;

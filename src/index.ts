@@ -7,7 +7,8 @@
 
 // Main Client (Facade)
 export type { TrainingPeaksClientConfig } from '@/types';
-export { TrainingPeaksClient } from './training-peaks-client';
+export { createTrainingPeaksClient } from './training-peaks-client';
+export type { TrainingPeaksClient } from './training-peaks-client';
 
 // Configuration
 export { DEFAULT_CONFIG, getSDKConfig } from '@/config';
@@ -15,6 +16,17 @@ export type { TrainingPeaksSDKConfig } from '@/config';
 
 // Domain Entities (Public API)
 export { AuthToken, Credentials, User, Workout, WorkoutFile } from '@/domain';
+
+// Domain Errors (Public API)
+export {
+  AuthenticationError,
+  AuthorizationError,
+  NetworkError,
+  RateLimitError,
+  TrainingPeaksError,
+  UploadError,
+  ValidationError,
+} from '@/domain';
 
 // Value Objects and Types
 export type { ApiResponse, LoginCredentials, UserProfile } from '@/types';
@@ -31,13 +43,17 @@ export {
 } from '@/application';
 
 // Repository Interfaces (for advanced usage)
-export type { AuthRepository, UploadResult, WorkoutRepository } from '@/domain';
+export type {
+  AuthRepository,
+  UploadResult,
+  WorkoutRepository,
+} from '@/application';
 
 // Services and Adapters (for advanced usage)
 export {
   TrainingPeaksAuthRepository,
   TrainingPeaksWorkoutRepository,
-} from '@/adapters';
+} from '@/infrastructure';
 
 // Workout Management
 export { WorkoutManager } from '@/workout';
@@ -52,8 +68,24 @@ export {
   WebBrowserAuthAdapter,
 } from '@/infrastructure';
 
+// Logging System (for configuration)
+export {
+  authLogger,
+  browserLogger,
+  configureLogger,
+  createCategoryLogger,
+  generalLogger,
+  getLogger,
+  LogCategory,
+  Logger,
+  LogLevel,
+  networkLogger,
+  workoutLogger,
+} from '@/infrastructure';
+export type { ExternalLogger, LogEntry, LoggerConfig } from '@/infrastructure';
+
 // Error Types (if any are exported from types)
 // export { ... } from './types';
 
-// Re-export default as named export for consistency
-export { TrainingPeaksClient as default } from './training-peaks-client';
+// For backward compatibility, export the factory function as the main export
+export { createTrainingPeaksClient as default } from './training-peaks-client';
