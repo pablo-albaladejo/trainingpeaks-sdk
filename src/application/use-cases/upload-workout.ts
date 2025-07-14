@@ -3,7 +3,7 @@
  * Handles workout upload operations
  */
 
-import { WorkoutDomainService } from '@/domain/services/workout-domain';
+import { WorkoutDomainService } from '@/application/services/workout-domain';
 import { readFileSync } from 'fs';
 
 export interface UploadWorkoutRequest {

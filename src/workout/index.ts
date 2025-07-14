@@ -4,6 +4,10 @@
  */
 
 import {
+  createWorkoutDomainService,
+  WorkoutDomainService,
+} from '@/application/services/workout-domain';
+import {
   createCreateStructuredWorkoutUseCase,
   CreateStructuredWorkoutUseCase,
   CreateStructuredWorkoutUseCaseRequest,
@@ -31,10 +35,6 @@ import {
 } from '@/application/use-cases/upload-workout';
 import { getSDKConfig } from '@/config';
 import { Workout } from '@/domain/entities/workout';
-import {
-  createWorkoutDomainService,
-  WorkoutDomainService,
-} from '@/domain/services/workout-domain';
 import { WorkoutStructure } from '@/domain/value-objects/workout-structure';
 import { FileSystemAdapter } from '@/infrastructure/filesystem/file-system-adapter';
 import {

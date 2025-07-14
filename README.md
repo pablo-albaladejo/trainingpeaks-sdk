@@ -7,6 +7,7 @@ A TypeScript SDK for TrainingPeaks API integration with authentication and worko
 [![Build Status](https://github.com/pablo-albaladejo/trainingpeaks-sdk/workflows/CI/badge.svg)](https://github.com/pablo-albaladejo/trainingpeaks-sdk/actions)
 [![codecov](https://codecov.io/gh/pablo-albaladejo/trainingpeaks-sdk/branch/main/graph/badge.svg)](https://codecov.io/gh/pablo-albaladejo/trainingpeaks-sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/pablo-albaladejo/trainingpeaks-sdk?utm_source=oss&utm_medium=github&utm_campaign=pablo-albaladejo%2Ftrainingpeaks-sdk&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
 ## 🚨 Migration Notice
 

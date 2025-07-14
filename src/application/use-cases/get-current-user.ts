@@ -4,8 +4,8 @@
  */
 
 import { AuthRepository } from '@/application/ports/auth';
+import { createAuthDomainService } from '@/application/services/auth-domain';
 import { User } from '@/domain/entities/user';
-import { createAuthDomainService } from '@/domain/services/auth-domain';
 
 /**
  * Get Current User Use Case Factory

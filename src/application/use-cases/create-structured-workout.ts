@@ -3,7 +3,7 @@
  * Handles structured workout creation operations
  */
 
-import { WorkoutDomainService } from '@/domain/services/workout-domain';
+import { WorkoutDomainService } from '@/application/services/workout-domain';
 import { WorkoutStructure } from '@/domain/value-objects/workout-structure';
 import { CreateStructuredWorkoutResponse } from '@/types';
 

@@ -17,7 +17,3 @@ export * from './errors';
 
 // Events
 export * from './events';
-
-// Services
-export { AuthDomainService } from './services/auth-domain';
-export { WorkoutDomainService } from './services/workout-domain';

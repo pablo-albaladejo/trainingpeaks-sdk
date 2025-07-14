@@ -45,3 +45,11 @@ export type { UploadResult, WorkoutRepository } from './ports/workout';
 
 // Services
 export { AuthApplicationService } from './services/auth-application';
+export {
+  createAuthDomainService,
+  type AuthDomainService,
+} from './services/auth-domain';
+export {
+  createWorkoutDomainService,
+  type WorkoutDomainService,
+} from './services/workout-domain';
