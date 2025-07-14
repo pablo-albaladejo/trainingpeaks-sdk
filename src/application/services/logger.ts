@@ -14,6 +14,18 @@ export type LogLevel = 'info' | 'error' | 'warn' | 'debug';
 export type LogContext = Record<string, unknown>;
 
 /**
+ * Logger configuration parameters
+ * Defines the configurable aspects of the logger for package consumers
+ */
+export type LoggerConfig = {
+  level?: LogLevel;
+  enableTimestamp?: boolean;
+  enableColors?: boolean;
+  format?: 'json' | 'text';
+  prefix?: string;
+};
+
+/**
  * Contract for logging operations
  * Defines what logging capabilities the system needs
  */
@@ -59,9 +71,4 @@ export type LoggerService = {
  * Factory function signature for creating logger service
  * This defines the contract for how the logger should be instantiated
  */
-export type LoggerServiceFactory = (config?: {
-  level?: LogLevel;
-  enableTimestamp?: boolean;
-  enableColors?: boolean;
-  format?: 'json' | 'text';
-}) => LoggerService;
+export type LoggerServiceFactory = (config?: LoggerConfig) => LoggerService;

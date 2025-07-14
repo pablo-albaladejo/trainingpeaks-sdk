@@ -1,9 +1,10 @@
 /**
  * Logger Service Implementation
- * Implements the LoggerService contract with console-based logging
+ * Implements the LoggerService contract with configurable logging outputs
  */
 
 import type {
+  LoggerConfig as BaseLoggerConfig,
   LogContext,
   LoggerServiceFactory,
   LogLevel,
@@ -28,6 +29,45 @@ const LOG_LEVELS = {
   info: 1,
   warn: 2,
   error: 3,
+};
+
+/**
+ * Output target interface for configurable logging
+ */
+export interface LogOutputTarget {
+  write(level: LogLevel, message: string): void;
+}
+
+/**
+ * Console output target (default)
+ */
+export const consoleOutputTarget: LogOutputTarget = {
+  write: (level: LogLevel, message: string) => {
+    switch (level) {
+      case 'error':
+        console.error(message);
+        break;
+      case 'warn':
+        console.warn(message);
+        break;
+      case 'debug':
+        console.debug(message);
+        break;
+      case 'info':
+      default:
+        console.log(message);
+        break;
+    }
+  },
+};
+
+/**
+ * Silent output target (for testing or disabled logging)
+ */
+export const silentOutputTarget: LogOutputTarget = {
+  write: () => {
+    // Do nothing
+  },
 };
 
 /**
@@ -72,16 +112,32 @@ const formatMessage = (
 };
 
 /**
+ * Enhanced logger configuration interface
+ * Extends the application layer contract with infrastructure-specific options
+ */
+export interface LoggerConfig extends BaseLoggerConfig {
+  outputTarget?: LogOutputTarget;
+}
+
+/**
  * IMPLEMENTATION of LoggerService
  * This is an ADAPTER - implements the port defined in application layer
+ * Now with configurable output targets for package consumers
  */
-export const createLoggerService: LoggerServiceFactory = (config = {}) => {
+export const createLoggerService: LoggerServiceFactory = (
+  config: BaseLoggerConfig = {}
+) => {
+  // Cast to extended config for infrastructure-specific options
+  const extendedConfig = config as LoggerConfig;
+
   const {
     level = 'info',
     enableTimestamp = true,
     enableColors = true,
     format = 'text',
-  } = config;
+    outputTarget = consoleOutputTarget,
+    prefix = '',
+  } = extendedConfig;
 
   const shouldLog = (logLevel: LogLevel): boolean => {
     return LOG_LEVELS[logLevel] >= LOG_LEVELS[level];
@@ -96,27 +152,15 @@ export const createLoggerService: LoggerServiceFactory = (config = {}) => {
       return;
     }
 
-    const formattedMessage = formatMessage(logLevel, message, context, {
+    const prefixedMessage = prefix ? `[${prefix}] ${message}` : message;
+    const formattedMessage = formatMessage(logLevel, prefixedMessage, context, {
       enableTimestamp,
       enableColors,
       format,
     });
 
-    switch (logLevel) {
-      case 'error':
-        console.error(formattedMessage);
-        break;
-      case 'warn':
-        console.warn(formattedMessage);
-        break;
-      case 'debug':
-        console.debug(formattedMessage);
-        break;
-      case 'info':
-      default:
-        console.log(formattedMessage);
-        break;
-    }
+    // Use configurable output target instead of direct console calls
+    outputTarget.write(logLevel, formattedMessage);
   };
 
   return {
@@ -148,10 +192,30 @@ export const createLoggerService: LoggerServiceFactory = (config = {}) => {
 export const defaultLogger = createLoggerService();
 
 /**
- * Create a logger with custom configuration
+ * Create a logger with custom configuration for package consumers
  */
-export const createCustomLogger = (
-  config: Parameters<LoggerServiceFactory>[0]
-) => {
+export const createCustomLogger = (config: LoggerConfig) => {
   return createLoggerService(config);
+};
+
+/**
+ * Create a logger with custom output target (for advanced use cases)
+ */
+export const createLoggerWithTarget = (
+  outputTarget: LogOutputTarget,
+  config: Omit<BaseLoggerConfig, 'outputTarget'> = {}
+) => {
+  const extendedConfig: LoggerConfig = {
+    ...config,
+    outputTarget,
+  };
+  return createLoggerService(extendedConfig);
+};
+
+/**
+ * Create a silent logger (useful for testing)
+ */
+export const createSilentLogger = () => {
+  const extendedConfig: LoggerConfig = { outputTarget: silentOutputTarget };
+  return createLoggerService(extendedConfig);
 };

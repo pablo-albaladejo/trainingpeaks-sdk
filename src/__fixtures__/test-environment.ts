@@ -1,5 +1,23 @@
-import { createLoggerService } from '@/infrastructure/services/logger';
 import { TrainingPeaksConfig } from '@/types';
+
+// Simple test logger
+const createTestLogger = () => ({
+  info: (message: string, context?: Record<string, unknown>) => {
+    console.log(`[INFO] ${message}`, context || '');
+  },
+  error: (message: string, context?: Record<string, unknown>) => {
+    console.error(`[ERROR] ${message}`, context || '');
+  },
+  warn: (message: string, context?: Record<string, unknown>) => {
+    console.warn(`[WARN] ${message}`, context || '');
+  },
+  debug: (message: string, context?: Record<string, unknown>) => {
+    console.log(`[DEBUG] ${message}`, context || '');
+  },
+  log: (level: string, message: string, context?: Record<string, unknown>) => {
+    console.log(`[${level.toUpperCase()}] ${message}`, context || '');
+  },
+});
 
 export interface TestEnvironment {
   trainingPeaksConfig: TrainingPeaksConfig;
@@ -41,7 +59,7 @@ export const testEnvironment: TestEnvironment = {
 
 // Helper function to skip tests if environment is not configured
 export function skipIfNotConfigured(): void {
-  const logger = createLoggerService({ level: 'info' });
+  const logger = createTestLogger();
 
   if (!testEnvironment.testUsername || !testEnvironment.testPassword) {
     throw new Error(
