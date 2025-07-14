@@ -51,13 +51,17 @@ export type {
 
 // Services and Adapters (for advanced usage)
 export {
-  TrainingPeaksAuthRepository,
-  TrainingPeaksWorkoutRepository,
+  createTrainingPeaksAuthRepository,
+  createTrainingPeaksWorkoutRepository,
 } from '@/infrastructure';
 
 // Workout Management
-export { WorkoutManager } from '@/workout';
-export type { WorkoutData, WorkoutUploadResponse } from '@/workout';
+export { createWorkoutManager, WorkoutManager } from './workout-manager';
+export type {
+  StructuredWorkoutData,
+  WorkoutData,
+  WorkoutUploadResponse,
+} from './workout-manager';
 
 // Infrastructure Adapters (for custom implementations)
 export {
@@ -68,21 +72,18 @@ export {
   WebBrowserAuthAdapter,
 } from '@/infrastructure';
 
-// Logging System (for configuration)
+// Logging System (new structured approach)
 export {
-  authLogger,
-  browserLogger,
-  configureLogger,
-  createCategoryLogger,
-  generalLogger,
-  getLogger,
-  LogCategory,
-  Logger,
-  LogLevel,
-  networkLogger,
-  workoutLogger,
+  BatchLogger,
+  createErrorHandlerService,
+  createLoggerService,
+  createStructuredLogger,
+  LogContextBuilder,
+  LogFormatter,
+  PerformanceTracker,
+  withTiming,
 } from '@/infrastructure';
-export type { ExternalLogger, LogEntry, LoggerConfig } from '@/infrastructure';
+// Logger types are now internal - use createLoggerService for logger configuration
 
 // Error Types (if any are exported from types)
 // export { ... } from './types';

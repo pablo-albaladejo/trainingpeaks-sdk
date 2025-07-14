@@ -21,11 +21,7 @@ export {
   ListWorkoutsUseCase,
   type ListWorkoutsRequest,
 } from './use-cases/list-workouts';
-export {
-  UploadWorkoutUseCase,
-  type UploadWorkoutFromFileRequest,
-  type UploadWorkoutRequest,
-} from './use-cases/upload-workout';
+export { UploadWorkoutUseCase } from './use-cases/upload-workout';
 
 // Ports
 export type {
@@ -74,6 +70,14 @@ export type {
   WorkoutManagementService,
   WorkoutManagementServiceFactory,
 } from './services/workout-management';
+export type {
+  WorkoutManagerConfig,
+  WorkoutManagerService,
+  WorkoutManagerServiceFactory,
+  WorkoutSearchCriteria,
+  WorkoutStatsFilters,
+  WorkoutStatsResponse,
+} from './services/workout-manager';
 export type {
   WorkoutListFilters,
   WorkoutQueryService,

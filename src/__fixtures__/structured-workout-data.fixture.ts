@@ -3,6 +3,7 @@
  * Provides test data for structured workout operations
  */
 
+import { StructuredWorkoutData } from '@/application/services/workout-manager';
 import { WorkoutLength } from '@/domain/value-objects/workout-length';
 import { WorkoutStep } from '@/domain/value-objects/workout-step';
 import {
@@ -11,7 +12,6 @@ import {
 } from '@/domain/value-objects/workout-structure';
 import { WorkoutTarget } from '@/domain/value-objects/workout-target';
 import { CreateStructuredWorkoutRequest } from '@/types/index';
-import { StructuredWorkoutData } from '@/workout/index';
 import { randomNumber } from './utils.fixture';
 
 export class StructuredWorkoutDataFixture {

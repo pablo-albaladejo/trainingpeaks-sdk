@@ -1,5 +1,5 @@
-import { faker } from '@faker-js/faker';
 import { WorkoutData, WorkoutFileData, WorkoutType } from '@/types';
+import { faker } from '@faker-js/faker';
 import { randomDate, randomNumber, randomString } from './utils.fixture';
 
 /**

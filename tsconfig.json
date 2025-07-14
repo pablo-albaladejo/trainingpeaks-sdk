@@ -40,7 +40,6 @@
     "dist",
     "**/*.test.ts",
     "**/*.spec.ts",
-    "src/test.setup.ts",
-    "src/__fixtures__/**"
+    "src/test.setup.ts"
   ]
 }

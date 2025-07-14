@@ -82,7 +82,14 @@ export interface ErrorHandlerConfig {
   logLevel: 'error' | 'warn' | 'info' | 'debug';
   maxRetryAttempts: number;
   retryDelay: number;
+  delayFn?: (ms: number) => Promise<void>;
 }
+
+/**
+ * Default delay function using setTimeout
+ */
+const defaultDelayFn = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Error Handler Service Factory
@@ -97,6 +104,7 @@ export const createErrorHandlerService = (
     logLevel: 'error',
     maxRetryAttempts: 3,
     retryDelay: 1000,
+    delayFn: defaultDelayFn,
   };
 
   const finalConfig = { ...defaultConfig, ...config };
@@ -187,7 +195,13 @@ export const createErrorHandlerService = (
       return error.constructor.name.replace('Error', '').toUpperCase();
     }
 
-    return error.constructor.name.replace('Error', '').toUpperCase();
+    // Handle generic Error class
+    const className = error.constructor.name;
+    if (className === 'Error') {
+      return 'ERROR';
+    }
+
+    return className.replace('Error', '').toUpperCase();
   };
 
   /**
@@ -371,9 +385,7 @@ export const createErrorHandlerService = (
         });
 
         // Wait before retrying with exponential backoff
-        await new Promise((resolve) =>
-          setTimeout(resolve, finalConfig.retryDelay * Math.pow(2, attempt - 1))
-        );
+        await finalConfig.delayFn!(finalConfig.retryDelay * 2 ** (attempt - 1));
       }
     }
 
