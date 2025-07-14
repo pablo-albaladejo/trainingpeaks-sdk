@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## <small>1.4.2 (2025-07-14)</small>
+
+* refactor: move domain services ([ff1dd2a](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/ff1dd2a))
+* feat!: function first refactor ([33d4085](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/33d4085))
+
 ## <small>1.4.1 (2025-07-13)</small>
 
 * chore: update dependencies to use playwright-core and remove playwright ([255ccbd](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/255ccbd))
