@@ -1,84 +1,58 @@
 /**
- * Authentication Application Service
- * Orchestrates authentication use cases and provides a unified interface
+ * Authentication Application Service Contract
+ * Defines the interface for authentication orchestration operations
  */
 
-import { AuthRepository } from '@/application/ports/auth';
-import { createGetCurrentUserUseCase } from '@/application/use-cases/get-current-user';
-import {
-  createLoginUseCase,
-  LoginRequest,
-  LoginResponse,
-} from '@/application/use-cases/login';
-import { createLogoutUseCase } from '@/application/use-cases/logout';
+import { LoginRequest, LoginResponse } from '@/application/use-cases/login';
 import { AuthToken, User } from '@/domain';
 
 /**
- * Authentication Application Service Factory
- * Creates an authentication application service with dependency injection
+ * Contract for authentication application operations
+ * Defines what authentication capabilities the system needs
  */
-export const createAuthApplicationService = (
-  authRepository: AuthRepository
-) => {
-  // Create use cases with dependency injection
-  const loginUseCase = createLoginUseCase(authRepository);
-  const logoutUseCase = createLogoutUseCase(authRepository);
-  const getCurrentUserUseCase = createGetCurrentUserUseCase(authRepository);
-
+export type AuthApplicationService = {
   /**
    * Authenticate user with credentials
+   * @param request - The login request containing credentials
+   * @returns Promise resolving to login response
    */
-  const login = async (request: LoginRequest): Promise<LoginResponse> => {
-    return await loginUseCase.execute(request);
-  };
+  login: (request: LoginRequest) => Promise<LoginResponse>;
 
   /**
    * Logout current user
+   * @returns Promise resolving when logout is complete
    */
-  const logout = async (): Promise<void> => {
-    await logoutUseCase.execute();
-  };
+  logout: () => Promise<void>;
 
   /**
    * Get current authenticated user
+   * @returns Promise resolving to current user
    */
-  const getCurrentUser = async (): Promise<User> => {
-    return await getCurrentUserUseCase.execute();
-  };
+  getCurrentUser: () => Promise<User>;
 
   /**
    * Check if user is currently authenticated
+   * @returns Boolean indicating if user is authenticated
    */
-  const isAuthenticated = (): boolean => {
-    return authRepository.isAuthenticated();
-  };
+  isAuthenticated: () => boolean;
 
   /**
    * Get current authentication token
+   * @returns Current auth token or null if not authenticated
    */
-  const getCurrentToken = (): AuthToken | null => {
-    return authRepository.getCurrentToken();
-  };
+  getCurrentToken: () => AuthToken | null;
 
   /**
    * Get current user ID
+   * @returns Current user ID or null if not authenticated
    */
-  const getUserId = (): string | null => {
-    return authRepository.getUserId();
-  };
-
-  // Return the service interface
-  return {
-    login,
-    logout,
-    getCurrentUser,
-    isAuthenticated,
-    getCurrentToken,
-    getUserId,
-  };
+  getUserId: () => string | null;
 };
 
-// Export the type for dependency injection
-export type AuthApplicationService = ReturnType<
-  typeof createAuthApplicationService
->;
+/**
+ * Factory function signature for creating authentication application service
+ * This defines the contract for how the service should be instantiated
+ */
+export type AuthApplicationServiceFactory = (
+  authRepository: unknown
+) => AuthApplicationService;

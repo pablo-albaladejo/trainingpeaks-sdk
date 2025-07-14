@@ -3,10 +3,7 @@
  * Handles all workout-related operations including upload, creation, and retrieval
  */
 
-import {
-  createWorkoutDomainService,
-  WorkoutDomainService,
-} from '@/application/services/workout-domain';
+import type { WorkoutDomainService } from '@/application/services/workout-domain';
 import {
   createCreateStructuredWorkoutUseCase,
   CreateStructuredWorkoutUseCase,
@@ -41,6 +38,7 @@ import {
   createTrainingPeaksWorkoutRepository,
   TrainingPeaksWorkoutRepository,
 } from '@/infrastructure/repositories/training-peaks-workout';
+import { createWorkoutDomainService } from '@/infrastructure/services/workout-domain';
 import { TrainingPeaksWorkoutApiAdapter } from '@/infrastructure/workout/trainingpeaks-api-adapter';
 import {
   CreateStructuredWorkoutResponse,

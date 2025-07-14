@@ -43,13 +43,50 @@ export type {
 export type { AuthRepository } from './ports/auth';
 export type { UploadResult, WorkoutRepository } from './ports/workout';
 
-// Services
-export { AuthApplicationService } from './services/auth-application';
-export {
-  createAuthDomainService,
-  type AuthDomainService,
-} from './services/auth-domain';
-export {
-  createWorkoutDomainService,
-  type WorkoutDomainService,
+// Services - Export only TYPES/CONTRACTS from application layer
+export type {
+  AuthApplicationService,
+  AuthApplicationServiceFactory,
+} from './services/auth-application';
+export type {
+  AuthValidationService,
+  AuthValidationServiceFactory,
+} from './services/auth-validation';
+// Legacy workout domain service (deprecated - use WorkoutService instead)
+export type {
+  WorkoutDomainService,
+  WorkoutDomainServiceFactory,
 } from './services/workout-domain';
+
+// New modular workout services
+export type {
+  SimpleWorkoutElementForCreation,
+  WorkoutCreationMetadata,
+  WorkoutCreationService,
+  WorkoutCreationServiceFactory,
+  WorkoutUploadMetadata,
+  WorkoutUploadResponse,
+} from './services/workout-creation';
+export type {
+  WorkoutManagementService,
+  WorkoutManagementServiceFactory,
+} from './services/workout-management';
+export type {
+  WorkoutListFilters,
+  WorkoutQueryService,
+  WorkoutQueryServiceFactory,
+} from './services/workout-query';
+export type {
+  WorkoutService,
+  WorkoutServiceFactory,
+} from './services/workout-service';
+export type {
+  SimpleWorkoutElement,
+  WorkoutUtilityService,
+  WorkoutUtilityServiceFactory,
+} from './services/workout-utility';
+export type {
+  WorkoutValidationParams,
+  WorkoutValidationService,
+  WorkoutValidationServiceFactory,
+} from './services/workout-validation';

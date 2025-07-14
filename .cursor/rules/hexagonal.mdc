@@ -16,6 +16,546 @@ alwaysApply: true
 - Application layer: Use cases, services, repository interfaces
 - Adapters layer: Infrastructure implementations (database, API clients, external services)
 
+### 🚨 **CRITICAL: Strict Ports & Adapters Separation Pattern**
+
+**THIS IS THE MOST IMPORTANT RULE IN THIS PROJECT:**
+
+The application layer MUST ONLY contain **contracts, types, and interfaces**.
+The infrastructure layer MUST contain **all implementations**.
+
+This enforces proper **Dependency Inversion Principle** and ensures true **hexagonal architecture**.
+
+#### **📋 Application Layer: ONLY Definitions & Contracts**
+
+```typescript
+// ✅ CORRECT: src/application/services/user-validation.ts
+// THIS FILE CONTAINS ONLY TYPE DEFINITIONS - NO IMPLEMENTATIONS
+
+/**
+ * User validation parameters for different validation scenarios
+ */
+export type UserValidationParams = {
+  userId?: string;
+  email?: string;
+  name?: string;
+  companyId?: number;
+  role?: string;
+  filters?: {
+    startDate?: Date;
+    endDate?: Date;
+    status?: string;
+    department?: string;
+    limit?: number;
+    offset?: number;
+  };
+  metadata?: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    preferences?: Record<string, any>;
+  };
+};
+
+/**
+ * Contract for user validation operations
+ * Defines what validation capabilities the system needs
+ */
+export type UserValidationService = {
+  /**
+   * Validates that a user ID meets business rules
+   * @throws InvalidUserIdError if validation fails
+   */
+  validateUserId: (userId: string) => void;
+
+  /**
+   * Validates user email format and business rules
+   * @throws InvalidEmailError if validation fails
+   */
+  validateEmail: (email: string) => void;
+
+  /**
+   * Validates filters for listing users
+   * @throws InvalidFiltersError if validation fails
+   */
+  validateListUsersFilters: (filters: UserValidationParams['filters']) => void;
+
+  /**
+   * Validates all business rules for user creation
+   * @throws Various domain errors if validation fails
+   */
+  validateUserCreationRules: (
+    name: string,
+    email: string,
+    companyId: number,
+    role: string
+  ) => void;
+
+  /**
+   * Validates that a user can be safely deleted
+   * @throws InvalidUserDeletionError if deletion is not allowed
+   */
+  validateUserCanBeDeleted: (user: User) => void;
+};
+
+/**
+ * Factory function signature for creating user validation service
+ * This defines the contract for how the service should be instantiated
+ */
+export type UserValidationServiceFactory = () => UserValidationService;
+```
+
+```typescript
+// ✅ CORRECT: src/application/services/notification-publisher.ts
+// EXAMPLE OF EVENT PUBLISHER - ONLY TYPE DEFINITIONS
+
+type NotificationEvent = {
+  eventId: string;
+  notification: {
+    id: number;
+    type: string;
+    title: string;
+    message: string;
+    recipientId: number;
+    metadata: {
+      priority: 'low' | 'medium' | 'high';
+      category: string;
+      actions?: Array<{
+        label: string;
+        action: string;
+      }>;
+    };
+    createdAt: string;
+    scheduledAt?: string;
+  };
+  context: {
+    source: string;
+    userId: number;
+    timestamp: number;
+  };
+};
+
+export type NotificationPublisherParams = {
+  companyId: number;
+  userId: number;
+  sessionId: string;
+  eventTimestamp: number;
+  events: Array<NotificationEvent>;
+};
+
+/**
+ * Contract for publishing notification events
+ * This is a PORT - defines what the application needs
+ */
+export type NotificationPublisher = (
+  params: NotificationPublisherParams
+) => Promise<void>;
+```
+
+#### **⚙️ Infrastructure Layer: ONLY Implementations**
+
+```typescript
+// ✅ CORRECT: src/infrastructure/services/user-validation.ts
+// THIS FILE CONTAINS THE ACTUAL IMPLEMENTATION
+
+import type {
+  UserValidationService,
+  UserValidationServiceFactory,
+} from '@/application/services/user-validation';
+import {
+  USER_LIMITS,
+  EMAIL_CONFIG,
+} from '@/application/services/user-constants';
+import {
+  InvalidUserIdError,
+  InvalidEmailError,
+  InvalidFiltersError,
+  InvalidUserRoleError,
+  InvalidUserDeletionError,
+} from '@/domain/errors/user-errors';
+
+/**
+ * IMPLEMENTATION of UserValidationService
+ * This is an ADAPTER - implements the port defined in application layer
+ */
+export const createUserValidationService: UserValidationServiceFactory =
+  (): UserValidationService => ({
+    validateUserId: (userId: string): void => {
+      // 🎯 ACTUAL IMPLEMENTATION HERE
+      if (userId === null || userId === undefined) {
+        throw new InvalidUserIdError('User ID cannot be null or undefined');
+      }
+
+      if (typeof userId !== 'string') {
+        throw new InvalidUserIdError('User ID must be a string');
+      }
+
+      if (!userId || userId.trim().length === 0) {
+        throw new InvalidUserIdError('User ID is required');
+      }
+
+      if (userId.length > USER_LIMITS.ID_MAX_LENGTH) {
+        throw new InvalidUserIdError(
+          `User ID cannot exceed ${USER_LIMITS.ID_MAX_LENGTH} characters`
+        );
+      }
+    },
+
+    validateEmail: (email: string): void => {
+      // 🎯 ACTUAL IMPLEMENTATION HERE
+      if (email === null || email === undefined) {
+        throw new InvalidEmailError('Email cannot be null or undefined');
+      }
+
+      if (typeof email !== 'string') {
+        throw new InvalidEmailError('Email must be a string');
+      }
+
+      if (!email || email.trim().length === 0) {
+        throw new InvalidEmailError('Email is required');
+      }
+
+      const emailRegex = EMAIL_CONFIG.VALIDATION_REGEX;
+      if (!emailRegex.test(email)) {
+        throw new InvalidEmailError('Invalid email format');
+      }
+
+      if (email.length > USER_LIMITS.EMAIL_MAX_LENGTH) {
+        throw new InvalidEmailError(
+          `Email cannot exceed ${USER_LIMITS.EMAIL_MAX_LENGTH} characters`
+        );
+      }
+    },
+
+    validateListUsersFilters: (filters) => {
+      // 🎯 ACTUAL IMPLEMENTATION HERE
+      if (filters === null || filters === undefined) {
+        throw new InvalidFiltersError('Filters cannot be null or undefined');
+      }
+
+      if (typeof filters !== 'object') {
+        throw new InvalidFiltersError('Filters must be an object');
+      }
+
+      // ... rest of implementation
+    },
+
+    validateUserCreationRules: (name, email, companyId, role) => {
+      // 🎯 ACTUAL IMPLEMENTATION HERE
+      if (name === null || name === undefined) {
+        throw new InvalidUserRoleError('Name cannot be null or undefined');
+      }
+
+      if (email === null || email === undefined) {
+        throw new InvalidEmailError('Email cannot be null or undefined');
+      }
+
+      // ... rest of implementation
+    },
+
+    validateUserCanBeDeleted: (user) => {
+      // 🎯 ACTUAL IMPLEMENTATION HERE
+      if (user === null || user === undefined) {
+        throw new InvalidUserDeletionError('User cannot be null or undefined');
+      }
+
+      if (typeof user !== 'object') {
+        throw new InvalidUserDeletionError('User must be an object');
+      }
+
+      // ... business rules implementation
+    },
+  });
+```
+
+```typescript
+// ✅ CORRECT: src/infrastructure/services/notification-publisher.ts
+// EXAMPLE OF EVENT PUBLISHER - ACTUAL IMPLEMENTATION
+
+import type { NotificationPublisher } from '@/application/services/notification-publisher';
+import type { EventPublisher } from '../event-publisher-client';
+
+/**
+ * IMPLEMENTATION of NotificationPublisher
+ * This is an ADAPTER - implements the port defined in application layer
+ */
+export const notificationPublisher =
+  (eventPublisher: EventPublisher): NotificationPublisher =>
+  async (params): Promise<void> => {
+    // 🎯 ACTUAL IMPLEMENTATION HERE
+    if (params.events.length === 0) {
+      return;
+    }
+
+    const publishableEvents = params.events.map((event) => {
+      return {
+        metadata: {
+          source: 'notification-service',
+          eventType: 'notification-created',
+          eventId: event.eventId,
+          eventTimestamp: new Date(params.eventTimestamp).toISOString(),
+          userId: params.userId,
+          companyId: params.companyId,
+          sessionId: params.sessionId,
+        },
+        data: {
+          notification: event.notification,
+          context: event.context,
+        },
+      };
+    });
+
+    await eventPublisher.publish(
+      publishableEvents,
+      `/companies/${params.companyId}/users/${params.userId}/notifications`
+    );
+  };
+```
+
+#### **🔧 Dependency Injection at Infrastructure Boundary**
+
+```typescript
+// ✅ CORRECT: src/infrastructure/http/handlers/user-handler.ts
+// DEPENDENCY INJECTION HAPPENS HERE - AT THE INFRASTRUCTURE BOUNDARY
+
+import type { UserValidationService } from '@/application/services/user-validation';
+import type { UserUtilityService } from '@/application/services/user-utility';
+import type { UserRepository } from '@/application/ports/user';
+
+// Import IMPLEMENTATIONS from infrastructure
+import { createUserValidationService } from '@/infrastructure/services/user-validation';
+import { createUserUtilityService } from '@/infrastructure/services/user-utility';
+import { createUserRepository } from '@/infrastructure/repositories/user-repository';
+
+export const createUserHandler = (dependencies: {
+  database: DatabaseClient;
+  logger: Logger;
+}) => {
+  // 🔧 DEPENDENCY INJECTION - COMPOSE IMPLEMENTATIONS
+  const userRepository: UserRepository = createUserRepository(
+    dependencies.database
+  );
+  const validationService: UserValidationService =
+    createUserValidationService();
+  const utilityService: UserUtilityService = createUserUtilityService();
+
+  // 🎯 COMPOSE USE CASES WITH INJECTED DEPENDENCIES
+  const createUserUseCase = createUserUseCase(
+    userRepository,
+    validationService,
+    utilityService
+  );
+
+  return async (request: UserRequest) => {
+    return await createUserUseCase(request.body);
+  };
+};
+```
+
+```typescript
+// ✅ CORRECT: Following dependency injection pattern
+// DEPENDENCY INJECTION IN USE CASE COMPOSITION
+
+const notificationPublisher = createNotificationPublisher(
+  createEventPublisher(httpClient, logger)
+);
+
+const useCase = createUserNotificationUseCase(notificationPublisher);
+```
+
+#### **🎯 Use Cases: Pure Orchestration**
+
+```typescript
+// ✅ CORRECT: src/application/use-cases/create-user.ts
+// USE CASES ORCHESTRATE CONTRACTS - NO IMPLEMENTATIONS
+
+import type { UserRepository } from '@/application/ports/user';
+import type { UserValidationService } from '@/application/services/user-validation';
+import type { UserUtilityService } from '@/application/services/user-utility';
+
+/**
+ * Use case for creating users
+ * Uses CONTRACTS/PORTS - never direct implementations
+ */
+export const createUserUseCase =
+  (
+    userRepository: UserRepository, // ← PORT (contract)
+    validationService: UserValidationService, // ← PORT (contract)
+    utilityService: UserUtilityService // ← PORT (contract)
+  ) =>
+  async (input: CreateUserInput): Promise<CreateUserResponse> => {
+    // 🎯 ORCHESTRATE USING CONTRACTS ONLY
+
+    // Use validation contract
+    validationService.validateUserCreationRules(
+      input.name,
+      input.email,
+      input.companyId,
+      input.role
+    );
+
+    // Use utility contract
+    const userId = utilityService.generateUserId();
+    const hashedPassword = utilityService.hashPassword(input.password);
+
+    // Use repository contract
+    return await userRepository.createUser({
+      ...input,
+      id: userId,
+      password: hashedPassword,
+    });
+  };
+```
+
+#### **📁 Strict Directory Structure**
+
+```
+src/
+├── application/
+│   ├── services/           # 📋 ONLY TYPE DEFINITIONS & CONTRACTS
+│   │   ├── user-validation.ts         # export type UserValidationService
+│   │   ├── user-utility.ts            # export type UserUtilityService
+│   │   ├── order-processing.ts        # export type OrderProcessingService
+│   │   ├── notification-publisher.ts  # export type NotificationPublisher
+│   │   └── user-constants.ts          # export const LIMITS, DEFAULTS (configuration)
+│   ├── ports/              # 📋 REPOSITORY & EXTERNAL CONTRACTS
+│   │   ├── user.ts                    # export interface UserRepository
+│   │   ├── order.ts                   # export interface OrderRepository
+│   │   └── auth.ts                    # export interface AuthRepository
+│   └── use-cases/          # 🎯 ORCHESTRATION USING CONTRACTS
+│       ├── create-user.ts
+│       ├── process-order.ts
+│       └── send-notification.ts
+│
+├── infrastructure/
+│   ├── services/           # ⚙️ ACTUAL IMPLEMENTATIONS OF APPLICATION/SERVICES
+│   │   ├── user-validation.ts         # implements UserValidationService
+│   │   ├── user-utility.ts            # implements UserUtilityService
+│   │   ├── order-processing.ts        # implements OrderProcessingService
+│   │   └── notification-publisher.ts  # implements NotificationPublisher
+│   ├── repositories/       # 💾 ACTUAL IMPLEMENTATIONS OF APPLICATION/PORTS
+│   │   ├── user-repository.ts         # implements UserRepository
+│   │   ├── order-repository.ts        # implements OrderRepository
+│   │   └── auth-repository.ts         # implements AuthRepository
+│   └── http/              # 🌐 HANDLERS WITH DEPENDENCY INJECTION
+│       ├── user-handler.ts            # composes & injects implementations
+│       └── order-handler.ts           # composes & injects implementations
+│
+└── domain/                # 🎯 PURE BUSINESS LOGIC
+    ├── entities/           # Classes with behavior
+    ├── value-objects/      # Immutable values
+    └── errors/            # Domain-specific exceptions
+```
+
+#### **🚨 CRITICAL VIOLATIONS TO AVOID**
+
+```typescript
+// ❌ ABSOLUTELY FORBIDDEN: Implementation in application layer
+// src/application/services/user-validation.ts
+
+export const createUserValidationService = () => {
+  // 🚫 THIS IS WRONG - NO IMPLEMENTATIONS IN APPLICATION LAYER
+  const validateUserId = (userId: string): void => {
+    if (!userId) {
+      throw new Error('Invalid ID'); // ❌ IMPLEMENTATION CODE
+    }
+  };
+
+  return { validateUserId }; // ❌ RETURNING IMPLEMENTATION
+};
+```
+
+```typescript
+// ❌ ABSOLUTELY FORBIDDEN: Direct implementation imports in use cases
+// src/application/use-cases/create-user.ts
+
+import { createUserValidationService } from '@/application/services/user-validation'; // ❌ WRONG
+
+export const createUserUseCase = (repository: UserRepository) => {
+  const validation = createUserValidationService(); // ❌ DIRECT INSTANTIATION
+  // ...
+};
+```
+
+```typescript
+// ❌ ABSOLUTELY FORBIDDEN: Mixed contracts and implementations
+// src/application/services/user-service.ts
+
+export type UserService = {
+  createUser: (input: CreateUserInput) => Promise<User>;
+};
+
+// 🚫 THIS VIOLATES SEPARATION - IMPLEMENTATION IN SAME FILE AS CONTRACT
+export const createUserService = (repo: UserRepository): UserService => ({
+  createUser: async (input) => {
+    // ❌ IMPLEMENTATION CODE IN APPLICATION LAYER
+    return await repo.create(input);
+  },
+});
+```
+
+#### **✅ CORRECT PATTERNS SUMMARY**
+
+| Layer                       | Contains                      | Examples                                                          | Purpose                                 |
+| --------------------------- | ----------------------------- | ----------------------------------------------------------------- | --------------------------------------- |
+| **Application/Services**    | Types, interfaces, contracts  | `export type ValidationService`, `export type EventPublisher`     | Define what the app needs (PORTS)       |
+| **Infrastructure/Services** | Implementations, real logic   | `export const createValidationService = (): ValidationService =>` | Implement what the app needs (ADAPTERS) |
+| **Application/Use-Cases**   | Orchestration using contracts | Function that receives contracts as params                        | Business logic orchestration            |
+| **Infrastructure/HTTP**     | Dependency injection          | Create & inject implementations into use cases                    | Wire everything together                |
+
+#### **🎯 Benefits of This Strict Separation**
+
+1. **True Dependency Inversion**: High-level modules (use cases) don't depend on low-level modules (implementations)
+2. **Perfect Testability**: Can easily mock any contract for testing
+3. **Swappable Implementations**: Can have multiple implementations of same contract
+4. **Clear Boundaries**: Impossible to accidentally mix layers
+5. **Hexagonal Compliance**: True ports & adapters pattern
+6. **ISP Compliance**: Interface Segregation - each contract is focused
+
+#### **🧪 Testing with This Pattern**
+
+```typescript
+// ✅ PERFECT TESTABILITY - Mock contracts easily
+describe('createUserUseCase', () => {
+  const mockValidationService: UserValidationService = {
+    validateUserId: vi.fn(),
+    validateEmail: vi.fn(),
+    validateListUsersFilters: vi.fn(),
+    validateUserCreationRules: vi.fn(),
+    validateUserCanBeDeleted: vi.fn(),
+  };
+
+  const mockUtilityService: UserUtilityService = {
+    generateUserId: vi.fn(() => 'test-id'),
+    hashPassword: vi.fn(() => 'hashed-password'),
+    generateToken: vi.fn(() => 'test-token'),
+    validatePermissions: vi.fn(),
+  };
+
+  const mockRepository: UserRepository = {
+    createUser: vi.fn(),
+    findById: vi.fn(),
+    findByEmail: vi.fn(),
+    updateUser: vi.fn(),
+    deleteUser: vi.fn(),
+  };
+
+  it('should create user successfully', async () => {
+    // Perfect isolation - using only contracts
+    const useCase = createUserUseCase(
+      mockRepository,
+      mockValidationService,
+      mockUtilityService
+    );
+
+    const result = await useCase(validInput);
+
+    expect(mockValidationService.validateUserCreationRules).toHaveBeenCalled();
+    expect(mockUtilityService.generateUserId).toHaveBeenCalled();
+    expect(mockRepository.createUser).toHaveBeenCalled();
+  });
+});
+```
+
 ### Function-First Philosophy
 
 **CRITICAL**: This project follows a **function-first approach** where:
@@ -1016,6 +1556,16 @@ const users = await db
 
 - Centralized AI model instances
 - Prompt engineering with evaluations
+- Structured output parsing with Zod
+
+This project follows hexagonal architecture with modern TypeScript patterns, emphasizing clean separation of concerns,
+comprehensive testing, and AI-driven features.
+
+- Structured output parsing with Zod
+
+This project follows hexagonal architecture with modern TypeScript patterns, emphasizing clean separation of concerns,
+comprehensive testing, and AI-driven features.
+
 - Structured output parsing with Zod
 
 This project follows hexagonal architecture with modern TypeScript patterns, emphasizing clean separation of concerns,

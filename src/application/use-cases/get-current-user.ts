@@ -4,7 +4,6 @@
  */
 
 import { AuthRepository } from '@/application/ports/auth';
-import { createAuthDomainService } from '@/application/services/auth-domain';
 import { User } from '@/domain/entities/user';
 
 /**
@@ -12,15 +11,12 @@ import { User } from '@/domain/entities/user';
  * Creates a get current user use case with dependency injection
  */
 export const createGetCurrentUserUseCase = (authRepository: AuthRepository) => {
-  const authDomainService = createAuthDomainService();
-
   /**
    * Execute get current user process
    */
   const execute = async (): Promise<User> => {
-    const currentToken = authRepository.getCurrentToken();
-
-    if (!currentToken || authDomainService.isTokenExpired(currentToken)) {
+    // Check if user is authenticated using repository method
+    if (!authRepository.isAuthenticated()) {
       throw new Error('No valid authentication token available');
     }
 

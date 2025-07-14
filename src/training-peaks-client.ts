@@ -8,10 +8,7 @@
  */
 
 import { AuthenticationConfig } from '@/application';
-import {
-  AuthApplicationService,
-  createAuthApplicationService,
-} from '@/application/services/auth-application';
+import type { AuthApplicationService } from '@/application/services/auth-application';
 import { getSDKConfig, TrainingPeaksSDKConfig } from '@/config';
 import { AuthToken, User } from '@/domain';
 import {
@@ -20,6 +17,7 @@ import {
   WebBrowserAuthAdapter,
 } from '@/infrastructure';
 import { createTrainingPeaksAuthRepository } from '@/infrastructure/repositories/training-peaks-auth';
+import { createAuthApplicationService } from '@/infrastructure/services/auth-application';
 import { TrainingPeaksClientConfig } from '@/types';
 
 export interface AuthEventCallbacks {

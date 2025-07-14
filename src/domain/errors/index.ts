@@ -65,3 +65,6 @@ export class NetworkError extends TrainingPeaksError {
     Object.setPrototypeOf(this, NetworkError.prototype);
   }
 }
+
+// Export workout-specific errors
+export * from './workout-errors';
