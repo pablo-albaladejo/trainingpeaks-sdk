@@ -1,6 +1,6 @@
 {
   "name": "trainingpeaks-sdk",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "TypeScript SDK for TrainingPeaks API integration with authentication and workout upload capabilities",
   "type": "module",
   "main": "./dist/index.cjs",

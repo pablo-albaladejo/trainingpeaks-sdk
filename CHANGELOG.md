@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## <small>1.5.1 (2025-07-20)</small>
+
+* refactor: transition from interface to type ([8a39888](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/8a39888))
+
 ## 1.5.0 (2025-07-14)
 
 * feat: enhance typescript linting rules and update sdk client structure ([bb4f871](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/bb4f871))
