@@ -274,9 +274,10 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     try {
       if (!response.ok()) {
         if (config.debug) {
-          console.warn(
-            `Token response failed with status ${response.status()}`
-          );
+          authLogger.warn('Token response failed', {
+            status: response.status(),
+            url: response.url(),
+          });
         }
         return;
       }
@@ -311,7 +312,10 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     try {
       if (!response.ok()) {
         if (config.debug) {
-          console.warn(`User response failed with status ${response.status()}`);
+          authLogger.warn('User response failed', {
+            status: response.status(),
+            url: response.url(),
+          });
         }
         return;
       }
@@ -339,7 +343,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
     } catch (error) {
       if (config.debug) {
         const text = await response.text().catch(() => '');
-        console.warn('Failed to parse response as JSON:', {
+        authLogger.warn('Failed to parse response as JSON', {
           url: response.url(),
           status: response.status(),
           text: text.substring(0, 200),

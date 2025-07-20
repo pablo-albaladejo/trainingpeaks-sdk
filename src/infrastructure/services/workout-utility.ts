@@ -14,8 +14,11 @@ import type {
 } from '@/application/services/workout-utility';
 
 export const generateWorkoutId: GenerateWorkoutId = (): string => {
-  // Generate a unique workout ID
-  return `workout_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // Generate a unique workout ID with microsecond precision
+  const timestamp = Date.now();
+  const microsecond = performance.now() % 1; // Get microsecond part
+  const random = Math.random().toString(36).substring(2, 11); // 9 characters
+  return `workout_${timestamp}_${Math.floor(microsecond * 1000000)}_${random}`;
 };
 
 export const getMimeTypeFromFileName: GetMimeTypeFromFileName = (
@@ -59,14 +62,21 @@ export const mapWorkoutTypeToActivityType: MapWorkoutTypeToActivityType = (
 export const buildStructureFromSimpleElements: BuildStructureFromSimpleElements =
   (elements: SimpleWorkoutElement[]) => {
     // Simple implementation - return a basic structure object
-    const structureElements = elements.map((element, index) => ({
-      type: element.type,
-      duration: element.duration,
-      intensity: element.intensity,
-      description: element.description,
-      begin: index * element.duration,
-      end: (index + 1) * element.duration,
-    }));
+    let currentTime = 0;
+    const structureElements = elements.map((element) => {
+      const begin = currentTime;
+      const end = currentTime + element.duration;
+      currentTime = end;
+
+      return {
+        type: element.type,
+        duration: element.duration,
+        intensity: element.intensity,
+        description: element.description,
+        begin,
+        end,
+      };
+    });
 
     const result = {
       elements: structureElements,

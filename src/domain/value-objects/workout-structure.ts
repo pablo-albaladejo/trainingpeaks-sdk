@@ -3,6 +3,7 @@
  * Represents the complete structure of a workout with elements, polyline, and metadata
  */
 
+import { ValidationError } from '@/domain/errors';
 import {
   WorkoutLength,
   WorkoutLengthUnit,
@@ -317,11 +318,11 @@ export class WorkoutStructure {
 
   private validateStructure(): void {
     if (!Array.isArray(this._structure)) {
-      throw new Error('Workout structure must be an array');
+      throw new ValidationError('Workout structure must be an array');
     }
 
     if (this._structure.length === 0) {
-      throw new Error('Workout structure cannot be empty');
+      throw new ValidationError('Workout structure cannot be empty');
     }
 
     // Validate that elements don't overlap
@@ -330,7 +331,7 @@ export class WorkoutStructure {
       const next = this._structure[i + 1];
 
       if (current && next && current.end > next.begin) {
-        throw new Error(
+        throw new ValidationError(
           `Workout structure elements overlap: element ${i} ends at ${current.end} but element ${i + 1} begins at ${next.begin}`
         );
       }
@@ -339,31 +340,33 @@ export class WorkoutStructure {
     // Validate each element
     this._structure.forEach((element, index) => {
       if (element.begin < 0) {
-        throw new Error(
+        throw new ValidationError(
           `Workout structure element ${index} has negative begin time: ${element.begin}`
         );
       }
 
       if (element.end <= element.begin) {
-        throw new Error(
+        throw new ValidationError(
           `Workout structure element ${index} has invalid time range: ${element.begin} to ${element.end}`
         );
       }
 
       if (element.steps.length === 0) {
-        throw new Error(`Workout structure element ${index} has no steps`);
+        throw new ValidationError(
+          `Workout structure element ${index} has no steps`
+        );
       }
     });
   }
 
   private validatePolyline(): void {
     if (!Array.isArray(this._polyline)) {
-      throw new Error('Workout polyline must be an array');
+      throw new ValidationError('Workout polyline must be an array');
     }
 
     this._polyline.forEach((point, index) => {
       if (!Array.isArray(point) || point.length !== 2) {
-        throw new Error(
+        throw new ValidationError(
           `Workout polyline point ${index} must be an array of exactly 2 numbers`
         );
       }
@@ -373,7 +376,7 @@ export class WorkoutStructure {
           (value) => typeof value === 'number' && Number.isFinite(value)
         )
       ) {
-        throw new Error(
+        throw new ValidationError(
           `Workout polyline point ${index} contains invalid values`
         );
       }
@@ -393,19 +396,19 @@ export class WorkoutStructure {
     const validTargetTypes: WorkoutIntensityTargetType[] = ['target', 'range'];
 
     if (!validLengthMetrics.includes(this._primaryLengthMetric)) {
-      throw new Error(
+      throw new ValidationError(
         `Invalid primary length metric: ${this._primaryLengthMetric}`
       );
     }
 
     if (!validIntensityMetrics.includes(this._primaryIntensityMetric)) {
-      throw new Error(
+      throw new ValidationError(
         `Invalid primary intensity metric: ${this._primaryIntensityMetric}`
       );
     }
 
     if (!validTargetTypes.includes(this._primaryIntensityTargetOrRange)) {
-      throw new Error(
+      throw new ValidationError(
         `Invalid primary intensity target type: ${this._primaryIntensityTargetOrRange}`
       );
     }

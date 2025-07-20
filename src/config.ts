@@ -1,3 +1,5 @@
+import { ValidationError } from '@/domain/errors';
+
 /**
  * TrainingPeaks SDK Configuration
  *
@@ -82,85 +84,59 @@ export type TrainingPeaksSDKConfig = {
 };
 
 /**
- * Default configuration values
+ * Type for client configuration that allows partial configuration
  */
-export const DEFAULT_CONFIG: TrainingPeaksSDKConfig = {
+export type TrainingPeaksClientConfig = {
+  urls?: Partial<TrainingPeaksSDKConfig['urls']>;
+  timeouts?: Partial<TrainingPeaksSDKConfig['timeouts']>;
+  tokens?: Partial<TrainingPeaksSDKConfig['tokens']>;
+  browser?: Partial<TrainingPeaksSDKConfig['browser']>;
+  debug?: Partial<TrainingPeaksSDKConfig['debug']>;
+  requests?: Partial<TrainingPeaksSDKConfig['requests']>;
+};
+
+/**
+ * Default configuration values (hardcoded defaults)
+ */
+const HARDCODED_DEFAULTS: TrainingPeaksSDKConfig = {
   urls: {
-    baseUrl:
-      process.env.TRAININGPEAKS_BASE_URL || 'https://www.trainingpeaks.com',
-    apiBaseUrl:
-      process.env.TRAININGPEAKS_API_BASE_URL || 'https://api.trainingpeaks.com',
-    loginUrl:
-      process.env.TRAININGPEAKS_LOGIN_URL ||
-      'https://home.trainingpeaks.com/login',
-    appUrl:
-      process.env.TRAININGPEAKS_APP_URL || 'https://app.trainingpeaks.com',
+    baseUrl: 'https://www.trainingpeaks.com',
+    apiBaseUrl: 'https://api.trainingpeaks.com',
+    loginUrl: 'https://home.trainingpeaks.com/login',
+    appUrl: 'https://app.trainingpeaks.com',
   },
 
   timeouts: {
-    default: parseInt(process.env.TRAININGPEAKS_TIMEOUT || '30000', 10),
-    webAuth: parseInt(
-      process.env.TRAININGPEAKS_WEB_AUTH_TIMEOUT || '30000',
-      10
-    ),
-    apiAuth: parseInt(
-      process.env.TRAININGPEAKS_API_AUTH_TIMEOUT || '30000',
-      10
-    ),
-    elementWait: parseInt(
-      process.env.TRAININGPEAKS_ELEMENT_WAIT_TIMEOUT || '5000',
-      10
-    ),
-    pageLoad: parseInt(
-      process.env.TRAININGPEAKS_PAGE_LOAD_TIMEOUT || '2000',
-      10
-    ),
-    errorDetection: parseInt(
-      process.env.TRAININGPEAKS_ERROR_DETECTION_TIMEOUT || '15000',
-      10
-    ),
-    testExecution: parseInt(
-      process.env.TRAININGPEAKS_TEST_EXECUTION_TIMEOUT || '60000',
-      10
-    ),
+    default: 30000,
+    webAuth: 30000,
+    apiAuth: 30000,
+    elementWait: 5000,
+    pageLoad: 2000,
+    errorDetection: 15000,
+    testExecution: 60000,
   },
 
   tokens: {
     // 5 minutes before expiration
-    refreshWindow: parseInt(
-      process.env.TRAININGPEAKS_TOKEN_REFRESH_WINDOW || '300000',
-      10
-    ),
+    refreshWindow: 300000,
     // 1 minute validation window
-    validationWindow: parseInt(
-      process.env.TRAININGPEAKS_TOKEN_VALIDATION_WINDOW || '60000',
-      10
-    ),
+    validationWindow: 60000,
     // 23 hours default expiration
-    defaultExpiration: parseInt(
-      process.env.TRAININGPEAKS_TOKEN_DEFAULT_EXPIRATION || '82800000',
-      10
-    ),
+    defaultExpiration: 82800000,
   },
 
   browser: {
-    headless: process.env.TRAININGPEAKS_BROWSER_HEADLESS !== 'false',
-    executablePath: process.env.TRAININGPEAKS_BROWSER_EXECUTABLE_PATH || '',
-    launchTimeout: parseInt(
-      process.env.TRAININGPEAKS_BROWSER_LAUNCH_TIMEOUT || '30000',
-      10
-    ),
-    pageWaitTimeout: parseInt(
-      process.env.TRAININGPEAKS_BROWSER_PAGE_WAIT_TIMEOUT || '2000',
-      10
-    ),
+    headless: true,
+    executablePath: '',
+    launchTimeout: 30000,
+    pageWaitTimeout: 2000,
   },
 
   debug: {
-    enabled: process.env.TRAININGPEAKS_DEBUG === 'true',
-    logAuth: process.env.TRAININGPEAKS_DEBUG_AUTH === 'true',
-    logNetwork: process.env.TRAININGPEAKS_DEBUG_NETWORK === 'true',
-    logBrowser: process.env.TRAININGPEAKS_DEBUG_BROWSER === 'true',
+    enabled: false,
+    logAuth: false,
+    logNetwork: false,
+    logBrowser: false,
   },
 
   requests: {
@@ -169,28 +145,324 @@ export const DEFAULT_CONFIG: TrainingPeaksSDKConfig = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    retryAttempts: parseInt(
-      process.env.TRAININGPEAKS_RETRY_ATTEMPTS || '3',
-      10
-    ),
-    retryDelay: parseInt(process.env.TRAININGPEAKS_RETRY_DELAY || '1000', 10),
+    retryAttempts: 3,
+    retryDelay: 1000,
   },
 };
+
+/**
+ * Type for environment configuration with optional values
+ */
+type EnvironmentConfig = {
+  urls?: {
+    baseUrl?: string;
+    apiBaseUrl?: string;
+    loginUrl?: string;
+    appUrl?: string;
+  };
+  timeouts?: {
+    default?: number;
+    webAuth?: number;
+    apiAuth?: number;
+    elementWait?: number;
+    pageLoad?: number;
+    errorDetection?: number;
+    testExecution?: number;
+  };
+  tokens?: {
+    refreshWindow?: number;
+    validationWindow?: number;
+    defaultExpiration?: number;
+  };
+  browser?: {
+    headless?: boolean;
+    executablePath?: string;
+    launchTimeout?: number;
+    pageWaitTimeout?: number;
+  };
+  debug?: {
+    enabled?: boolean;
+    logAuth?: boolean;
+    logNetwork?: boolean;
+    logBrowser?: boolean;
+  };
+  requests?: {
+    retryAttempts?: number;
+    retryDelay?: number;
+  };
+};
+
+/**
+ * Get environment-based configuration overrides
+ */
+function getEnvironmentConfig(): EnvironmentConfig {
+  return {
+    urls: {
+      baseUrl: process.env.TRAININGPEAKS_BASE_URL || undefined,
+      apiBaseUrl: process.env.TRAININGPEAKS_API_BASE_URL || undefined,
+      loginUrl: process.env.TRAININGPEAKS_LOGIN_URL || undefined,
+      appUrl: process.env.TRAININGPEAKS_APP_URL || undefined,
+    },
+
+    timeouts: {
+      default: process.env.TRAININGPEAKS_TIMEOUT
+        ? (() => {
+            const parsed = parseInt(process.env.TRAININGPEAKS_TIMEOUT!, 10);
+            return isNaN(parsed) ? undefined : parsed;
+          })()
+        : undefined,
+      webAuth: process.env.TRAININGPEAKS_WEB_AUTH_TIMEOUT
+        ? (() => {
+            const parsed = parseInt(
+              process.env.TRAININGPEAKS_WEB_AUTH_TIMEOUT!,
+              10
+            );
+            return isNaN(parsed) ? undefined : parsed;
+          })()
+        : undefined,
+      apiAuth: process.env.TRAININGPEAKS_API_AUTH_TIMEOUT
+        ? (() => {
+            const parsed = parseInt(
+              process.env.TRAININGPEAKS_API_AUTH_TIMEOUT!,
+              10
+            );
+            return isNaN(parsed) ? undefined : parsed;
+          })()
+        : undefined,
+      elementWait: process.env.TRAININGPEAKS_ELEMENT_WAIT_TIMEOUT
+        ? (() => {
+            const parsed = parseInt(
+              process.env.TRAININGPEAKS_ELEMENT_WAIT_TIMEOUT!,
+              10
+            );
+            return isNaN(parsed) ? undefined : parsed;
+          })()
+        : undefined,
+      pageLoad: process.env.TRAININGPEAKS_PAGE_LOAD_TIMEOUT
+        ? (() => {
+            const parsed = parseInt(
+              process.env.TRAININGPEAKS_PAGE_LOAD_TIMEOUT!,
+              10
+            );
+            return isNaN(parsed) ? undefined : parsed;
+          })()
+        : undefined,
+      errorDetection: process.env.TRAININGPEAKS_ERROR_DETECTION_TIMEOUT
+        ? (() => {
+            const parsed = parseInt(
+              process.env.TRAININGPEAKS_ERROR_DETECTION_TIMEOUT!,
+              10
+            );
+            return isNaN(parsed) ? undefined : parsed;
+          })()
+        : undefined,
+      testExecution: process.env.TRAININGPEAKS_TEST_EXECUTION_TIMEOUT
+        ? (() => {
+            const parsed = parseInt(
+              process.env.TRAININGPEAKS_TEST_EXECUTION_TIMEOUT!,
+              10
+            );
+            return isNaN(parsed) ? undefined : parsed;
+          })()
+        : undefined,
+    },
+
+    tokens: {
+      refreshWindow: process.env.TRAININGPEAKS_TOKEN_REFRESH_WINDOW
+        ? (() => {
+            const parsed = parseInt(
+              process.env.TRAININGPEAKS_TOKEN_REFRESH_WINDOW!,
+              10
+            );
+            return isNaN(parsed) ? undefined : parsed;
+          })()
+        : undefined,
+      validationWindow: process.env.TRAININGPEAKS_TOKEN_VALIDATION_WINDOW
+        ? (() => {
+            const parsed = parseInt(
+              process.env.TRAININGPEAKS_TOKEN_VALIDATION_WINDOW!,
+              10
+            );
+            return isNaN(parsed) ? undefined : parsed;
+          })()
+        : undefined,
+      defaultExpiration: process.env.TRAININGPEAKS_TOKEN_DEFAULT_EXPIRATION
+        ? (() => {
+            const parsed = parseInt(
+              process.env.TRAININGPEAKS_TOKEN_DEFAULT_EXPIRATION!,
+              10
+            );
+            return isNaN(parsed) ? undefined : parsed;
+          })()
+        : undefined,
+    },
+
+    browser: {
+      headless:
+        process.env.TRAININGPEAKS_BROWSER_HEADLESS !== undefined
+          ? process.env.TRAININGPEAKS_BROWSER_HEADLESS !== 'false'
+          : undefined,
+      executablePath:
+        process.env.TRAININGPEAKS_BROWSER_EXECUTABLE_PATH || undefined,
+      launchTimeout: process.env.TRAININGPEAKS_BROWSER_LAUNCH_TIMEOUT
+        ? (() => {
+            const parsed = parseInt(
+              process.env.TRAININGPEAKS_BROWSER_LAUNCH_TIMEOUT!,
+              10
+            );
+            return isNaN(parsed) ? undefined : parsed;
+          })()
+        : undefined,
+      pageWaitTimeout: process.env.TRAININGPEAKS_BROWSER_PAGE_WAIT_TIMEOUT
+        ? (() => {
+            const parsed = parseInt(
+              process.env.TRAININGPEAKS_BROWSER_PAGE_WAIT_TIMEOUT!,
+              10
+            );
+            return isNaN(parsed) ? undefined : parsed;
+          })()
+        : undefined,
+    },
+
+    debug: {
+      enabled:
+        process.env.TRAININGPEAKS_DEBUG !== undefined
+          ? process.env.TRAININGPEAKS_DEBUG === 'true'
+          : undefined,
+      logAuth:
+        process.env.TRAININGPEAKS_DEBUG_AUTH !== undefined
+          ? process.env.TRAININGPEAKS_DEBUG_AUTH === 'true'
+          : undefined,
+      logNetwork:
+        process.env.TRAININGPEAKS_DEBUG_NETWORK !== undefined
+          ? process.env.TRAININGPEAKS_DEBUG_NETWORK === 'true'
+          : undefined,
+      logBrowser:
+        process.env.TRAININGPEAKS_DEBUG_BROWSER !== undefined
+          ? process.env.TRAININGPEAKS_DEBUG_BROWSER === 'true'
+          : undefined,
+    },
+
+    requests: {
+      retryAttempts: process.env.TRAININGPEAKS_RETRY_ATTEMPTS
+        ? (() => {
+            const parsed = parseInt(
+              process.env.TRAININGPEAKS_RETRY_ATTEMPTS!,
+              10
+            );
+            return isNaN(parsed) ? undefined : parsed;
+          })()
+        : undefined,
+      retryDelay: process.env.TRAININGPEAKS_RETRY_DELAY
+        ? (() => {
+            const parsed = parseInt(process.env.TRAININGPEAKS_RETRY_DELAY!, 10);
+            return isNaN(parsed) ? undefined : parsed;
+          })()
+        : undefined,
+    },
+  };
+}
+
+/**
+ * Deep merge configuration objects, filtering out undefined values
+ */
+function deepMergeConfig(
+  base: TrainingPeaksSDKConfig,
+  overrides: TrainingPeaksClientConfig
+): TrainingPeaksSDKConfig {
+  const result = { ...base };
+
+  // Simple deep merge for specific sections
+  if (overrides.urls) {
+    result.urls = { ...result.urls, ...overrides.urls };
+  }
+  if (overrides.timeouts) {
+    result.timeouts = { ...result.timeouts, ...overrides.timeouts };
+  }
+  if (overrides.tokens) {
+    result.tokens = { ...result.tokens, ...overrides.tokens };
+  }
+  if (overrides.browser) {
+    result.browser = { ...result.browser, ...overrides.browser };
+  }
+  if (overrides.debug) {
+    result.debug = { ...result.debug, ...overrides.debug };
+  }
+  if (overrides.requests) {
+    result.requests = { ...result.requests, ...overrides.requests };
+  }
+
+  return result;
+}
 
 /**
  * Merge user configuration with defaults
  */
 export function mergeWithDefaultConfig(
-  userConfig: Partial<TrainingPeaksSDKConfig> = {}
+  userConfig: TrainingPeaksClientConfig = {}
 ): TrainingPeaksSDKConfig {
-  return {
-    urls: { ...DEFAULT_CONFIG.urls, ...userConfig.urls },
-    timeouts: { ...DEFAULT_CONFIG.timeouts, ...userConfig.timeouts },
-    tokens: { ...DEFAULT_CONFIG.tokens, ...userConfig.tokens },
-    browser: { ...DEFAULT_CONFIG.browser, ...userConfig.browser },
-    debug: { ...DEFAULT_CONFIG.debug, ...userConfig.debug },
-    requests: { ...DEFAULT_CONFIG.requests, ...userConfig.requests },
-  };
+  // 1. Start with hardcoded defaults
+  // 2. Override with environment variables
+  // 3. Override with user configuration
+  const envConfig = getEnvironmentConfig();
+
+  // Simple merge approach to avoid type issues
+  const config = { ...HARDCODED_DEFAULTS };
+
+  // Merge environment config
+  if (envConfig.urls) {
+    // Filter out undefined values
+    const filteredUrls = Object.fromEntries(
+      Object.entries(envConfig.urls).filter(([, value]) => value !== undefined)
+    );
+    config.urls = { ...config.urls, ...filteredUrls };
+  }
+  if (envConfig.timeouts) {
+    // Filter out undefined values
+    const filteredTimeouts = Object.fromEntries(
+      Object.entries(envConfig.timeouts).filter(
+        ([, value]) => value !== undefined
+      )
+    );
+    config.timeouts = { ...config.timeouts, ...filteredTimeouts };
+  }
+  if (envConfig.tokens) {
+    // Filter out undefined values
+    const filteredTokens = Object.fromEntries(
+      Object.entries(envConfig.tokens).filter(
+        ([, value]) => value !== undefined
+      )
+    );
+    config.tokens = { ...config.tokens, ...filteredTokens };
+  }
+  if (envConfig.browser) {
+    // Filter out undefined values
+    const filteredBrowser = Object.fromEntries(
+      Object.entries(envConfig.browser).filter(
+        ([, value]) => value !== undefined
+      )
+    );
+    config.browser = { ...config.browser, ...filteredBrowser };
+  }
+  if (envConfig.debug) {
+    // Filter out undefined values
+    const filteredDebug = Object.fromEntries(
+      Object.entries(envConfig.debug).filter(([, value]) => value !== undefined)
+    );
+    config.debug = { ...config.debug, ...filteredDebug };
+  }
+  if (envConfig.requests) {
+    // Filter out undefined values
+    const filteredRequests = Object.fromEntries(
+      Object.entries(envConfig.requests).filter(
+        ([, value]) => value !== undefined
+      )
+    );
+    config.requests = { ...config.requests, ...filteredRequests };
+  }
+
+  // Merge user config using deep merge
+  return deepMergeConfig(config, userConfig);
 }
 
 /**
@@ -200,26 +472,30 @@ export function validateConfig(config: TrainingPeaksSDKConfig): void {
   // Validate URLs
   Object.entries(config.urls).forEach(([key, url]) => {
     if (!url || typeof url !== 'string') {
-      throw new Error(`Invalid URL configuration for ${key}: ${url}`);
+      throw new ValidationError(`Invalid URL configuration for ${key}: ${url}`);
     }
     try {
       new URL(url);
     } catch (error) {
-      throw new Error(`Invalid URL format for ${key}: ${url}`);
+      throw new ValidationError(`Invalid URL format for ${key}: ${url}`);
     }
   });
 
   // Validate timeouts
   Object.entries(config.timeouts).forEach(([key, timeout]) => {
     if (typeof timeout !== 'number' || timeout < 0) {
-      throw new Error(`Invalid timeout configuration for ${key}: ${timeout}`);
+      throw new ValidationError(
+        `Invalid timeout configuration for ${key}: ${timeout}`
+      );
     }
   });
 
   // Validate token configurations
   Object.entries(config.tokens).forEach(([key, value]) => {
     if (typeof value !== 'number' || value < 0) {
-      throw new Error(`Invalid token configuration for ${key}: ${value}`);
+      throw new ValidationError(
+        `Invalid token configuration for ${key}: ${value}`
+      );
     }
   });
 }
@@ -228,7 +504,7 @@ export function validateConfig(config: TrainingPeaksSDKConfig): void {
  * Get configuration from environment variables or defaults
  */
 export function getSDKConfig(
-  userConfig: Partial<TrainingPeaksSDKConfig> = {}
+  userConfig: TrainingPeaksClientConfig = {}
 ): TrainingPeaksSDKConfig {
   const config = mergeWithDefaultConfig(userConfig);
   validateConfig(config);

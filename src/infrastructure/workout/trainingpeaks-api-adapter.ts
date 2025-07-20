@@ -9,6 +9,7 @@ import {
   WorkoutServicePort,
 } from '@/application/ports/workout';
 import { getSDKConfig } from '@/config';
+import { WorkoutUploadError } from '@/domain/errors/workout-errors';
 import { WorkoutFile } from '@/domain/value-objects/workout-file';
 import { networkLogger, workoutLogger } from '@/infrastructure/logging/logger';
 import {
@@ -79,7 +80,9 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
       const workoutId = response.data?.workoutId;
 
       if (!workoutId) {
-        throw new Error('No workout ID received from API response');
+        throw new WorkoutUploadError(
+          'No workout ID received from API response'
+        );
       }
 
       workoutLogger.info(

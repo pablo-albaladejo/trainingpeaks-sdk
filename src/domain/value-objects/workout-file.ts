@@ -3,6 +3,8 @@
  * Represents a workout file with validation
  */
 
+import { ValidationError } from '@/domain/errors';
+
 export class WorkoutFile {
   private static readonly ALLOWED_EXTENSIONS = ['.tcx', '.gpx', '.fit', '.xml'];
   private static readonly MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -15,7 +17,7 @@ export class WorkoutFile {
     this.validateFileName();
     this.validateContent();
     this.validateMimeType();
-    this.validateFileSize();
+    this.validateSize();
     this.validateFileExtension();
   }
 
@@ -85,30 +87,44 @@ export class WorkoutFile {
 
   private validateFileName(): void {
     if (!this._fileName || this._fileName.trim().length === 0) {
-      throw new Error('File name cannot be empty');
+      throw new ValidationError('File name cannot be empty');
     }
     if (this._fileName.length > 255) {
-      throw new Error('File name cannot exceed 255 characters');
+      throw new ValidationError('File name cannot exceed 255 characters');
     }
   }
 
   private validateContent(): void {
-    if (!this._content) {
-      throw new Error('File content cannot be empty');
+    if (!this._content || this._content.trim().length === 0) {
+      throw new ValidationError('File content cannot be empty');
     }
   }
 
   private validateMimeType(): void {
     if (!this._mimeType || this._mimeType.trim().length === 0) {
-      throw new Error('MIME type cannot be empty');
+      throw new ValidationError('MIME type cannot be empty');
+    }
+
+    const validMimeTypes = [
+      'application/gpx+xml',
+      'application/tcx+xml',
+      'application/fit',
+      'text/csv',
+      'application/json',
+    ];
+
+    if (!validMimeTypes.includes(this._mimeType)) {
+      throw new ValidationError(
+        `Unsupported MIME type: ${this._mimeType}. Supported types: ${validMimeTypes.join(', ')}`
+      );
     }
   }
 
-  private validateFileSize(): void {
-    const size = this.size;
-    if (size > WorkoutFile.MAX_FILE_SIZE) {
-      throw new Error(
-        `File size (${size} bytes) exceeds maximum limit of ${WorkoutFile.MAX_FILE_SIZE} bytes`
+  private validateSize(): void {
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (this._content.length > maxSize) {
+      throw new ValidationError(
+        `File size exceeds maximum allowed size of ${maxSize} bytes`
       );
     }
   }

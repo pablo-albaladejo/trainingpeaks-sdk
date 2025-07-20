@@ -3,6 +3,7 @@
  * Represents an individual step in a workout structure
  */
 
+import { ValidationError } from '@/domain/errors';
 import {
   WorkoutLength,
   WorkoutLengthUnit,
@@ -245,22 +246,24 @@ export class WorkoutStep {
 
   private validateName(): void {
     if (!this._name || this._name.trim().length === 0) {
-      throw new Error('Workout step name cannot be empty');
+      throw new ValidationError('Workout step name cannot be empty');
     }
 
     if (this._name.length > 100) {
-      throw new Error('Workout step name cannot exceed 100 characters');
+      throw new ValidationError(
+        'Workout step name cannot exceed 100 characters'
+      );
     }
   }
 
   private validateTargets(): void {
     if (!Array.isArray(this._targets)) {
-      throw new Error('Workout step targets must be an array');
+      throw new ValidationError('Workout step targets must be an array');
     }
 
     // Allow empty targets for rest steps
     if (this._targets.length === 0 && this._intensityClass !== 'rest') {
-      console.warn(
+      throw new ValidationError(
         `Workout step '${this._name}' has no targets but is not a rest step`
       );
     }
@@ -275,7 +278,7 @@ export class WorkoutStep {
     ];
 
     if (!validClasses.includes(this._intensityClass)) {
-      throw new Error(
+      throw new ValidationError(
         `Invalid workout step intensity class: ${this._intensityClass}`
       );
     }

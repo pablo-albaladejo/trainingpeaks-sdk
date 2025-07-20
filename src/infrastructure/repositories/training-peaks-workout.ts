@@ -18,6 +18,7 @@ import {
 } from '@/domain/errors/workout-errors';
 import { WorkoutFile } from '@/domain/value-objects/workout-file';
 import { workoutLogger } from '@/infrastructure/logging/logger';
+import { TrainingPeaksWorkoutApiAdapter } from '@/infrastructure/workout/trainingpeaks-api-adapter';
 import {
   CreateStructuredWorkoutRequest,
   CreateStructuredWorkoutResponse,
@@ -56,6 +57,18 @@ export const createTrainingPeaksWorkoutRepository = (
 
     return service;
   };
+
+  // Register the TrainingPeaks API adapter
+  const apiAdapter = new TrainingPeaksWorkoutApiAdapter();
+  registerWorkoutService(apiAdapter);
+
+  workoutLogger.info(
+    'TrainingPeaks workout repository created with API adapter',
+    {
+      baseUrl: config.baseUrl,
+      timeout: config.timeout,
+    }
+  );
 
   const uploadWorkout = async (
     workoutData: WorkoutData,

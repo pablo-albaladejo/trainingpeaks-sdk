@@ -3,73 +3,147 @@
  * Main client for interacting with TrainingPeaks services
  */
 
+import { getSDKConfig, type TrainingPeaksClientConfig } from '@/config';
+import { AuthenticationError } from '@/domain/errors';
+import { Credentials } from '@/domain/value-objects/credentials';
+import { authLogger } from '@/infrastructure/logging/logger';
+import { createTrainingPeaksAuthRepository } from '@/infrastructure/repositories/training-peaks-auth';
 import { createWorkoutManager } from './workout-manager';
-
-/**
- * Configuration for the TrainingPeaks client
- */
-export type TrainingPeaksClientConfig = {
-  baseUrl?: string;
-  timeout?: number;
-  debug?: boolean;
-};
 
 /**
  * Main TrainingPeaks client
  */
 export class TrainingPeaksClient {
-  private config: TrainingPeaksClientConfig;
-  private workoutManager: unknown;
-  private authenticated: boolean = false;
+  private sdkConfig: ReturnType<typeof getSDKConfig>;
+  private workoutManager: ReturnType<typeof createWorkoutManager>;
+  private authRepository: ReturnType<typeof createTrainingPeaksAuthRepository>;
 
   constructor(config: TrainingPeaksClientConfig = {}) {
-    this.config = {
-      baseUrl: config.baseUrl || 'https://api.trainingpeaks.com',
-      timeout: config.timeout || 10000,
-      debug: config.debug || false,
-    };
-    this.workoutManager = createWorkoutManager();
+    // Get SDK configuration with client overrides
+    this.sdkConfig = getSDKConfig(config);
+
+    // Initialize real authentication repository
+    this.authRepository = createTrainingPeaksAuthRepository();
+
+    // Initialize workout manager with the same configuration
+    this.workoutManager = createWorkoutManager(config);
   }
 
   /**
    * Login with username and password
    */
   async login(username: string, password: string) {
-    // Simulate authentication logic
-    if (username === 'invalid_user' && password === 'invalid_password') {
-      this.authenticated = false;
-      throw new Error('Invalid credentials');
-    }
+    try {
+      authLogger.info('Starting client authentication', {
+        username,
+        authMethod: this.sdkConfig.browser.headless ? 'web' : 'api',
+      });
 
-    this.authenticated = true;
-    return {
-      success: true,
-      user: { id: '1', username, email: `${username}@example.com` },
-      token: { accessToken: 'mock-token', expiresAt: new Date() },
-    };
+      // Validate credentials
+      if (
+        !username ||
+        !password ||
+        username.trim().length === 0 ||
+        password.trim().length === 0
+      ) {
+        throw new AuthenticationError('Invalid credentials');
+      }
+
+      // Create credentials value object
+      const credentials = Credentials.create(username, password);
+
+      // Authenticate using real repository
+      const token = await this.authRepository.authenticate(credentials);
+      const user = await this.authRepository.getCurrentUser();
+
+      if (!user) {
+        throw new AuthenticationError(
+          'Failed to retrieve user information after authentication'
+        );
+      }
+
+      authLogger.info('Client authentication successful', {
+        userId: user.id,
+        username: user.name,
+      });
+
+      return {
+        success: true,
+        user: {
+          id: user.id,
+          username: user.name, // User entity has 'name' property
+          email: `${username}@example.com`, // Generate email from username
+        },
+        token: {
+          accessToken: token.accessToken,
+          expiresAt: token.expiresAt,
+        },
+      };
+    } catch (error) {
+      authLogger.error('Client authentication failed', {
+        username,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
+    }
   }
 
   /**
    * Logout
    */
   async logout() {
-    this.authenticated = false;
-    return { success: true };
+    try {
+      authLogger.info('Starting client logout');
+
+      await this.authRepository.clearAuth();
+
+      authLogger.info('Client logout successful');
+
+      return { success: true };
+    } catch (error) {
+      authLogger.error('Client logout failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
+    }
   }
 
   /**
    * Get current user
    */
   async getCurrentUser() {
-    // Simple implementation for now
-    return { id: '1', username: 'user', email: 'user@example.com' };
+    try {
+      const user = await this.authRepository.getCurrentUser();
+
+      if (!user) {
+        return null;
+      }
+
+      return {
+        id: user.id,
+        username: user.name,
+        email: `${user.name}@example.com`,
+      };
+    } catch (error) {
+      authLogger.error('Failed to get current user', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
+    }
   }
 
   /**
    * Check if authenticated
    */
   isAuthenticated(): boolean {
-    return this.authenticated;
+    return this.authRepository.isAuthenticated();
+  }
+
+  /**
+   * Get current user ID
+   */
+  getUserId(): string | null {
+    return this.authRepository.getUserId();
   }
 
   /**
@@ -82,7 +156,7 @@ export class TrainingPeaksClient {
   /**
    * Get configuration
    */
-  getConfig(): TrainingPeaksClientConfig {
-    return this.config;
+  getConfig() {
+    return this.sdkConfig;
   }
 }

@@ -384,8 +384,8 @@ export class Workout {
       this._structure &&
       this._duration !== this._structure.getTotalDuration()
     ) {
-      // Log warning but don't throw error - duration might be overridden
-      console.warn(
+      // Duration mismatch is a validation issue, not just a warning
+      throw new WorkoutValidationError(
         `Workout duration (${this._duration}s) doesn't match structure duration (${this._structure.getTotalDuration()}s)`
       );
     }

@@ -3,6 +3,8 @@
  * Represents the duration or length of a workout step
  */
 
+import { ValidationError } from '@/domain/errors';
+
 export type WorkoutLengthUnit =
   | 'second'
   | 'minute'
@@ -122,15 +124,15 @@ export class WorkoutLength {
 
   private validateValue(): void {
     if (this._value < 0) {
-      throw new Error('Workout length value must be non-negative');
+      throw new ValidationError('Workout length value must be non-negative');
     }
 
     if (!Number.isFinite(this._value)) {
-      throw new Error('Workout length value must be a finite number');
+      throw new ValidationError('Workout length value must be a finite number');
     }
 
     if (this._unit === 'repetition' && !Number.isInteger(this._value)) {
-      throw new Error('Repetition count must be an integer');
+      throw new ValidationError('Repetition count must be an integer');
     }
   }
 
@@ -146,7 +148,7 @@ export class WorkoutLength {
     ];
 
     if (!validUnits.includes(this._unit)) {
-      throw new Error(`Invalid workout length unit: ${this._unit}`);
+      throw new ValidationError(`Invalid workout length unit: ${this._unit}`);
     }
   }
 }

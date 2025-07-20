@@ -4,6 +4,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import type { TrainingPeaksClientConfig } from './config';
 import { createWorkoutManager } from './workout-manager';
 
 describe('WorkoutManager', () => {
@@ -26,11 +27,19 @@ describe('WorkoutManager', () => {
 
   it('should create workout manager with custom config', () => {
     // Arrange
-    const config = {
-      baseUrl: 'https://api.trainingpeaks.com',
-      timeout: 5000,
-      debug: true,
-      headers: { 'Custom-Header': 'test' },
+    const config: TrainingPeaksClientConfig = {
+      urls: {
+        apiBaseUrl: 'https://custom-api.trainingpeaks.com',
+      },
+      timeouts: {
+        default: 5000,
+      },
+      debug: {
+        enabled: true,
+      },
+      requests: {
+        defaultHeaders: { 'Custom-Header': 'test' },
+      },
     };
 
     // Act

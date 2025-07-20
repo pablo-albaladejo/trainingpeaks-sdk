@@ -1,3 +1,5 @@
+import { ValidationError } from '@/domain/errors';
+
 /**
  * AuthToken Domain Entity
  * Represents authentication token in the domain
@@ -81,19 +83,22 @@ export class AuthToken {
 
   private validateAccessToken(): void {
     if (!this._accessToken || this._accessToken.trim().length === 0) {
-      throw new Error('Access token cannot be empty');
+      throw new ValidationError('Access token cannot be empty');
     }
   }
 
   private validateTokenType(): void {
     if (!this._tokenType || this._tokenType.trim().length === 0) {
-      throw new Error('Token type cannot be empty');
+      throw new ValidationError('Token type cannot be empty');
     }
   }
 
   private validateExpiresAt(): void {
-    if (!this._expiresAt || isNaN(this._expiresAt.getTime())) {
-      throw new Error('Expires at must be a valid date');
+    if (
+      !(this._expiresAt instanceof Date) ||
+      isNaN(this._expiresAt.getTime())
+    ) {
+      throw new ValidationError('Expires at must be a valid date');
     }
   }
 }

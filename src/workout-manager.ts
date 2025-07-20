@@ -4,6 +4,8 @@
  */
 
 import type { WorkoutRepository } from '@/application/ports/workout';
+import { getSDKConfig, type TrainingPeaksClientConfig } from '@/config';
+import { createTrainingPeaksWorkoutRepository } from '@/infrastructure/repositories/training-peaks-workout';
 import {
   createStructuredWorkout,
   deleteWorkout,
@@ -15,54 +17,59 @@ import {
   uploadWorkout,
   uploadWorkoutFromFile,
 } from '@/infrastructure/services/workout-manager';
-
-// Mock repository for placeholder functionality
-const mockWorkoutRepository: WorkoutRepository = {
-  getWorkout: async () => null,
-  listWorkouts: async () => [],
-  deleteWorkout: async () => true,
-  createStructuredWorkout: async () => ({
-    id: 'placeholder',
-    success: true,
-    message: 'Workout created successfully',
-  }),
-  uploadWorkout: async () => ({
-    success: true,
-    workoutId: 'placeholder',
-    message: 'Workout uploaded successfully',
-  }),
-  uploadWorkoutFromFile: async () => ({
-    success: true,
-    workoutId: 'placeholder',
-    message: 'Workout uploaded from file successfully',
-  }),
-  updateWorkout: async () => {
-    throw new Error('Update workout not implemented');
-  },
-  searchWorkouts: async () => [],
-  getWorkoutStats: async () => ({
-    totalWorkouts: 0,
-    totalDuration: 0,
-    totalDistance: 0,
-    averageDuration: 0,
-    averageDistance: 0,
-  }),
-};
+import { TrainingPeaksWorkoutApiAdapter } from '@/infrastructure/workout/trainingpeaks-api-adapter';
 
 /**
- * Create workout manager with default configuration
+ * Create workout manager with real TrainingPeaks integration
  */
-export const createWorkoutManager = () => {
+export const createWorkoutManager = (config?: TrainingPeaksClientConfig) => {
+  // Get SDK configuration with optional overrides
+  const sdkConfig = getSDKConfig(config);
+
+  // Create API adapter
+  const apiAdapter = new TrainingPeaksWorkoutApiAdapter();
+
+  // Create repository with real API integration
+  const workoutRepository: WorkoutRepository =
+    createTrainingPeaksWorkoutRepository(
+      // File system adapter (placeholder for now)
+      {
+        readFile: async () => Buffer.from(''),
+        writeFile: async () => {},
+        deleteFile: async () => {},
+        exists: async () => false,
+        fileExists: async () => false,
+        createDirectory: async () => {},
+        listFiles: async () => [],
+        getFileStats: async () => ({
+          size: 0,
+          created: new Date(),
+          modified: new Date(),
+        }),
+        moveFile: async () => {},
+        copyFile: async () => {},
+      },
+      {
+        baseUrl: sdkConfig.urls.apiBaseUrl,
+        timeout: sdkConfig.timeouts.default,
+        retries: sdkConfig.requests.retryAttempts,
+        headers: sdkConfig.requests.defaultHeaders,
+      }
+    );
+
+  // Note: The repository factory should handle adapter registration internally
+  // The API adapter will be used when the repository calls getWorkoutService()
+
   return {
-    uploadWorkout: uploadWorkout(mockWorkoutRepository),
-    uploadWorkoutFromFile: uploadWorkoutFromFile(mockWorkoutRepository),
-    getWorkout: getWorkout(mockWorkoutRepository),
-    listWorkouts: listWorkouts(mockWorkoutRepository),
-    deleteWorkout: deleteWorkout(mockWorkoutRepository),
-    createStructuredWorkout: createStructuredWorkout(mockWorkoutRepository),
-    searchWorkouts: searchWorkouts(mockWorkoutRepository),
-    getWorkoutStats: getWorkoutStats(mockWorkoutRepository),
-    getWorkoutRepository: getWorkoutRepository(mockWorkoutRepository),
+    uploadWorkout: uploadWorkout(workoutRepository),
+    uploadWorkoutFromFile: uploadWorkoutFromFile(workoutRepository),
+    getWorkout: getWorkout(workoutRepository),
+    listWorkouts: listWorkouts(workoutRepository),
+    deleteWorkout: deleteWorkout(workoutRepository),
+    createStructuredWorkout: createStructuredWorkout(workoutRepository),
+    searchWorkouts: searchWorkouts(workoutRepository),
+    getWorkoutStats: getWorkoutStats(workoutRepository),
+    getWorkoutRepository: getWorkoutRepository(workoutRepository),
   };
 };
 

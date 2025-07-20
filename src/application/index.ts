@@ -23,11 +23,11 @@ export {
   type LogContext,
   type LogDebug,
   type LogError,
-  type LoggerConfig,
   type LogInfo,
   type LogLevel,
   type LogWarn,
   type LogWithLevel,
+  type LoggerConfig,
 } from './services/logger';
 
 // Auth Application Services - Individual Functions
@@ -101,11 +101,8 @@ export {
 // Workout Validation Services
 export {
   type ValidateListWorkoutsFilters,
-  type ValidateStructuredWorkoutBusinessRules,
-  type ValidateWorkoutCanBeDeleted,
   type ValidateWorkoutFile,
   type ValidateWorkoutId,
-  type WorkoutValidationParams,
 } from './services/workout-validation';
 
 // Use Cases

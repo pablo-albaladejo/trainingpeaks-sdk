@@ -1,3 +1,5 @@
+import { ValidationError } from '@/domain/errors';
+
 /**
  * Workout Target Value Object
  * Represents an intensity target with minimum and maximum values
@@ -126,24 +128,28 @@ export class WorkoutTarget {
 
   private validateValues(): void {
     if (!Number.isFinite(this._minValue)) {
-      throw new Error('Workout target minValue must be a finite number');
+      throw new ValidationError(
+        'Workout target minValue must be a finite number'
+      );
     }
 
     if (!Number.isFinite(this._maxValue)) {
-      throw new Error('Workout target maxValue must be a finite number');
+      throw new ValidationError(
+        'Workout target maxValue must be a finite number'
+      );
     }
 
     if (this._minValue < 0) {
-      throw new Error('Workout target minValue must be non-negative');
+      throw new ValidationError('Workout target minValue must be non-negative');
     }
 
     if (this._maxValue < 0) {
-      throw new Error('Workout target maxValue must be non-negative');
+      throw new ValidationError('Workout target maxValue must be non-negative');
     }
 
     if (this._minValue > this._maxValue) {
-      throw new Error(
-        'Workout target minValue cannot be greater than maxValue'
+      throw new ValidationError(
+        `Workout target minValue (${this._minValue}) cannot be greater than maxValue (${this._maxValue})`
       );
     }
   }

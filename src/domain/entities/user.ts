@@ -1,3 +1,5 @@
+import { ValidationError } from '@/domain/errors';
+
 /**
  * User Domain Entity
  * Represents a TrainingPeaks user in the domain
@@ -45,13 +47,13 @@ export class User {
 
   private validateId(): void {
     if (!this._id || this._id.trim().length === 0) {
-      throw new Error('User ID cannot be empty');
+      throw new ValidationError('User ID cannot be empty');
     }
   }
 
   private validateName(): void {
     if (!this._name || this._name.trim().length === 0) {
-      throw new Error('User name cannot be empty');
+      throw new ValidationError('User name cannot be empty');
     }
   }
 }

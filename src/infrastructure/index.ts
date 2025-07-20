@@ -59,8 +59,6 @@ export {
 
 export {
   validateListWorkoutsFilters,
-  validateStructuredWorkoutBusinessRules,
-  validateWorkoutCanBeDeleted,
   validateWorkoutFile,
   validateWorkoutId,
 } from './services/workout-validation';

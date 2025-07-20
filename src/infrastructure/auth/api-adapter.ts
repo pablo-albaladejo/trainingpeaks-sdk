@@ -10,6 +10,7 @@ import {
 import { getSDKConfig } from '@/config';
 import { AuthToken } from '@/domain/entities/auth-token';
 import { User } from '@/domain/entities/user';
+import { AuthenticationError, NetworkError } from '@/domain/errors';
 import { Credentials } from '@/domain/value-objects/credentials';
 import axios, { AxiosInstance } from 'axios';
 
@@ -49,7 +50,7 @@ export class ApiAuthAdapter implements AuthenticationPort {
       });
 
       if (!tokenResponse.data.access_token) {
-        throw new Error('No access token received from API');
+        throw new AuthenticationError('No access token received from API');
       }
 
       // Create AuthToken entity
@@ -68,7 +69,7 @@ export class ApiAuthAdapter implements AuthenticationPort {
       });
 
       if (!userResponse.data.user) {
-        throw new Error('No user information received from API');
+        throw new AuthenticationError('No user information received from API');
       }
 
       // Create User entity
@@ -84,8 +85,13 @@ export class ApiAuthAdapter implements AuthenticationPort {
         user,
       };
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`API authentication failed: ${message}`);
+      if (axios.isAxiosError(error)) {
+        const message = error.response?.data?.message || error.message;
+        throw new AuthenticationError(`API authentication failed: ${message}`);
+      }
+      throw new NetworkError(
+        `API authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -102,7 +108,7 @@ export class ApiAuthAdapter implements AuthenticationPort {
       });
 
       if (!response.data.access_token) {
-        throw new Error('No access token received from refresh');
+        throw new AuthenticationError('No access token received from refresh');
       }
 
       return AuthToken.create(
@@ -112,8 +118,13 @@ export class ApiAuthAdapter implements AuthenticationPort {
         response.data.refresh_token || refreshToken
       );
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Token refresh failed: ${message}`);
+      if (axios.isAxiosError(error)) {
+        const message = error.response?.data?.message || error.message;
+        throw new AuthenticationError(`Token refresh failed: ${message}`);
+      }
+      throw new NetworkError(
+        `Token refresh failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 }

@@ -1,3 +1,5 @@
+import { ValidationError } from '@/domain/errors';
+
 /**
  * Credentials Value Object
  * Represents user authentication credentials
@@ -32,21 +34,21 @@ export class Credentials {
 
   private validateUsername(): void {
     if (!this._username || this._username.trim().length === 0) {
-      throw new Error('Username cannot be empty');
+      throw new ValidationError('Username cannot be empty');
     }
 
     if (this._username.length < 3) {
-      throw new Error('Username must be at least 3 characters long');
+      throw new ValidationError('Username must be at least 3 characters long');
     }
   }
 
   private validatePassword(): void {
     if (!this._password || this._password.trim().length === 0) {
-      throw new Error('Password cannot be empty');
+      throw new ValidationError('Password cannot be empty');
     }
 
     if (this._password.length < 6) {
-      throw new Error('Password must be at least 6 characters long');
+      throw new ValidationError('Password must be at least 6 characters long');
     }
   }
 }
