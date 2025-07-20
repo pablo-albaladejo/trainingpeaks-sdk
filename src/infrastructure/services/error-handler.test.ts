@@ -119,7 +119,8 @@ describe('Error Handler Service', () => {
     it('should classify upload errors as HIGH severity', () => {
       const uploadError = new UploadError('Upload failed');
       const operationError = new WorkoutOperationNotAllowedError(
-        'Operation not allowed'
+        'delete',
+        'Workout is locked'
       );
 
       expect(errorHandler.classifyErrorSeverity(uploadError)).toBe(
@@ -184,8 +185,8 @@ describe('Error Handler Service', () => {
         errorHandler.getErrorCodeFromError(new AuthenticationError('test'))
       ).toBe('AUTHENTICATION_ERROR');
       expect(
-        errorHandler.getErrorCodeFromError(new WorkoutNotFoundError('test'))
-      ).toBe('WORKOUTNOTFOUND');
+        errorHandler.getErrorCodeFromError(new WorkoutNotFoundError('test-id'))
+      ).toBe('WORKOUT_NOT_FOUND');
       expect(errorHandler.getErrorCodeFromError(new Error('test'))).toBe(
         'ERROR'
       );
@@ -200,7 +201,7 @@ describe('Error Handler Service', () => {
   describe('enrichErrorContext', () => {
     it('should enrich error context with additional information', () => {
       const errorHandler = createErrorHandlerService(mockLogger);
-      const error = new WorkoutError('Test workout error');
+      const error = new WorkoutValidationError('Test workout validation error');
       const context = {
         userId: '123',
         operation: 'createWorkout',
@@ -212,7 +213,9 @@ describe('Error Handler Service', () => {
       expect(enrichedContext.operation).toBe('createWorkout');
       expect(enrichedContext.timestamp).toBeInstanceOf(Date);
       expect(enrichedContext.metadata?.errorType).toBe('workout');
-      expect(enrichedContext.metadata?.errorCategory).toBe('WorkoutError');
+      expect(enrichedContext.metadata?.errorCategory).toBe(
+        'WorkoutValidationError'
+      );
     });
 
     it('should not enrich context when enrichment is disabled', () => {

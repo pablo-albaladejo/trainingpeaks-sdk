@@ -11,7 +11,13 @@ import {
   WorkoutServicePort,
 } from '@/application/ports/workout';
 import { Workout } from '@/domain/entities/workout';
+import {
+  WorkoutNotFoundError,
+  WorkoutServiceUnavailableError,
+  WorkoutValidationError,
+} from '@/domain/errors/workout-errors';
 import { WorkoutFile } from '@/domain/value-objects/workout-file';
+import { workoutLogger } from '@/infrastructure/logging/logger';
 import {
   CreateStructuredWorkoutRequest,
   CreateStructuredWorkoutResponse,
@@ -42,7 +48,8 @@ export const createTrainingPeaksWorkoutRepository = (
     const service = workoutServices.find((s) => s.canHandle(config));
 
     if (!service) {
-      throw new Error(
+      throw new WorkoutServiceUnavailableError(
+        'TrainingPeaks',
         'No suitable workout service found for the current configuration'
       );
     }
@@ -55,10 +62,21 @@ export const createTrainingPeaksWorkoutRepository = (
     file?: WorkoutFile
   ): Promise<UploadResult> => {
     try {
+      workoutLogger.info('Uploading workout via repository', {
+        workoutName: workoutData.name,
+        hasFile: !!file,
+      });
+
       const workoutService = getWorkoutService();
 
       return await workoutService.uploadWorkout(workoutData, file);
     } catch (error) {
+      workoutLogger.error('Failed to upload workout via repository', {
+        workoutName: workoutData.name,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+      });
+
       return {
         success: false,
         workoutId: '',
@@ -74,6 +92,12 @@ export const createTrainingPeaksWorkoutRepository = (
     mimeType: string
   ): Promise<UploadResult> => {
     try {
+      workoutLogger.info('Uploading workout from file via repository', {
+        filename,
+        fileSize: buffer.length,
+        mimeType,
+      });
+
       const workoutFile = WorkoutFile.create(
         filename,
         buffer.toString(),
@@ -92,6 +116,12 @@ export const createTrainingPeaksWorkoutRepository = (
 
       return await uploadWorkout(workoutData, workoutFile);
     } catch (error) {
+      workoutLogger.error('Failed to upload workout from file via repository', {
+        filename,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+      });
+
       return {
         success: false,
         workoutId: '',
@@ -105,10 +135,26 @@ export const createTrainingPeaksWorkoutRepository = (
     request: CreateStructuredWorkoutRequest
   ): Promise<CreateStructuredWorkoutResponse> => {
     try {
+      workoutLogger.info('Creating structured workout via repository', {
+        title: request.title,
+        athleteId: request.athleteId,
+      });
+
       const workoutService = getWorkoutService();
 
       return await workoutService.createStructuredWorkout(request);
     } catch (error) {
+      workoutLogger.error(
+        'Failed to create structured workout via repository',
+        {
+          title: request.title,
+          athleteId: request.athleteId,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          errorType:
+            error instanceof Error ? error.constructor.name : 'Unknown',
+        }
+      );
+
       return {
         success: false,
         message: 'Failed to create structured workout',
@@ -119,10 +165,17 @@ export const createTrainingPeaksWorkoutRepository = (
 
   const getWorkout = async (workoutId: string): Promise<Workout | null> => {
     try {
+      workoutLogger.info('Getting workout via repository', {
+        workoutId,
+      });
+
       const workoutService = getWorkoutService();
       const workoutData = await workoutService.getWorkout(workoutId);
 
       if (!workoutData) {
+        workoutLogger.info('Workout not found via repository', {
+          workoutId,
+        });
         return null;
       }
 
@@ -138,7 +191,11 @@ export const createTrainingPeaksWorkoutRepository = (
         []
       );
     } catch (error) {
-      console.error('Failed to get workout:', error);
+      workoutLogger.error('Failed to get workout via repository', {
+        workoutId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+      });
       return null;
     }
   };
@@ -150,6 +207,8 @@ export const createTrainingPeaksWorkoutRepository = (
     endDate?: Date;
   }): Promise<Workout[]> => {
     try {
+      workoutLogger.info('Listing workouts via repository', { options });
+
       const workoutService = getWorkoutService();
       const workoutDataList = await workoutService.listWorkouts(options);
 
@@ -167,7 +226,11 @@ export const createTrainingPeaksWorkoutRepository = (
         )
       );
     } catch (error) {
-      console.error('Failed to list workouts:', error);
+      workoutLogger.error('Failed to list workouts via repository', {
+        options,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+      });
       return [];
     }
   };
@@ -177,10 +240,15 @@ export const createTrainingPeaksWorkoutRepository = (
     data: Partial<WorkoutData>
   ): Promise<Workout> => {
     try {
+      workoutLogger.info('Updating workout via repository', {
+        workoutId,
+        updateFields: Object.keys(data),
+      });
+
       // Get the existing workout
       const existingWorkout = await getWorkout(workoutId);
       if (!existingWorkout) {
-        throw new Error(`Workout with ID ${workoutId} not found`);
+        throw new WorkoutNotFoundError(workoutId);
       }
 
       // Update the workout with new metadata
@@ -193,7 +261,13 @@ export const createTrainingPeaksWorkoutRepository = (
 
       return updatedWorkout;
     } catch (error) {
-      throw new Error(
+      workoutLogger.error('Failed to update workout via repository', {
+        workoutId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+      });
+
+      throw new WorkoutValidationError(
         `Failed to update workout: ${
           error instanceof Error ? error.message : 'Unknown error'
         }`
@@ -203,11 +277,19 @@ export const createTrainingPeaksWorkoutRepository = (
 
   const deleteWorkout = async (workoutId: string): Promise<boolean> => {
     try {
+      workoutLogger.info('Deleting workout via repository', {
+        workoutId,
+      });
+
       const workoutService = getWorkoutService();
 
       return await workoutService.deleteWorkout(workoutId);
     } catch (error) {
-      console.error('Failed to delete workout:', error);
+      workoutLogger.error('Failed to delete workout via repository', {
+        workoutId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+      });
       return false;
     }
   };
@@ -221,6 +303,8 @@ export const createTrainingPeaksWorkoutRepository = (
     offset?: number;
   }): Promise<Workout[]> => {
     try {
+      workoutLogger.info('Searching workouts via repository', { query });
+
       // For now, use listWorkouts as a simple implementation
       return await listWorkouts({
         limit: query.limit,
@@ -229,7 +313,11 @@ export const createTrainingPeaksWorkoutRepository = (
         endDate: query.endDate,
       });
     } catch (error) {
-      console.error('Failed to search workouts:', error);
+      workoutLogger.error('Failed to search workouts via repository', {
+        query,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+      });
       return [];
     }
   };
@@ -246,6 +334,8 @@ export const createTrainingPeaksWorkoutRepository = (
     averageDistance: number;
   }> => {
     try {
+      workoutLogger.info('Getting workout stats via repository', { filters });
+
       const workouts = await listWorkouts({
         startDate: filters?.startDate,
         endDate: filters?.endDate,
@@ -270,7 +360,11 @@ export const createTrainingPeaksWorkoutRepository = (
         averageDistance,
       };
     } catch (error) {
-      console.error('Failed to get workout stats:', error);
+      workoutLogger.error('Failed to get workout stats via repository', {
+        filters,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+      });
       return {
         totalWorkouts: 0,
         totalDuration: 0,

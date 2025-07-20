@@ -3,6 +3,7 @@
  * Represents a workout in the domain
  */
 
+import { WorkoutValidationError } from '@/domain/errors/workout-errors';
 import { WorkoutStructure } from '@/domain/value-objects/workout-structure';
 
 export class Workout {
@@ -200,74 +201,66 @@ export class Workout {
     return this._date >= oneDayAgo;
   }
 
+  public isLongWorkout(): boolean {
+    return this._duration > 7200; // More than 2 hours
+  }
+
+  public isShortWorkout(): boolean {
+    return this._duration < 1800; // Less than 30 minutes
+  }
+
   public getFormattedDuration(): string {
     const hours = Math.floor(this._duration / 3600);
     const minutes = Math.floor((this._duration % 3600) / 60);
     const seconds = this._duration % 60;
 
     if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds
-        .toString()
-        .padStart(2, '0')}`;
+      return `${hours}h ${minutes}m ${seconds}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${seconds}s`;
+    } else {
+      return `${seconds}s`;
     }
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
 
   public getFormattedDistance(): string | undefined {
     if (!this._distance) return undefined;
 
     if (this._distance >= 1000) {
-      return `${(this._distance / 1000).toFixed(2)} km`;
+      return `${(this._distance / 1000).toFixed(2)}km`;
+    } else {
+      return `${this._distance}m`;
     }
-    return `${this._distance} m`;
   }
 
-  /**
-   * Get the workout type (structured or file-based)
-   */
   public getWorkoutType(): 'structured' | 'file-based' | 'simple' {
     if (this.hasStructure()) {
       return 'structured';
-    }
-    if (this.hasFile()) {
+    } else if (this.hasFile()) {
       return 'file-based';
+    } else {
+      return 'simple';
     }
-    return 'simple';
   }
 
-  /**
-   * Get structure steps count
-   */
   public getStructureStepsCount(): number {
-    return this._structure ? this._structure.getAllSteps().length : 0;
+    return this._structure?.getAllSteps().length || 0;
   }
 
-  /**
-   * Get structure active steps count
-   */
   public getStructureActiveStepsCount(): number {
-    return this._structure ? this._structure.getActiveSteps().length : 0;
+    return this._structure?.getActiveSteps().length || 0;
   }
 
-  /**
-   * Get structure repetitions count
-   */
   public getStructureRepetitionsCount(): number {
-    return this._structure ? this._structure.getRepetitions().length : 0;
+    return this._structure?.getRepetitions().length || 0;
   }
 
-  /**
-   * Check if workout is time-based (from structure)
-   */
   public isTimeBased(): boolean {
-    return this._structure ? this._structure.isTimeBased() : true; // Default to time-based
+    return this._structure?.isTimeBased() || false;
   }
 
-  /**
-   * Check if workout is distance-based (from structure)
-   */
   public isDistanceBased(): boolean {
-    return this._structure ? this._structure.isDistanceBased() : false;
+    return this._structure?.isDistanceBased() || false;
   }
 
   public equals(other: Workout): boolean {
@@ -282,13 +275,13 @@ export class Workout {
   }): Workout {
     return new Workout(
       this._id,
-      updates.name || this._name,
-      updates.description || this._description,
+      updates.name ?? this._name,
+      updates.description ?? this._description,
       this._date,
       this._duration,
       this._distance,
-      updates.activityType || this._activityType,
-      updates.tags || this._tags,
+      updates.activityType ?? this._activityType,
+      updates.tags ?? this._tags,
       this._fileContent,
       this._fileName,
       this._createdAt,
@@ -297,11 +290,8 @@ export class Workout {
     );
   }
 
-  /**
-   * Create a new workout with updated structure
-   */
   public withStructure(structure: WorkoutStructure): Workout {
-    // Update duration based on new structure
+    // Calculate new duration from structure
     const newDuration = structure.getTotalDuration();
 
     return new Workout(
@@ -321,9 +311,6 @@ export class Workout {
     );
   }
 
-  /**
-   * Create a new workout without structure (convert to simple workout)
-   */
   public withoutStructure(): Workout {
     return new Workout(
       this._id,
@@ -345,57 +332,62 @@ export class Workout {
   // Validation methods
   private validateId(): void {
     if (!this._id || this._id.trim().length === 0) {
-      throw new Error('Workout ID cannot be empty');
+      throw new WorkoutValidationError('Workout ID cannot be empty');
     }
   }
 
   private validateName(): void {
     if (!this._name || this._name.trim().length === 0) {
-      throw new Error('Workout name cannot be empty');
+      throw new WorkoutValidationError('Workout name cannot be empty');
     }
     if (this._name.length > 255) {
-      throw new Error('Workout name cannot exceed 255 characters');
+      throw new WorkoutValidationError(
+        'Workout name cannot exceed 255 characters'
+      );
     }
   }
 
   private validateDate(): void {
-    if (!this._date || isNaN(this._date.getTime())) {
-      throw new Error('Workout date must be a valid date');
+    if (!(this._date instanceof Date) || isNaN(this._date.getTime())) {
+      throw new WorkoutValidationError('Workout date must be a valid date');
     }
   }
 
   private validateDuration(): void {
     if (this._duration < 0) {
-      throw new Error('Workout duration cannot be negative');
+      throw new WorkoutValidationError('Workout duration cannot be negative');
     }
     if (this._duration > 86400) {
-      // More than 24 hours
-      throw new Error('Workout duration cannot exceed 24 hours');
+      // 24 hours in seconds
+      throw new WorkoutValidationError(
+        'Workout duration cannot exceed 24 hours'
+      );
     }
   }
 
   private validateDistance(): void {
-    if (this._distance !== undefined && this._distance < 0) {
-      throw new Error('Workout distance cannot be negative');
-    }
-    if (this._distance !== undefined && this._distance > 1000000) {
-      // More than 1000km
-      throw new Error('Workout distance cannot exceed 1000km');
+    if (this._distance !== undefined) {
+      if (this._distance < 0) {
+        throw new WorkoutValidationError('Workout distance cannot be negative');
+      }
+      if (this._distance > 1000000) {
+        // 1000km in meters
+        throw new WorkoutValidationError(
+          'Workout distance cannot exceed 1000km'
+        );
+      }
     }
   }
 
   private validateStructure(): void {
-    if (this._structure) {
-      // If structure is provided, validate consistency
-      const structureDuration = this._structure.getTotalDuration();
-
-      // Allow some tolerance for floating point differences
-      const tolerance = 1; // 1 second tolerance
-      if (Math.abs(this._duration - structureDuration) > tolerance) {
-        console.warn(
-          `Workout duration (${this._duration}s) doesn't match structure duration (${structureDuration}s)`
-        );
-      }
+    if (
+      this._structure &&
+      this._duration !== this._structure.getTotalDuration()
+    ) {
+      // Log warning but don't throw error - duration might be overridden
+      console.warn(
+        `Workout duration (${this._duration}s) doesn't match structure duration (${this._structure.getTotalDuration()}s)`
+      );
     }
   }
 }

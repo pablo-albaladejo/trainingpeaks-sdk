@@ -18,7 +18,6 @@ import {
   StructuredWorkoutResponse,
   WorkoutData,
   WorkoutStructure,
-  WorkoutType,
 } from '@/types';
 import axios, { AxiosInstance } from 'axios';
 
@@ -50,18 +49,59 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
     try {
       workoutLogger.info('Uploading workout via TrainingPeaks API', {
         name: workoutData.name,
+        hasFile: !!file,
       });
 
-      // In a real implementation, this would make actual API calls
-      // For now, simulate the upload
-      await this.simulateApiCall('upload', workoutData);
+      // Prepare upload data
+      const uploadData = {
+        ...workoutData,
+        fileData: file
+          ? {
+              filename: file.fileName,
+              content: file.content,
+              mimeType: file.mimeType,
+            }
+          : undefined,
+      };
+
+      // Make actual API call to TrainingPeaks
+      const response = await this.httpClient.post<{ workoutId: string }>(
+        '/fitness/v6/workouts/upload',
+        uploadData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          timeout: this.sdkConfig.timeouts.default,
+        }
+      );
+
+      const workoutId = response.data?.workoutId;
+
+      if (!workoutId) {
+        throw new Error('No workout ID received from API response');
+      }
+
+      workoutLogger.info(
+        'Successfully uploaded workout via TrainingPeaks API',
+        {
+          workoutId,
+          name: workoutData.name,
+        }
+      );
 
       return {
         success: true,
-        workoutId: `workout_${Date.now()}`,
+        workoutId,
         message: 'Workout uploaded successfully via TrainingPeaks API',
       };
     } catch (error) {
+      workoutLogger.error('Failed to upload workout via TrainingPeaks API', {
+        name: workoutData.name,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+      });
+
       return {
         success: false,
         workoutId: '',
@@ -77,22 +117,36 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
         workoutId: id,
       });
 
-      // In a real implementation, this would make actual GET API calls
-      await this.simulateApiCall('get', id);
+      // Make actual API call to TrainingPeaks
+      const response = await this.httpClient.get<WorkoutData>(
+        `/fitness/v6/workouts/${id}`,
+        {
+          timeout: this.sdkConfig.timeouts.default,
+        }
+      );
 
-      // Return mock workout data
-      return {
-        name: 'API Retrieved Workout',
-        description: 'Retrieved from TrainingPeaks API',
-        date: new Date().toISOString(),
-        duration: 3600, // 1 hour
-        distance: 5000, // 5km
-        type: WorkoutType.RUN,
-      };
-    } catch (error) {
-      if (this.sdkConfig.debug.enabled) {
-        console.error('Failed to get workout:', error);
+      if (!response.data) {
+        workoutLogger.info('Workout not found via TrainingPeaks API', {
+          workoutId: id,
+        });
+        return null;
       }
+
+      workoutLogger.info(
+        'Successfully retrieved workout via TrainingPeaks API',
+        {
+          workoutId: id,
+          workoutName: response.data.name,
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      workoutLogger.error('Failed to get workout via TrainingPeaks API', {
+        workoutId: id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+      });
       return null;
     }
   }
@@ -106,32 +160,48 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
     try {
       workoutLogger.info('Listing workouts via TrainingPeaks API', { options });
 
-      // In a real implementation, this would make actual API calls with query parameters
-      await this.simulateApiCall('list', options);
+      // Build query parameters
+      const params: Record<string, string | number> = {};
 
-      // Return mock workouts
-      return [
-        {
-          name: 'Morning Run',
-          description: 'Morning training session',
-          date: new Date().toISOString(),
-          duration: 2700, // 45 minutes
-          distance: 5000, // 5km
-          type: WorkoutType.RUN,
-        },
-        {
-          name: 'Evening Bike',
-          description: 'Evening cycling session',
-          date: new Date(Date.now() - 86400000).toISOString(), // Yesterday
-          duration: 3600, // 1 hour
-          distance: 20000, // 20km
-          type: WorkoutType.BIKE,
-        },
-      ];
-    } catch (error) {
-      if (this.sdkConfig.debug.enabled) {
-        console.error('Failed to list workouts:', error);
+      if (options?.limit) {
+        params.limit = options.limit;
       }
+
+      if (options?.offset) {
+        params.offset = options.offset;
+      }
+
+      if (options?.startDate) {
+        params.startDate = options.startDate.toISOString();
+      }
+
+      if (options?.endDate) {
+        params.endDate = options.endDate.toISOString();
+      }
+
+      // Make actual API call to TrainingPeaks
+      const response = await this.httpClient.get<{ workouts: WorkoutData[] }>(
+        '/fitness/v6/workouts',
+        {
+          params,
+          timeout: this.sdkConfig.timeouts.default,
+        }
+      );
+
+      const workouts = response.data?.workouts || [];
+
+      workoutLogger.info('Successfully listed workouts via TrainingPeaks API', {
+        count: workouts.length,
+        options,
+      });
+
+      return workouts;
+    } catch (error) {
+      workoutLogger.error('Failed to list workouts via TrainingPeaks API', {
+        options,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+      });
       return [];
     }
   }
@@ -142,12 +212,22 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
         workoutId: id,
       });
 
-      // In a real implementation, this would make actual DELETE API calls
-      await this.simulateApiCall('delete', id);
+      // Make actual DELETE API call to TrainingPeaks
+      await this.httpClient.delete(`/fitness/v6/workouts/${id}`, {
+        timeout: this.sdkConfig.timeouts.default,
+      });
+
+      workoutLogger.info('Successfully deleted workout via TrainingPeaks API', {
+        workoutId: id,
+      });
 
       return true;
     } catch (error) {
-      workoutLogger.error('Failed to delete workout', { workoutId: id, error });
+      workoutLogger.error('Failed to delete workout via TrainingPeaks API', {
+        workoutId: id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+      });
       return false;
     }
   }
@@ -264,9 +344,16 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
         workout: response.data,
       };
     } catch (error) {
-      if (this.sdkConfig.debug.enabled) {
-        console.error('Failed to create structured workout:', error);
-      }
+      workoutLogger.error(
+        'Failed to create structured workout via TrainingPeaks API',
+        {
+          title: request.title,
+          athleteId: request.athleteId,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          errorType:
+            error instanceof Error ? error.constructor.name : 'Unknown',
+        }
+      );
 
       let errorMessage = 'Failed to create structured workout';
       let errors: string[] = [];

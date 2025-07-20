@@ -12,12 +12,7 @@ import {
   UploadError,
   ValidationError,
 } from '@/domain/errors/index';
-import {
-  WorkoutError,
-  WorkoutNotFoundError,
-  WorkoutOperationNotAllowedError,
-  WorkoutValidationError,
-} from '@/domain/errors/workout-errors';
+import { WorkoutValidationError } from '@/domain/errors/workout-errors';
 
 /**
  * Error context type for enriching error information
@@ -126,13 +121,15 @@ export const createErrorHandlerService = (
    * Classify error severity based on error type
    */
   const classifyErrorSeverity = (error: Error): ErrorSeverity => {
+    // Check for validation errors
     if (
       error instanceof ValidationError ||
-      error instanceof WorkoutValidationError
+      error.constructor.name === 'WorkoutValidationError'
     ) {
       return ErrorSeverity.LOW;
     }
 
+    // Check for authentication/authorization errors
     if (
       error instanceof AuthenticationError ||
       error instanceof AuthorizationError
@@ -140,17 +137,20 @@ export const createErrorHandlerService = (
       return ErrorSeverity.MEDIUM;
     }
 
+    // Check for network/rate limit errors
     if (error instanceof NetworkError || error instanceof RateLimitError) {
       return ErrorSeverity.MEDIUM;
     }
 
-    if (error instanceof WorkoutNotFoundError) {
+    // Check for workout not found errors
+    if (error.constructor.name === 'WorkoutNotFoundError') {
       return ErrorSeverity.LOW;
     }
 
+    // Check for upload/operation errors
     if (
       error instanceof UploadError ||
-      error instanceof WorkoutOperationNotAllowedError
+      error.constructor.name === 'WorkoutOperationNotAllowedError'
     ) {
       return ErrorSeverity.HIGH;
     }
@@ -168,7 +168,7 @@ export const createErrorHandlerService = (
 
     if (
       error instanceof ValidationError ||
-      error instanceof WorkoutValidationError
+      error.constructor.name === 'WorkoutValidationError'
     ) {
       return 400;
     }
@@ -181,7 +181,7 @@ export const createErrorHandlerService = (
       return 403;
     }
 
-    if (error instanceof WorkoutNotFoundError) {
+    if (error.constructor.name === 'WorkoutNotFoundError') {
       return 404;
     }
 
@@ -204,8 +204,21 @@ export const createErrorHandlerService = (
       return error.code;
     }
 
-    if (error instanceof WorkoutError) {
-      return error.constructor.name.replace('Error', '').toUpperCase();
+    // Handle workout errors specifically
+    if (
+      error.constructor.name === 'WorkoutError' ||
+      error.constructor.name === 'WorkoutValidationError' ||
+      error.constructor.name === 'WorkoutNotFoundError' ||
+      error.constructor.name === 'WorkoutOperationNotAllowedError' ||
+      error.constructor.name === 'WorkoutUploadError' ||
+      error.constructor.name === 'WorkoutFileProcessingError' ||
+      error.constructor.name === 'WorkoutStructureError' ||
+      error.constructor.name === 'WorkoutServiceUnavailableError' ||
+      error.constructor.name === 'WorkoutDataCorruptionError' ||
+      error.constructor.name === 'WorkoutQuotaExceededError' ||
+      error.constructor.name === 'WorkoutSyncError'
+    ) {
+      return (error as TrainingPeaksError).code;
     }
 
     // Handle generic Error class
@@ -235,7 +248,19 @@ export const createErrorHandlerService = (
     };
 
     // Add specific context based on error type
-    if (error instanceof WorkoutError) {
+    if (
+      error.constructor.name === 'WorkoutError' ||
+      error.constructor.name === 'WorkoutValidationError' ||
+      error.constructor.name === 'WorkoutNotFoundError' ||
+      error.constructor.name === 'WorkoutOperationNotAllowedError' ||
+      error.constructor.name === 'WorkoutUploadError' ||
+      error.constructor.name === 'WorkoutFileProcessingError' ||
+      error.constructor.name === 'WorkoutStructureError' ||
+      error.constructor.name === 'WorkoutServiceUnavailableError' ||
+      error.constructor.name === 'WorkoutDataCorruptionError' ||
+      error.constructor.name === 'WorkoutQuotaExceededError' ||
+      error.constructor.name === 'WorkoutSyncError'
+    ) {
       enrichedContext.metadata = {
         ...enrichedContext.metadata,
         errorType: 'workout',

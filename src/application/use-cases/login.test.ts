@@ -137,7 +137,7 @@ describe('Login Use Case', () => {
         .withAccessToken('special-token')
         .build();
       const expectedUser = new UserFixture()
-        .withEmail('user@domain.com')
+        .withName('user@domain.com')
         .build();
       const expectedResponse: LoginResponse = {
         token: expectedToken,

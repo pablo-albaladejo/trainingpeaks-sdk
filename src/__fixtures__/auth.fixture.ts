@@ -124,7 +124,8 @@ export class UserFixture {
   private user: Partial<{
     id: string;
     name: string;
-    email: string;
+    avatar: string;
+    preferences: Record<string, unknown>;
   }> = {};
 
   /**
@@ -160,18 +161,38 @@ export class UserFixture {
   }
 
   /**
-   * Set user email
+   * Set user avatar
    */
-  withEmail(email: string): this {
-    this.user.email = email;
+  withAvatar(avatar: string): this {
+    this.user.avatar = avatar;
     return this;
   }
 
   /**
-   * Set random user email
+   * Set random user avatar
    */
-  withRandomEmail(): this {
-    this.user.email = faker.internet.email();
+  withRandomAvatar(): this {
+    this.user.avatar = faker.image.avatar();
+    return this;
+  }
+
+  /**
+   * Set user preferences
+   */
+  withPreferences(preferences: Record<string, unknown>): this {
+    this.user.preferences = preferences;
+    return this;
+  }
+
+  /**
+   * Set random user preferences
+   */
+  withRandomPreferences(): this {
+    this.user.preferences = {
+      timezone: faker.location.timeZone(),
+      units: faker.helpers.arrayElement(['metric', 'imperial']),
+      language: faker.helpers.arrayElement(['en', 'es', 'fr', 'de']),
+    };
     return this;
   }
 
@@ -182,7 +203,8 @@ export class UserFixture {
     return User.create(
       this.user.id || faker.string.uuid(),
       this.user.name || faker.person.fullName(),
-      this.user.email || faker.internet.email()
+      this.user.avatar || faker.image.avatar(),
+      this.user.preferences
     );
   }
 
@@ -200,7 +222,8 @@ export class UserFixture {
     return new UserFixture()
       .withRandomId()
       .withRandomName()
-      .withRandomEmail()
+      .withRandomAvatar()
+      .withRandomPreferences()
       .build();
   }
 }
