@@ -8,15 +8,15 @@ import { AuthToken } from '@/domain/entities/auth-token';
 import { User } from '@/domain/entities/user';
 import { Credentials } from '@/domain/value-objects/credentials';
 
-export interface LoginRequest {
+export type LoginRequest = {
   username: string;
   password: string;
-}
+};
 
-export interface LoginResponse {
+export type LoginResponse = {
   token: AuthToken;
   user: User;
-}
+};
 
 /**
  * Login Use Case Factory

@@ -8,11 +8,11 @@ import { createWorkoutManager } from './workout-manager';
 /**
  * Configuration for the TrainingPeaks client
  */
-export interface TrainingPeaksClientConfig {
+export type TrainingPeaksClientConfig = {
   baseUrl?: string;
   timeout?: number;
   debug?: boolean;
-}
+};
 
 /**
  * Main TrainingPeaks client

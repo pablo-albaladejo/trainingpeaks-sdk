@@ -14,23 +14,23 @@ import { Credentials } from '@/domain/value-objects/credentials';
 import { authLogger, browserLogger } from '@/infrastructure/logging/logger';
 import { Browser, chromium, Page, Response } from 'playwright-core';
 
-interface InterceptedData {
+type InterceptedData = {
   token?: AuthToken;
   userId?: string;
-}
+};
 
-interface TokenResponse {
+type TokenResponse = {
   token?: {
     access_token: string;
     refresh_token?: string;
   };
-}
+};
 
-interface UserResponse {
+type UserResponse = {
   user?: {
     userId: string | number;
   };
-}
+};
 
 export class WebBrowserAuthAdapter implements AuthenticationPort {
   private readonly sdkConfig = getSDKConfig();

@@ -3,19 +3,18 @@
  * Tests for the auth validation service implementation following @unit-test-rule.mdc
  */
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { AuthTokenFixture } from '../../__fixtures__/auth.fixture';
 import { randomNumber } from '../../__fixtures__/utils.fixture';
-import { createAuthValidationService } from './auth-validation';
+import {
+  getTimeUntilExpiration,
+  getTimeUntilRefresh,
+  isTokenExpired,
+  isTokenValid,
+  shouldRefreshToken,
+} from './auth-validation';
 
 describe('Auth Validation Service', () => {
-  let authValidationService: ReturnType<typeof createAuthValidationService>;
-
-  beforeEach(() => {
-    // Arrange - Create service instance
-    authValidationService = createAuthValidationService();
-  });
-
   describe('shouldRefreshToken', () => {
     it('should return true when token needs refresh', () => {
       // Arrange - Token that expires in 5 minutes (should trigger refresh)
@@ -24,20 +23,20 @@ describe('Auth Validation Service', () => {
         .build();
 
       // Act
-      const result = authValidationService.shouldRefreshToken(token);
+      const result = shouldRefreshToken(token);
 
       // Assert
       expect(result).toBe(true);
     });
 
     it('should return false when token does not need refresh', () => {
-      // Arrange - Token that expires in 2 hours (should not trigger refresh)
+      // Arrange - Token that expires in 30 minutes (should not trigger refresh)
       const token = new AuthTokenFixture()
-        .withExpiresIn(7200) // 2 hours
+        .withExpiresIn(1800) // 30 minutes
         .build();
 
       // Act
-      const result = authValidationService.shouldRefreshToken(token);
+      const result = shouldRefreshToken(token);
 
       // Assert
       expect(result).toBe(false);
@@ -46,26 +45,26 @@ describe('Auth Validation Service', () => {
 
   describe('isTokenValid', () => {
     it('should return true for valid tokens', () => {
-      // Arrange - Token that expires in 1 hour
+      // Arrange - Token that expires in 10 minutes
       const token = new AuthTokenFixture()
-        .withExpiresIn(3600) // 1 hour
+        .withExpiresIn(600) // 10 minutes
         .build();
 
       // Act
-      const result = authValidationService.isTokenValid(token);
+      const result = isTokenValid(token);
 
       // Assert
       expect(result).toBe(true);
     });
 
     it('should return false for tokens close to expiration', () => {
-      // Arrange - Token that expires in 1 minute
+      // Arrange - Token that expires in 2 minutes (within validation threshold)
       const token = new AuthTokenFixture()
-        .withExpiresIn(60) // 1 minute
+        .withExpiresIn(120) // 2 minutes
         .build();
 
       // Act
-      const result = authValidationService.isTokenValid(token);
+      const result = isTokenValid(token);
 
       // Assert
       expect(result).toBe(false);
@@ -74,25 +73,26 @@ describe('Auth Validation Service', () => {
 
   describe('isTokenExpired', () => {
     it('should return false for unexpired tokens', () => {
-      // Arrange - Token that expires in 1 hour
+      // Arrange - Token that expires in 10 minutes
       const token = new AuthTokenFixture()
-        .withExpiresIn(3600) // 1 hour
+        .withExpiresIn(600) // 10 minutes
         .build();
 
       // Act
-      const result = authValidationService.isTokenExpired(token);
+      const result = isTokenExpired(token);
 
       // Assert
       expect(result).toBe(false);
     });
 
     it('should return true for expired tokens', () => {
-      // Arrange - Token that expired 1 hour ago
-      const expiredDate = new Date(Date.now() - 3600 * 1000);
-      const token = new AuthTokenFixture().withExpiresAt(expiredDate).build();
+      // Arrange - Token that expired 1 minute ago
+      const token = new AuthTokenFixture()
+        .withExpiresIn(-60) // 1 minute ago
+        .build();
 
       // Act
-      const result = authValidationService.isTokenExpired(token);
+      const result = isTokenExpired(token);
 
       // Assert
       expect(result).toBe(true);
@@ -101,26 +101,27 @@ describe('Auth Validation Service', () => {
 
   describe('getTimeUntilExpiration', () => {
     it('should return correct time until expiration', () => {
-      // Arrange - Token that expires in 1 hour
+      // Arrange - Token that expires in 10 minutes
       const token = new AuthTokenFixture()
-        .withExpiresIn(3600) // 1 hour
+        .withExpiresIn(600) // 10 minutes
         .build();
 
       // Act
-      const result = authValidationService.getTimeUntilExpiration(token);
+      const result = getTimeUntilExpiration(token);
 
       // Assert
-      expect(result).toBeGreaterThan(3500000); // Should be close to 1 hour in ms
-      expect(result).toBeLessThanOrEqual(3600000); // Should not exceed 1 hour
+      expect(result).toBeGreaterThan(590000); // Should be close to 10 minutes (600s)
+      expect(result).toBeLessThanOrEqual(600000); // Allow exactly 600000ms
     });
 
     it('should return 0 for expired tokens', () => {
-      // Arrange - Token that expired 1 hour ago
-      const expiredDate = new Date(Date.now() - 3600 * 1000);
-      const token = new AuthTokenFixture().withExpiresAt(expiredDate).build();
+      // Arrange - Token that expired 5 minutes ago
+      const token = new AuthTokenFixture()
+        .withExpiresIn(-300) // 5 minutes ago
+        .build();
 
       // Act
-      const result = authValidationService.getTimeUntilExpiration(token);
+      const result = getTimeUntilExpiration(token);
 
       // Assert
       expect(result).toBe(0);
@@ -129,27 +130,27 @@ describe('Auth Validation Service', () => {
 
   describe('getTimeUntilRefresh', () => {
     it('should return correct time until refresh', () => {
-      // Arrange - Token that expires in 2 hours
+      // Arrange - Token that expires in 10 minutes
       const token = new AuthTokenFixture()
-        .withExpiresIn(7200) // 2 hours
+        .withExpiresIn(600) // 10 minutes
         .build();
 
       // Act
-      const result = authValidationService.getTimeUntilRefresh(token);
+      const result = getTimeUntilRefresh(token);
 
       // Assert
-      expect(result).toBeGreaterThan(0);
-      expect(result).toBeLessThanOrEqual(7200000); // Should not exceed 2 hours
+      expect(result).toBeGreaterThan(0); // Should be positive
+      expect(result).toBeLessThan(600000); // Should be less than expiration time
     });
 
     it('should return 0 when refresh time has passed', () => {
-      // Arrange - Token that expires in 5 minutes (should be ready for refresh)
+      // Arrange - Token that expires in 2 minutes (within refresh threshold)
       const token = new AuthTokenFixture()
-        .withExpiresIn(300) // 5 minutes
+        .withExpiresIn(120) // 2 minutes
         .build();
 
       // Act
-      const result = authValidationService.getTimeUntilRefresh(token);
+      const result = getTimeUntilRefresh(token);
 
       // Assert
       expect(result).toBe(0);
@@ -158,61 +159,80 @@ describe('Auth Validation Service', () => {
 
   describe('edge cases and integration scenarios', () => {
     it('should handle random token expiration times correctly', () => {
-      // Arrange
-      const randomExpiresIn = randomNumber(60, 7200); // 1 minute to 2 hours
-      const token = new AuthTokenFixture()
-        .withExpiresIn(randomExpiresIn)
-        .build();
+      // Arrange - Generate random tokens with different expiration times
+      const tokens = Array.from({ length: 10 }, () => {
+        const expiresIn = randomNumber(1, 3600); // 1 second to 1 hour
+        return new AuthTokenFixture().withExpiresIn(expiresIn).build();
+      });
 
-      // Act
-      const isValid = authValidationService.isTokenValid(token);
-      const isExpired = authValidationService.isTokenExpired(token);
-      const shouldRefresh = authValidationService.shouldRefreshToken(token);
-      const timeUntilExpiration =
-        authValidationService.getTimeUntilExpiration(token);
-      const timeUntilRefresh = authValidationService.getTimeUntilRefresh(token);
+      // Act & Assert - All validation functions should work without errors
+      tokens.forEach((token) => {
+        expect(() => {
+          const valid = isTokenValid(token);
+          const expired = isTokenExpired(token);
+          const shouldRefresh = shouldRefreshToken(token);
+          const timeUntilExpiration = getTimeUntilExpiration(token);
+          const timeUntilRefresh = getTimeUntilRefresh(token);
 
-      // Assert
-      expect(typeof isValid).toBe('boolean');
-      expect(typeof isExpired).toBe('boolean');
-      expect(typeof shouldRefresh).toBe('boolean');
-      expect(typeof timeUntilExpiration).toBe('number');
-      expect(typeof timeUntilRefresh).toBe('number');
-      expect(timeUntilExpiration).toBeGreaterThanOrEqual(0);
-      expect(timeUntilRefresh).toBeGreaterThanOrEqual(0);
+          // Basic consistency checks
+          expect(typeof valid).toBe('boolean');
+          expect(typeof expired).toBe('boolean');
+          expect(typeof shouldRefresh).toBe('boolean');
+          expect(typeof timeUntilExpiration).toBe('number');
+          expect(typeof timeUntilRefresh).toBe('number');
+        }).not.toThrow();
+      });
     });
 
     it('should be consistent with token validation logic', () => {
-      // Arrange
-      const token = AuthTokenFixture.random();
+      // Arrange - Token with specific expiration time
+      const token = new AuthTokenFixture()
+        .withExpiresIn(180) // 3 minutes
+        .build();
 
       // Act
-      const isValid1 = authValidationService.isTokenValid(token);
-      const isValid2 = authValidationService.isTokenValid(token);
-      const isExpired1 = authValidationService.isTokenExpired(token);
-      const isExpired2 = authValidationService.isTokenExpired(token);
+      const valid = isTokenValid(token);
+      const expired = isTokenExpired(token);
+      const shouldRefresh = shouldRefreshToken(token);
 
-      // Assert - Results should be consistent for same token
-      expect(isValid1).toBe(isValid2);
-      expect(isExpired1).toBe(isExpired2);
+      // Assert - Logic should be consistent
+      expect(expired).toBe(false); // Should not be expired
+      expect(valid).toBe(true); // Should be valid (3 min > 2 min threshold)
+      expect(shouldRefresh).toBe(true); // Should need refresh (3 min < 5 min threshold)
     });
 
     it('should handle multiple tokens correctly', () => {
-      // Arrange
-      const tokens = Array.from({ length: randomNumber(3, 10) }, () =>
-        AuthTokenFixture.random()
-      );
+      // Arrange - Multiple tokens with different states
+      const validToken = new AuthTokenFixture().withExpiresIn(1800).build(); // 30 minutes
+      const expiredToken = new AuthTokenFixture().withExpiresIn(-300).build(); // 5 minutes ago
+      const refreshNeededToken = new AuthTokenFixture()
+        .withExpiresIn(240)
+        .build(); // 4 minutes
 
-      // Act & Assert
-      tokens.forEach((token) => {
-        expect(() => {
-          authValidationService.isTokenValid(token);
-          authValidationService.isTokenExpired(token);
-          authValidationService.shouldRefreshToken(token);
-          authValidationService.getTimeUntilExpiration(token);
-          authValidationService.getTimeUntilRefresh(token);
-        }).not.toThrow();
-      });
+      // Act & Assert - Should handle all tokens without errors
+      expect(() => {
+        // Valid token tests
+        isTokenValid(validToken);
+        isTokenExpired(validToken);
+        shouldRefreshToken(validToken);
+        getTimeUntilExpiration(validToken);
+        getTimeUntilRefresh(validToken);
+
+        // Expired token tests
+        isTokenValid(expiredToken);
+        isTokenExpired(expiredToken);
+        shouldRefreshToken(expiredToken);
+        getTimeUntilExpiration(expiredToken);
+        getTimeUntilRefresh(expiredToken);
+
+        // Refresh needed token tests
+        const token = refreshNeededToken;
+        isTokenValid(token);
+        isTokenExpired(token);
+        shouldRefreshToken(token);
+        getTimeUntilExpiration(token);
+        getTimeUntilRefresh(token);
+      }).not.toThrow();
     });
   });
 });

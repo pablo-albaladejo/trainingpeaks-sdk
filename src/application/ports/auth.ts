@@ -7,7 +7,7 @@ import { AuthToken } from '@/domain/entities/auth-token';
 import { User } from '@/domain/entities/user';
 import { Credentials } from '@/domain/value-objects/credentials';
 
-export interface AuthRepository {
+export type AuthRepository = {
   /**
    * Authenticate user with credentials
    */
@@ -52,4 +52,4 @@ export interface AuthRepository {
    * Get user ID from stored authentication
    */
   getUserId(): string | null;
-}
+};

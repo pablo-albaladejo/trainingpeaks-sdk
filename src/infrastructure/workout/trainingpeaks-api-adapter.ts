@@ -4,11 +4,11 @@
  */
 
 import {
+  UploadResult,
   WorkoutServiceConfig,
   WorkoutServicePort,
 } from '@/application/ports/workout';
 import { getSDKConfig } from '@/config';
-import { Workout } from '@/domain/entities/workout';
 import { WorkoutFile } from '@/domain/value-objects/workout-file';
 import { networkLogger, workoutLogger } from '@/infrastructure/logging/logger';
 import {
@@ -16,7 +16,9 @@ import {
   CreateStructuredWorkoutResponse,
   StructuredWorkoutRequest,
   StructuredWorkoutResponse,
+  WorkoutData,
   WorkoutStructure,
+  WorkoutType,
 } from '@/types';
 import axios, { AxiosInstance } from 'axios';
 
@@ -42,82 +44,116 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
   }
 
   public async uploadWorkout(
-    workout: Workout,
-    config: Required<WorkoutServiceConfig>
-  ): Promise<{
-    success: boolean;
-    workoutId?: string;
-    message: string;
-    errors?: string[];
-  }> {
+    workoutData: WorkoutData,
+    file?: WorkoutFile
+  ): Promise<UploadResult> {
     try {
       workoutLogger.info('Uploading workout via TrainingPeaks API', {
-        name: workout.name,
+        name: workoutData.name,
       });
 
       // In a real implementation, this would make actual API calls
       // For now, simulate the upload
-      await this.simulateApiCall('upload', workout, config);
+      await this.simulateApiCall('upload', workoutData);
 
       return {
         success: true,
-        workoutId: workout.id,
+        workoutId: `workout_${Date.now()}`,
         message: 'Workout uploaded successfully via TrainingPeaks API',
       };
     } catch (error) {
       return {
         success: false,
+        workoutId: '',
         message: 'API upload failed',
         errors: [error instanceof Error ? error.message : 'Unknown error'],
       };
     }
   }
 
-  public async uploadWorkoutFile(
-    workoutFile: WorkoutFile,
-    metadata: {
-      name?: string;
-      description?: string;
-      activityType?: string;
-      tags?: string[];
-    },
-    config: Required<WorkoutServiceConfig>
-  ): Promise<{
-    success: boolean;
-    workoutId?: string;
-    message: string;
-    errors?: string[];
-  }> {
+  public async getWorkout(id: string): Promise<WorkoutData | null> {
     try {
-      workoutLogger.info('Uploading workout file via TrainingPeaks API', {
-        fileName: workoutFile.fileName,
+      workoutLogger.info('Getting workout via TrainingPeaks API', {
+        workoutId: id,
       });
 
-      // In a real implementation, this would make actual API calls with FormData
-      await this.simulateApiCall(
-        'uploadFile',
-        { workoutFile, metadata },
-        config
-      );
+      // In a real implementation, this would make actual GET API calls
+      await this.simulateApiCall('get', id);
 
-      const workoutId = `workout_${Date.now()}`;
+      // Return mock workout data
       return {
-        success: true,
-        workoutId,
-        message: 'Workout file uploaded successfully via TrainingPeaks API',
+        name: 'API Retrieved Workout',
+        description: 'Retrieved from TrainingPeaks API',
+        date: new Date().toISOString(),
+        duration: 3600, // 1 hour
+        distance: 5000, // 5km
+        type: WorkoutType.RUN,
       };
     } catch (error) {
-      return {
-        success: false,
-        message: 'API file upload failed',
-        errors: [error instanceof Error ? error.message : 'Unknown error'],
-      };
+      if (this.sdkConfig.debug.enabled) {
+        console.error('Failed to get workout:', error);
+      }
+      return null;
+    }
+  }
+
+  public async listWorkouts(options?: {
+    limit?: number;
+    offset?: number;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<WorkoutData[]> {
+    try {
+      workoutLogger.info('Listing workouts via TrainingPeaks API', { options });
+
+      // In a real implementation, this would make actual API calls with query parameters
+      await this.simulateApiCall('list', options);
+
+      // Return mock workouts
+      return [
+        {
+          name: 'Morning Run',
+          description: 'Morning training session',
+          date: new Date().toISOString(),
+          duration: 2700, // 45 minutes
+          distance: 5000, // 5km
+          type: WorkoutType.RUN,
+        },
+        {
+          name: 'Evening Bike',
+          description: 'Evening cycling session',
+          date: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+          duration: 3600, // 1 hour
+          distance: 20000, // 20km
+          type: WorkoutType.BIKE,
+        },
+      ];
+    } catch (error) {
+      if (this.sdkConfig.debug.enabled) {
+        console.error('Failed to list workouts:', error);
+      }
+      return [];
+    }
+  }
+
+  public async deleteWorkout(id: string): Promise<boolean> {
+    try {
+      workoutLogger.info('Deleting workout via TrainingPeaks API', {
+        workoutId: id,
+      });
+
+      // In a real implementation, this would make actual DELETE API calls
+      await this.simulateApiCall('delete', id);
+
+      return true;
+    } catch (error) {
+      workoutLogger.error('Failed to delete workout', { workoutId: id, error });
+      return false;
     }
   }
 
   public async createStructuredWorkout(
-    request: CreateStructuredWorkoutRequest,
-    config: Required<WorkoutServiceConfig>
+    request: CreateStructuredWorkoutRequest
   ): Promise<CreateStructuredWorkoutResponse> {
     try {
       workoutLogger.info('Creating structured workout via TrainingPeaks API', {
@@ -211,10 +247,9 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
         apiRequest,
         {
           headers: {
-            ...config.headers,
             'Content-Type': 'application/json',
           },
-          timeout: config.timeout,
+          timeout: this.sdkConfig.timeouts.default,
         }
       );
 
@@ -229,7 +264,7 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
         workout: response.data,
       };
     } catch (error) {
-      if (config.debug) {
+      if (this.sdkConfig.debug.enabled) {
         console.error('Failed to create structured workout:', error);
       }
 
@@ -252,108 +287,9 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
     }
   }
 
-  public async getWorkout(
-    workoutId: string,
-    config: Required<WorkoutServiceConfig>
-  ): Promise<Workout | null> {
-    try {
-      workoutLogger.info('Getting workout via TrainingPeaks API', {
-        workoutId,
-      });
-
-      // In a real implementation, this would make actual GET API calls
-      await this.simulateApiCall('get', workoutId, config);
-
-      // Return mock workout
-      return Workout.create(
-        workoutId,
-        'API Retrieved Workout',
-        'Retrieved from TrainingPeaks API',
-        new Date(),
-        3600, // 1 hour
-        5000, // 5km
-        'Running',
-        ['api', 'retrieved']
-      );
-    } catch (error) {
-      if (config.debug) {
-        console.error('Failed to get workout:', error);
-      }
-      return null;
-    }
-  }
-
-  public async listWorkouts(
-    filters: {
-      startDate?: Date;
-      endDate?: Date;
-      activityType?: string;
-      tags?: string[];
-      limit?: number;
-      offset?: number;
-    },
-    config: Required<WorkoutServiceConfig>
-  ): Promise<Workout[]> {
-    try {
-      workoutLogger.info('Listing workouts via TrainingPeaks API', { filters });
-
-      // In a real implementation, this would make actual API calls with query parameters
-      await this.simulateApiCall('list', filters, config);
-
-      // Return mock workouts
-      return [
-        Workout.create(
-          'workout_1',
-          'Morning Run',
-          'Morning training session',
-          new Date(),
-          2700, // 45 minutes
-          5000, // 5km
-          'Running',
-          ['morning', 'training']
-        ),
-        Workout.create(
-          'workout_2',
-          'Evening Bike',
-          'Evening cycling session',
-          new Date(Date.now() - 86400000), // Yesterday
-          3600, // 1 hour
-          20000, // 20km
-          'Cycling',
-          ['evening', 'cycling']
-        ),
-      ];
-    } catch (error) {
-      if (config.debug) {
-        console.error('Failed to list workouts:', error);
-      }
-      return [];
-    }
-  }
-
-  public async deleteWorkout(
-    workoutId: string,
-    config: Required<WorkoutServiceConfig>
-  ): Promise<boolean> {
-    try {
-      workoutLogger.info('Deleting workout via TrainingPeaks API', {
-        workoutId,
-      });
-
-      // In a real implementation, this would make actual DELETE API calls
-      await this.simulateApiCall('delete', workoutId, config);
-
-      return true;
-    } catch (error) {
-      workoutLogger.error('Failed to delete workout', { workoutId, error });
-      return false;
-    }
-  }
-
   private async simulateApiCall(
     operation: string,
-    data: unknown,
-    config: Required<WorkoutServiceConfig>
+    data: unknown
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       networkLogger.debug(`Simulating TrainingPeaks API call: ${operation}`, {

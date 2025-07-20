@@ -4,7 +4,7 @@
 
 import { WorkoutStructure as WorkoutStructureValueObject } from '@/domain/value-objects/workout-structure';
 
-export interface TrainingPeaksConfig {
+export type TrainingPeaksConfig = {
   /** Base URL for the TrainingPeaks API */
   baseUrl?: string;
   /** Request timeout in milliseconds */
@@ -24,16 +24,16 @@ export interface TrainingPeaksConfig {
     /** Custom browser executable path */
     executablePath?: string;
   };
-}
+};
 
-export interface LoginCredentials {
+export type LoginCredentials = {
   /** Username */
   username: string;
   /** User password */
   password: string;
-}
+};
 
-export interface AuthToken {
+export type AuthToken = {
   /** Access token */
   accessToken: string;
   /** Token type (usually 'Bearer') */
@@ -42,9 +42,9 @@ export interface AuthToken {
   expiresAt: number;
   /** Refresh token */
   refreshToken?: string;
-}
+};
 
-export interface UserProfile {
+export type UserProfile = {
   /** User ID */
   id: string;
   /** User full name */
@@ -53,9 +53,9 @@ export interface UserProfile {
   avatar?: string;
   /** User preferences */
   preferences?: Record<string, unknown>;
-}
+};
 
-export interface WorkoutData {
+export type WorkoutData = {
   /** Workout name/title */
   name: string;
   /** Workout description */
@@ -70,16 +70,16 @@ export interface WorkoutData {
   type?: WorkoutType;
   /** Workout file data */
   fileData?: WorkoutFileData;
-}
+};
 
-export interface WorkoutFileData {
+export type WorkoutFileData = {
   /** File name */
   filename: string;
   /** File content as buffer or string */
   content: Uint8Array | string | Buffer;
   /** File MIME type */
   mimeType: string;
-}
+};
 
 export enum WorkoutType {
   BIKE = 'BIKE',
@@ -88,7 +88,7 @@ export enum WorkoutType {
   OTHER = 'OTHER',
 }
 
-export interface UploadResponse {
+export type UploadResponse = {
   /** Upload ID */
   id: string;
   /** Upload status */
@@ -99,10 +99,10 @@ export interface UploadResponse {
   workoutId?: string;
   /** Upload errors if any */
   errors?: string[];
-}
+};
 
 // Structured Workout Types
-export interface WorkoutStructureStep {
+export type WorkoutStructureStep = {
   /** Step name */
   name: string;
   /** Step duration/length */
@@ -113,9 +113,9 @@ export interface WorkoutStructureStep {
   intensityClass: 'active' | 'rest' | 'warmUp' | 'coolDown';
   /** Whether duration is open */
   openDuration: boolean;
-}
+};
 
-export interface WorkoutLength {
+export type WorkoutLength = {
   /** Length value */
   value: number;
   /** Length unit */
@@ -127,16 +127,16 @@ export interface WorkoutLength {
     | 'meter'
     | 'kilometer'
     | 'mile';
-}
+};
 
-export interface WorkoutTarget {
+export type WorkoutTarget = {
   /** Minimum target value */
   minValue: number;
   /** Maximum target value */
   maxValue: number;
-}
+};
 
-export interface WorkoutStructureElement {
+export type WorkoutStructureElement = {
   /** Element type */
   type: 'step' | 'repetition';
   /** Element length */
@@ -147,9 +147,9 @@ export interface WorkoutStructureElement {
   begin: number;
   /** End time in seconds */
   end: number;
-}
+};
 
-export interface WorkoutStructure {
+export type WorkoutStructure = {
   /** Structure elements */
   structure: WorkoutStructureElement[];
   /** Polyline coordinates for visualization */
@@ -166,9 +166,9 @@ export interface WorkoutStructure {
     | 'speed';
   /** Primary intensity target type */
   primaryIntensityTargetOrRange: 'target' | 'range';
-}
+};
 
-export interface StructuredWorkoutRequest {
+export type StructuredWorkoutRequest = {
   /** Athlete ID */
   athleteId: number;
   /** Workout title */
@@ -311,18 +311,18 @@ export interface StructuredWorkoutRequest {
   poolLengthOptionId?: number | null;
   /** Workout sub type ID */
   workoutSubTypeId?: number | null;
-}
+};
 
-export interface StructuredWorkoutResponse extends StructuredWorkoutRequest {
+export type StructuredWorkoutResponse = StructuredWorkoutRequest & {
   /** Workout ID */
   workoutId: number;
   /** Shared workout information key */
   sharedWorkoutInformationKey?: string;
   /** Shared workout information expire key */
   sharedWorkoutInformationExpireKey?: string;
-}
+};
 
-export interface CreateStructuredWorkoutRequest {
+export type CreateStructuredWorkoutRequest = {
   /** Athlete ID */
   athleteId: number;
   /** Workout title */
@@ -362,9 +362,9 @@ export interface CreateStructuredWorkoutRequest {
       shoeId?: number;
     };
   };
-}
+};
 
-export interface CreateStructuredWorkoutResponse {
+export type CreateStructuredWorkoutResponse = {
   /** Success status */
   success: boolean;
   /** Workout ID if successful */
@@ -375,34 +375,34 @@ export interface CreateStructuredWorkoutResponse {
   errors?: string[];
   /** Full workout data if successful */
   workout?: StructuredWorkoutResponse;
-}
+};
 
-export interface ApiResponse<T = unknown> {
+export type ApiResponse<T = unknown> = {
   /** Response data */
   data: T;
   /** Response status */
   status: number;
   /** Response message */
   message?: string;
-}
+};
 
-export interface RequestOptions {
+export type RequestOptions = {
   /** Request headers */
   headers?: Record<string, string>;
   /** Request timeout */
   timeout?: number;
   /** Retry configuration */
   retry?: RetryConfig;
-}
+};
 
-export interface RetryConfig {
+export type RetryConfig = {
   /** Number of retries */
   attempts: number;
   /** Delay between retries in milliseconds */
   delay: number;
   /** Backoff factor */
   backoff: number;
-}
+};
 
 /**
  * Import and re-export configuration types from config module
@@ -410,7 +410,7 @@ export interface RetryConfig {
 import type { TrainingPeaksSDKConfig } from '@/config';
 export type { TrainingPeaksSDKConfig } from '@/config';
 
-export interface TrainingPeaksClientConfig {
+export type TrainingPeaksClientConfig = {
   /** Base URL for TrainingPeaks */
   baseUrl?: string;
   /** Authentication method */
@@ -429,4 +429,4 @@ export interface TrainingPeaksClientConfig {
   headers?: Record<string, string>;
   /** Complete SDK configuration (overrides other options) */
   sdkConfig?: Partial<TrainingPeaksSDKConfig>;
-}
+};

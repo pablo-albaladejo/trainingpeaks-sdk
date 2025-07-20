@@ -6,14 +6,21 @@
 import { faker } from '@faker-js/faker';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { randomNumber, randomString } from '../../__fixtures__/utils.fixture';
-import { createWorkoutManagementService } from './workout-management';
+import { deleteWorkout } from './workout-management';
 
 describe('Workout Management Service', () => {
-  let workoutManagementService: ReturnType<
-    typeof createWorkoutManagementService
-  >;
-  let mockWorkoutRepository: any;
-  let mockValidationService: any;
+  let mockWorkoutRepository: {
+    getWorkout: ReturnType<typeof vi.fn>;
+    deleteWorkout: ReturnType<typeof vi.fn>;
+    uploadWorkout: ReturnType<typeof vi.fn>;
+    listWorkouts: ReturnType<typeof vi.fn>;
+    createStructuredWorkout: ReturnType<typeof vi.fn>;
+    uploadWorkoutFromFile: ReturnType<typeof vi.fn>;
+  };
+  let mockValidationService: {
+    validateWorkoutId: ReturnType<typeof vi.fn>;
+    validateWorkoutCanBeDeleted: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     // Arrange - Setup mocks
@@ -23,18 +30,13 @@ describe('Workout Management Service', () => {
       uploadWorkout: vi.fn(),
       listWorkouts: vi.fn(),
       createStructuredWorkout: vi.fn(),
+      uploadWorkoutFromFile: vi.fn(),
     };
 
     mockValidationService = {
       validateWorkoutId: vi.fn(),
       validateWorkoutCanBeDeleted: vi.fn(),
     };
-
-    // Create service instance with mocks
-    workoutManagementService = createWorkoutManagementService(
-      mockWorkoutRepository,
-      mockValidationService
-    );
   });
 
   describe('deleteWorkout', () => {
@@ -51,7 +53,10 @@ describe('Workout Management Service', () => {
       );
 
       // Act
-      const result = await workoutManagementService.deleteWorkout(workoutId);
+      const result = await deleteWorkout(
+        mockWorkoutRepository,
+        mockValidationService
+      )(workoutId);
 
       // Assert
       expect(result).toBe(true);
@@ -76,7 +81,7 @@ describe('Workout Management Service', () => {
 
       // Act & Assert
       await expect(
-        workoutManagementService.deleteWorkout(workoutId)
+        deleteWorkout(mockWorkoutRepository, mockValidationService)(workoutId)
       ).rejects.toThrow();
       expect(mockValidationService.validateWorkoutId).toHaveBeenCalledWith(
         workoutId
@@ -96,7 +101,7 @@ describe('Workout Management Service', () => {
 
       // Act & Assert
       await expect(
-        workoutManagementService.deleteWorkout(workoutId)
+        deleteWorkout(mockWorkoutRepository, mockValidationService)(workoutId)
       ).rejects.toThrow('Invalid workout ID');
       expect(mockValidationService.validateWorkoutId).toHaveBeenCalledWith(
         workoutId
@@ -117,7 +122,10 @@ describe('Workout Management Service', () => {
       );
 
       // Act
-      const result = await workoutManagementService.deleteWorkout(workoutId);
+      const result = await deleteWorkout(
+        mockWorkoutRepository,
+        mockValidationService
+      )(workoutId);
 
       // Assert
       expect(result).toBe(false);
@@ -142,7 +150,7 @@ describe('Workout Management Service', () => {
 
       // Act & Assert
       await expect(
-        workoutManagementService.deleteWorkout(workoutId)
+        deleteWorkout(mockWorkoutRepository, mockValidationService)(workoutId)
       ).rejects.toThrow('Cannot delete workout');
       expect(
         mockValidationService.validateWorkoutCanBeDeleted
@@ -160,7 +168,7 @@ describe('Workout Management Service', () => {
 
       // Act & Assert
       await expect(
-        workoutManagementService.deleteWorkout(workoutId)
+        deleteWorkout(mockWorkoutRepository, mockValidationService)(workoutId)
       ).rejects.toThrow('Database error');
       expect(mockWorkoutRepository.getWorkout).toHaveBeenCalledWith(workoutId);
     });
@@ -178,7 +186,10 @@ describe('Workout Management Service', () => {
       );
 
       // Act
-      const result = await workoutManagementService.deleteWorkout(workoutId);
+      const result = await deleteWorkout(
+        mockWorkoutRepository,
+        mockValidationService
+      )(workoutId);
 
       // Assert
       expect(result).toBe(true);
@@ -188,33 +199,33 @@ describe('Workout Management Service', () => {
   });
 
   describe('service creation', () => {
-    it('should create service with required dependencies', () => {
+    it('should create delete workout function with required dependencies', () => {
       // Arrange & Act
-      const service = createWorkoutManagementService(
+      const deleteWorkoutFn = deleteWorkout(
         mockWorkoutRepository,
         mockValidationService
       );
 
       // Assert
-      expect(service).toBeDefined();
-      expect(typeof service.deleteWorkout).toBe('function');
+      expect(deleteWorkoutFn).toBeDefined();
+      expect(typeof deleteWorkoutFn).toBe('function');
     });
 
-    it('should create unique service instances', () => {
+    it('should create unique function instances', () => {
       // Arrange & Act
-      const service1 = createWorkoutManagementService(
+      const deleteWorkoutFn1 = deleteWorkout(
         mockWorkoutRepository,
         mockValidationService
       );
-      const service2 = createWorkoutManagementService(
+      const deleteWorkoutFn2 = deleteWorkout(
         mockWorkoutRepository,
         mockValidationService
       );
 
       // Assert
-      expect(service1).toBeDefined();
-      expect(service2).toBeDefined();
-      expect(service1).not.toBe(service2);
+      expect(deleteWorkoutFn1).toBeDefined();
+      expect(deleteWorkoutFn2).toBeDefined();
+      expect(deleteWorkoutFn1).not.toBe(deleteWorkoutFn2);
     });
   });
 });

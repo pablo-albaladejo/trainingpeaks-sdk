@@ -1,47 +1,81 @@
 /**
  * Infrastructure Layer Exports
- * External adapters and implementations
+ * Exports all infrastructure implementations
  */
 
-// Services - Export infrastructure service implementations
-export { createAuthApplicationService } from './services/auth-application';
-export { createAuthValidationService } from './services/auth-validation';
-export { createLoggerService } from './services/logger';
-export { createWorkoutCreationService } from './services/workout-creation';
-export { createWorkoutManagementService } from './services/workout-management';
-export { createWorkoutManagerService } from './services/workout-manager';
-export { createWorkoutQueryService } from './services/workout-query';
-export { createWorkoutUtilityService } from './services/workout-utility';
-export { createWorkoutValidationService } from './services/workout-validation';
-
-// Storage adapters
-export { InMemoryStorageAdapter } from './storage/in-memory-adapter';
-
-// Filesystem adapters
-export { FileSystemAdapter } from './filesystem/file-system-adapter';
-
-// Repositories
-export { createTrainingPeaksAuthRepository } from './repositories/training-peaks-auth';
-export { createTrainingPeaksWorkoutRepository } from './repositories/training-peaks-workout';
-
-// Workout adapters
-export { TrainingPeaksWorkoutApiAdapter } from './workout/trainingpeaks-api-adapter';
-
-// Auth adapters
-export { ApiAuthAdapter } from './auth/api-adapter';
-
-// Browser adapters
-export { WebBrowserAuthAdapter } from './browser/web-auth-adapter';
-
-// Logging utilities
+// Auth services
 export {
-  BatchLogger,
-  LogContextBuilder,
-  LogFormatter,
-  PerformanceTracker,
-  createStructuredLogger,
-  withTiming,
-} from './services/logging-utilities';
+  getCurrentToken,
+  getCurrentUser,
+  getUserId,
+  isAuthenticated,
+  login,
+  logout,
+} from './services/auth-application';
+
+export {
+  getTimeUntilExpiration,
+  getTimeUntilRefresh,
+  isTokenExpired,
+  isTokenValid,
+  shouldRefreshToken,
+} from './services/auth-validation';
+
+// Logger services
+export {
+  consoleOutputTarget,
+  createLoggerService,
+  createLoggerWithTarget,
+  createSilentLogger,
+  silentOutputTarget,
+} from './services/logger';
+
+// Workout services
+export { deleteWorkout } from './services/workout-management';
+
+export {
+  createStructuredWorkout as createStructuredWorkoutManager,
+  deleteWorkout as deleteWorkoutManager,
+  getWorkout,
+  getWorkoutRepository,
+  getWorkoutStats,
+  listWorkouts,
+  searchWorkouts,
+  uploadWorkoutFromFile,
+  uploadWorkout as uploadWorkoutManager,
+} from './services/workout-manager';
+
+export {
+  getWorkout as getWorkoutQuery,
+  listWorkouts as listWorkoutsQuery,
+} from './services/workout-query';
+
+export {
+  buildStructureFromSimpleElements,
+  generateWorkoutId,
+  getMimeTypeFromFileName,
+  mapWorkoutTypeToActivityType,
+} from './services/workout-utility';
+
+export {
+  validateListWorkoutsFilters,
+  validateStructuredWorkoutBusinessRules,
+  validateWorkoutCanBeDeleted,
+  validateWorkoutFile,
+  validateWorkoutId,
+} from './services/workout-validation';
 
 // Error handling
-export { createErrorHandlerService } from './services/error-handler';
+export {
+  ErrorSeverity,
+  createErrorHandlerService,
+  type ApiResponse,
+  type ErrorContext,
+  type ErrorHandlerConfig,
+  type ErrorHandlerService,
+  type ErrorResponse,
+  type SuccessResponse,
+} from './services/error-handler';
+
+// HTTP handlers
+export { createAuthHandler } from './http/auth-handler';

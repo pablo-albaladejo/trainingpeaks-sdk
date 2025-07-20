@@ -4,7 +4,6 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { LoggerService } from '../../application/services/logger';
 import {
   AuthenticationError,
   AuthorizationError,
@@ -23,7 +22,7 @@ import {
 import { createErrorHandlerService, ErrorSeverity } from './error-handler';
 
 // Mock logger
-const mockLogger: LoggerService = {
+const mockLogger = {
   info: vi.fn(),
   error: vi.fn(),
   warn: vi.fn(),
@@ -313,6 +312,39 @@ describe('Error Handler Service', () => {
       expect(result.data).toEqual(data);
       expect(result.statusCode).toBe(201);
     });
+
+    it('should validate and return valid result', () => {
+      const errorHandler = createErrorHandlerService(mockLogger);
+      const result = { valid: true };
+      const validator = (data: { valid: boolean }) => data.valid === true;
+
+      const validatedResult = errorHandler.validateResult(validator)(result);
+
+      expect(validatedResult).toEqual(result);
+    });
+
+    it('should throw validation error for invalid result', () => {
+      const errorHandler = createErrorHandlerService(mockLogger);
+      const result = { valid: false };
+      const validator = (data: { valid: boolean }) => data.valid === true;
+
+      expect(() => errorHandler.validateResult(validator)(result)).toThrow(
+        ValidationError
+      );
+    });
+
+    it('should throw validation error with custom message', () => {
+      const errorHandler = createErrorHandlerService(mockLogger);
+      const result = { valid: false };
+      const validator = (data: { valid: boolean }) => data.valid === true;
+
+      expect(() =>
+        errorHandler.validateResult(
+          validator,
+          'Custom validation error'
+        )(result)
+      ).toThrow('Custom validation error');
+    });
   });
 
   describe('wrapAsyncOperation', () => {
@@ -482,7 +514,7 @@ describe('Error Handler Service', () => {
       const result = { valid: true };
       const validator = (data: { valid: boolean }) => data.valid === true;
 
-      const validatedResult = errorHandler.validateResult(result, validator);
+      const validatedResult = errorHandler.validateResult(validator)(result);
 
       expect(validatedResult).toEqual(result);
     });
@@ -492,7 +524,7 @@ describe('Error Handler Service', () => {
       const result = { valid: false };
       const validator = (data: { valid: boolean }) => data.valid === true;
 
-      expect(() => errorHandler.validateResult(result, validator)).toThrow(
+      expect(() => errorHandler.validateResult(validator)(result)).toThrow(
         ValidationError
       );
     });
@@ -504,10 +536,9 @@ describe('Error Handler Service', () => {
 
       expect(() =>
         errorHandler.validateResult(
-          result,
           validator,
           'Custom validation error'
-        )
+        )(result)
       ).toThrow('Custom validation error');
     });
   });

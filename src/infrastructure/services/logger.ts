@@ -1,20 +1,25 @@
 /**
  * Logger Service Implementation
- * Implements the LoggerService contract with configurable logging outputs
+ * Individual function implementations that receive dependencies as parameters
  */
 
 import type {
   LogContext,
+  LogDebug,
+  LogError,
   LoggerConfig,
+  LogInfo,
   LogLevel,
+  LogWarn,
+  LogWithLevel,
 } from '@/application/services/logger';
 
 /**
- * Output target interface for configurable logging
+ * Output target type for configurable logging
  */
-export interface LogOutputTarget {
+export type LogOutputTarget = {
   write(level: LogLevel, message: string): void;
-}
+};
 
 /**
  * Console output target (default)
@@ -48,11 +53,8 @@ export const silentOutputTarget: LogOutputTarget = {
   },
 };
 
-/**
- * IMPLEMENTATION of LoggerService
- * This is an ADAPTER - implements the port defined in application layer
- */
-export const createLoggerService = (config: LoggerConfig = {}) => {
+// Helper function to create logger logic
+const createLoggerLogic = (config: LoggerConfig = {}) => {
   const logLevel = config.level || 'info';
   const enableTimestamp = config.enableTimestamp ?? true;
   const enableColors = config.enableColors ?? true;
@@ -123,6 +125,48 @@ export const createLoggerService = (config: LoggerConfig = {}) => {
       console.log(formatted);
     }
   };
+
+  return { logMessage };
+};
+
+export const logInfo =
+  (config: LoggerConfig = {}): LogInfo =>
+  (message: string, context?: LogContext): void => {
+    const { logMessage } = createLoggerLogic(config);
+    logMessage('info', message, context);
+  };
+
+export const logError =
+  (config: LoggerConfig = {}): LogError =>
+  (message: string, context?: LogContext): void => {
+    const { logMessage } = createLoggerLogic(config);
+    logMessage('error', message, context);
+  };
+
+export const logWarn =
+  (config: LoggerConfig = {}): LogWarn =>
+  (message: string, context?: LogContext): void => {
+    const { logMessage } = createLoggerLogic(config);
+    logMessage('warn', message, context);
+  };
+
+export const logDebug =
+  (config: LoggerConfig = {}): LogDebug =>
+  (message: string, context?: LogContext): void => {
+    const { logMessage } = createLoggerLogic(config);
+    logMessage('debug', message, context);
+  };
+
+export const logWithLevel =
+  (config: LoggerConfig = {}): LogWithLevel =>
+  (level: LogLevel, message: string, context?: LogContext): void => {
+    const { logMessage } = createLoggerLogic(config);
+    logMessage(level, message, context);
+  };
+
+// Keep the existing grouped functions for backward compatibility
+export const createLoggerService = (config: LoggerConfig = {}) => {
+  const { logMessage } = createLoggerLogic(config);
 
   return {
     info: (message: string, context?: LogContext): void => {

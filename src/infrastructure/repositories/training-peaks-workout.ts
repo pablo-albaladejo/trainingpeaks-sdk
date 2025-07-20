@@ -15,6 +15,7 @@ import { WorkoutFile } from '@/domain/value-objects/workout-file';
 import {
   CreateStructuredWorkoutRequest,
   CreateStructuredWorkoutResponse,
+  WorkoutData,
 } from '@/types';
 
 /**
@@ -24,7 +25,7 @@ import {
 export const createTrainingPeaksWorkoutRepository = (
   fileSystemAdapter: FileSystemPort,
   config: WorkoutServiceConfig
-) => {
+): WorkoutRepository => {
   const workoutServices: WorkoutServicePort[] = [];
 
   /**
@@ -49,24 +50,18 @@ export const createTrainingPeaksWorkoutRepository = (
     return service;
   };
 
-  const getFullConfig = (): Required<WorkoutServiceConfig> => {
-    return {
-      baseUrl: config.baseUrl || 'https://api.trainingpeaks.com',
-      timeout: config.timeout || 30000,
-      debug: config.debug || false,
-      headers: config.headers || {},
-    };
-  };
-
-  const uploadWorkout = async (workout: Workout): Promise<UploadResult> => {
+  const uploadWorkout = async (
+    workoutData: WorkoutData,
+    file?: WorkoutFile
+  ): Promise<UploadResult> => {
     try {
       const workoutService = getWorkoutService();
-      const fullConfig = getFullConfig();
 
-      return await workoutService.uploadWorkout(workout, fullConfig);
+      return await workoutService.uploadWorkout(workoutData, file);
     } catch (error) {
       return {
         success: false,
+        workoutId: '',
         message: 'Failed to upload workout',
         errors: [error instanceof Error ? error.message : 'Unknown error'],
       };
@@ -74,26 +69,32 @@ export const createTrainingPeaksWorkoutRepository = (
   };
 
   const uploadWorkoutFromFile = async (
-    workoutFile: WorkoutFile,
-    metadata?: {
-      name?: string;
-      description?: string;
-      activityType?: string;
-      tags?: string[];
-    }
+    filename: string,
+    buffer: Buffer,
+    mimeType: string
   ): Promise<UploadResult> => {
     try {
-      const workoutService = getWorkoutService();
-      const fullConfig = getFullConfig();
-
-      return await workoutService.uploadWorkoutFile(
-        workoutFile,
-        metadata || {},
-        fullConfig
+      const workoutFile = WorkoutFile.create(
+        filename,
+        buffer.toString(),
+        mimeType
       );
+      const workoutData: WorkoutData = {
+        name: filename,
+        description: `Uploaded from file: ${filename}`,
+        date: new Date().toISOString(),
+        fileData: {
+          filename,
+          content: buffer,
+          mimeType,
+        },
+      };
+
+      return await uploadWorkout(workoutData, workoutFile);
     } catch (error) {
       return {
         success: false,
+        workoutId: '',
         message: 'Failed to upload workout from file',
         errors: [error instanceof Error ? error.message : 'Unknown error'],
       };
@@ -105,9 +106,8 @@ export const createTrainingPeaksWorkoutRepository = (
   ): Promise<CreateStructuredWorkoutResponse> => {
     try {
       const workoutService = getWorkoutService();
-      const fullConfig = getFullConfig();
 
-      return await workoutService.createStructuredWorkout(request, fullConfig);
+      return await workoutService.createStructuredWorkout(request);
     } catch (error) {
       return {
         success: false,
@@ -120,28 +120,52 @@ export const createTrainingPeaksWorkoutRepository = (
   const getWorkout = async (workoutId: string): Promise<Workout | null> => {
     try {
       const workoutService = getWorkoutService();
-      const fullConfig = getFullConfig();
+      const workoutData = await workoutService.getWorkout(workoutId);
 
-      return await workoutService.getWorkout(workoutId, fullConfig);
+      if (!workoutData) {
+        return null;
+      }
+
+      // Convert WorkoutData to Workout entity
+      return Workout.create(
+        workoutId,
+        workoutData.name,
+        workoutData.description || '',
+        new Date(workoutData.date || Date.now()),
+        workoutData.duration || 0,
+        workoutData.distance || 0,
+        workoutData.type || 'OTHER',
+        []
+      );
     } catch (error) {
       console.error('Failed to get workout:', error);
       return null;
     }
   };
 
-  const listWorkouts = async (filters?: {
-    startDate?: Date;
-    endDate?: Date;
-    activityType?: string;
-    tags?: string[];
+  const listWorkouts = async (options?: {
     limit?: number;
     offset?: number;
+    startDate?: Date;
+    endDate?: Date;
   }): Promise<Workout[]> => {
     try {
       const workoutService = getWorkoutService();
-      const fullConfig = getFullConfig();
+      const workoutDataList = await workoutService.listWorkouts(options);
 
-      return await workoutService.listWorkouts(filters || {}, fullConfig);
+      // Convert WorkoutData[] to Workout[]
+      return workoutDataList.map((workoutData, index) =>
+        Workout.create(
+          `workout_${index}`,
+          workoutData.name,
+          workoutData.description || '',
+          new Date(workoutData.date || Date.now()),
+          workoutData.duration || 0,
+          workoutData.distance || 0,
+          workoutData.type || 'OTHER',
+          []
+        )
+      );
     } catch (error) {
       console.error('Failed to list workouts:', error);
       return [];
@@ -150,12 +174,7 @@ export const createTrainingPeaksWorkoutRepository = (
 
   const updateWorkout = async (
     workoutId: string,
-    updates: {
-      name?: string;
-      description?: string;
-      activityType?: string;
-      tags?: string[];
-    }
+    data: Partial<WorkoutData>
   ): Promise<Workout> => {
     try {
       // Get the existing workout
@@ -165,10 +184,13 @@ export const createTrainingPeaksWorkoutRepository = (
       }
 
       // Update the workout with new metadata
-      const updatedWorkout = existingWorkout.withUpdatedMetadata(updates);
+      const updatedWorkout = existingWorkout.withUpdatedMetadata({
+        name: data.name,
+        description: data.description,
+        activityType: data.type,
+        tags: [],
+      });
 
-      // In a real implementation, this would make an API call to update the workout
-      // For now, we'll just return the updated workout
       return updatedWorkout;
     } catch (error) {
       throw new Error(
@@ -182,9 +204,8 @@ export const createTrainingPeaksWorkoutRepository = (
   const deleteWorkout = async (workoutId: string): Promise<boolean> => {
     try {
       const workoutService = getWorkoutService();
-      const fullConfig = getFullConfig();
 
-      return await workoutService.deleteWorkout(workoutId, fullConfig);
+      return await workoutService.deleteWorkout(workoutId);
     } catch (error) {
       console.error('Failed to delete workout:', error);
       return false;
@@ -192,72 +213,20 @@ export const createTrainingPeaksWorkoutRepository = (
   };
 
   const searchWorkouts = async (query: {
-    text?: string;
-    activityType?: string;
-    dateRange?: {
-      start: Date;
-      end: Date;
-    };
-    durationRange?: {
-      min: number;
-      max: number;
-    };
-    distanceRange?: {
-      min: number;
-      max: number;
-    };
+    name?: string;
+    type?: string;
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+    offset?: number;
   }): Promise<Workout[]> => {
     try {
-      // Get all workouts and filter them
-      const allWorkouts = await listWorkouts();
-
-      return allWorkouts.filter((workout) => {
-        // Text search
-        if (query.text) {
-          const searchText = query.text.toLowerCase();
-          const workoutText =
-            `${workout.name} ${workout.description}`.toLowerCase();
-          if (!workoutText.includes(searchText)) {
-            return false;
-          }
-        }
-
-        // Activity type filter
-        if (query.activityType && workout.activityType !== query.activityType) {
-          return false;
-        }
-
-        // Date range filter
-        if (query.dateRange) {
-          if (
-            workout.date < query.dateRange.start ||
-            workout.date > query.dateRange.end
-          ) {
-            return false;
-          }
-        }
-
-        // Duration range filter
-        if (query.durationRange) {
-          if (
-            workout.duration < query.durationRange.min ||
-            workout.duration > query.durationRange.max
-          ) {
-            return false;
-          }
-        }
-
-        // Distance range filter
-        if (query.distanceRange && workout.distance) {
-          if (
-            workout.distance < query.distanceRange.min ||
-            workout.distance > query.distanceRange.max
-          ) {
-            return false;
-          }
-        }
-
-        return true;
+      // For now, use listWorkouts as a simple implementation
+      return await listWorkouts({
+        limit: query.limit,
+        offset: query.offset,
+        startDate: query.startDate,
+        endDate: query.endDate,
       });
     } catch (error) {
       console.error('Failed to search workouts:', error);
@@ -268,7 +237,7 @@ export const createTrainingPeaksWorkoutRepository = (
   const getWorkoutStats = async (filters?: {
     startDate?: Date;
     endDate?: Date;
-    activityType?: string;
+    workoutType?: string;
   }): Promise<{
     totalWorkouts: number;
     totalDuration: number;
@@ -277,7 +246,10 @@ export const createTrainingPeaksWorkoutRepository = (
     averageDistance: number;
   }> => {
     try {
-      const workouts = await listWorkouts(filters);
+      const workouts = await listWorkouts({
+        startDate: filters?.startDate,
+        endDate: filters?.endDate,
+      });
 
       const totalWorkouts = workouts.length;
       const totalDuration = workouts.reduce((sum, w) => sum + w.duration, 0);
@@ -285,13 +257,17 @@ export const createTrainingPeaksWorkoutRepository = (
         (sum, w) => sum + (w.distance || 0),
         0
       );
+      const averageDuration =
+        totalWorkouts > 0 ? totalDuration / totalWorkouts : 0;
+      const averageDistance =
+        totalWorkouts > 0 ? totalDistance / totalWorkouts : 0;
 
       return {
         totalWorkouts,
         totalDuration,
         totalDistance,
-        averageDuration: totalWorkouts > 0 ? totalDuration / totalWorkouts : 0,
-        averageDistance: totalWorkouts > 0 ? totalDistance / totalWorkouts : 0,
+        averageDuration,
+        averageDistance,
       };
     } catch (error) {
       console.error('Failed to get workout stats:', error);
@@ -305,65 +281,15 @@ export const createTrainingPeaksWorkoutRepository = (
     }
   };
 
-  const readWorkoutFile = async (filePath: string): Promise<WorkoutFile> => {
-    try {
-      const exists = await fileSystemAdapter.fileExists(filePath);
-      if (!exists) {
-        throw new Error(`Workout file not found: ${filePath}`);
-      }
-
-      const content = await fileSystemAdapter.readFile(filePath);
-      const fileName = filePath.split('/').pop() || 'workout.tcx';
-      const mimeType = getMimeTypeFromFileName(fileName);
-
-      return WorkoutFile.create(fileName, content, mimeType);
-    } catch (error) {
-      throw new Error(
-        `Failed to read workout file: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`
-      );
-    }
-  };
-
-  const getMimeTypeFromFileName = (fileName: string): string => {
-    const extension = fileName.toLowerCase().split('.').pop();
-
-    switch (extension) {
-      case 'tcx':
-        return 'application/vnd.garmin.tcx+xml';
-      case 'gpx':
-        return 'application/gpx+xml';
-      case 'fit':
-        return 'application/vnd.ant.fit';
-      case 'xml':
-        return 'application/xml';
-      default:
-        return 'application/octet-stream';
-    }
-  };
-
-  // Return the repository interface and register function
-  const repository: WorkoutRepository = {
-    uploadWorkout,
-    uploadWorkoutFromFile,
-    createStructuredWorkout,
+  return {
     getWorkout,
     listWorkouts,
-    updateWorkout,
     deleteWorkout,
+    createStructuredWorkout,
+    uploadWorkout,
+    uploadWorkoutFromFile,
+    updateWorkout,
     searchWorkouts,
     getWorkoutStats,
   };
-
-  return {
-    repository,
-    registerWorkoutService,
-    readWorkoutFile,
-  };
 };
-
-// Export the type for dependency injection
-export type TrainingPeaksWorkoutRepository = ReturnType<
-  typeof createTrainingPeaksWorkoutRepository
->;

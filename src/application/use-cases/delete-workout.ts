@@ -5,9 +5,9 @@
 
 import type { DeleteWorkout } from '@/application/services/workout-management';
 
-export interface DeleteWorkoutRequest {
+export type DeleteWorkoutRequest = {
   workoutId: string;
-}
+};
 
 /**
  * Delete Workout Use Case Factory

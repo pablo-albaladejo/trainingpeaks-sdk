@@ -20,21 +20,21 @@ import {
 } from '@/domain/errors/workout-errors';
 
 /**
- * Error context interface for enriching error information
+ * Error context type for enriching error information
  */
-export interface ErrorContext {
+export type ErrorContext = {
   operation?: string;
   userId?: string | number;
   workoutId?: string;
   requestId?: string;
   timestamp?: Date;
   metadata?: Record<string, unknown>;
-}
+};
 
 /**
- * Structured error response interface
+ * Structured error response type
  */
-export interface ErrorResponse {
+export type ErrorResponse = {
   success: false;
   error: {
     code: string;
@@ -45,17 +45,17 @@ export interface ErrorResponse {
   };
   statusCode: number;
   timestamp: Date;
-}
+};
 
 /**
- * Success response interface
+ * Success response type
  */
-export interface SuccessResponse<T = unknown> {
+export type SuccessResponse<T = unknown> = {
   success: true;
   data: T;
   statusCode: number;
   timestamp: Date;
-}
+};
 
 /**
  * Generic response type
@@ -75,14 +75,14 @@ export enum ErrorSeverity {
 /**
  * Error handler configuration
  */
-export interface ErrorHandlerConfig {
+export type ErrorHandlerConfig = {
   enableStackTrace: boolean;
   enableContextEnrichment: boolean;
   logLevel: 'error' | 'warn' | 'info' | 'debug';
   maxRetryAttempts: number;
   retryDelay: number;
   delayFn?: (ms: number) => Promise<void>;
-}
+};
 
 /**
  * Default delay function using setTimeout
@@ -432,16 +432,17 @@ export const createErrorHandlerService = (
   /**
    * Validate and transform result
    */
-  const validateResult = <T>(
-    result: T,
-    validator: (data: T) => boolean,
-    errorMessage: string = 'Validation failed'
-  ): T => {
-    if (!validator(result)) {
-      throw new ValidationError(errorMessage);
-    }
-    return result;
-  };
+  const validateResult =
+    <T>(
+      validator: (data: T) => boolean,
+      errorMessage: string = 'Validation failed'
+    ) =>
+    (result: T): T => {
+      if (!validator(result)) {
+        throw new ValidationError(errorMessage);
+      }
+      return result;
+    };
 
   return {
     handleError,

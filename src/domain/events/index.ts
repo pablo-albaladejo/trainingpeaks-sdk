@@ -6,38 +6,38 @@
  */
 
 // Base Domain Event
-export interface DomainEvent {
+export type DomainEvent = {
   readonly eventId: string;
   readonly occurredAt: Date;
   readonly eventType: string;
   readonly aggregateId: string;
   readonly aggregateType: string;
   readonly eventVersion: number;
-}
+};
 
 // Authentication Events
-export interface UserLoggedInEvent extends DomainEvent {
+export type UserLoggedInEvent = DomainEvent & {
   readonly eventType: 'USER_LOGGED_IN';
   readonly aggregateType: 'USER';
   readonly userId: string;
   readonly loginMethod: 'web' | 'credentials';
-}
+};
 
-export interface UserLoggedOutEvent extends DomainEvent {
+export type UserLoggedOutEvent = DomainEvent & {
   readonly eventType: 'USER_LOGGED_OUT';
   readonly aggregateType: 'USER';
   readonly userId: string;
-}
+};
 
-export interface AuthenticationFailedEvent extends DomainEvent {
+export type AuthenticationFailedEvent = DomainEvent & {
   readonly eventType: 'AUTHENTICATION_FAILED';
   readonly aggregateType: 'USER';
   readonly reason: string;
   readonly attemptedUsername?: string;
-}
+};
 
 // Workout Events
-export interface WorkoutUploadedEvent extends DomainEvent {
+export type WorkoutUploadedEvent = DomainEvent & {
   readonly eventType: 'WORKOUT_UPLOADED';
   readonly aggregateType: 'WORKOUT';
   readonly workoutId: string;
@@ -45,49 +45,49 @@ export interface WorkoutUploadedEvent extends DomainEvent {
   readonly fileName: string;
   readonly fileSize: number;
   readonly uploadDuration: number;
-}
+};
 
-export interface WorkoutDeletedEvent extends DomainEvent {
+export type WorkoutDeletedEvent = DomainEvent & {
   readonly eventType: 'WORKOUT_DELETED';
   readonly aggregateType: 'WORKOUT';
   readonly workoutId: string;
-}
+};
 
-export interface StructuredWorkoutCreatedEvent extends DomainEvent {
+export type StructuredWorkoutCreatedEvent = DomainEvent & {
   readonly eventType: 'STRUCTURED_WORKOUT_CREATED';
   readonly aggregateType: 'WORKOUT';
   readonly workoutId: string;
   readonly workoutName: string;
   readonly structureType: string;
   readonly totalSteps: number;
-}
+};
 
-export interface WorkoutUploadFailedEvent extends DomainEvent {
+export type WorkoutUploadFailedEvent = DomainEvent & {
   readonly eventType: 'WORKOUT_UPLOAD_FAILED';
   readonly aggregateType: 'WORKOUT';
   readonly fileName: string;
   readonly errorType: string;
   readonly errorMessage: string;
-}
+};
 
 // Network Events
-export interface NetworkRequestStartedEvent extends DomainEvent {
+export type NetworkRequestStartedEvent = DomainEvent & {
   readonly eventType: 'NETWORK_REQUEST_STARTED';
   readonly aggregateType: 'NETWORK';
   readonly requestId: string;
   readonly method: string;
   readonly url: string;
   readonly timestamp: number;
-}
+};
 
-export interface NetworkRequestCompletedEvent extends DomainEvent {
+export type NetworkRequestCompletedEvent = DomainEvent & {
   readonly eventType: 'NETWORK_REQUEST_COMPLETED';
   readonly aggregateType: 'NETWORK';
   readonly requestId: string;
   readonly statusCode: number;
   readonly duration: number;
   readonly success: boolean;
-}
+};
 
 // Type union for all domain events
 export type AllDomainEvents =

@@ -1,12 +1,12 @@
 /**
- * Storage Port Interface
+ * Storage Port Type
  * Defines contract for storing authentication data
  */
 
 import { AuthToken } from '@/domain/entities/auth-token';
 import { User } from '@/domain/entities/user';
 
-export interface StoragePort {
+export type StoragePort = {
   /**
    * Store authentication token
    */
@@ -41,4 +41,4 @@ export interface StoragePort {
    * Check if there is valid stored authentication
    */
   hasValidAuth(): Promise<boolean>;
-}
+};

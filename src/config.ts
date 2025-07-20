@@ -5,7 +5,7 @@
  * All values can be overridden through environment variables or client configuration.
  */
 
-export interface TrainingPeaksSDKConfig {
+export type TrainingPeaksSDKConfig = {
   /** URL configurations */
   urls: {
     /** Base URL for TrainingPeaks main site */
@@ -79,7 +79,7 @@ export interface TrainingPeaksSDKConfig {
     /** Retry delay (in milliseconds) */
     retryDelay: number;
   };
-}
+};
 
 /**
  * Default configuration values

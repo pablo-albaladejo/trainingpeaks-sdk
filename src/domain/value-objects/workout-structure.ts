@@ -23,7 +23,7 @@ export type WorkoutIntensityMetric =
   | 'speed';
 export type WorkoutIntensityTargetType = 'target' | 'range';
 
-export interface WorkoutStructureElement {
+export type WorkoutStructureElement = {
   /** Element type */
   type: WorkoutElementType;
   /** Element length */
@@ -34,7 +34,7 @@ export interface WorkoutStructureElement {
   begin: number;
   /** End time in seconds */
   end: number;
-}
+};
 
 export class WorkoutStructure {
   private constructor(

@@ -32,28 +32,28 @@ export enum LogCategory {
 /**
  * Log entry structure
  */
-export interface LogEntry {
+export type LogEntry = {
   level: LogLevel;
   category: LogCategory;
   message: string;
   data?: unknown;
   timestamp: Date;
-}
+};
 
 /**
- * External logger interface that users can implement
+ * External logger type that users can implement
  */
-export interface ExternalLogger {
+export type ExternalLogger = {
   debug(message: string, data?: unknown): void;
   info(message: string, data?: unknown): void;
   warn(message: string, data?: unknown): void;
   error(message: string, data?: unknown): void;
-}
+};
 
 /**
- * Logger configuration interface
+ * Logger configuration type
  */
-export interface LoggerConfig {
+export type LoggerConfig = {
   /** Minimum log level to output */
   level: LogLevel;
   /** Enable/disable specific categories */
@@ -70,7 +70,7 @@ export interface LoggerConfig {
   jsonFormat: boolean;
   /** Custom prefix for all log messages */
   prefix: string;
-}
+};
 
 /**
  * Default console logger implementation

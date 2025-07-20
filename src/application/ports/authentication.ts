@@ -1,5 +1,5 @@
 /**
- * Authentication Port Interface
+ * Authentication Port Type
  * Defines contract for external authentication adapters
  */
 
@@ -7,7 +7,7 @@ import { AuthToken } from '@/domain/entities/auth-token';
 import { User } from '@/domain/entities/user';
 import { Credentials } from '@/domain/value-objects/credentials';
 
-export interface AuthenticationConfig {
+export type AuthenticationConfig = {
   /** Base URL for authentication */
   baseUrl?: string;
   /** Request timeout in milliseconds */
@@ -22,9 +22,9 @@ export interface AuthenticationConfig {
     timeout?: number;
     executablePath?: string;
   };
-}
+};
 
-export interface AuthenticationPort {
+export type AuthenticationPort = {
   /**
    * Authenticate user and return auth token
    */
@@ -48,4 +48,4 @@ export interface AuthenticationPort {
    * Validate if adapter can handle the given configuration
    */
   canHandle(config: AuthenticationConfig): boolean;
-}
+};

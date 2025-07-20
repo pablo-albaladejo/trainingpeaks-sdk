@@ -8,103 +8,50 @@ import { WorkoutFile } from '@/domain/value-objects/workout-file';
 import {
   CreateStructuredWorkoutRequest,
   CreateStructuredWorkoutResponse,
+  WorkoutData,
 } from '@/types';
 
-export interface UploadResult {
+export type UploadResult = {
   success: boolean;
-  workoutId?: string;
+  workoutId: string;
   message: string;
   errors?: string[];
-}
+};
 
-export interface WorkoutRepository {
-  /**
-   * Upload a workout to the repository
-   */
-  uploadWorkout(workout: Workout): Promise<UploadResult>;
-
-  /**
-   * Upload a workout from file
-   */
-  uploadWorkoutFromFile(
-    workoutFile: WorkoutFile,
-    metadata?: {
-      name?: string;
-      description?: string;
-      activityType?: string;
-      tags?: string[];
-    }
-  ): Promise<UploadResult>;
-
-  /**
-   * Create a structured workout
-   */
+export type WorkoutRepository = {
+  getWorkout(id: string): Promise<Workout | null>;
+  listWorkouts(options?: {
+    limit?: number;
+    offset?: number;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<Workout[]>;
+  deleteWorkout(id: string): Promise<boolean>;
   createStructuredWorkout(
     request: CreateStructuredWorkoutRequest
   ): Promise<CreateStructuredWorkoutResponse>;
-
-  /**
-   * Get a workout by ID
-   */
-  getWorkout(workoutId: string): Promise<Workout | null>;
-
-  /**
-   * List user's workouts
-   */
-  listWorkouts(filters?: {
+  uploadWorkout(
+    workoutData: WorkoutData,
+    file?: WorkoutFile
+  ): Promise<UploadResult>;
+  uploadWorkoutFromFile(
+    filename: string,
+    buffer: Buffer,
+    mimeType: string
+  ): Promise<UploadResult>;
+  updateWorkout(id: string, data: Partial<WorkoutData>): Promise<Workout>;
+  searchWorkouts(query: {
+    name?: string;
+    type?: string;
     startDate?: Date;
     endDate?: Date;
-    activityType?: string;
-    tags?: string[];
     limit?: number;
     offset?: number;
   }): Promise<Workout[]>;
-
-  /**
-   * Update workout metadata
-   */
-  updateWorkout(
-    workoutId: string,
-    updates: {
-      name?: string;
-      description?: string;
-      activityType?: string;
-      tags?: string[];
-    }
-  ): Promise<Workout>;
-
-  /**
-   * Delete a workout
-   */
-  deleteWorkout(workoutId: string): Promise<boolean>;
-
-  /**
-   * Search workouts by criteria
-   */
-  searchWorkouts(query: {
-    text?: string;
-    activityType?: string;
-    dateRange?: {
-      start: Date;
-      end: Date;
-    };
-    durationRange?: {
-      min: number;
-      max: number;
-    };
-    distanceRange?: {
-      min: number;
-      max: number;
-    };
-  }): Promise<Workout[]>;
-
-  /**
-   * Get workout statistics
-   */
   getWorkoutStats(filters?: {
     startDate?: Date;
     endDate?: Date;
-    activityType?: string;
+    workoutType?: string;
   }): Promise<{
     totalWorkouts: number;
     totalDuration: number;
@@ -112,106 +59,48 @@ export interface WorkoutRepository {
     averageDuration: number;
     averageDistance: number;
   }>;
-}
+};
 
-export interface FileSystemPort {
-  /**
-   * Read file content
-   */
-  readFile(filePath: string): Promise<string>;
-
-  /**
-   * Check if file exists
-   */
+export type FileSystemPort = {
+  readFile(filePath: string): Promise<Buffer>;
+  writeFile(filePath: string, data: Buffer): Promise<void>;
+  deleteFile(filePath: string): Promise<void>;
+  exists(filePath: string): Promise<boolean>;
   fileExists(filePath: string): Promise<boolean>;
+  createDirectory(dirPath: string): Promise<void>;
+  listFiles(dirPath: string): Promise<string[]>;
+  getFileStats(filePath: string): Promise<{
+    size: number;
+    created: Date;
+    modified: Date;
+  }>;
+  moveFile(sourcePath: string, destPath: string): Promise<void>;
+  copyFile(sourcePath: string, destPath: string): Promise<void>;
+};
 
-  /**
-   * Write file content
-   */
-  writeFile(filePath: string, content: string): Promise<void>;
-}
-
-export interface WorkoutServiceConfig {
-  baseUrl?: string;
-  timeout?: number;
+export type WorkoutServiceConfig = {
+  baseUrl: string;
+  timeout: number;
+  retries: number;
+  headers: Record<string, string>;
   debug?: boolean;
-  headers?: Record<string, string>;
-}
+};
 
-export interface WorkoutServicePort {
-  /**
-   * Check if this service can handle workout operations
-   */
-  canHandle(config: WorkoutServiceConfig): boolean;
-
-  /**
-   * Upload workout to external service
-   */
+export type WorkoutServicePort = {
   uploadWorkout(
-    workout: Workout,
-    config: Required<WorkoutServiceConfig>
-  ): Promise<{
-    success: boolean;
-    workoutId?: string;
-    message: string;
-    errors?: string[];
-  }>;
-
-  /**
-   * Upload workout file to external service
-   */
-  uploadWorkoutFile(
-    workoutFile: WorkoutFile,
-    metadata: {
-      name?: string;
-      description?: string;
-      activityType?: string;
-      tags?: string[];
-    },
-    config: Required<WorkoutServiceConfig>
-  ): Promise<{
-    success: boolean;
-    workoutId?: string;
-    message: string;
-    errors?: string[];
-  }>;
-
-  /**
-   * Create structured workout in external service
-   */
+    workoutData: WorkoutData,
+    file?: WorkoutFile
+  ): Promise<UploadResult>;
+  getWorkout(id: string): Promise<WorkoutData | null>;
+  listWorkouts(options?: {
+    limit?: number;
+    offset?: number;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<WorkoutData[]>;
+  deleteWorkout(id: string): Promise<boolean>;
   createStructuredWorkout(
-    request: CreateStructuredWorkoutRequest,
-    config: Required<WorkoutServiceConfig>
+    request: CreateStructuredWorkoutRequest
   ): Promise<CreateStructuredWorkoutResponse>;
-
-  /**
-   * Get workout from external service
-   */
-  getWorkout(
-    workoutId: string,
-    config: Required<WorkoutServiceConfig>
-  ): Promise<Workout | null>;
-
-  /**
-   * List workouts from external service
-   */
-  listWorkouts(
-    filters: {
-      startDate?: Date;
-      endDate?: Date;
-      activityType?: string;
-      tags?: string[];
-      limit?: number;
-      offset?: number;
-    },
-    config: Required<WorkoutServiceConfig>
-  ): Promise<Workout[]>;
-
-  /**
-   * Delete workout from external service
-   */
-  deleteWorkout(
-    workoutId: string,
-    config: Required<WorkoutServiceConfig>
-  ): Promise<boolean>;
-}
+  canHandle(config: WorkoutServiceConfig): boolean;
+};

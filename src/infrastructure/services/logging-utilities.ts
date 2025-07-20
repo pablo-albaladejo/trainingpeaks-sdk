@@ -10,20 +10,20 @@ import { createLoggerService } from '@/infrastructure/services/logger';
 type LoggerInstance = ReturnType<typeof createLoggerService>;
 
 /**
- * Performance measurement interface
+ * Performance measurement type
  */
-export interface PerformanceMetrics {
+export type PerformanceMetrics = {
   duration: number;
   startTime: number;
   endTime: number;
   operationName: string;
   metadata?: Record<string, unknown>;
-}
+};
 
 /**
- * Context builder interface for structured logging
+ * Context builder type for structured logging
  */
-export interface LogContextBuilderInterface {
+export type LogContextBuilderInterface = {
   userId?: string | number;
   sessionId?: string;
   requestId?: string;
@@ -32,12 +32,12 @@ export interface LogContextBuilderInterface {
   workoutId?: string;
   athleteId?: string | number;
   metadata?: Record<string, unknown>;
-}
+};
 
 /**
  * Configuration for timing operations
  */
-export interface TimingOptions {
+export type TimingOptions = {
   logger?: LoggerInstance;
   logLevel?: LogLevel;
   operationName?: string;
@@ -47,19 +47,19 @@ export interface TimingOptions {
   threshold?: number; // Log only if duration exceeds threshold (ms)
   onSuccess?: (metrics: PerformanceMetrics) => void;
   onError?: (error: Error, metrics: PerformanceMetrics) => void;
-}
+};
 
 /**
  * Log formatter options
  */
-export interface LogFormatterOptions {
+export type LogFormatterOptions = {
   maxDepth?: number;
   maxStringLength?: number;
   excludeFields?: string[];
   includeStackTrace?: boolean;
   maskSensitiveData?: boolean;
   timestampFormat?: 'iso' | 'unix' | 'relative';
-}
+};
 
 /**
  * Performance tracker class

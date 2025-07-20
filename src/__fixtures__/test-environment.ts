@@ -19,7 +19,7 @@ const createTestLogger = () => ({
   },
 });
 
-export interface TestEnvironment {
+export type TestEnvironment = {
   trainingPeaksConfig: TrainingPeaksConfig;
   testUsername: string;
   testPassword: string;
@@ -27,7 +27,7 @@ export interface TestEnvironment {
   loginUrl: string;
   appUrl: string;
   errorHandlingTimeout: number;
-}
+};
 
 export const testEnvironment: TestEnvironment = {
   trainingPeaksConfig: {
