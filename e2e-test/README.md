@@ -16,12 +16,79 @@ These E2E tests verify that the built SDK works correctly in real-world scenario
 - ✅ **State management** is consistent
 - ✅ **Compatibility** across different usage patterns
 
+## 🔧 Environment Setup
+
+### Automatic .env Loading
+
+The E2E tests automatically load environment variables from the `.env` file in the project root. This is the same pattern used by integration tests.
+
+### Required Environment Variables
+
+The E2E tests use the same configuration pattern as integration tests. You must set these environment variables in your `.env` file in the project root:
+
+```bash
+# Required: TrainingPeaks credentials
+TRAININGPEAKS_TEST_USERNAME=your-test-username
+TRAININGPEAKS_TEST_PASSWORD=your-test-password
+
+# Optional: Configuration overrides
+TRAININGPEAKS_WEB_HEADLESS=true                    # Default: true
+TRAININGPEAKS_WEB_TIMEOUT=30000                    # Default: 30000ms
+TRAININGPEAKS_AUTH_METHOD=web                      # Default: web
+TRAININGPEAKS_BASE_URL=https://www.trainingpeaks.com
+```
+
+### Setup Instructions
+
+1. **Create or edit `.env` file** in the project root:
+
+   ```env
+   TRAININGPEAKS_TEST_USERNAME=your-test-username
+   TRAININGPEAKS_TEST_PASSWORD=your-test-password
+   TRAININGPEAKS_WEB_HEADLESS=true
+   TRAININGPEAKS_WEB_TIMEOUT=30000
+   ```
+
+2. **Install Playwright browsers** (for web authentication):
+   ```bash
+   npx playwright install chromium
+   ```
+
+### Running Without Credentials
+
+If you don't have TrainingPeaks credentials or the `.env` file is missing, the tests will skip gracefully:
+
+```bash
+# Tests will show this message and exit cleanly
+⚠️  Skipping E2E tests - missing credentials
+   Set TRAININGPEAKS_TEST_USERNAME and TRAININGPEAKS_TEST_PASSWORD in .env file
+   Example:
+     TRAININGPEAKS_TEST_USERNAME=your-username
+     TRAININGPEAKS_TEST_PASSWORD=your-password
+```
+
+### Environment Variable Priority
+
+The tests follow this priority order for configuration:
+
+1. **Environment variables** (highest priority)
+2. **`.env` file** (loaded automatically from project root)
+3. **Default values** (lowest priority)
+
+This means you can override `.env` settings with environment variables:
+
+```bash
+# Override .env settings
+TRAININGPEAKS_WEB_HEADLESS=false npm run test:advanced
+TRAININGPEAKS_WEB_TIMEOUT=60000 npm run test:advanced
+```
+
 ## 📁 Test Structure
 
 ```
 e2e-test/
 ├── test-built-library.mjs          # Basic functionality test (ESM)
-├── test-built-library-cjs.cjs      # Basic functionality test (CommonJS)
+├── test-built-library.cjs          # Basic functionality test (CommonJS)
 ├── advanced-workflow-test.mjs      # Complete workflow simulation
 ├── compatibility-test.mjs          # Compatibility and edge cases
 ├── run-e2e.sh                     # Main test runner script
@@ -56,11 +123,24 @@ npm run test:compatibility  # Compatibility and edge cases
 npm run test:all
 ```
 
+### Run with Custom Configuration
+
+```bash
+# Run with specific timeout
+TRAININGPEAKS_WEB_TIMEOUT=60000 npm run test:advanced
+
+# Run with visible browser
+TRAININGPEAKS_WEB_HEADLESS=false npm run test:advanced
+
+# Run with custom credentials
+TRAININGPEAKS_TEST_USERNAME=myuser TRAININGPEAKS_TEST_PASSWORD=mypass npm run test:advanced
+```
+
 ## 📋 Test Categories
 
 ### 1. Basic E2E Tests
 
-**Files:** `test-built-library.mjs`, `test-built-library-cjs.cjs`
+**Files:** `test-built-library.mjs`, `test-built-library.cjs`
 
 Tests fundamental SDK functionality based on integration test patterns:
 

@@ -213,7 +213,7 @@ fi
 # Run tests
 echo "🧪 Running tests..."
 node e2e-test/test-built-library.mjs
-node e2e-test/test-built-library-cjs.cjs
+node e2e-test/test-built-library.cjs
 node e2e-test/advanced-workflow-test.mjs
 
 echo "🎉 All E2E tests passed!"

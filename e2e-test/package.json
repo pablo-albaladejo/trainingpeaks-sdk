@@ -6,7 +6,7 @@
     "test": "bash run-e2e.sh",
     "test:basic": "bash run-e2e.sh",
     "test:esm": "node test-built-library.mjs",
-    "test:cjs": "node test-built-library-cjs.cjs",
+    "test:cjs": "node test-built-library.cjs",
     "test:advanced": "node advanced-workflow-test.mjs",
     "test:compatibility": "node compatibility-test.mjs",
     "test:all": "npm run test:esm && npm run test:cjs && npm run test:advanced && npm run test:compatibility"
@@ -24,5 +24,8 @@
   "private": true,
   "engines": {
     "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1"
   }
 }
