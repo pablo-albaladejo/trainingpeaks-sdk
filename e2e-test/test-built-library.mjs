@@ -1,111 +1,214 @@
 #!/usr/bin/env node
 
 /**
- * E2E Test for Built Library (ES Modules)
- *
- * This test verifies that the built library can be imported and used correctly
- * in an ES modules environment.
+ * Basic E2E Test for Built NPM Package
+ * Tests fundamental package functionality and API surface
+ * Based on integration test patterns
  */
 
 import { TrainingPeaksClient } from '../dist/index.js';
 
-console.log('🧪 Testing TrainingPeaks SDK (ES Modules)...\n');
+console.log('🧪 Testing NPM Package (ES Modules) - Basic Functionality\n');
 
-async function runE2ETests() {
+async function runBasicE2ETest() {
+  let client;
+
   try {
-    console.log('✅ Step 1: Import successful');
+    console.log('📦 Step 1: Package Import and Instantiation');
+    console.log('===========================================');
 
-    // Test client instantiation
-    const client = new TrainingPeaksClient({
-      debug: true,
-      timeout: 5000,
-      baseUrl: 'https://api.trainingpeaks.com',
+    // Test 1: Import and instantiation with configuration
+    client = new TrainingPeaksClient({
+      debug: {
+        enabled: true,
+        logAuth: true,
+        logNetwork: true,
+        logBrowser: true,
+      },
+      browser: {
+        headless: true,
+        launchTimeout: 30000,
+        pageWaitTimeout: 2000,
+      },
+      timeouts: {
+        webAuth: 30000,
+        apiAuth: 10000,
+        default: 10000,
+      },
     });
 
-    console.log('✅ Step 2: Client instantiation successful');
+    console.log('✅ Step 1: Client instantiation successful');
 
-    // Test that essential methods exist
-    if (typeof client.login !== 'function') {
-      throw new Error('client.login method not found');
-    }
+    console.log('\n⚙️  Step 2: Configuration Validation');
+    console.log('=====================================');
 
-    if (typeof client.logout !== 'function') {
-      throw new Error('client.logout method not found');
-    }
-
-    if (typeof client.getCurrentUser !== 'function') {
-      throw new Error('client.getCurrentUser method not found');
-    }
-
-    if (typeof client.isAuthenticated !== 'function') {
-      throw new Error('client.isAuthenticated method not found');
-    }
-
-    if (typeof client.getWorkoutManager !== 'function') {
-      throw new Error('client.getWorkoutManager method not found');
-    }
-
-    console.log('✅ Step 3: All essential methods exist');
-
-    // Test configuration
+    // Test 2: Configuration methods
     const config = client.getConfig();
     if (!config) {
       throw new Error('getConfig() returned null/undefined');
     }
 
-    if (!config.baseUrl) {
-      throw new Error('getConfig().baseUrl is missing');
+    // Verify configuration structure (based on integration test patterns)
+    if (!config.urls || !config.urls.baseUrl) {
+      throw new Error('Configuration missing urls.baseUrl');
     }
 
-    if (!config.timeout) {
-      throw new Error('getConfig().timeout is missing');
+    if (!config.timeouts || !config.timeouts.default) {
+      throw new Error('Configuration missing timeouts.default');
     }
 
-    console.log('✅ Step 4: Configuration methods work correctly');
+    if (!config.debug || typeof config.debug.enabled !== 'boolean') {
+      throw new Error('Configuration missing debug.enabled');
+    }
 
-    // Test authentication state
-    const isAuthenticated = client.isAuthenticated();
-    if (typeof isAuthenticated !== 'boolean') {
+    console.log(`✅ Configuration loaded: ${config.urls.baseUrl}`);
+    console.log(`✅ Default timeout: ${config.timeouts.default}ms`);
+    console.log(`✅ Debug enabled: ${config.debug.enabled}`);
+
+    console.log('\n🔐 Step 3: Authentication State Management');
+    console.log('==========================================');
+
+    // Test 3: Initial authentication state
+    const initialAuthState = client.isAuthenticated();
+    if (typeof initialAuthState !== 'boolean') {
       throw new Error('isAuthenticated() should return boolean');
     }
 
-    console.log('✅ Step 5: Authentication state methods work correctly');
+    if (initialAuthState !== false) {
+      throw new Error('Client should not be authenticated initially');
+    }
 
-    // Test workout manager
+    console.log(`✅ Initial auth state: ${initialAuthState}`);
+
+    // Test 4: User ID before authentication
+    const initialUserId = client.getUserId();
+    if (initialUserId !== null) {
+      throw new Error('getUserId() should return null when not authenticated');
+    }
+
+    console.log(`✅ Initial user ID: ${initialUserId}`);
+
+    console.log('\n🔧 Step 4: API Surface Verification');
+    console.log('===================================');
+
+    // Test 5: API surface verification (based on integration test patterns)
+    const requiredMethods = [
+      'login',
+      'logout',
+      'getCurrentUser',
+      'getWorkoutManager',
+      'isAuthenticated',
+      'getUserId',
+      'getConfig',
+    ];
+
+    requiredMethods.forEach((method) => {
+      if (typeof client[method] !== 'function') {
+        throw new Error(`Missing required method: ${method}`);
+      }
+    });
+
+    console.log(`✅ All ${requiredMethods.length} required methods exist`);
+
+    console.log('\n💪 Step 5: Workout Manager Interface');
+    console.log('====================================');
+
+    // Test 6: Workout manager
     const workoutManager = client.getWorkoutManager();
     if (!workoutManager) {
       throw new Error('getWorkoutManager() returned null/undefined');
     }
 
-    console.log('✅ Step 6: Workout manager methods work correctly');
+    // Verify workout manager methods exist
+    const workoutManagerMethods = [
+      'uploadWorkout',
+      'getWorkout',
+      'listWorkouts',
+      'deleteWorkout',
+    ];
 
-    // Test login with mock credentials (should work with our mock implementation)
-    try {
-      const result = await client.login('test_user', 'test_password');
-      if (!result.success) {
-        throw new Error('Login should succeed with mock implementation');
+    workoutManagerMethods.forEach((method) => {
+      if (typeof workoutManager[method] !== 'function') {
+        throw new Error(`Missing workout manager method: ${method}`);
       }
-      console.log('✅ Step 7: Login method works correctly');
-    } catch (error) {
-      console.log('⚠️  Step 7: Login test skipped (expected with mock)');
+    });
+
+    console.log(
+      `✅ All ${workoutManagerMethods.length} workout manager methods exist`
+    );
+
+    console.log('\n🎯 Step 6: Type Safety Validation');
+    console.log('================================');
+
+    // Test 7: Type safety validation
+    const authState = client.isAuthenticated();
+    if (typeof authState !== 'boolean') {
+      throw new Error('isAuthenticated() should return boolean');
     }
 
-    // Test logout
-    try {
-      const result = await client.logout();
-      if (!result.success) {
-        throw new Error('Logout should succeed with mock implementation');
-      }
-      console.log('✅ Step 8: Logout method works correctly');
-    } catch (error) {
-      console.log('⚠️  Step 8: Logout test skipped (expected with mock)');
+    const userId = client.getUserId();
+    if (userId !== null && typeof userId !== 'string') {
+      throw new Error('getUserId() should return string or null');
     }
 
-    console.log('\n🎉 All E2E tests passed!');
+    const configType = client.getConfig();
+    if (typeof configType !== 'object') {
+      throw new Error('getConfig() should return object');
+    }
+
+    console.log('✅ All return types are correct');
+
+    console.log('\n🔄 Step 7: Configuration Override Test');
+    console.log('=====================================');
+
+    // Test 8: Configuration overrides (based on integration test patterns)
+    const customConfig = {
+      urls: {
+        baseUrl: 'https://custom.trainingpeaks.com',
+        apiBaseUrl: 'https://custom-api.trainingpeaks.com',
+      },
+      timeouts: {
+        default: 15000,
+        webAuth: 45000,
+      },
+      debug: {
+        enabled: true,
+        logAuth: true,
+      },
+    };
+
+    const customClient = new TrainingPeaksClient(customConfig);
+    const customClientConfig = customClient.getConfig();
+
+    // Verify custom configuration was applied
+    if (customClientConfig.urls.baseUrl !== customConfig.urls.baseUrl) {
+      throw new Error('Custom baseUrl not applied correctly');
+    }
+
+    if (customClientConfig.timeouts.default !== customConfig.timeouts.default) {
+      throw new Error('Custom default timeout not applied correctly');
+    }
+
+    console.log('✅ Configuration overrides work correctly');
+
+    console.log('\n🎉 Basic E2E Test Completed Successfully!');
+    console.log('==========================================');
+    console.log('✅ Package import and instantiation');
+    console.log('✅ Configuration validation');
+    console.log('✅ Authentication state management');
+    console.log('✅ API surface verification');
+    console.log('✅ Workout manager interface');
+    console.log('✅ Type safety validation');
+    console.log('✅ Configuration override functionality');
+    console.log('\n📦 SDK is ready for npm distribution!');
   } catch (error) {
-    console.error('❌ E2E test failed:', error.message);
+    console.error('\n❌ Basic E2E test failed');
+    console.error('========================');
+    console.error('Error:', error.message);
+    console.error('Stack:', error.stack);
     process.exit(1);
   }
 }
 
-runE2ETests();
+// Run the basic test
+runBasicE2ETest();

@@ -1,17 +1,28 @@
 {
   "name": "trainingpeaks-sdk-e2e-tests",
   "version": "1.0.0",
-  "description": "End-to-end tests for TrainingPeaks SDK",
+  "description": "End-to-end tests for TrainingPeaks SDK - Comprehensive testing suite for npm package validation",
   "scripts": {
     "test": "bash run-e2e.sh",
+    "test:basic": "bash run-e2e.sh",
     "test:esm": "node test-built-library.mjs",
-    "test:cjs": "node test-built-library-cjs.cjs"
+    "test:cjs": "node test-built-library-cjs.cjs",
+    "test:advanced": "node advanced-workflow-test.mjs",
+    "test:compatibility": "node compatibility-test.mjs",
+    "test:all": "npm run test:esm && npm run test:cjs && npm run test:advanced && npm run test:compatibility"
   },
   "keywords": [
     "trainingpeaks",
     "sdk",
     "e2e",
-    "tests"
+    "tests",
+    "npm",
+    "package",
+    "validation",
+    "compatibility"
   ],
-  "private": true
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }
