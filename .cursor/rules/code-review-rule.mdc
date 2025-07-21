@@ -1,14 +1,236 @@
 ---
-description: 
-globs: 
 alwaysApply: false
+description: Comprehensive code review guidelines for identifying issues, suggesting improvements, and maintaining code quality
 ---
-Review, analyze code, identify issues, and suggest improvements.
 
-Guidelines:
-- Look for bugs, security issues, and performance problems
+# 🔍 Code Review Guidelines
+
+## 🎯 **Primary Objectives**
+
+When conducting code reviews, focus on identifying and addressing:
+
+- **Bugs and Logic Errors**: Functional issues that could cause runtime problems
+- **Security Vulnerabilities**: Potential security risks and attack vectors
+- **Performance Issues**: Inefficient algorithms, memory leaks, or scalability concerns
+- **Maintainability Problems**: Code that's hard to understand, test, or modify
+- **Architecture Violations**: Breaks in design patterns or architectural principles
+
+## 🚨 **Critical Issues to Flag**
+
+### **Security Concerns**
+
+- SQL injection vulnerabilities
+- XSS and injection attacks
+- Insecure authentication/authorization
+- Hardcoded secrets or credentials
+- Unsafe file operations
+- Unvalidated user input
+
+### **Performance Problems**
+
+- N+1 query patterns
+- Memory leaks (unclosed resources, event listeners)
+- Inefficient algorithms (O(n²) when O(n) is possible)
+- Unnecessary re-renders or computations
+- Large bundle sizes or dependencies
+
+### **Architecture Violations**
+
+- Violations of hexagonal architecture patterns
+- Direct dependencies between layers
+- Business logic in infrastructure layer
+- Infrastructure concerns in application layer
+- Missing error boundaries or error handling
+
+## 🔧 **Code Quality Standards**
+
+### **Readability & Maintainability**
+
+- **Function Length**: Functions should be focused and under 20-30 lines
+- **Variable Naming**: Descriptive, intention-revealing names
+- **Code Duplication**: DRY principle - eliminate repeated code
+- **Complexity**: Cyclomatic complexity should be manageable
+- **Comments**: Code should be self-documenting, comments for "why" not "what"
+
+### **TypeScript Best Practices**
+
+- **Type Safety**: Avoid `any`, use proper type definitions
+- **Null Safety**: Handle null/undefined cases explicitly
+- **Interface Design**: Favor composition over inheritance
+- **Generic Usage**: Use generics for reusable, type-safe code
+
+### **Testing Considerations**
+
+- **Test Coverage**: Critical paths should have tests
+- **Test Quality**: Tests should be readable and maintainable
+- **Mock Usage**: Appropriate mocking of dependencies
+- **Edge Cases**: Tests should cover error conditions
+
+## 📋 **Review Checklist**
+
+### **Before Review**
+
+- [ ] Code compiles without errors
+- [ ] Tests pass
+- [ ] No obvious syntax issues
+- [ ] Follows project naming conventions
+
+### **During Review**
+
+- [ ] **Functionality**: Does the code do what it's supposed to do?
+- [ ] **Security**: Are there any security vulnerabilities?
+- [ ] **Performance**: Are there performance concerns?
+- [ ] **Maintainability**: Is the code easy to understand and modify?
+- [ ] **Testing**: Are there adequate tests?
+- [ ] **Documentation**: Is the code self-documenting?
+
+### **Architecture Compliance**
+
+- [ ] **Hexagonal Architecture**: Follows ports and adapters pattern
+- [ ] **Layer Separation**: Application layer contains only contracts
+- [ ] **Dependency Injection**: Uses function-based DI correctly
+- [ ] **Error Handling**: Proper domain error usage
+- [ ] **Logging**: Structured logging with appropriate levels
+
+## 💡 **Improvement Suggestions**
+
+### **When Suggesting Changes**
+
+1. **Be Specific**: Provide concrete examples, not vague suggestions
+2. **Explain Why**: Give context for why the change is beneficial
+3. **Offer Alternatives**: Suggest multiple approaches when possible
+4. **Consider Impact**: Evaluate the effort vs. benefit ratio
+5. **Be Constructive**: Focus on the code, not the person
+
+### **Common Improvement Patterns**
+
+```typescript
+// ❌ Avoid: Complex nested conditions
+if (
+  user &&
+  user.profile &&
+  user.profile.settings &&
+  user.profile.settings.notifications
+) {
+  // handle notifications
+}
+
+// ✅ Prefer: Early returns and guard clauses
+if (!user?.profile?.settings?.notifications) {
+  return;
+}
+// handle notifications
+
+// ❌ Avoid: Large functions doing multiple things
+function processUserData(user) {
+  // validate user
+  // transform data
+  // save to database
+  // send notifications
+  // update cache
+}
+
+// ✅ Prefer: Single responsibility functions
+const validateUser = (user) => {
+  /* */
+};
+const transformUserData = (user) => {
+  /* */
+};
+const saveUser = (user) => {
+  /* */
+};
+const notifyUser = (user) => {
+  /* */
+};
+const updateCache = (user) => {
+  /* */
+};
+
+const processUserData = (user) => {
+  validateUser(user);
+  const transformed = transformUserData(user);
+  saveUser(transformed);
+  notifyUser(transformed);
+  updateCache(transformed);
+};
+```
+
+## 🎯 **Review Priorities**
+
+### **High Priority** (Must Fix)
+
+- Security vulnerabilities
+- Critical bugs that could cause data loss
+- Performance issues affecting user experience
+- Architecture violations that break the system
+
+### **Medium Priority** (Should Fix)
+
+- Code duplication
+- Poor error handling
+- Missing tests for critical paths
+- Inconsistent naming or formatting
+
+### **Low Priority** (Nice to Have)
+
+- Minor formatting issues
+- Optional performance optimizations
+- Additional test coverage for edge cases
+- Documentation improvements
+
+## 📝 **Review Comments Format**
+
+### **Structure Your Feedback**
+
+```
+**Issue Type**: [Security/Performance/Bug/Architecture/Quality]
+**Priority**: [High/Medium/Low]
+**Description**: Clear explanation of the issue
+**Impact**: What could go wrong or what's inefficient
+**Suggestion**: Specific recommendation for improvement
+**Example**: Code example if applicable
+```
+
+### **Example Review Comment**
+
+````
+**Issue Type**: Architecture
+**Priority**: High
+**Description**: Direct import of infrastructure implementation in use case
+**Impact**: Violates hexagonal architecture, creates tight coupling
+**Suggestion**: Import the contract/type from application layer instead
+**Example**:
+```typescript
+// ❌ Current
+import { createUserRepository } from '@/infrastructure/repositories/user-repository';
+
+// ✅ Suggested
+import type { UserRepository } from '@/application/ports/user';
+````
+
+```
+
+## 🚀 **Positive Feedback**
+
+Don't forget to acknowledge good practices:
+- Clean, readable code
+- Good test coverage
+- Proper error handling
+- Following architectural patterns
+- Thoughtful comments and documentation
+- Performance considerations
+
+## 📚 **Resources for Reviewers**
+
+- [Hexagonal Architecture Rules](mdc:hexagonal.mdc)
+- Project coding standards
+- Security guidelines
+- Performance benchmarks
+- Testing strategies
 - Suggest improvements for readability and maintainability
 - Identify potential edge cases and error handling gaps
 - Point out violations of best practices or conventions
 - Provide constructive feedback with clear explanations
 - Be thorough but prioritize important issues over minor stylistic concerns
+```

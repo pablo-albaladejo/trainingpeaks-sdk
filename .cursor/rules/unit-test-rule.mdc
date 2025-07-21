@@ -1,17 +1,417 @@
 ---
-description: 
-globs: 
 alwaysApply: false
+description: Unit test guidelines for writing tests with Vitest, following Arrange-Act-Assert pattern and using proper mocking strategies
 ---
-# Unit Test Guide
 
-- The test uses the Arrange-Act-Assert pattern and is written with `Vitest`.
-- Instead of manually mocking the logger, it uses a shared mock: @mockLogInfo and the real @logger instance.
-- When adding or updating tests, prefer using the shared logger mock and follow the Arrange-Act-Assert structure for clarity and consistency.
-- For common types, prefer generate a fixture builder helper in `src/__fixtures__`, for example [playbookConfiguration.fixture.ts](mdc:src/__fixtures__/playbookConfiguration.fixture.ts)
-- This approach ensures tests are robust and not dependent on static values.
-- When generating random values in unit tests, use `faker`. See [assignPlaybookSettings/index.test.ts](mdc:src/adapters/lambda/graphql/assignPlaybookSettings/index.test.ts) for an example.
+# 🧪 Unit Test Guide
+
+Unit tests in this codebase are written with **Vitest** and follow specific patterns for consistency, maintainability, and reliability.
+
+## 🎯 **Core Principles**
+
+- **Arrange-Act-Assert Pattern**: Clear structure for all test cases
+- **Shared Mocking**: Use shared mocks instead of manual mocking
+- **Fixture Builders**: Generate test data using fixture builders
+- **Random Data**: Use `faker` for generating random test values
+- **Strict Assertions**: Prefer `toStrictEqual` over `toEqual`
+
+## 📋 **Test Structure**
+
+### **Arrange-Act-Assert Pattern**
+
+```typescript
+describe('Feature Tests', () => {
+  it('should perform expected behavior', () => {
+    // Arrange: Set up test data and mocks
+    const input = { id: randomNumber(), name: faker.person.fullName() };
+    const expectedResult = { id: input.id, name: input.name, status: 'ACTIVE' };
+
+    // Act: Execute the function being tested
+    const result = functionUnderTest(input);
+
+    // Assert: Verify the expected outcome
+    expect(result).toStrictEqual(expectedResult);
+  });
+});
+```
+
+### **Complete Example**
+
+```typescript
+import { describe, it, expect, vi } from 'vitest';
+import { faker } from '@faker-js/faker';
+import { randomNumber } from '@/__fixtures__/utils.fixture';
+import { userBuilder } from '@/__fixtures__/user.fixture';
+import { mockLogInfo } from '@/__fixtures__/test-environment';
+
+describe('createUserUseCase', () => {
+  it('should create user successfully', async () => {
+    // Arrange
+    const mockRepository = {
+      createUser: vi
+        .fn()
+        .mockResolvedValue({ id: randomNumber(), name: 'Test User' }),
+    };
+    const mockValidationService = {
+      validateUserCreationRules: vi.fn(),
+    };
+
+    const input = {
+      name: faker.person.fullName(),
+      email: faker.internet.email(),
+      companyId: randomNumber(),
+    };
+
+    const useCase = createUserUseCase(mockRepository, mockValidationService);
+
+    // Act
+    const result = await useCase(input);
+
+    // Assert
+    expect(
+      mockValidationService.validateUserCreationRules
+    ).toHaveBeenCalledWith(input);
+    expect(mockRepository.createUser).toHaveBeenCalledWith(input);
+    expect(result).toStrictEqual({
+      id: expect.any(Number),
+      name: 'Test User',
+    });
+    expect(mockLogInfo).toHaveBeenCalledWith('User created successfully', {
+      userId: expect.any(Number),
+    });
+  });
+});
+```
+
+## 🔧 **Mocking Strategies**
+
+### **Shared Logger Mock**
+
+Instead of manually mocking the logger, use the shared mock from the test environment:
+
+```typescript
+// ✅ Correct: Using shared logger mock
+import { mockLogInfo } from '@/__fixtures__/test-environment';
+
+it('should log success message', () => {
+  // Arrange
+  const input = { name: 'Test User' };
+
+  // Act
+  const result = functionUnderTest(input);
+
+  // Assert
+  expect(mockLogInfo).toHaveBeenCalledWith('User created', {
+    name: 'Test User',
+  });
+});
+
+// ❌ Avoid: Manual logger mocking
+const mockLogger = {
+  info: vi.fn(),
+  error: vi.fn(),
+};
+```
+
+### **Repository and Service Mocking**
+
+```typescript
+// ✅ Correct: Mocking dependencies with vi.fn()
+const mockUserRepository = {
+  createUser: vi.fn().mockResolvedValue(userBuilder.build()),
+  findById: vi.fn().mockResolvedValue(userBuilder.build()),
+  updateUser: vi.fn().mockResolvedValue(userBuilder.build()),
+  deleteUser: vi.fn().mockResolvedValue(undefined),
+};
+
+const mockValidationService = {
+  validateUserCreationRules: vi.fn(),
+  validateEmail: vi.fn(),
+  validateUserId: vi.fn(),
+};
+
+// ✅ Correct: Using mocked dependencies in use case
+const useCase = createUserUseCase(mockUserRepository, mockValidationService);
+```
+
+## 📊 **Test Data Generation**
+
+### **Using Faker for Random Data**
+
+```typescript
+import { faker } from '@faker-js/faker';
+
+// ✅ Correct: Generate random test data
+const testUser = {
+  id: randomNumber(),
+  name: faker.person.fullName(),
+  email: faker.internet.email(),
+  age: faker.number.int({ min: 18, max: 100 }),
+  isActive: faker.datatype.boolean(),
+  createdAt: faker.date.recent(),
+};
+
+// ✅ Correct: Generate arrays of test data
+const testUsers = Array.from({ length: 5 }, () => userBuilder.build());
+
+// ✅ Correct: Generate specific types of data
+const email = faker.internet.email();
+const phone = faker.phone.number();
+const address = faker.location.streetAddress();
+const company = faker.company.name();
+```
+
+### **Using Fixture Builders**
+
+For common types, prefer generating fixture builder helpers in `src/__fixtures__/`:
+
+```typescript
+// ✅ Correct: Using fixture builders
+import { userBuilder } from '@/__fixtures__/user.fixture';
+import { companyBuilder } from '@/__fixtures__/company.fixture';
+
+const testUser = userBuilder.build();
+const testCompany = companyBuilder.build({
+  id: randomNumber(),
+  name: faker.company.name(),
+});
+
+// ✅ Correct: Building with specific overrides
+const activeUser = userBuilder.build({
+  isActive: true,
+  email: faker.internet.email(),
+});
+```
+
+### **Using randomNumber for IDs**
+
+```typescript
+import { randomNumber } from '@/__fixtures__/utils.fixture';
+
+// ✅ Correct: Generate random numbers for IDs
+const userId = randomNumber();
+const companyId = randomNumber();
+const orderId = randomNumber();
+
+// ✅ Correct: Generate numbers within ranges
+const age = faker.number.int({ min: 18, max: 100 });
+const price = faker.number.float({ min: 0, max: 1000, precision: 0.01 });
+```
+
+## ✅ **Assertion Best Practices**
+
+### **Using toStrictEqual**
+
+```typescript
+// ✅ Correct: Strict equality for exact matching
+expect(result).toStrictEqual({
+  id: expect.any(Number),
+  name: 'Test User',
+  email: 'test@example.com',
+  isActive: true,
+});
+
+// ✅ Correct: Partial matching for complex objects
+expect(result).toStrictEqual(
+  expect.objectContaining({
+    id: expect.any(Number),
+    name: 'Test User',
+  })
+);
+
+// ❌ Avoid: Using toEqual for object comparisons
+expect(result).toEqual({ id: 1, name: 'Test' }); // Less strict
+```
+
+### **Mock Verification**
+
+```typescript
+// ✅ Correct: Verify mock calls
+expect(mockRepository.createUser).toHaveBeenCalledWith(expectedInput);
+expect(mockRepository.createUser).toHaveBeenCalledTimes(1);
+expect(mockValidationService.validateEmail).toHaveBeenCalledWith(
+  'test@example.com'
+);
+
+// ✅ Correct: Verify mock call arguments
+const createUserCall = mockRepository.createUser.mock.calls[0];
+expect(createUserCall[0]).toStrictEqual(expectedInput);
+```
+
+## 🚨 **Error Testing**
+
+### **Testing Error Scenarios**
+
+```typescript
+it('should throw error for invalid input', () => {
+  // Arrange
+  const invalidInput = { name: '', email: 'invalid-email' };
+  const mockValidationService = {
+    validateUserCreationRules: vi.fn().mockImplementation(() => {
+      throw new ValidationError('Invalid input');
+    }),
+  };
+
+  const useCase = createUserUseCase(mockRepository, mockValidationService);
+
+  // Act & Assert
+  expect(async () => {
+    await useCase(invalidInput);
+  }).rejects.toThrow(ValidationError);
+
+  expect(mockValidationService.validateUserCreationRules).toHaveBeenCalledWith(
+    invalidInput
+  );
+});
+```
+
+### **Testing Async Errors**
+
+```typescript
+it('should handle repository errors', async () => {
+  // Arrange
+  const mockRepository = {
+    createUser: vi
+      .fn()
+      .mockRejectedValue(new DatabaseError('Connection failed')),
+  };
+
+  const useCase = createUserUseCase(mockRepository, mockValidationService);
+
+  // Act & Assert
+  await expect(useCase(validInput)).rejects.toThrow(DatabaseError);
+  expect(mockLogInfo).not.toHaveBeenCalled();
+});
+```
+
+## 📁 **File Organization**
+
+### **Test File Naming**
+
+- Unit test files use `.test.ts` suffix
+- Place test files next to the implementation files
+- Use descriptive test file names
+
+```
+src/
+├── application/
+│   ├── use-cases/
+│   │   ├── create-user.ts
+│   │   └── create-user.test.ts
+│   └── services/
+│       ├── user-validation.ts
+│       └── user-validation.test.ts
+├── infrastructure/
+│   ├── services/
+│   │   ├── user-validation.ts
+│   │   └── user-validation.test.ts
+│   └── repositories/
+│       ├── user-repository.ts
+│       └── user-repository.test.ts
+```
+
+### **Test Structure Within Files**
+
+```typescript
+describe('UserValidationService', () => {
+  describe('validateEmail', () => {
+    it('should validate correct email format', () => {
+      // test implementation
+    });
+
+    it('should reject invalid email format', () => {
+      // test implementation
+    });
+
+    it('should handle empty email', () => {
+      // test implementation
+    });
+  });
+
+  describe('validateUserId', () => {
+    it('should validate correct user ID', () => {
+      // test implementation
+    });
+  });
+});
+```
+
+## 🎯 **Best Practices Summary**
+
+1. **Use Arrange-Act-Assert pattern** for clear test structure
+2. **Use shared mocks** from `@/__fixtures__/test-environment`
+3. **Generate test data with faker** and `randomNumber()`
+4. **Use fixture builders** for common types
+5. **Prefer `toStrictEqual`** over `toEqual` for assertions
+6. **Mock dependencies** with `vi.fn()`
+7. **Test error scenarios** and edge cases
+8. **Verify mock calls** to ensure correct interactions
+9. **Use descriptive test names** that explain the scenario
+10. **Keep tests focused** on single responsibility
+
+## 📚 **Example Unit Test**
+
+See [auth-validation.test.ts](mdc:src/infrastructure/services/auth-validation.test.ts) for a concrete example of unit tests following these conventions.
+
+## 🔍 **Common Patterns**
+
+### **Testing Use Cases**
+
+```typescript
+describe('createUserUseCase', () => {
+  it('should create user successfully', async () => {
+    // Arrange
+    const mockRepository = {
+      createUser: vi.fn().mockResolvedValue(userBuilder.build()),
+    };
+    const mockValidationService = { validateUserCreationRules: vi.fn() };
+    const input = {
+      name: faker.person.fullName(),
+      email: faker.internet.email(),
+    };
+
+    const useCase = createUserUseCase(mockRepository, mockValidationService);
+
+    // Act
+    const result = await useCase(input);
+
+    // Assert
+    expect(
+      mockValidationService.validateUserCreationRules
+    ).toHaveBeenCalledWith(input);
+    expect(mockRepository.createUser).toHaveBeenCalledWith(input);
+    expect(result).toStrictEqual(
+      expect.objectContaining({ id: expect.any(Number) })
+    );
+  });
+});
+```
+
+### **Testing Services**
+
+```typescript
+describe('validateEmail', () => {
+  it('should validate correct email', () => {
+    // Arrange
+    const email = faker.internet.email();
+
+    // Act
+    const result = validateEmail(email);
+
+    // Assert
+    expect(result).toBe(true);
+  });
+
+  it('should reject invalid email', () => {
+    // Arrange
+    const invalidEmail = 'invalid-email';
+
+    // Act & Assert
+    expect(() => validateEmail(invalidEmail)).toThrow(ValidationError);
+  });
+});
+```
+
 - For number types, use `randomNumber` from [utils.fixture.ts](mdc:src/__fixtures__/utils.fixture.ts)
 - To generate random value, use `faker`
 - Prefer using `toStrictEqual` over `toEqual`
-
