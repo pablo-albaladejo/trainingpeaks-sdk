@@ -3,8 +3,7 @@
  * Defines the interface for workout creation operations
  */
 
-import type { WorkoutFile } from '@/domain/value-objects/workout-file';
-import type { WorkoutStructure } from '@/domain/value-objects/workout-structure';
+import type { WorkoutFile, WorkoutStructure } from '@/domain';
 import type { WorkoutData } from '@/types';
 
 /**

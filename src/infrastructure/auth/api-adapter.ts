@@ -8,10 +8,8 @@ import {
   AuthenticationPort,
 } from '@/application/ports/authentication';
 import { getSDKConfig } from '@/config';
-import { AuthToken } from '@/domain/entities/auth-token';
-import { User } from '@/domain/entities/user';
+import type { AuthToken, Credentials, User } from '@/domain';
 import { AuthenticationError, NetworkError } from '@/domain/errors';
-import { Credentials } from '@/domain/value-objects/credentials';
 import {
   createAuthToken,
   createUser,

@@ -35,13 +35,12 @@ import type {
   ValidateWorkoutUpload,
   ValidateWorkoutUserTags,
 } from '@/application/services/workout-validation';
+import type { WorkoutFile, WorkoutStructure } from '@/domain';
 import {
   WorkoutFileProcessingError,
   WorkoutQuotaExceededError,
   WorkoutValidationError,
 } from '@/domain/errors/workout-errors';
-import type { WorkoutFile } from '@/domain/value-objects/workout-file';
-import type { WorkoutStructure } from '@/domain/value-objects/workout-structure-simple';
 import type { CreateStructuredWorkoutRequest, WorkoutData } from '@/types';
 
 // Validation constants

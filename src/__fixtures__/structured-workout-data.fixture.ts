@@ -3,13 +3,14 @@
  * Provides test data for structured workout operations
  */
 
+import type { WorkoutStructure, WorkoutStructureElement } from '@/domain';
 import {
-  WorkoutLength,
-  WorkoutStep,
-  WorkoutStructure,
-  WorkoutStructureElement,
-  WorkoutTarget,
-} from '@/domain/value-objects/workout-structure';
+  createWorkoutLength,
+  createWorkoutStep,
+  createWorkoutStructure,
+  createWorkoutStructureElement,
+  createWorkoutTarget,
+} from '@/infrastructure/services/domain-factories';
 import { CreateStructuredWorkoutRequest } from '@/types/index';
 import { randomNumber } from './utils.fixture';
 
@@ -94,131 +95,107 @@ export class StructuredWorkoutDataFixture {
 
   private createDefaultStructure(): WorkoutStructure {
     // Create a simple 3-step workout: warm-up, main set, cool-down
-    const warmUpStep = WorkoutStep.create(
+    const warmUpStep = createWorkoutStep(
       'Warm-up',
-      WorkoutLength.create(600, 'second'), // 10 minutes
-      [WorkoutTarget.create(60, 70)],
+      createWorkoutLength(600, 'second'), // 10 minutes
+      [createWorkoutTarget(60, 70)],
       'warmUp'
     );
 
-    const mainSetStep = WorkoutStep.create(
+    const mainSetStep = createWorkoutStep(
       'Main Set',
-      WorkoutLength.create(1200, 'second'), // 20 minutes
-      [WorkoutTarget.create(80, 90)],
+      createWorkoutLength(1200, 'second'), // 20 minutes
+      [createWorkoutTarget(80, 90)],
       'active'
     );
 
-    const coolDownStep = WorkoutStep.create(
+    const coolDownStep = createWorkoutStep(
       'Cool-down',
-      WorkoutLength.create(300, 'second'), // 5 minutes
-      [WorkoutTarget.create(50, 60)],
+      createWorkoutLength(300, 'second'), // 5 minutes
+      [createWorkoutTarget(50, 60)],
       'coolDown'
     );
 
-    const elements: WorkoutStructureElement[] = [
-      WorkoutStructureElement.create(
-        'step',
-        WorkoutLength.create(600, 'second'),
-        [warmUpStep],
-        0,
-        600
-      ),
-      WorkoutStructureElement.create(
-        'step',
-        WorkoutLength.create(1200, 'second'),
-        [mainSetStep],
-        600,
-        1800
-      ),
-      WorkoutStructureElement.create(
-        'step',
-        WorkoutLength.create(300, 'second'),
-        [coolDownStep],
-        1800,
-        2100
-      ),
-    ];
+    const step1Element = createWorkoutStructureElement(
+      'step',
+      createWorkoutLength(600, 'second'),
+      [warmUpStep],
+      0,
+      600
+    );
 
-    const polyline: number[][] = [
-      [0, 0],
-      [0.285, 0.65], // Warm-up
-      [0.857, 0.85], // Main set
-      [1, 0.55], // Cool-down
-    ];
+    const step2Element = createWorkoutStructureElement(
+      'step',
+      createWorkoutLength(1200, 'second'),
+      [mainSetStep],
+      600,
+      1800
+    );
 
-    return WorkoutStructure.create(
-      elements,
-      polyline,
+    const step3Element = createWorkoutStructureElement(
+      'step',
+      createWorkoutLength(300, 'second'),
+      [coolDownStep],
+      1800,
+      2100
+    );
+
+    return createWorkoutStructure(
+      [step1Element, step2Element, step3Element],
+      [
+        [0, 0],
+        [600, 0],
+        [1800, 0],
+        [2100, 0],
+      ],
       'duration',
       'percentOfThresholdPace',
-      'range'
+      'target'
     );
   }
 
   private createRandomStructure(): WorkoutStructure {
-    const numElements = randomNumber(2, 5);
+    const stepCount = randomNumber(2, 5);
     const elements: WorkoutStructureElement[] = [];
     let currentTime = 0;
 
-    for (let i = 0; i < numElements; i++) {
-      const isRepetition = Math.random() < 0.3; // 30% chance of repetition
-      const numSteps = randomNumber(1, 3);
-      const steps: WorkoutStep[] = [];
+    for (let i = 0; i < stepCount; i++) {
+      const stepDuration = randomNumber(300, 1800); // 5-30 minutes
+      const stepName = `Step ${i + 1}`;
+      const intensityClass = this.getRandomIntensityClass();
 
-      for (let j = 0; j < numSteps; j++) {
-        const duration = randomNumber(60, 600); // 1-10 minutes
-        const minIntensity = randomNumber(50, 80);
-        const maxIntensity = randomNumber(minIntensity + 5, 100);
-        const intensityClass = this.getRandomIntensityClass();
-        const name = `${intensityClass} ${duration}s`;
-
-        steps.push(
-          WorkoutStep.create(
-            name,
-            WorkoutLength.create(duration, 'second'),
-            [WorkoutTarget.create(minIntensity, maxIntensity)],
-            intensityClass
-          )
-        );
-      }
-
-      const elementDuration = steps.reduce(
-        (sum, step) => sum + (step.getDurationInSeconds() || 0),
-        0
-      );
-      const repetitions = isRepetition ? randomNumber(2, 4) : 1;
-      const totalDuration = elementDuration * repetitions;
-
-      elements.push(
-        WorkoutStructureElement.create(
-          isRepetition ? 'repetition' : 'step',
-          WorkoutLength.create(
-            isRepetition ? repetitions : elementDuration,
-            isRepetition ? 'repetition' : 'second'
-          ),
-          steps,
-          currentTime,
-          currentTime + totalDuration
-        )
+      const minValue = randomNumber(60, 85);
+      const maxValue = randomNumber(minValue + 5, 100);
+      const step = createWorkoutStep(
+        stepName,
+        createWorkoutLength(stepDuration, 'second'),
+        [createWorkoutTarget(minValue, maxValue)],
+        intensityClass
       );
 
-      currentTime += totalDuration;
+      const element = createWorkoutStructureElement(
+        'step',
+        createWorkoutLength(stepDuration, 'second'),
+        [step],
+        currentTime,
+        currentTime + stepDuration
+      );
+
+      elements.push(element);
+      currentTime += stepDuration;
     }
 
-    // Generate random polyline
-    const polyline: number[][] = [];
-    for (let i = 0; i <= 10; i++) {
-      const x = i / 10;
-      const y = Math.random() * 0.5 + 0.25; // Random between 0.25 and 0.75
-      polyline.push([x, y]);
-    }
+    const polyline = elements.map((_, index) => [
+      (index / elements.length) * 100,
+      randomNumber(0, 100),
+    ]);
 
-    return WorkoutStructure.create(
+    return createWorkoutStructure(
       elements,
       polyline,
       'duration',
       'percentOfThresholdPace',
-      'range'
+      'target'
     );
   }
 
@@ -229,133 +206,104 @@ export class StructuredWorkoutDataFixture {
       'warmUp',
       'coolDown',
     ];
-    const index = randomNumber(0, classes.length - 1);
-    return classes[index] || 'active';
+    return classes[randomNumber(0, classes.length - 1)] || 'active';
   }
 
-  /**
-   * Create a default structured workout
-   */
   public static default(): CreateStructuredWorkoutRequest {
     return new StructuredWorkoutDataFixture().build();
   }
 
-  /**
-   * Create a random structured workout
-   */
   public static random(): CreateStructuredWorkoutRequest {
     return new StructuredWorkoutDataFixture().withRandomData().build();
   }
 
-  /**
-   * Create a structured workout with intervals
-   */
   public static withIntervals(): CreateStructuredWorkoutRequest {
-    const fixture = new StructuredWorkoutDataFixture();
-
-    // Create interval structure
-    const warmUpStep = WorkoutStep.create(
+    // Create a workout with intervals
+    const warmUpStep = createWorkoutStep(
       'Warm-up',
-      WorkoutLength.create(600, 'second'),
-      [WorkoutTarget.create(60, 70)],
+      createWorkoutLength(300, 'second'), // 5 minutes
+      [createWorkoutTarget(60, 70)],
       'warmUp'
     );
 
-    const intervalStep = WorkoutStep.create(
+    const intervalStep = createWorkoutStep(
       'Interval',
-      WorkoutLength.create(240, 'second'), // 4 minutes
-      [WorkoutTarget.create(85, 95)],
+      createWorkoutLength(120, 'second'), // 2 minutes
+      [createWorkoutTarget(85, 95)],
       'active'
     );
 
-    const recoveryStep = WorkoutStep.create(
-      'Recovery',
-      WorkoutLength.create(120, 'second'), // 2 minutes
-      [WorkoutTarget.create(65, 75)],
+    const restStep = createWorkoutStep(
+      'Rest',
+      createWorkoutLength(60, 'second'), // 1 minute
+      [createWorkoutTarget(50, 60)],
       'rest'
     );
 
-    const coolDownStep = WorkoutStep.create(
+    const coolDownStep = createWorkoutStep(
       'Cool-down',
-      WorkoutLength.create(300, 'second'),
-      [WorkoutTarget.create(50, 60)],
+      createWorkoutLength(300, 'second'), // 5 minutes
+      [createWorkoutTarget(60, 70)],
       'coolDown'
     );
 
-    const elements: WorkoutStructureElement[] = [
-      WorkoutStructureElement.create(
-        'step',
-        WorkoutLength.create(600, 'second'),
-        [warmUpStep],
-        0,
-        600
-      ),
-      WorkoutStructureElement.create(
-        'repetition',
-        WorkoutLength.create(5, 'repetition'),
-        [intervalStep, recoveryStep],
-        600,
-        2400 // 5 * (240 + 120) = 1800 + 600 = 2400
-      ),
-      WorkoutStructureElement.create(
-        'step',
-        WorkoutLength.create(300, 'second'),
-        [coolDownStep],
-        2400,
-        2700
-      ),
-    ];
-
-    const polyline: number[][] = [
-      [0, 0],
-      [0.222, 0.65], // Warm-up
-      [0.259, 0.9], // First interval
-      [0.303, 0.7], // First recovery
-      [0.37, 0.9], // Second interval
-      [0.414, 0.7], // Second recovery
-      [0.481, 0.9], // Third interval
-      [0.525, 0.7], // Third recovery
-      [0.592, 0.9], // Fourth interval
-      [0.636, 0.7], // Fourth recovery
-      [0.703, 0.9], // Fifth interval
-      [0.747, 0.7], // Fifth recovery
-      [0.889, 0.55], // Cool-down start
-      [1, 0.55], // Cool-down end
-    ];
-
-    const structure = WorkoutStructure.create(
-      elements,
-      polyline,
-      'duration',
-      'percentOfThresholdPace',
-      'range'
+    // Create repetition element for intervals
+    const repetitionElement = createWorkoutStructureElement(
+      'repetition',
+      createWorkoutLength(4, 'repetition'),
+      [intervalStep, restStep],
+      300, // Start after warm-up
+      300 + 4 * (120 + 60) // 4 intervals * (2min + 1min rest)
     );
 
-    return fixture
-      .withTitle('Interval Training')
+    const warmUpElement = createWorkoutStructureElement(
+      'step',
+      createWorkoutLength(300, 'second'),
+      [warmUpStep],
+      0,
+      300
+    );
+
+    const coolDownElement = createWorkoutStructureElement(
+      'step',
+      createWorkoutLength(300, 'second'),
+      [coolDownStep],
+      300 + 4 * (120 + 60), // After intervals
+      300 + 4 * (120 + 60) + 300 // After cool-down
+    );
+
+    const structure = createWorkoutStructure(
+      [warmUpElement, repetitionElement, coolDownElement],
+      [
+        [0, 0],
+        [300, 0],
+        [300 + 4 * (120 + 60), 0],
+        [300 + 4 * (120 + 60) + 300, 0],
+      ],
+      'duration',
+      'percentOfThresholdPace',
+      'target'
+    );
+
+    return new StructuredWorkoutDataFixture()
+      .withTitle('Interval Training Workout')
       .withStructure(structure)
       .withMetadata({
-        description: 'High-intensity interval training workout',
-        userTags: 'intervals, high-intensity, cardio',
+        description: 'A challenging interval workout with 4x2min intervals',
+        userTags: 'interval, running, advanced',
         plannedMetrics: {
-          totalTimePlanned: 45, // 45 minutes
-          tssPlanned: 95.5,
+          totalTimePlanned: 0.5, // 30 minutes
+          tssPlanned: 85.5,
           ifPlanned: 0.85,
         },
       })
       .build();
   }
 
-  /**
-   * Create a create request with default data
-   */
   public static defaultCreateRequest(): CreateStructuredWorkoutRequest {
     return new StructuredWorkoutDataFixture().buildCreateRequest();
   }
 
-  /**
-   * Create a create request with random data
-   */
   public static randomCreateRequest(): CreateStructuredWorkoutRequest {
     return new StructuredWorkoutDataFixture()
       .withRandomData()

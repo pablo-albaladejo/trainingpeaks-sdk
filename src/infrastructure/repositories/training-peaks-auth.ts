@@ -4,15 +4,13 @@
  */
 
 import type { AuthRepository } from '@/application/ports/auth';
+import type { StoragePort } from '@/application/ports/storage';
 import { getSDKConfig } from '@/config';
-import type { AuthToken } from '@/domain/entities/auth-token';
-import type { User } from '@/domain/entities/user';
+import type { AuthToken, Credentials, User } from '@/domain';
 import { SDKError } from '@/domain/errors';
-import type { Credentials } from '@/domain/value-objects/credentials';
 import { ApiAuthAdapter } from '@/infrastructure/auth/api-adapter';
 import { WebBrowserAuthAdapter } from '@/infrastructure/browser/web-auth-adapter';
 import { logError, logInfo, logWarn } from '@/infrastructure/services/logger';
-import { InMemoryStorageAdapter } from '@/infrastructure/storage/in-memory-adapter';
 
 const authLogger = {
   info: logInfo(),
@@ -20,23 +18,32 @@ const authLogger = {
   warn: logWarn(),
 };
 
-export const createTrainingPeaksAuthRepository = (): AuthRepository => {
-  let currentUser: User | null = null;
-  let currentToken: AuthToken | null = null;
+export const createTrainingPeaksAuthRepository = (
+  storageAdapter: StoragePort
+): AuthRepository => {
+  // Cache for synchronous operations
+  let cachedToken: AuthToken | null = null;
+  let cachedUser: User | null = null;
+  let cacheValid = false;
 
-  const setCurrentUser = (user: User | null): void => {
-    currentUser = user;
+  // Update cache from storage
+  const updateCache = async (): Promise<void> => {
+    try {
+      cachedToken = await storageAdapter.getToken();
+      cachedUser = await storageAdapter.getUser();
+      cacheValid = true;
+    } catch (error) {
+      authLogger.error('Failed to update cache from storage', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      cacheValid = false;
+    }
   };
 
-  const setCurrentToken = (token: AuthToken | null): void => {
-    currentToken = token;
-  };
-
-  const clearCurrentState = (): void => {
-    currentUser = null;
-    currentToken = null;
-  };
-
+  // Initialize cache
+  updateCache().catch(() => {
+    // Silent fail on initialization
+  });
   const authenticate = async (credentials: Credentials): Promise<AuthToken> => {
     try {
       authLogger.info('Starting authentication process', {
@@ -46,7 +53,6 @@ export const createTrainingPeaksAuthRepository = (): AuthRepository => {
       const sdkConfig = getSDKConfig();
       const apiAuthAdapter = new ApiAuthAdapter();
       const webAuthAdapter = new WebBrowserAuthAdapter();
-      const storageAdapter = new InMemoryStorageAdapter();
 
       const authConfig = {
         baseUrl: sdkConfig.urls.baseUrl,
@@ -77,9 +83,14 @@ export const createTrainingPeaksAuthRepository = (): AuthRepository => {
         );
       }
 
-      // Store authentication data
-      setCurrentToken(authResult.token);
-      setCurrentUser(authResult.user);
+      // Store authentication data using storage adapter
+      await storageAdapter.storeToken(authResult.token);
+      await storageAdapter.storeUser(authResult.user);
+
+      // Update cache
+      cachedToken = authResult.token;
+      cachedUser = authResult.user;
+      cacheValid = true;
 
       authLogger.info('Authentication successful', {
         userId: authResult.user.id,
@@ -110,17 +121,19 @@ export const createTrainingPeaksAuthRepository = (): AuthRepository => {
   };
 
   const getCurrentUser = async (): Promise<User | null> => {
-    return currentUser;
+    return await storageAdapter.getUser();
   };
 
   const clearAuth = async (): Promise<void> => {
-    authLogger.info('Clearing authentication state');
-    clearCurrentState();
+    await storageAdapter.clear();
+    cachedToken = null;
+    cachedUser = null;
+    cacheValid = false;
   };
 
   const refreshToken = async (refreshToken: string): Promise<AuthToken> => {
     try {
-      authLogger.info('Refreshing authentication token');
+      authLogger.info('Starting token refresh process');
 
       const sdkConfig = getSDKConfig();
       const apiAuthAdapter = new ApiAuthAdapter();
@@ -130,30 +143,31 @@ export const createTrainingPeaksAuthRepository = (): AuthRepository => {
         timeout: sdkConfig.timeouts.apiAuth,
         debug: sdkConfig.debug.logAuth,
         headers: sdkConfig.requests.defaultHeaders,
-        webAuth: {
-          headless: sdkConfig.browser.headless,
-          timeout: sdkConfig.timeouts.webAuth,
-          executablePath: sdkConfig.browser.executablePath,
-        },
       };
 
-      // Try API refresh first (more efficient)
-      if (apiAuthAdapter.canHandle(authConfig)) {
-        const newToken = await apiAuthAdapter.refreshToken(
-          refreshToken,
-          authConfig
-        );
-        setCurrentToken(newToken);
-        authLogger.info('Token refreshed successfully via API');
-        return newToken;
-      } else {
-        // Fallback to web authentication if API is not available
+      if (!apiAuthAdapter.canHandle(authConfig)) {
         throw SDKError.fileError(
-          'AUTH_1009',
-          'Token refresh not supported for web authentication',
+          'AUTH_1006',
+          'API authentication adapter not available for token refresh',
           { operation: 'refreshToken' }
         );
       }
+
+      const newToken = await apiAuthAdapter.refreshToken(
+        refreshToken,
+        authConfig
+      );
+
+      // Store the new token
+      await storageAdapter.storeToken(newToken);
+      cachedToken = newToken;
+      cacheValid = true;
+
+      authLogger.info('Token refresh successful', {
+        tokenExpiresAt: newToken.expiresAt,
+      });
+
+      return newToken;
     } catch (error) {
       authLogger.error('Token refresh failed', {
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -164,9 +178,8 @@ export const createTrainingPeaksAuthRepository = (): AuthRepository => {
         throw error;
       }
 
-      throw SDKError.fileError(
-        'AUTH_1004',
-        'Token refresh failed',
+      throw SDKError.authFailed(
+        'Token refresh process failed',
         { operation: 'refreshToken' },
         error instanceof Error ? error : undefined
       );
@@ -174,14 +187,19 @@ export const createTrainingPeaksAuthRepository = (): AuthRepository => {
   };
 
   const isAuthenticated = (): boolean => {
-    if (!currentToken) {
+    if (!cachedToken || !cacheValid) {
       return false;
     }
 
     // Check if token is expired
-    if (currentToken.expiresAt < new Date()) {
-      authLogger.warn('Token has expired, clearing authentication state');
-      clearCurrentState();
+    const now = new Date();
+    const expiresAt = new Date(cachedToken.expiresAt);
+
+    if (now >= expiresAt) {
+      authLogger.warn('Token is expired', {
+        tokenExpiresAt: cachedToken.expiresAt,
+        currentTime: now.toISOString(),
+      });
       return false;
     }
 
@@ -189,21 +207,23 @@ export const createTrainingPeaksAuthRepository = (): AuthRepository => {
   };
 
   const getCurrentToken = (): AuthToken | null => {
-    return currentToken;
+    return cacheValid ? cachedToken : null;
   };
 
   const getUserId = (): string | null => {
-    return currentUser?.id || null;
+    return cacheValid && cachedUser ? cachedUser.id : null;
   };
 
   const storeToken = async (token: AuthToken): Promise<void> => {
-    authLogger.info('Storing authentication token');
-    setCurrentToken(token);
+    await storageAdapter.storeToken(token);
+    cachedToken = token;
+    cacheValid = true;
   };
 
   const storeUser = async (user: User): Promise<void> => {
-    authLogger.info('Storing user information');
-    setCurrentUser(user);
+    await storageAdapter.storeUser(user);
+    cachedUser = user;
+    cacheValid = true;
   };
 
   return {

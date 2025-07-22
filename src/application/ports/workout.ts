@@ -3,8 +3,7 @@
  * Defines the contract for workout repository implementations
  */
 
-import { Workout } from '@/domain/entities/workout';
-import { WorkoutFile } from '@/domain/value-objects/workout-file';
+import type { Workout, WorkoutFile } from '@/domain';
 import {
   CreateStructuredWorkoutRequest,
   CreateStructuredWorkoutResponse,

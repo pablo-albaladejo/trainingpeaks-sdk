@@ -2,7 +2,7 @@
  * TrainingPeaks SDK Types
  */
 
-import { WorkoutStructure as WorkoutStructureValueObject } from '@/domain/value-objects/workout-structure';
+import type { WorkoutStructure as WorkoutStructureValueObject } from '@/domain';
 
 export type TrainingPeaksConfig = {
   /** Base URL for the TrainingPeaks API */

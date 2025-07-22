@@ -24,8 +24,8 @@ import type {
   ValidateWorkoutStructure,
   ValidateWorkoutTargetValues,
 } from '@/application/services/domain-validation';
+import type { WorkoutStructure } from '@/domain';
 import { ValidationError } from '@/domain/errors';
-import type { WorkoutStructure } from '@/domain/value-objects/workout-structure-simple';
 
 // Workout entity validation implementations
 export const validateWorkoutId: ValidateWorkoutId = (id: string): void => {

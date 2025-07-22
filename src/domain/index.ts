@@ -1,16 +1,10 @@
 /**
  * Domain Layer Exports
- * Pure business logic and entities
+ * Pure business logic and types
  */
 
-// Entities
-export { AuthToken } from './entities/auth-token';
-export { User } from './entities/user';
-export { Workout } from './entities/workout';
-
-// Value Objects
-export { Credentials } from './value-objects/credentials';
-export { WorkoutFile } from './value-objects/workout-file';
+// Domain types (inferred from Zod schemas)
+export * from './schemas';
 
 // Errors
 export * from './errors';

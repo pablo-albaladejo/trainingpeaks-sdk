@@ -3,7 +3,7 @@
  * Contracts for calculating workout metrics from structure
  */
 
-import type { WorkoutStructure } from '@/domain/value-objects/workout-structure';
+import type { WorkoutStructure } from '@/domain';
 
 /**
  * Planned workout metrics calculated from structure

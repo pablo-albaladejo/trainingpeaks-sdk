@@ -4,8 +4,7 @@
  */
 
 import type { WorkoutRepository } from '@/application/ports/workout';
-import type { WorkoutFile } from '@/domain/value-objects/workout-file';
-import type { WorkoutStructure } from '@/domain/value-objects/workout-structure';
+import type { WorkoutFile, WorkoutStructure } from '@/domain';
 import type { WorkoutData } from '@/types';
 
 /**

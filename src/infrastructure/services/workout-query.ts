@@ -10,7 +10,7 @@ import type {
   ListWorkoutsParams,
   ListWorkoutsResponse,
 } from '@/application/services/workout-query';
-import type { Workout } from '@/domain/entities/workout';
+import type { Workout } from '@/domain';
 import type { WorkoutData, WorkoutType } from '@/types';
 
 // Helper function to map Workout entity to WorkoutData

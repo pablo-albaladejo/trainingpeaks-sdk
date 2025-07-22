@@ -9,8 +9,8 @@ import {
   WorkoutServicePort,
 } from '@/application/ports/workout';
 import { getSDKConfig } from '@/config';
+import type { WorkoutFile } from '@/domain';
 import { WorkoutUploadError } from '@/domain/errors/workout-errors';
-import { WorkoutFile } from '@/domain/value-objects/workout-file';
 import { networkLogger, workoutLogger } from '@/infrastructure/logging/logger';
 import { calculatePlannedMetrics } from '@/infrastructure/services/workout-metrics';
 import {
@@ -19,7 +19,6 @@ import {
   StructuredWorkoutRequest,
   StructuredWorkoutResponse,
   WorkoutData,
-  WorkoutStructure,
 } from '@/types';
 import axios, { AxiosInstance } from 'axios';
 
@@ -340,7 +339,7 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
         complianceTssPercent: null,
         rpe: null,
         feeling: null,
-        structure: request.structure.toData() as WorkoutStructure,
+        structure: request.structure,
         orderOnDay: null,
         personalRecordCount: 0,
         syncedTo: null,

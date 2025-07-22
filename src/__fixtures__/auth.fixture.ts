@@ -1,6 +1,4 @@
-import type { AuthToken } from '@/domain/entities/auth-token';
-import type { User } from '@/domain/entities/user';
-import type { Credentials } from '@/domain/value-objects/credentials';
+import type { AuthToken, Credentials, User } from '@/domain';
 import {
   createAuthToken,
   createCredentials,

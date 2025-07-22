@@ -10,13 +10,12 @@ import {
   WorkoutServiceConfig,
   WorkoutServicePort,
 } from '@/application/ports/workout';
-import { Workout } from '@/domain/entities/workout';
+import type { Workout, WorkoutFile } from '@/domain';
 import {
   WorkoutNotFoundError,
   WorkoutServiceUnavailableError,
   WorkoutValidationError,
 } from '@/domain/errors/workout-errors';
-import { WorkoutFile } from '@/domain/value-objects/workout-file';
 import { workoutLogger } from '@/infrastructure/logging/logger';
 import {
   createWorkout,

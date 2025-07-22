@@ -729,7 +729,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
         title: 'Test Structured Workout',
         workoutTypeValueId: 3,
         workoutDay: '2024-01-15T00:00:00.000Z',
-        structure: request.structure.toData() as any,
+        structure: request.structure as any,
         isItAnOr: false,
       };
 
@@ -759,7 +759,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
           title: request.title,
           workoutTypeValueId: request.workoutTypeValueId,
           workoutDay: request.workoutDay,
-          structure: request.structure.toData(),
+          structure: request.structure,
         }),
         expect.objectContaining({
           headers: { 'Content-Type': 'application/json' },
@@ -805,7 +805,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
         title: request.title,
         workoutTypeValueId: request.workoutTypeValueId,
         workoutDay: request.workoutDay,
-        structure: request.structure.toData() as any,
+        structure: request.structure as any,
         isItAnOr: false,
         code: 'WKT001',
         description: 'High intensity interval training',

@@ -4,8 +4,7 @@
  */
 
 import { StoragePort } from '@/application/ports/storage';
-import { AuthToken } from '@/domain/entities/auth-token';
-import { User } from '@/domain/entities/user';
+import type { AuthToken, User } from '@/domain';
 import { isTokenExpired } from '@/infrastructure/services/auth-business-logic';
 
 export class InMemoryStorageAdapter implements StoragePort {

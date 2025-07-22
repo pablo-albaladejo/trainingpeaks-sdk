@@ -42,7 +42,7 @@ import type {
   IsValueInTargetRange,
   IsWarmUpStep,
 } from '@/application/services/value-object-business-logic';
-import type { WorkoutLengthUnit } from '@/domain/value-objects/workout-length';
+import type { WorkoutLengthUnit } from '@/domain';
 
 // WorkoutLength business logic implementations
 export const convertLengthToSeconds: ConvertLengthToSeconds = (

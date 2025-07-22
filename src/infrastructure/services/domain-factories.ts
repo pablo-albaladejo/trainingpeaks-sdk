@@ -1,20 +1,20 @@
-import { AuthToken } from '@/domain/entities/auth-token';
-import { User } from '@/domain/entities/user';
-import { Workout } from '@/domain/entities/workout';
 import type {
+  AuthToken,
+  Credentials,
+  User,
+  Workout,
+  WorkoutFile,
+  WorkoutIntensityClass,
   WorkoutIntensityMetric,
   WorkoutIntensityTargetType,
+  WorkoutLength,
   WorkoutLengthMetric,
-} from '@/domain/schemas/workout-structure.schema';
-import { Credentials } from '@/domain/value-objects/credentials';
-import { WorkoutFile } from '@/domain/value-objects/workout-file';
-import type { WorkoutLengthUnit } from '@/domain/value-objects/workout-length';
-import { WorkoutLength } from '@/domain/value-objects/workout-length';
-import type { WorkoutIntensityClass } from '@/domain/value-objects/workout-step';
-import { WorkoutStep } from '@/domain/value-objects/workout-step';
-import { WorkoutStructureElement } from '@/domain/value-objects/workout-structure-element';
-import { WorkoutStructure } from '@/domain/value-objects/workout-structure-simple';
-import { WorkoutTarget } from '@/domain/value-objects/workout-target';
+  WorkoutLengthUnit,
+  WorkoutStep,
+  WorkoutStructure,
+  WorkoutStructureElement,
+  WorkoutTarget,
+} from '@/domain';
 import {
   validateAccessToken,
   validateExpiresAt,
@@ -66,7 +66,7 @@ export const createWorkout = (
   validateWorkoutDistance(distance);
   validateWorkoutStructure(duration, structure);
 
-  return new Workout(
+  return {
     id,
     name,
     description,
@@ -77,10 +77,10 @@ export const createWorkout = (
     tags,
     fileContent,
     fileName,
-    createdAt || new Date(),
-    updatedAt || new Date(),
-    structure
-  );
+    createdAt: createdAt || new Date(),
+    updatedAt: updatedAt || new Date(),
+    structure,
+  };
 };
 
 export const createWorkoutFromFile = (
@@ -153,7 +153,12 @@ export const createUser = (
   validateUserId(id);
   validateUserName(name);
 
-  return new User(id, name, avatar, preferences);
+  return {
+    id,
+    name,
+    avatar,
+    preferences,
+  };
 };
 
 // AuthToken entity factory
@@ -167,7 +172,12 @@ export const createAuthToken = (
   validateTokenType(tokenType);
   validateExpiresAt(expiresAt);
 
-  return new AuthToken(accessToken, tokenType, expiresAt, refreshToken);
+  return {
+    accessToken,
+    tokenType,
+    expiresAt,
+    refreshToken,
+  };
 };
 
 export const createAuthTokenFromTimestamp = (
@@ -192,7 +202,10 @@ export const createWorkoutLength = (
   validateWorkoutLengthValue(value);
   validateWorkoutLengthUnit(unit);
 
-  return new WorkoutLength(value, unit);
+  return {
+    value,
+    unit,
+  };
 };
 
 // WorkoutTarget value object factory
@@ -202,7 +215,10 @@ export const createWorkoutTarget = (
 ): WorkoutTarget => {
   validateWorkoutTargetValues(minValue, maxValue);
 
-  return new WorkoutTarget(minValue, maxValue);
+  return {
+    minValue,
+    maxValue,
+  };
 };
 
 export const createSingleWorkoutTarget = (value: number): WorkoutTarget => {
@@ -221,7 +237,13 @@ export const createWorkoutStep = (
   validateWorkoutStepTargets(targets, intensityClass);
   validateWorkoutStepIntensityClass(intensityClass);
 
-  return new WorkoutStep(name, length, targets, intensityClass, openDuration);
+  return {
+    name,
+    length,
+    targets: [...targets], // Return a copy to prevent mutations
+    intensityClass,
+    openDuration,
+  };
 };
 
 // WorkoutFile value object factory
@@ -236,7 +258,11 @@ export const createWorkoutFile = (
   validateWorkoutFileSize(content);
   validateWorkoutFileExtension(fileName);
 
-  return new WorkoutFile(fileName, content, mimeType);
+  return {
+    fileName,
+    content,
+    mimeType,
+  };
 };
 
 export const createWorkoutFileFromBuffer = (
@@ -255,7 +281,10 @@ export const createCredentials = (
   validateUsername(username);
   validatePassword(password);
 
-  return new Credentials(username, password);
+  return {
+    username,
+    password,
+  };
 };
 
 // WorkoutStructureElement value object factory
@@ -266,7 +295,13 @@ export const createWorkoutStructureElement = (
   begin: number,
   end: number
 ): WorkoutStructureElement => {
-  return new WorkoutStructureElement(type, length, steps, begin, end);
+  return {
+    type,
+    length,
+    steps,
+    begin,
+    end,
+  };
 };
 
 // WorkoutStructure value object factory
@@ -277,11 +312,11 @@ export const createWorkoutStructure = (
   primaryIntensityMetric: WorkoutIntensityMetric,
   primaryIntensityTargetOrRange: WorkoutIntensityTargetType
 ): WorkoutStructure => {
-  return new WorkoutStructure(
+  return {
     structure,
-    polyline,
+    polyline: [...polyline], // Return a copy to prevent mutations
     primaryLengthMetric,
     primaryIntensityMetric,
-    primaryIntensityTargetOrRange
-  );
+    primaryIntensityTargetOrRange,
+  };
 };

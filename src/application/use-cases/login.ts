@@ -4,8 +4,7 @@
  */
 
 import type { AuthRepository } from '@/application/ports/auth';
-import type { AuthToken } from '@/domain/entities/auth-token';
-import type { User } from '@/domain/entities/user';
+import type { AuthToken, User } from '@/domain';
 import { createCredentials } from '@/infrastructure/services/domain-factories';
 
 export type LoginRequest = {

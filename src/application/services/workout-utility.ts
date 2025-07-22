@@ -3,7 +3,7 @@
  * Defines the interface for workout utility operations
  */
 
-import type { WorkoutStructure } from '@/domain/value-objects/workout-structure';
+import type { WorkoutStructure } from '@/domain';
 
 /**
  * Simple workout element for utility operations

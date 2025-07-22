@@ -3,9 +3,7 @@
  * Defines contract for external authentication adapters
  */
 
-import { AuthToken } from '@/domain/entities/auth-token';
-import { User } from '@/domain/entities/user';
-import { Credentials } from '@/domain/value-objects/credentials';
+import type { AuthToken, Credentials, User } from '@/domain';
 
 export type AuthenticationConfig = {
   /** Base URL for authentication */

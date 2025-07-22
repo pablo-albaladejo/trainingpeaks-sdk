@@ -4,7 +4,10 @@
  */
 
 // Main client
-export { TrainingPeaksClient } from './training-peaks-client';
+export {
+  TrainingPeaksClient,
+  createTrainingPeaksClientWithPersistentStorage,
+} from './training-peaks-client';
 
 // Configuration
 export { getSDKConfig } from './config';
@@ -12,21 +15,34 @@ export { getSDKConfig } from './config';
 // Workout manager
 export { createWorkoutManager } from './workout-manager';
 
-// Domain entities
-export { AuthToken } from './domain/entities/auth-token';
-export { User } from './domain/entities/user';
-export { Workout } from './domain/entities/workout';
+// Storage adapters
+export {
+  FileSystemStorageAdapter,
+  InMemoryStorageAdapter,
+} from './infrastructure/storage';
+
+// Domain types (inferred from Zod schemas)
+export type {
+  AuthToken,
+  Credentials,
+  User,
+  Workout,
+  WorkoutElementType,
+  WorkoutFile,
+  WorkoutIntensityClass,
+  WorkoutIntensityMetric,
+  WorkoutIntensityTargetType,
+  WorkoutLength,
+  WorkoutLengthMetric,
+  WorkoutLengthUnit,
+  WorkoutStep,
+  WorkoutStructure,
+  WorkoutStructureElement,
+  WorkoutTarget,
+} from './domain';
 
 // Domain errors
 export * from './domain/errors';
-
-// Value objects
-export { Credentials } from './domain/value-objects/credentials';
-export { WorkoutFile } from './domain/value-objects/workout-file';
-export { WorkoutLength } from './domain/value-objects/workout-length';
-export { WorkoutStep } from './domain/value-objects/workout-step';
-export { WorkoutStructure } from './domain/value-objects/workout-structure';
-export { WorkoutTarget } from './domain/value-objects/workout-target';
 
 // Use cases
 export { createStructuredWorkoutUseCase } from './application/use-cases/create-structured-workout';

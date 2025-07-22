@@ -21,6 +21,10 @@ export {
   shouldRefreshToken,
 } from './services/auth-validation';
 
+// Storage adapters
+export { FileSystemStorageAdapter } from './storage/file-system-adapter';
+export { InMemoryStorageAdapter } from './storage/in-memory-adapter';
+
 // Logger services
 export {
   consoleOutputTarget,

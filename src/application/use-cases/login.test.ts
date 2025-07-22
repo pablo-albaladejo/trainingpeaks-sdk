@@ -7,7 +7,6 @@ import { faker } from '@faker-js/faker';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthTokenFixture, UserFixture } from '../../__fixtures__/auth.fixture';
 import { randomNumber, randomString } from '../../__fixtures__/utils.fixture';
-import { Credentials } from '../../domain/value-objects/credentials';
 import { AuthRepository } from '../ports/auth';
 import { createLoginUseCase, LoginRequest, LoginResponse } from './login';
 
@@ -94,7 +93,10 @@ describe('Login Use Case', () => {
       // Assert
       expect(result).toStrictEqual(expectedResponse);
       expect(mockAuthRepository.authenticate).toHaveBeenCalledWith(
-        expect.any(Credentials)
+        expect.objectContaining({
+          username,
+          password,
+        })
       );
     });
 
@@ -232,7 +234,10 @@ describe('Login Use Case', () => {
       // Assert
       expect(result).toStrictEqual(expectedResponse);
       expect(mockAuthRepository.authenticate).toHaveBeenCalledWith(
-        expect.any(Credentials)
+        expect.objectContaining({
+          username: expect.any(String),
+          password: expect.any(String),
+        })
       );
       expect(mockAuthRepository.getCurrentUser).toHaveBeenCalledTimes(1);
     });

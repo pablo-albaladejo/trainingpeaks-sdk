@@ -17,7 +17,7 @@ import type {
   IsStructuredWorkout,
   IsTimeBasedWorkout,
 } from '@/application/services/workout-business-logic';
-import type { WorkoutStructure } from '@/domain/value-objects/workout-structure-simple';
+import type { WorkoutStructure } from '@/domain';
 
 // Workout business logic implementations
 export const hasWorkoutFile: HasWorkoutFile = (

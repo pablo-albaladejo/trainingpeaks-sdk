@@ -3,8 +3,7 @@
  * Defines contract for storing authentication data
  */
 
-import { AuthToken } from '@/domain/entities/auth-token';
-import { User } from '@/domain/entities/user';
+import type { AuthToken, User } from '@/domain';
 
 export type StoragePort = {
   /**

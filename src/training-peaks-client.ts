@@ -3,27 +3,35 @@
  * Main client for interacting with TrainingPeaks services
  */
 
+import type { StoragePort } from '@/application/ports/storage';
 import { getSDKConfig, type TrainingPeaksClientConfig } from '@/config';
 import { AuthenticationError } from '@/domain/errors';
 import { authLogger } from '@/infrastructure/logging/logger';
 import { createTrainingPeaksAuthRepository } from '@/infrastructure/repositories/training-peaks-auth';
 import { createCredentials } from '@/infrastructure/services/domain-factories';
+import { InMemoryStorageAdapter } from '@/infrastructure/storage/in-memory-adapter';
 import { createWorkoutManager } from './workout-manager';
 
 /**
  * Main TrainingPeaks client
  */
 export class TrainingPeaksClient {
-  private sdkConfig: ReturnType<typeof getSDKConfig>;
-  private workoutManager: ReturnType<typeof createWorkoutManager>;
-  private authRepository: ReturnType<typeof createTrainingPeaksAuthRepository>;
+  readonly sdkConfig: ReturnType<typeof getSDKConfig>;
+  readonly workoutManager: ReturnType<typeof createWorkoutManager>;
+  readonly authRepository: ReturnType<typeof createTrainingPeaksAuthRepository>;
 
-  constructor(config: TrainingPeaksClientConfig = {}) {
+  constructor(
+    config: TrainingPeaksClientConfig = {},
+    storageAdapter?: StoragePort
+  ) {
     // Get SDK configuration with client overrides
     this.sdkConfig = getSDKConfig(config);
 
-    // Initialize real authentication repository
-    this.authRepository = createTrainingPeaksAuthRepository();
+    // Use provided storage adapter or default to in-memory
+    const storage = storageAdapter || new InMemoryStorageAdapter();
+
+    // Initialize real authentication repository with storage adapter
+    this.authRepository = createTrainingPeaksAuthRepository(storage);
 
     // Initialize workout manager with the same configuration
     this.workoutManager = createWorkoutManager(config);
@@ -160,3 +168,19 @@ export class TrainingPeaksClient {
     return this.sdkConfig;
   }
 }
+
+/**
+ * Create TrainingPeaks Client with persistent storage
+ * Uses file system to store authentication data between sessions
+ *
+ * Note: This is a placeholder for future implementation.
+ * Currently, the client uses in-memory storage only.
+ * To implement persistent storage, the client architecture needs to be updated.
+ */
+export const createTrainingPeaksClientWithPersistentStorage = (
+  config: TrainingPeaksClientConfig = {}
+) => {
+  // For now, return the regular client
+  // TODO: Implement persistent storage integration
+  return new TrainingPeaksClient(config);
+};

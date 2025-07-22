@@ -11,7 +11,7 @@ import type {
   ShouldRefreshToken,
   TokenValidationConfig,
 } from '@/application/services/auth-validation';
-import type { AuthToken } from '@/domain/entities/auth-token';
+import type { AuthToken } from '@/domain';
 
 export const shouldRefreshToken: ShouldRefreshToken = (
   token: AuthToken,

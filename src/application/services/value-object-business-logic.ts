@@ -1,4 +1,4 @@
-import type { WorkoutLengthUnit } from '@/domain/value-objects/workout-length';
+import type { WorkoutLengthUnit } from '@/domain';
 
 // WorkoutLength business logic
 export type ConvertLengthToSeconds = (

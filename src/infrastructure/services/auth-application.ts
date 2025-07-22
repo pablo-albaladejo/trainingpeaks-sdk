@@ -14,8 +14,7 @@ import type {
   LoginResponse,
   Logout,
 } from '@/application/services/auth-application';
-import type { AuthToken } from '@/domain/entities/auth-token';
-import type { User } from '@/domain/entities/user';
+import type { AuthToken, User } from '@/domain';
 import { SDKError } from '@/domain/errors';
 
 export const login =

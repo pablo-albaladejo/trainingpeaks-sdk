@@ -3,7 +3,7 @@
  * Defines the interface for authentication validation operations
  */
 
-import type { AuthToken } from '@/domain/entities/auth-token';
+import type { AuthToken } from '@/domain';
 
 /**
  * Token validation configuration

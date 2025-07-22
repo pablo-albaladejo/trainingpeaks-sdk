@@ -3,8 +3,7 @@
  * Provides test data for the Workout domain entity
  */
 
-import type { Workout } from '@/domain/entities/workout';
-import type { WorkoutStructure } from '@/domain/value-objects/workout-structure-simple';
+import type { Workout, WorkoutStructure } from '@/domain';
 import {
   createStructuredWorkout,
   createWorkout,

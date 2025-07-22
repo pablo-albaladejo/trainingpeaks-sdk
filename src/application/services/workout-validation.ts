@@ -3,8 +3,7 @@
  * Defines validation contracts for workout operations
  */
 
-import type { WorkoutFile } from '@/domain/value-objects/workout-file';
-import type { WorkoutStructure } from '@/domain/value-objects/workout-structure-simple';
+import type { WorkoutFile, WorkoutStructure } from '@/domain';
 import type { CreateStructuredWorkoutRequest, WorkoutData } from '@/types';
 
 export type ValidateWorkoutId = (id: string) => void;

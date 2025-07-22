@@ -3,7 +3,7 @@
  * Provides test data for the WorkoutFile value object
  */
 
-import type { WorkoutFile } from '@/domain/value-objects/workout-file';
+import type { WorkoutFile } from '@/domain';
 import {
   createWorkoutFile,
   createWorkoutFileFromBuffer,

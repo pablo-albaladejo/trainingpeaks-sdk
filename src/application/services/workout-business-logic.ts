@@ -1,4 +1,4 @@
-import type { WorkoutStructure } from '@/domain/value-objects/workout-structure-simple';
+import type { WorkoutStructure } from '@/domain';
 
 // Workout business logic
 export type HasWorkoutFile = (
