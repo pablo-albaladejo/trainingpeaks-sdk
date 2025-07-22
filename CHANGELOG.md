@@ -1,3 +1,27 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+
+## 1.6.0 (2025-07-22)
+
+* chore: disable coverage for integration tests in configuration ([ba60405](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/ba60405))
+* fix: improve configuration validation in end-to-end tests ([3884dfd](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/3884dfd))
+* feat: add comprehensive end-to-end tests ([e26f60e](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/e26f60e))
+* feat: add rosie factory patterns for test data generation ([15d2b9d](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/15d2b9d))
+* feat: enhance configuration validation and add comprehensive tests ([72f1e1b](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/72f1e1b))
+* feat: enhance trainingpeaks client with persistent storage support ([53c1277](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/53c1277))
+* feat: enhance workout validation and error handling ([70f76fe](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/70f76fe))
+* feat: implement centralized error handling ([745b7ad](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/745b7ad))
+* feat: implement error handling service ([71c4a41](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/71c4a41))
+* feat: improve end-to-end tests with environment variable support ([6f45811](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/6f45811))
+* feat: update cursor guidelines for improved clarity and consistency ([8167b89](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/8167b89))
+* refactor: streamline use case implementations and enhance type exports ([00fbfd5](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/00fbfd5))
+* refactor: update documentation and improve code structure ([01f035c](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/01f035c))
+
 # Changes
 
 All important changes to this project are listed here.
