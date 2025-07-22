@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## 1.7.0 (2025-07-22)
+
+* feat: integrate  codecov for test analytics ([a0a181f](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/a0a181f))
+
 ## 1.6.0 (2025-07-22)
 
 * chore: disable coverage for integration tests in configuration ([ba60405](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/ba60405))
