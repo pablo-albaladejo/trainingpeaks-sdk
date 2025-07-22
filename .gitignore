@@ -10,6 +10,9 @@ dist-cjs/
 build/
 coverage/
 
+# Test reports
+test-report.junit.xml
+
 # IDE and editor files
 .vscode/
 .idea/

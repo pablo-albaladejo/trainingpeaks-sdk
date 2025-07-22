@@ -463,6 +463,39 @@ src/
 4. **Fast**: Functions are faster than classes
 5. **Composable**: Functions work well together
 
+### Test Analytics with Codecov
+
+This project uses Codecov Test Analytics to provide insights into test health and performance:
+
+#### Features
+
+- **Test Performance Tracking**: Monitor test run times and failure rates across branches
+- **PR Test Feedback**: Get detailed information about failed tests in PR comments
+- **Flaky Test Detection**: Identify tests that fail intermittently on main branch
+- **Test History**: Track test performance over time
+
+#### How it works
+
+1. **JUnit XML Generation**: Tests generate JUnit XML reports using Vitest
+2. **CI Integration**: GitHub Actions uploads test results to Codecov
+3. **Analytics Dashboard**: View test metrics in the Codecov UI
+4. **PR Comments**: Automatic feedback on test failures in pull requests
+
+#### Configuration
+
+The setup includes:
+
+- **Vitest Configuration**: JUnit reporter configured in `vitest.config.ts`
+- **CI Workflow**: Test results upload in `.github/workflows/ci.yml`
+- **Package Scripts**: `npm run test:junit` generates coverage + JUnit XML
+
+#### Benefits
+
+- **Faster Debugging**: Quick identification of test failures with stack traces
+- **Quality Assurance**: Track test reliability and performance trends
+- **Team Collaboration**: Shared visibility into test health across the project
+- **Continuous Improvement**: Data-driven decisions about test optimization
+
 ### How web login works
 
 1. **Open browser**: Start a browser window
