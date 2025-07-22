@@ -30,12 +30,12 @@ async function runE2ETests() {
       throw new Error('getConfig() returned null/undefined');
     }
 
-    if (!config.baseUrl) {
-      throw new Error('getConfig().baseUrl is missing');
+    if (!config.urls || !config.urls.baseUrl) {
+      throw new Error('getConfig().urls.baseUrl is missing');
     }
 
-    if (!config.timeout) {
-      throw new Error('getConfig().timeout is missing');
+    if (!config.timeouts || !config.timeouts.default) {
+      throw new Error('getConfig().timeouts.default is missing');
     }
 
     console.log('✅ Step 3: Configuration methods work correctly');
