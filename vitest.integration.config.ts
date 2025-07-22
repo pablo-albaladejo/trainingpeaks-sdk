@@ -18,5 +18,8 @@ export default defineConfig({
     env: {
       NODE_ENV: 'test',
     },
+    coverage: {
+      enabled: false, // Disable coverage for integration tests
+    },
   },
 });
