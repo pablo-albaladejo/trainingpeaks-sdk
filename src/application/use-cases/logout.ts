@@ -3,22 +3,26 @@
  * Handles user logout process
  */
 
-import { AuthRepository } from '@/application/ports/auth';
+import type { AuthRepository } from '@/application/ports/auth';
+
+export type ExecuteLogoutUseCase = () => Promise<void>;
 
 /**
- * Logout Use Case Factory
- * Creates a logout use case with dependency injection
+ * Logout Use Case Implementation
+ * Individual function that receives dependencies as parameters
  */
-export const createLogoutUseCase = (authRepository: AuthRepository) => {
-  /**
-   * Execute logout process
-   */
-  const execute = async (): Promise<void> => {
+export const executeLogoutUseCase =
+  (authRepository: AuthRepository): ExecuteLogoutUseCase =>
+  async (): Promise<void> => {
     // Clear all authentication data
     await authRepository.clearAuth();
   };
 
-  return { execute };
+// Keep the existing grouped function for backward compatibility
+export const createLogoutUseCase = (authRepository: AuthRepository) => {
+  return {
+    execute: executeLogoutUseCase(authRepository),
+  };
 };
 
 // Export the type for dependency injection

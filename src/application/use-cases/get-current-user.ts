@@ -3,18 +3,18 @@
  * Retrieves the currently authenticated user
  */
 
-import { AuthRepository } from '@/application/ports/auth';
-import { User } from '@/domain/entities/user';
+import type { AuthRepository } from '@/application/ports/auth';
+import type { User } from '@/domain/entities/user';
+
+export type ExecuteGetCurrentUserUseCase = () => Promise<User>;
 
 /**
- * Get Current User Use Case Factory
- * Creates a get current user use case with dependency injection
+ * Get Current User Use Case Implementation
+ * Individual function that receives dependencies as parameters
  */
-export const createGetCurrentUserUseCase = (authRepository: AuthRepository) => {
-  /**
-   * Execute get current user process
-   */
-  const execute = async (): Promise<User> => {
+export const executeGetCurrentUserUseCase =
+  (authRepository: AuthRepository): ExecuteGetCurrentUserUseCase =>
+  async (): Promise<User> => {
     // Check if user is authenticated using repository method
     if (!authRepository.isAuthenticated()) {
       throw new Error('No valid authentication token available');
@@ -28,7 +28,11 @@ export const createGetCurrentUserUseCase = (authRepository: AuthRepository) => {
     return currentUser;
   };
 
-  return { execute };
+// Keep the existing grouped function for backward compatibility
+export const createGetCurrentUserUseCase = (authRepository: AuthRepository) => {
+  return {
+    execute: executeGetCurrentUserUseCase(authRepository),
+  };
 };
 
 // Export the type for dependency injection

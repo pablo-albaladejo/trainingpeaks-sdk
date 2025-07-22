@@ -8,21 +8,26 @@ import type { DeleteWorkout } from '@/application/services/workout-management';
 export type DeleteWorkoutRequest = {
   workoutId: string;
 };
+export type ExecuteDeleteWorkoutUseCase = (
+  request: DeleteWorkoutRequest
+) => Promise<boolean>;
 
 /**
- * Delete Workout Use Case Factory
- * Creates a delete workout use case with dependency injection
+ * Delete Workout Use Case Implementation
+ * Individual function that receives dependencies as parameters
  */
-export const createDeleteWorkoutUseCase = (deleteWorkoutFn: DeleteWorkout) => {
-  /**
-   * Execute delete workout process
-   */
-  const execute = async (request: DeleteWorkoutRequest): Promise<boolean> => {
+export const executeDeleteWorkoutUseCase =
+  (deleteWorkoutFn: DeleteWorkout): ExecuteDeleteWorkoutUseCase =>
+  async (request: DeleteWorkoutRequest): Promise<boolean> => {
     // Delegate to domain service
     return await deleteWorkoutFn(request.workoutId);
   };
 
-  return { execute };
+// Keep the existing grouped function for backward compatibility
+export const createDeleteWorkoutUseCase = (deleteWorkoutFn: DeleteWorkout) => {
+  return {
+    execute: executeDeleteWorkoutUseCase(deleteWorkoutFn),
+  };
 };
 
 // Export the type for dependency injection

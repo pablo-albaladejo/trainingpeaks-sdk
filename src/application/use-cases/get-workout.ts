@@ -5,27 +5,27 @@
 import type { GetWorkout } from '@/application/services/workout-query';
 import type { WorkoutData } from '@/types';
 
-/**
- * Request parameters for getting a workout
- */
 export type GetWorkoutRequest = {
   workoutId: string;
 };
-
-/**
- * Response type for getting a workout
- */
 export type GetWorkoutResponse = WorkoutData | null;
+export type ExecuteGetWorkoutUseCase = (
+  request: GetWorkoutRequest
+) => Promise<GetWorkoutResponse>;
 
 /**
- * Use case for getting workouts
+ * Get Workout Use Case Implementation
+ * Individual function that receives dependencies as parameters
  */
+export const executeGetWorkoutUseCase =
+  (getWorkoutFn: GetWorkout): ExecuteGetWorkoutUseCase =>
+  async (request: GetWorkoutRequest): Promise<GetWorkoutResponse> => {
+    return await getWorkoutFn(request.workoutId);
+  };
+
+// Keep the existing grouped function for backward compatibility
 export const createGetWorkoutUseCase = (getWorkoutFn: GetWorkout) => {
   return {
-    execute: async (
-      request: GetWorkoutRequest
-    ): Promise<GetWorkoutResponse> => {
-      return await getWorkoutFn(request.workoutId);
-    },
+    execute: executeGetWorkoutUseCase(getWorkoutFn),
   };
 };

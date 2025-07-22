@@ -8,29 +8,33 @@ import type {
   CreateStructuredWorkoutResponse,
 } from '@/application/services/workout-creation';
 
-/**
- * Request type for creating a structured workout
- */
 export type CreateStructuredWorkoutUseCaseRequest =
   CreateStructuredWorkoutRequest;
-
-/**
- * Response type for creating a structured workout
- */
 export type CreateStructuredWorkoutUseCaseResponse =
   CreateStructuredWorkoutResponse;
+export type ExecuteCreateStructuredWorkoutUseCase = (
+  request: CreateStructuredWorkoutUseCaseRequest
+) => Promise<CreateStructuredWorkoutUseCaseResponse>;
 
 /**
- * Use case for creating structured workouts
+ * Create Structured Workout Use Case Implementation
+ * Individual function that receives dependencies as parameters
  */
+export const executeCreateStructuredWorkoutUseCase =
+  (
+    createStructuredWorkoutFn: CreateStructuredWorkout
+  ): ExecuteCreateStructuredWorkoutUseCase =>
+  async (
+    request: CreateStructuredWorkoutUseCaseRequest
+  ): Promise<CreateStructuredWorkoutUseCaseResponse> => {
+    return await createStructuredWorkoutFn(request);
+  };
+
+// Keep the existing grouped function for backward compatibility
 export const createStructuredWorkoutUseCase = (
   createStructuredWorkoutFn: CreateStructuredWorkout
 ) => {
   return {
-    execute: async (
-      request: CreateStructuredWorkoutUseCaseRequest
-    ): Promise<CreateStructuredWorkoutUseCaseResponse> => {
-      return await createStructuredWorkoutFn(request);
-    },
+    execute: executeCreateStructuredWorkoutUseCase(createStructuredWorkoutFn),
   };
 };

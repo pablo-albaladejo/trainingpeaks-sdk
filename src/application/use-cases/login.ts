@@ -3,9 +3,9 @@
  * Handles user authentication and session establishment
  */
 
-import { AuthRepository } from '@/application/ports/auth';
-import { AuthToken } from '@/domain/entities/auth-token';
-import { User } from '@/domain/entities/user';
+import type { AuthRepository } from '@/application/ports/auth';
+import type { AuthToken } from '@/domain/entities/auth-token';
+import type { User } from '@/domain/entities/user';
 import { Credentials } from '@/domain/value-objects/credentials';
 
 export type LoginRequest = {
@@ -18,15 +18,17 @@ export type LoginResponse = {
   user: User;
 };
 
+export type ExecuteLoginUseCase = (
+  request: LoginRequest
+) => Promise<LoginResponse>;
+
 /**
- * Login Use Case Factory
- * Creates a login use case with dependency injection
+ * Login Use Case Implementation
+ * Individual function that receives dependencies as parameters
  */
-export const createLoginUseCase = (authRepository: AuthRepository) => {
-  /**
-   * Execute login process
-   */
-  const execute = async (request: LoginRequest): Promise<LoginResponse> => {
+export const executeLoginUseCase =
+  (authRepository: AuthRepository): ExecuteLoginUseCase =>
+  async (request: LoginRequest): Promise<LoginResponse> => {
     // Create credentials from request
     const credentials = Credentials.create(request.username, request.password);
 
@@ -50,7 +52,11 @@ export const createLoginUseCase = (authRepository: AuthRepository) => {
     };
   };
 
-  return { execute };
+// Keep the existing grouped function for backward compatibility
+export const createLoginUseCase = (authRepository: AuthRepository) => {
+  return {
+    execute: executeLoginUseCase(authRepository),
+  };
 };
 
 // Export the type for dependency injection
