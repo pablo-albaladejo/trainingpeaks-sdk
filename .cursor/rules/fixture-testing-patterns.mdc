@@ -1,0 +1,475 @@
+---
+title: Fixture Testing Patterns
+alwaysApply: false
+---
+
+# Testing Patterns with Rosie Factory Fixtures
+
+## 🧪 Test Structure with Fixtures
+
+### **Basic Test Pattern**
+
+```typescript
+describe('[Feature]', () => {
+  it('should [expected behavior]', () => {
+    // Arrange - Use fixtures for test data
+    const entity = entityBuilder.build({
+      option1: 'value1',
+      option2: 'value2',
+    });
+
+    // Act - Execute the function under test
+    const result = functionUnderTest(entity);
+
+    // Assert - Verify the result
+    expect(result).toBe(expectedValue);
+  });
+});
+```
+
+## 📋 Core Testing Patterns
+
+### 1. **Simple Entity Testing**
+
+```typescript
+it('should work with basic entity', () => {
+  // Arrange
+  const user = userBuilder.build();
+
+  // Act
+  const result = processUser(user);
+
+  // Assert
+  expect(result).toBeDefined();
+  expect(result.id).toBe(user.id);
+});
+```
+
+### 2. **Testing with Specific Options**
+
+```typescript
+it('should handle specific configuration', () => {
+  // Arrange
+  const token = authTokenBuilder.build({
+    expiresInMinutes: 5, // Token expires in 5 minutes
+    tokenType: 'Bearer',
+  });
+
+  // Act
+  const isValid = isTokenValid(token);
+
+  // Assert
+  expect(isValid).toBe(false); // Should be invalid (close to expiration)
+});
+```
+
+### 3. **Testing Relationships**
+
+```typescript
+it('should preserve user properties', () => {
+  // Arrange
+  const user = userBuilder.build({
+    id: '123',
+    name: 'Test User',
+    timezone: 'UTC',
+    units: 'metric',
+  });
+
+  // Act
+  const result = getUserInfo(user);
+
+  // Assert
+  expect(result.id).toBe('123');
+  expect(result.name).toBe('Test User');
+  expect(result.preferences.timezone).toBe('UTC');
+});
+```
+
+## 🎯 Advanced Testing Patterns
+
+### **Testing Complex Nested Structures**
+
+```typescript
+it('should work with complex workout structure', () => {
+  // Arrange
+  const workout = structuredWorkoutRequestBuilder.build({
+    includeWarmup: true,
+    includeCooldown: true,
+    elementCount: 3,
+  });
+
+  // Act
+  const result = createWorkout(workout);
+
+  // Assert
+  expect(result.structure.elements).toHaveLength(3);
+  expect(result.structure.elements[0].type).toBe('step');
+});
+```
+
+### **Testing Array Responses**
+
+```typescript
+it('should return paginated results', () => {
+  // Arrange
+  const response = listWorkoutsResponseBuilder.build({
+    workoutCount: 5,
+    total: 15,
+    page: 2,
+    limit: 10,
+  });
+
+  // Act
+  const result = processResponse(response);
+
+  // Assert
+  expect(result.workouts).toHaveLength(5);
+  expect(result.total).toBe(15);
+  expect(result.hasMore).toBe(true);
+});
+```
+
+### **Testing Error Scenarios**
+
+```typescript
+it('should handle validation errors', () => {
+  // Arrange
+  const response = uploadWorkoutResponseBuilder.build({
+    includeErrors: true,
+    success: false,
+  });
+
+  // Act
+  const result = processUploadResponse(response);
+
+  // Assert
+  expect(result.success).toBe(false);
+  expect(result.validationErrors).toHaveLength(1);
+});
+```
+
+## 🔄 Reusable Test Patterns
+
+### **Using Predefined Builders**
+
+```typescript
+it('should work with valid credentials', () => {
+  // Arrange
+  const credentials = validCredentialsBuilder.build();
+
+  // Act
+  const result = authenticate(credentials);
+
+  // Assert
+  expect(result.success).toBe(true);
+});
+
+it('should reject invalid credentials', () => {
+  // Arrange
+  const credentials = invalidCredentialsBuilder.build();
+
+  // Act
+  const result = authenticate(credentials);
+
+  // Assert
+  expect(result.success).toBe(false);
+});
+```
+
+### **Testing Different File Types**
+
+```typescript
+it('should handle TCX files', () => {
+  // Arrange
+  const file = tcxWorkoutFileBuilder.build();
+
+  // Act
+  const result = processFile(file);
+
+  // Assert
+  expect(result.mimeType).toBe('application/tcx+xml');
+});
+
+it('should handle GPX files', () => {
+  // Arrange
+  const file = gpxWorkoutFileBuilder.build();
+
+  // Act
+  const result = processFile(file);
+
+  // Assert
+  expect(result.mimeType).toBe('application/gpx+xml');
+});
+```
+
+## 🚨 Common Testing Anti-Patterns
+
+### **❌ Don't Create Data Manually**
+
+```typescript
+// ❌ WRONG: Manual data creation
+const user = {
+  id: '123',
+  name: 'Test User',
+  preferences: {
+    timezone: 'UTC',
+    units: 'metric',
+  },
+};
+```
+
+### **✅ Use Fixtures Instead**
+
+```typescript
+// ✅ CORRECT: Use fixtures
+const user = userBuilder.build({
+  id: '123',
+  name: 'Test User',
+  timezone: 'UTC',
+  units: 'metric',
+});
+```
+
+### **❌ Don't Repeat Complex Object Creation**
+
+```typescript
+// ❌ WRONG: Repeated complex object creation
+const workout1 = {
+  name: 'Workout 1',
+  duration: 3600,
+  distance: 10000,
+  type: 'run',
+};
+const workout2 = {
+  name: 'Workout 2',
+  duration: 1800,
+  distance: 5000,
+  type: 'run',
+};
+```
+
+### **✅ Use Builders with Options**
+
+```typescript
+// ✅ CORRECT: Use builders with options
+const workout1 = workoutDataBuilder.build({
+  name: 'Workout 1',
+  durationMinutes: 60,
+  distanceKm: 10,
+});
+const workout2 = workoutDataBuilder.build({
+  name: 'Workout 2',
+  durationMinutes: 30,
+  distanceKm: 5,
+});
+```
+
+## 📊 Testing Edge Cases
+
+### **Testing Boundary Conditions**
+
+```typescript
+it('should handle expired tokens', () => {
+  // Arrange
+  const token = expiredAuthTokenBuilder.build();
+
+  // Act
+  const result = validateToken(token);
+
+  // Assert
+  expect(result.isValid).toBe(false);
+  expect(result.isExpired).toBe(true);
+});
+
+it('should handle tokens close to expiration', () => {
+  // Arrange
+  const token = authTokenBuilder.build({
+    expiresInMinutes: 2 / 60, // 2 minutes
+  });
+
+  // Act
+  const result = validateToken(token);
+
+  // Assert
+  expect(result.needsRefresh).toBe(true);
+});
+```
+
+### **Testing Optional Fields**
+
+```typescript
+it('should work without optional fields', () => {
+  // Arrange
+  const workout = workoutDataBuilder.build({
+    includeFileData: false,
+    includeMetadata: false,
+  });
+
+  // Act
+  const result = processWorkout(workout);
+
+  // Assert
+  expect(result.fileData).toBeUndefined();
+  expect(result.metadata).toBeUndefined();
+});
+```
+
+## 🔧 Mock Integration Patterns
+
+### **Mocking with Fixtures**
+
+```typescript
+describe('Service Integration', () => {
+  it('should call repository with correct data', () => {
+    // Arrange
+    const user = userBuilder.build();
+    const mockRepository = {
+      createUser: vi.fn().mockResolvedValue(user),
+    };
+
+    // Act
+    const result = await createUserService(mockRepository, user);
+
+    // Assert
+    expect(mockRepository.createUser).toHaveBeenCalledWith(user);
+    expect(result).toStrictEqual(user);
+  });
+});
+```
+
+### **Testing Error Responses**
+
+```typescript
+it('should handle repository errors', () => {
+  // Arrange
+  const user = userBuilder.build();
+  const error = new Error('Database connection failed');
+  const mockRepository = {
+    createUser: vi.fn().mockRejectedValue(error),
+  };
+
+  // Act & Assert
+  expect(createUserService(mockRepository, user)).rejects.toThrow(
+    'Database connection failed'
+  );
+});
+```
+
+## 📝 Test Documentation Patterns
+
+### **Test Description Pattern**
+
+```typescript
+describe('[Feature]', () => {
+  describe('[Specific Behavior]', () => {
+    it('should [expected outcome] when [condition]', () => {
+      // Test implementation
+    });
+  });
+});
+```
+
+### **Complex Test Documentation**
+
+```typescript
+/**
+ * Tests the workout creation flow with complex nested structures
+ * Verifies that:
+ * - Structure elements are properly created
+ * - Transitions are calculated correctly
+ * - Domain factory functions are used appropriately
+ */
+it('should create complex workout structure', () => {
+  // Test implementation
+});
+```
+
+## 🎯 Performance Testing Patterns
+
+### **Testing Large Data Sets**
+
+```typescript
+it('should handle large workout lists', () => {
+  // Arrange
+  const response = listWorkoutsResponseBuilder.build({
+    workoutCount: 100,
+    total: 1000,
+  });
+
+  // Act
+  const result = processLargeResponse(response);
+
+  // Assert
+  expect(result.workouts).toHaveLength(100);
+  expect(result.hasMore).toBe(true);
+});
+```
+
+### **Testing Processing Time**
+
+```typescript
+it('should process large files efficiently', () => {
+  // Arrange
+  const file = workoutFileBuilder.build({
+    fileFormat: 'fit',
+    contentLength: 1024 * 1024, // 1MB
+  });
+
+  // Act
+  const startTime = Date.now();
+  const result = processLargeFile(file);
+  const processingTime = Date.now() - startTime;
+
+  // Assert
+  expect(result.success).toBe(true);
+  expect(processingTime).toBeLessThan(5000); // Should complete within 5 seconds
+});
+```
+
+## 🔄 Integration Testing Patterns
+
+### **End-to-End Testing**
+
+```typescript
+describe('Workout Upload Flow', () => {
+  it('should complete full upload process', async () => {
+    // Arrange
+    const file = tcxWorkoutFileBuilder.build();
+    const user = userBuilder.build();
+    const expectedResponse = uploadWorkoutResponseBuilder.build({
+      success: true,
+      fileType: 'tcx',
+    });
+
+    // Act
+    const result = await uploadWorkout(file, user);
+
+    // Assert
+    expect(result.success).toBe(true);
+    expect(result.fileInfo.type).toBe('application/tcx+xml');
+  });
+});
+```
+
+## 📚 Reference Testing Files
+
+- [auth-validation.test.ts](mdc:src/infrastructure/services/auth-validation.test.ts) - Token validation testing patterns
+- [get-current-user.test.ts](mdc:src/application/use-cases/get-current-user.test.ts) - User entity testing
+- [list-workouts.test.ts](mdc:src/application/use-cases/list-workouts.test.ts) - Pagination testing
+- [upload-workout.test.ts](mdc:src/application/use-cases/upload-workout.test.ts) - File upload testing
+- [create-structured-workout.test.ts](mdc:src/application/use-cases/create-structured-workout.test.ts) - Complex structure testing
+
+## 🎯 Key Testing Principles
+
+1. **Use fixtures for ALL test data creation**
+2. **Test with realistic data using faker**
+3. **Use predefined builders for common scenarios**
+4. **Test edge cases with specific options**
+5. **Mock external dependencies with fixture data**
+6. **Document complex test scenarios**
+7. **Test both success and failure paths**
+8. **Use descriptive test names**
+9. **Follow Arrange-Act-Assert pattern**
+10. **Keep tests focused and isolated**
+
+---

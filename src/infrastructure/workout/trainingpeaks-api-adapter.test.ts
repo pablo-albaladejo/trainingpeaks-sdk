@@ -12,8 +12,8 @@ import {
 } from '@/types';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { beforeEach, describe, expect, it, MockedFunction, vi } from 'vitest';
-import { StructuredWorkoutDataFixture } from '../../__fixtures__/structured-workout-data.fixture';
-import { WorkoutDataFixture } from '../../__fixtures__/workout-data.fixture';
+import { structuredWorkoutRequestBuilder } from '../../__fixtures__/structured-workout-data.fixture';
+import { workoutDataBuilder } from '../../__fixtures__/workout-data.fixture';
 import { createWorkoutFile } from '../../infrastructure/services/domain-factories';
 import { TrainingPeaksWorkoutApiAdapter } from './trainingpeaks-api-adapter';
 
@@ -197,7 +197,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
   describe('uploadWorkout', () => {
     it('should successfully upload workout without file', async () => {
       // Arrange
-      const workoutData = WorkoutDataFixture.default();
+      const workoutData = workoutDataBuilder.build();
       const mockResponse: AxiosResponse = {
         data: { workoutId: 'workout-123' },
         status: 200,
@@ -233,7 +233,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
 
     it('should successfully upload workout with file', async () => {
       // Arrange
-      const workoutData = WorkoutDataFixture.default();
+      const workoutData = workoutDataBuilder.build();
       const file = createWorkoutFile(
         'test.tcx',
         '<tcx>...</tcx>',
@@ -273,7 +273,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
 
     it('should throw error when no workout ID received', async () => {
       // Arrange
-      const workoutData = WorkoutDataFixture.default();
+      const workoutData = workoutDataBuilder.build();
       const mockResponse: AxiosResponse = {
         data: {}, // No workoutId
         status: 200,
@@ -304,7 +304,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
 
     it('should handle HTTP error responses', async () => {
       // Arrange
-      const workoutData = WorkoutDataFixture.default();
+      const workoutData = workoutDataBuilder.build();
       const error = new Error('Network error');
       mockHttpClient.post.mockRejectedValue(error);
 
@@ -329,7 +329,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
 
     it('should handle unknown error types', async () => {
       // Arrange
-      const workoutData = WorkoutDataFixture.default();
+      const workoutData = workoutDataBuilder.build();
       mockHttpClient.post.mockRejectedValue('String error');
 
       // Act
@@ -356,7 +356,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
     it('should successfully get workout', async () => {
       // Arrange
       const workoutId = 'workout-123';
-      const workoutData = WorkoutDataFixture.default();
+      const workoutData = workoutDataBuilder.build();
       const mockResponse: AxiosResponse = {
         data: workoutData,
         status: 200,
@@ -468,10 +468,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
   describe('listWorkouts', () => {
     it('should successfully list workouts without options', async () => {
       // Arrange
-      const workouts = [
-        WorkoutDataFixture.default(),
-        new WorkoutDataFixture().withName('Workout 2').build(),
-      ];
+      const workouts = [workoutDataBuilder.build(), workoutDataBuilder.build()];
       const mockResponse: AxiosResponse = {
         data: { workouts },
         status: 200,
@@ -504,7 +501,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
         startDate: new Date('2024-01-01'),
         endDate: new Date('2024-01-31'),
       };
-      const workouts = [WorkoutDataFixture.default()];
+      const workouts = [workoutDataBuilder.build()];
       const mockResponse: AxiosResponse = {
         data: { workouts },
         status: 200,
@@ -540,7 +537,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
         startDate: new Date('2024-01-01'),
         // No offset or endDate
       };
-      const workouts = [WorkoutDataFixture.default()];
+      const workouts = [workoutDataBuilder.build()];
       const mockResponse: AxiosResponse = {
         data: { workouts },
         status: 200,
@@ -628,7 +625,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
         startDate: undefined,
         endDate: undefined,
       };
-      const workouts = [WorkoutDataFixture.default()];
+      const workouts = [workoutDataBuilder.build()];
       const mockResponse: AxiosResponse = {
         data: { workouts },
         status: 200,
@@ -720,7 +717,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
         title: 'Test Structured Workout',
         workoutTypeValueId: 3,
         workoutDay: '2024-01-15T00:00:00.000Z',
-        structure: StructuredWorkoutDataFixture.default().structure,
+        structure: structuredWorkoutRequestBuilder.build().structure,
       };
 
       const mockResponseData: StructuredWorkoutResponse = {
@@ -775,7 +772,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
         title: 'Complex Structured Workout',
         workoutTypeValueId: 3,
         workoutDay: '2024-01-15T00:00:00.000Z',
-        structure: StructuredWorkoutDataFixture.withIntervals().structure,
+        structure: structuredWorkoutRequestBuilder.build().structure,
         metadata: {
           code: 'WKT001',
           description: 'High intensity interval training',
@@ -854,7 +851,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
     it('should handle Axios error with response data', async () => {
       // Arrange
       const request: CreateStructuredWorkoutRequest =
-        StructuredWorkoutDataFixture.defaultCreateRequest();
+        structuredWorkoutRequestBuilder.build();
       const axiosError = {
         isAxiosError: true,
         response: {
@@ -892,7 +889,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
     it('should handle Axios error without response data', async () => {
       // Arrange
       const request: CreateStructuredWorkoutRequest =
-        StructuredWorkoutDataFixture.defaultCreateRequest();
+        structuredWorkoutRequestBuilder.build();
       const axiosError = {
         isAxiosError: true,
         message: 'Network error',
@@ -916,7 +913,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
     it('should handle regular Error', async () => {
       // Arrange
       const request: CreateStructuredWorkoutRequest =
-        StructuredWorkoutDataFixture.defaultCreateRequest();
+        structuredWorkoutRequestBuilder.build();
       const error = new Error('Generic error');
 
       vi.mocked(axios.isAxiosError).mockReturnValue(false);
@@ -936,7 +933,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
     it('should handle unknown error types', async () => {
       // Arrange
       const request: CreateStructuredWorkoutRequest =
-        StructuredWorkoutDataFixture.defaultCreateRequest();
+        structuredWorkoutRequestBuilder.build();
 
       vi.mocked(axios.isAxiosError).mockReturnValue(false);
       mockHttpClient.post.mockRejectedValue('String error');
@@ -959,7 +956,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
         title: 'Test Workout',
         workoutTypeValueId: 3,
         workoutDay: '2024-01-15T00:00:00.000Z',
-        structure: StructuredWorkoutDataFixture.default().structure,
+        structure: structuredWorkoutRequestBuilder.build().structure,
         // No metadata provided
       };
 
@@ -997,7 +994,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
   describe('API request configuration', () => {
     it('should use correct headers for all requests', async () => {
       // Arrange
-      const workoutData = WorkoutDataFixture.default();
+      const workoutData = workoutDataBuilder.build();
       mockHttpClient.post.mockResolvedValue({ data: { workoutId: '123' } });
       mockHttpClient.get.mockResolvedValue({ data: workoutData });
       mockHttpClient.delete.mockResolvedValue({ status: 200 });
@@ -1031,9 +1028,9 @@ describe('TrainingPeaks Workout API Adapter', () => {
 
     it('should log all operations consistently', async () => {
       // Arrange
-      const workoutData = WorkoutDataFixture.default();
+      const workoutData = workoutDataBuilder.build();
       const workoutId = 'test-workout-123';
-      const request = StructuredWorkoutDataFixture.defaultCreateRequest();
+      const request = structuredWorkoutRequestBuilder.build();
 
       mockHttpClient.post.mockResolvedValue({ data: { workoutId } });
       mockHttpClient.get.mockResolvedValue({ data: workoutData });
@@ -1073,7 +1070,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
   describe('edge cases and error boundaries', () => {
     it('should handle malformed response data', async () => {
       // Arrange
-      const workoutData = WorkoutDataFixture.default();
+      const workoutData = workoutDataBuilder.build();
       const mockResponse: AxiosResponse = {
         data: 'not an object',
         status: 200,

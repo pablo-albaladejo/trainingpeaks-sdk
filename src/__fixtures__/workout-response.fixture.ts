@@ -1,585 +1,341 @@
 /**
  * Workout Response Fixtures
- * Provides test data for workout operation responses
+ * Factory pattern fixtures for creating workout response data using rosie and faker
+ *
+ * This fixture demonstrates:
+ * - Dependencies between related attributes
+ * - Reusable builders for common response patterns
+ * - Proper handling of optional fields
+ * - Consistent response structure patterns
  */
 
-import { faker } from '@faker-js/faker';
 import type {
   CreateStructuredWorkoutResponse,
   UploadWorkoutResponse,
 } from '@/application/services/workout-creation';
 import type { ListWorkoutsResponse } from '@/application/services/workout-query';
-import { WorkoutDataFixture } from './workout-data.fixture';
-import { StructuredWorkoutDataFixture } from './structured-workout-data.fixture';
+import { faker } from '@faker-js/faker';
+import { Factory } from 'rosie';
 import { randomNumber, randomString, randomUrl } from './utils.fixture';
+import { workoutDataBuilder } from './workout-data.fixture';
 
 /**
- * Create Structured Workout Response Fixture
+ * FileInfo Builder
+ * Creates file information for workout responses
  */
-export class CreateStructuredWorkoutResponseFixture {
-  private response: Partial<CreateStructuredWorkoutResponse> = {};
+export const fileInfoBuilder = new Factory<{
+  originalName: string;
+  size: number;
+  type: string;
+  uploadedAt: Date;
+}>()
+  .attr('originalName', () => `workout-${randomString()}.tcx`)
+  .attr('size', () => randomNumber(1024, 1048576))
+  .attr('type', () => 'application/tcx+xml')
+  .attr('uploadedAt', () => faker.date.recent())
+  .option('fileType', 'tcx')
+  .option('fileSize', undefined)
+  .after((fileInfo, options) => {
+    const fileType =
+      (options as { fileType?: string; fileSize?: number }).fileType || 'tcx';
+    const fileSize = (options as { fileType?: string; fileSize?: number })
+      .fileSize;
 
-  withWorkoutId(workoutId: string): this {
-    this.response.workoutId = workoutId;
-    return this;
-  }
+    let type: string;
+    let originalName: string;
 
-  withRandomWorkoutId(): this {
-    this.response.workoutId = randomString();
-    return this;
-  }
+    switch (fileType) {
+      case 'gpx':
+        type = 'application/gpx+xml';
+        originalName = `workout-${randomString()}.gpx`;
+        break;
+      case 'fit':
+        type = 'application/fit';
+        originalName = `workout-${randomString()}.fit`;
+        break;
+      case 'tcx':
+      default:
+        type = 'application/tcx+xml';
+        originalName = `workout-${randomString()}.tcx`;
+        break;
+    }
 
-  withSuccess(success: boolean): this {
-    this.response.success = success;
-    return this;
-  }
-
-  withMessage(message: string): this {
-    this.response.message = message;
-    return this;
-  }
-
-  withRandomMessage(): this {
-    this.response.message = faker.lorem.sentence();
-    return this;
-  }
-
-  withUrl(url: string): this {
-    this.response.url = url;
-    return this;
-  }
-
-  withRandomUrl(): this {
-    this.response.url = randomUrl();
-    return this;
-  }
-
-  withCreatedAt(createdAt: Date): this {
-    this.response.createdAt = createdAt;
-    return this;
-  }
-
-  withRandomCreatedAt(): this {
-    this.response.createdAt = faker.date.recent();
-    return this;
-  }
-
-  withEstimatedDuration(duration: number): this {
-    this.response.estimatedDuration = duration;
-    return this;
-  }
-
-  withRandomEstimatedDuration(): this {
-    this.response.estimatedDuration = randomNumber(600, 7200);
-    return this;
-  }
-
-  withEstimatedDistance(distance: number): this {
-    this.response.estimatedDistance = distance;
-    return this;
-  }
-
-  withRandomEstimatedDistance(): this {
-    this.response.estimatedDistance = randomNumber(1000, 50000);
-    return this;
-  }
-
-  withEstimatedCalories(calories: number): this {
-    this.response.estimatedCalories = calories;
-    return this;
-  }
-
-  withRandomEstimatedCalories(): this {
-    this.response.estimatedCalories = randomNumber(100, 1000);
-    return this;
-  }
-
-  withStructure(structure: unknown): this {
-    this.response.structure = structure;
-    return this;
-  }
-
-  withRandomStructure(): this {
-    this.response.structure = StructuredWorkoutDataFixture.random().structure;
-    return this;
-  }
-
-  withValidationWarnings(warnings: string[]): this {
-    this.response.validationWarnings = warnings;
-    return this;
-  }
-
-  withRandomValidationWarnings(): this {
-    this.response.validationWarnings = Array.from(
-      { length: randomNumber(1, 3) },
-      () => faker.lorem.sentence()
-    );
-    return this;
-  }
-
-  withUploadStatus(status: 'pending' | 'processing' | 'completed' | 'failed'): this {
-    this.response.uploadStatus = status;
-    return this;
-  }
-
-  withRandomUploadStatus(): this {
-    const statuses: ('pending' | 'processing' | 'completed' | 'failed')[] = [
-      'pending',
-      'processing',
-      'completed',
-      'failed',
-    ];
-    this.response.uploadStatus = faker.helpers.arrayElement(statuses);
-    return this;
-  }
-
-  withProcessingTime(time: number): this {
-    this.response.processingTime = time;
-    return this;
-  }
-
-  withRandomProcessingTime(): this {
-    this.response.processingTime = randomNumber(100, 1000);
-    return this;
-  }
-
-  withMetadata(metadata: Record<string, unknown>): this {
-    this.response.metadata = metadata;
-    return this;
-  }
-
-  withRandomMetadata(): this {
-    this.response.metadata = {
-      version: '1.0',
-      creator: 'sdk',
-      timestamp: new Date().toISOString(),
-    };
-    return this;
-  }
-
-  build(): CreateStructuredWorkoutResponse {
     return {
-      workoutId: this.response.workoutId || randomString(),
-      success: this.response.success ?? true,
-      message: this.response.message,
-      url: this.response.url,
-      createdAt: this.response.createdAt,
-      estimatedDuration: this.response.estimatedDuration,
-      estimatedDistance: this.response.estimatedDistance,
-      estimatedCalories: this.response.estimatedCalories,
-      structure: this.response.structure,
-      validationWarnings: this.response.validationWarnings,
-      uploadStatus: this.response.uploadStatus,
-      processingTime: this.response.processingTime,
-      metadata: this.response.metadata,
+      originalName,
+      size: fileSize || fileInfo.size,
+      type,
+      uploadedAt: fileInfo.uploadedAt,
     };
-  }
-
-  static success(): CreateStructuredWorkoutResponse {
-    return new CreateStructuredWorkoutResponseFixture()
-      .withRandomWorkoutId()
-      .withSuccess(true)
-      .withRandomMessage()
-      .withRandomCreatedAt()
-      .build();
-  }
-
-  static failure(): CreateStructuredWorkoutResponse {
-    return new CreateStructuredWorkoutResponseFixture()
-      .withWorkoutId('')
-      .withSuccess(false)
-      .withMessage('Failed to create workout')
-      .build();
-  }
-
-  static random(): CreateStructuredWorkoutResponse {
-    return new CreateStructuredWorkoutResponseFixture()
-      .withRandomWorkoutId()
-      .withSuccess(Math.random() > 0.2)
-      .withRandomMessage()
-      .withRandomUrl()
-      .withRandomCreatedAt()
-      .withRandomEstimatedDuration()
-      .withRandomEstimatedDistance()
-      .withRandomEstimatedCalories()
-      .withRandomProcessingTime()
-      .withRandomMetadata()
-      .build();
-  }
-}
+  });
 
 /**
- * Upload Workout Response Fixture
+ * ValidationWarning Builder
+ * Creates validation warning objects
  */
-export class UploadWorkoutResponseFixture {
-  private response: Partial<UploadWorkoutResponse> = {};
-
-  withWorkoutId(workoutId: string): this {
-    this.response.workoutId = workoutId;
-    return this;
-  }
-
-  withRandomWorkoutId(): this {
-    this.response.workoutId = randomString();
-    return this;
-  }
-
-  withSuccess(success: boolean): this {
-    this.response.success = success;
-    return this;
-  }
-
-  withMessage(message: string): this {
-    this.response.message = message;
-    return this;
-  }
-
-  withRandomMessage(): this {
-    this.response.message = faker.lorem.sentence();
-    return this;
-  }
-
-  withUrl(url: string): this {
-    this.response.url = url;
-    return this;
-  }
-
-  withRandomUrl(): this {
-    this.response.url = randomUrl();
-    return this;
-  }
-
-  withProcessedData(data: unknown): this {
-    this.response.processedData = data;
-    return this;
-  }
-
-  withRandomProcessedData(): this {
-    this.response.processedData = WorkoutDataFixture.random();
-    return this;
-  }
-
-  withFileInfo(fileInfo: UploadWorkoutResponse['fileInfo']): this {
-    this.response.fileInfo = fileInfo;
-    return this;
-  }
-
-  withRandomFileInfo(): this {
-    this.response.fileInfo = {
-      originalName: faker.system.fileName({ extensionCount: 1 }),
-      size: randomNumber(1024, 1024 * 1024 * 5),
-      type: faker.helpers.arrayElement([
-        'application/tcx+xml',
-        'application/gpx+xml',
-        'application/fit',
-      ]),
-      uploadedAt: faker.date.recent(),
-    };
-    return this;
-  }
-
-  withValidationErrors(errors: string[]): this {
-    this.response.validationErrors = errors;
-    return this;
-  }
-
-  withRandomValidationErrors(): this {
-    this.response.validationErrors = Array.from(
-      { length: randomNumber(1, 3) },
-      () => faker.lorem.sentence()
-    );
-    return this;
-  }
-
-  withValidationWarnings(warnings: string[]): this {
-    this.response.validationWarnings = warnings;
-    return this;
-  }
-
-  withRandomValidationWarnings(): this {
-    this.response.validationWarnings = Array.from(
-      { length: randomNumber(1, 3) },
-      () => faker.lorem.sentence()
-    );
-    return this;
-  }
-
-  withProcessingTime(time: number): this {
-    this.response.processingTime = time;
-    return this;
-  }
-
-  withRandomProcessingTime(): this {
-    this.response.processingTime = randomNumber(100, 2500);
-    return this;
-  }
-
-  withMetadata(metadata: Record<string, unknown>): this {
-    this.response.metadata = metadata;
-    return this;
-  }
-
-  withRandomMetadata(): this {
-    this.response.metadata = {
-      uploadSource: 'sdk',
-      fileFormat: faker.helpers.arrayElement(['tcx', 'gpx', 'fit']),
-      processingVersion: faker.system.semver(),
-      deviceInfo: {
-        manufacturer: faker.helpers.arrayElement(['Garmin', 'Polar', 'Suunto']),
-        model: faker.commerce.productName(),
-      },
-    };
-    return this;
-  }
-
-  build(): UploadWorkoutResponse {
-    return {
-      workoutId: this.response.workoutId || randomString(),
-      success: this.response.success ?? true,
-      message: this.response.message,
-      url: this.response.url,
-      processedData: this.response.processedData,
-      fileInfo: this.response.fileInfo,
-      validationErrors: this.response.validationErrors,
-      validationWarnings: this.response.validationWarnings,
-      processingTime: this.response.processingTime,
-      metadata: this.response.metadata,
-    };
-  }
-
-  static success(): UploadWorkoutResponse {
-    return new UploadWorkoutResponseFixture()
-      .withRandomWorkoutId()
-      .withSuccess(true)
-      .withRandomMessage()
-      .withRandomUrl()
-      .withRandomProcessedData()
-      .withRandomFileInfo()
-      .build();
-  }
-
-  static failure(): UploadWorkoutResponse {
-    return new UploadWorkoutResponseFixture()
-      .withWorkoutId('')
-      .withSuccess(false)
-      .withMessage('Upload failed: Invalid file format')
-      .withRandomValidationErrors()
-      .build();
-  }
-
-  static random(): UploadWorkoutResponse {
-    return new UploadWorkoutResponseFixture()
-      .withRandomWorkoutId()
-      .withSuccess(Math.random() > 0.2)
-      .withRandomMessage()
-      .withRandomUrl()
-      .withRandomProcessedData()
-      .withRandomFileInfo()
-      .withRandomProcessingTime()
-      .withRandomMetadata()
-      .build();
-  }
-}
+export const validationWarningBuilder = new Factory()
+  .attr('field', () =>
+    faker.helpers.arrayElement(['name', 'description', 'date', 'duration'])
+  )
+  .attr('message', () => faker.lorem.sentence())
+  .attr('severity', () => faker.helpers.arrayElement(['warning', 'info']))
+  .option('field', 'name')
+  .option('message', 'Field validation warning')
+  .option('severity', 'warning');
 
 /**
- * List Workouts Response Fixture
+ * ValidationError Builder
+ * Creates validation error objects
  */
-export class ListWorkoutsResponseFixture {
-  private response: Partial<ListWorkoutsResponse> = {};
-
-  withWorkouts(workouts: unknown[]): this {
-    this.response.workouts = workouts;
-    return this;
-  }
-
-  withRandomWorkouts(count: number = randomNumber(1, 5)): this {
-    this.response.workouts = Array.from({ length: count }, (_, i) =>
-      new WorkoutDataFixture().withName(`Workout ${i + 1}`).build()
-    );
-    return this;
-  }
-
-  withTotal(total: number): this {
-    this.response.total = total;
-    return this;
-  }
-
-  withRandomTotal(): this {
-    this.response.total = randomNumber(0, 2000);
-    return this;
-  }
-
-  withPage(page: number): this {
-    this.response.page = page;
-    return this;
-  }
-
-  withRandomPage(): this {
-    this.response.page = randomNumber(1, 10);
-    return this;
-  }
-
-  withLimit(limit: number): this {
-    this.response.limit = limit;
-    return this;
-  }
-
-  withRandomLimit(): this {
-    this.response.limit = randomNumber(10, 100);
-    return this;
-  }
-
-  withHasMore(hasMore: boolean): this {
-    this.response.hasMore = hasMore;
-    return this;
-  }
-
-  withRandomHasMore(): this {
-    this.response.hasMore = Math.random() > 0.5;
-    return this;
-  }
-
-  build(): ListWorkoutsResponse {
-    return {
-      workouts: this.response.workouts || [],
-      total: this.response.total || 0,
-      page: this.response.page || 1,
-      limit: this.response.limit || 10,
-      hasMore: this.response.hasMore ?? false,
-    };
-  }
-
-  static empty(): ListWorkoutsResponse {
-    return new ListWorkoutsResponseFixture()
-      .withWorkouts([])
-      .withTotal(0)
-      .withPage(1)
-      .withLimit(10)
-      .withHasMore(false)
-      .build();
-  }
-
-  static withWorkouts(workouts: unknown[]): ListWorkoutsResponse {
-    return new ListWorkoutsResponseFixture()
-      .withWorkouts(workouts)
-      .withTotal(workouts.length)
-      .withPage(1)
-      .withLimit(10)
-      .withHasMore(false)
-      .build();
-  }
-
-  static random(): ListWorkoutsResponse {
-    const workoutCount = randomNumber(0, 10);
-    return new ListWorkoutsResponseFixture()
-      .withRandomWorkouts(workoutCount)
-      .withRandomTotal()
-      .withRandomPage()
-      .withRandomLimit()
-      .withRandomHasMore()
-      .build();
-  }
-}
+export const validationErrorBuilder = new Factory()
+  .attr('field', () =>
+    faker.helpers.arrayElement(['name', 'description', 'date', 'duration'])
+  )
+  .attr('message', () => faker.lorem.sentence())
+  .attr('code', () =>
+    faker.helpers.arrayElement(['REQUIRED', 'INVALID_FORMAT', 'OUT_OF_RANGE'])
+  )
+  .option('field', 'name')
+  .option('message', 'Field validation error')
+  .option('code', 'REQUIRED');
 
 /**
- * Workout File Fixture for testing uploads
+ * CreateStructuredWorkoutResponse Builder
+ * Creates structured workout creation responses with proper dependencies
  */
-export class WorkoutFileFixture {
-  private file: Partial<{
-    name: string;
-    content: string;
-    size: number;
-    type: string;
-  }> = {};
+export const createStructuredWorkoutResponseBuilder =
+  new Factory<CreateStructuredWorkoutResponse>()
+    .attr('workoutId', () => randomString())
+    .attr('success', () => true)
+    .attr('message', () => faker.lorem.sentence())
+    .attr('url', () => randomUrl())
+    .attr('createdAt', () => faker.date.recent())
+    .attr('estimatedDuration', () => randomNumber(600, 7200))
+    .attr('estimatedDistance', () => randomNumber(1000, 50000))
+    .attr('estimatedCalories', () => randomNumber(100, 1000))
+    .attr('structure', () => undefined)
+    .attr('validationWarnings', () => undefined)
+    .attr('uploadStatus', () => 'completed' as const)
+    .attr('processingTime', () => randomNumber(100, 1000))
+    .attr('metadata', () => undefined)
+    .option('includeWarnings', false)
+    .option('includeStructure', false)
+    .option('processingTime', undefined)
+    .after((response, options) => {
+      const warnings = options.includeWarnings
+        ? Array.from({ length: randomNumber(1, 3) }, () =>
+            validationWarningBuilder.build()
+          )
+        : undefined;
 
-  withName(name: string): this {
-    this.file.name = name;
-    return this;
-  }
+      return {
+        ...response,
+        validationWarnings: warnings,
+        processingTime:
+          options.processingTime !== undefined
+            ? options.processingTime
+            : response.processingTime,
+      };
+    });
 
-  withRandomName(): this {
-    const extensions = ['tcx', 'gpx', 'fit'];
-    const extension = faker.helpers.arrayElement(extensions);
-    this.file.name = `${faker.lorem.word()}.${extension}`;
-    return this;
-  }
-
-  withContent(content: string): this {
-    this.file.content = content;
-    return this;
-  }
-
-  withRandomContent(): this {
-    this.file.content = faker.lorem.paragraphs();
-    return this;
-  }
-
-  withSize(size: number): this {
-    this.file.size = size;
-    return this;
-  }
-
-  withRandomSize(): this {
-    this.file.size = randomNumber(1024, 1024 * 1024 * 5);
-    return this;
-  }
-
-  withType(type: string): this {
-    this.file.type = type;
-    return this;
-  }
-
-  withRandomType(): this {
-    this.file.type = faker.helpers.arrayElement([
-      'application/tcx+xml',
-      'application/gpx+xml',
-      'application/fit',
-    ]);
-    return this;
-  }
-
-  build() {
+/**
+ * UploadWorkoutResponse Builder
+ * Creates workout upload responses with file info and validation
+ */
+export const uploadWorkoutResponseBuilder = new Factory<UploadWorkoutResponse>()
+  .attr('workoutId', () => randomString())
+  .attr('success', () => true)
+  .attr('message', () => faker.lorem.sentence())
+  .attr('url', () => randomUrl())
+  .attr('processedData', () => workoutDataBuilder.build())
+  .attr('fileInfo', () => fileInfoBuilder.build())
+  .attr('validationErrors', () => undefined)
+  .attr('validationWarnings', () => undefined)
+  .attr('processingTime', () => randomNumber(100, 2500))
+  .attr('metadata', () => undefined)
+  .after((response) => {
     return {
-      name: this.file.name || 'workout.tcx',
-      content: this.file.content || '<TrainingCenterDatabase>...</TrainingCenterDatabase>',
-      size: this.file.size || 1024,
-      type: this.file.type || 'application/tcx+xml',
+      ...response,
+      fileInfo: response.fileInfo,
+      validationErrors: response.validationErrors,
+      validationWarnings: response.validationWarnings,
+      processingTime: response.processingTime,
     };
+  });
+
+/**
+ * Helper function to create upload responses with specific options
+ */
+export const createUploadWorkoutResponse = (
+  options: {
+    fileType?: string;
+    fileSize?: number;
+    includeErrors?: boolean;
+    includeWarnings?: boolean;
+    warningCount?: number;
+    processingTime?: number;
+    success?: boolean;
+  } = {}
+) => {
+  // Create fileInfo manually
+  let fileType: string;
+  let originalName: string;
+
+  switch (options.fileType) {
+    case 'gpx':
+      fileType = 'application/gpx+xml';
+      originalName = `workout-${randomString()}.gpx`;
+      break;
+    case 'fit':
+      fileType = 'application/fit';
+      originalName = `workout-${randomString()}.fit`;
+      break;
+    case 'tcx':
+    default:
+      fileType = 'application/tcx+xml';
+      originalName = `workout-${randomString()}.tcx`;
+      break;
   }
 
-  static tcx() {
-    return new WorkoutFileFixture()
-      .withName('workout.tcx')
-      .withContent('<TrainingCenterDatabase>...</TrainingCenterDatabase>')
-      .withSize(1024)
-      .withType('application/tcx+xml')
-      .build();
-  }
+  const fileInfo = {
+    originalName,
+    size:
+      options.fileSize !== undefined
+        ? options.fileSize
+        : randomNumber(1024, 1048576),
+    type: fileType,
+    uploadedAt: faker.date.recent(),
+  };
 
-  static gpx() {
-    return new WorkoutFileFixture()
-      .withName('workout.gpx')
-      .withContent('<gpx>...</gpx>')
-      .withSize(2048)
-      .withType('application/gpx+xml')
-      .build();
-  }
+  const errors = options.includeErrors
+    ? Array.from({ length: randomNumber(1, 2) }, () =>
+        validationErrorBuilder.build()
+      )
+    : undefined;
 
-  static fit() {
-    return new WorkoutFileFixture()
-      .withName('workout.fit')
-      .withContent('binary-fit-data...')
-      .withSize(5 * 1024 * 1024)
-      .withType('application/fit')
-      .build();
-  }
+  const warnings = options.includeWarnings
+    ? Array.from({ length: options.warningCount || randomNumber(1, 3) }, () =>
+        validationWarningBuilder.build()
+      )
+    : undefined;
 
-  static random() {
-    return new WorkoutFileFixture()
-      .withRandomName()
-      .withRandomContent()
-      .withRandomSize()
-      .withRandomType()
-      .build();
-  }
-}
+  return uploadWorkoutResponseBuilder.build({
+    success: options.success !== undefined ? options.success : true,
+    fileInfo,
+    validationErrors: errors,
+    validationWarnings: warnings,
+    processingTime: options.processingTime,
+  });
+};
+
+/**
+ * ListWorkoutsResponse Builder
+ * Creates workout list responses with pagination
+ */
+export const listWorkoutsResponseBuilder = new Factory<ListWorkoutsResponse>()
+  .attr('workouts', () => [])
+  .attr('total', () => 0)
+  .attr('page', () => 1)
+  .attr('limit', () => 10)
+  .attr('hasMore', () => false)
+  .after((response) => {
+    return {
+      workouts: response.workouts,
+      total: response.total,
+      page: response.page,
+      limit: response.limit,
+      hasMore: response.hasMore,
+    };
+  });
+
+/**
+ * Helper function to create list responses with specific workout count
+ */
+export const createListWorkoutsResponse = (
+  options: {
+    workoutCount?: number;
+    total?: number;
+    page?: number;
+    limit?: number;
+  } = {}
+) => {
+  const workouts = Array.from({ length: options.workoutCount || 0 }, () =>
+    workoutDataBuilder.build()
+  );
+
+  const total = options.total || options.workoutCount || 0;
+  const page = options.page || 1;
+  const limit = options.limit || 10;
+  const hasMore = page * limit < total;
+
+  return listWorkoutsResponseBuilder.build({
+    workouts,
+    total,
+    page,
+    limit,
+    hasMore,
+  });
+};
+
+/**
+ * Predefined Response Builders for Common Scenarios
+ * These demonstrate reusable builders for common response patterns
+ */
+
+/**
+ * Successful Upload Response Builder
+ * Creates successful upload responses
+ */
+export const successfulUploadResponseBuilder = new Factory()
+  .extend(uploadWorkoutResponseBuilder)
+  .option('success', true)
+  .option('includeErrors', false)
+  .option('includeWarnings', false)
+  .option('processingTime', 500);
+
+/**
+ * Failed Upload Response Builder
+ * Creates failed upload responses with errors
+ */
+export const failedUploadResponseBuilder = new Factory()
+  .extend(uploadWorkoutResponseBuilder)
+  .option('success', false)
+  .option('includeErrors', true)
+  .option('includeWarnings', true)
+  .option('processingTime', 100)
+  .after((response) => ({
+    ...response,
+    message: 'Upload failed due to validation errors',
+    processedData: undefined,
+    fileInfo: undefined,
+  }));
+
+/**
+ * Paginated List Response Builder
+ * Creates paginated list responses with realistic data
+ */
+export const paginatedListResponseBuilder = new Factory()
+  .extend(listWorkoutsResponseBuilder)
+  .option('workoutCount', 10)
+  .option('total', 50)
+  .option('page', 1)
+  .option('limit', 10)
+  .after((response, options) => {
+    const total = options.total || 50;
+    const hasMore = options.page * options.limit < total;
+
+    return {
+      ...response,
+      hasMore,
+      total,
+    };
+  });
+
+/**
+ * Empty List Response Builder
+ * Creates empty list responses
+ */
+export const emptyListResponseBuilder = new Factory()
+  .extend(listWorkoutsResponseBuilder)
+  .option('workoutCount', 0)
+  .option('total', 0)
+  .option('hasMore', false);

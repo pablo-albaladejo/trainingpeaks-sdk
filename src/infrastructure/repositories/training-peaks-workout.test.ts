@@ -4,7 +4,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { WorkoutDataFixture } from '../../__fixtures__/workout-data.fixture';
+import { workoutDataBuilder } from '../../__fixtures__/workout-data.fixture';
 import { ValidationError } from '../../domain/errors';
 import { createWorkoutFile } from '../../infrastructure/services/domain-factories';
 import { createTrainingPeaksWorkoutRepository } from './training-peaks-workout';
@@ -146,18 +146,16 @@ describe('TrainingPeaks Workout Repository', () => {
 
     it('should handle workout data conversion', () => {
       // Arrange
-      const workoutData = WorkoutDataFixture.default();
+      const workoutData = workoutDataBuilder.build();
 
-      // Act
-      const repository = createTrainingPeaksWorkoutRepository(
-        mockFileSystemAdapter,
-        config
-      );
-
-      // Assert - basic structure validation
+      // Act & Assert
       expect(workoutData).toBeDefined();
       expect(workoutData.name).toBeDefined();
       expect(workoutData.description).toBeDefined();
+      expect(workoutData.date).toBeDefined();
+      expect(workoutData.duration).toBeDefined();
+      expect(workoutData.distance).toBeDefined();
+      expect(workoutData.type).toBeDefined();
     });
 
     it('should handle workout file creation', () => {

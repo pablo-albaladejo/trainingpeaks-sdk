@@ -1,312 +1,302 @@
 /**
  * Structured Workout Data Fixture
- * Provides test data for structured workout operations
+ * Factory pattern fixtures for creating structured workout data using rosie and faker
+ *
+ * This fixture demonstrates complex nested structures with proper builder separation:
+ * - WorkoutStep builders for individual workout steps
+ * - WorkoutStructureElement builders for structure elements
+ * - WorkoutStructure builder for complete workout structures
+ * - Proper use of domain factory functions
+ * - Dependencies between related attributes
  */
 
-import type { WorkoutStructure, WorkoutStructureElement } from '@/domain';
 import {
   createWorkoutLength,
   createWorkoutStep,
   createWorkoutStructure,
   createWorkoutStructureElement,
-  createWorkoutTarget,
 } from '@/infrastructure/services/domain-factories';
 import { CreateStructuredWorkoutRequest } from '@/types/index';
+import { Factory } from 'rosie';
 import { randomNumber } from './utils.fixture';
 
-export class StructuredWorkoutDataFixture {
-  private athleteId: number = randomNumber(1000, 9999);
-  private title: string = 'Test Structured Workout';
-  private workoutTypeValueId: number = 3; // Running
-  private workoutDay: string =
-    new Date().toISOString().split('T')[0] + 'T00:00:00';
-  private structure: WorkoutStructure = this.createDefaultStructure();
-  private metadata: CreateStructuredWorkoutRequest['metadata'] = undefined;
+/**
+ * WorkoutTarget Builder
+ * Creates workout target objects for intensity zones
+ */
+export const workoutTargetBuilder = new Factory()
+  .attr('min', () => randomNumber(50, 95))
+  .attr('max', () => randomNumber(60, 100))
+  .option('min', 60)
+  .option('max', 80)
+  .after((target) => {
+    // Ensure max is always greater than min
+    if (target.max <= target.min) {
+      target.max = target.min + randomNumber(5, 20);
+    }
+    return target;
+  });
 
-  public withAthleteId(athleteId: number): StructuredWorkoutDataFixture {
-    this.athleteId = athleteId;
-    return this;
-  }
-
-  public withTitle(title: string): StructuredWorkoutDataFixture {
-    this.title = title;
-    return this;
-  }
-
-  public withWorkoutTypeValueId(
-    workoutTypeValueId: number
-  ): StructuredWorkoutDataFixture {
-    this.workoutTypeValueId = workoutTypeValueId;
-    return this;
-  }
-
-  public withWorkoutDay(workoutDay: string): StructuredWorkoutDataFixture {
-    this.workoutDay = workoutDay;
-    return this;
-  }
-
-  public withStructure(
-    structure: WorkoutStructure
-  ): StructuredWorkoutDataFixture {
-    this.structure = structure;
-    return this;
-  }
-
-  public withMetadata(
-    metadata: CreateStructuredWorkoutRequest['metadata']
-  ): StructuredWorkoutDataFixture {
-    this.metadata = metadata;
-    return this;
-  }
-
-  public withRandomData(): StructuredWorkoutDataFixture {
-    this.athleteId = randomNumber(1000, 9999);
-    this.title = `Random Workout ${randomNumber(1, 100)}`;
-    this.workoutTypeValueId = randomNumber(1, 5);
-    this.workoutDay =
-      new Date(Date.now() + randomNumber(-30, 30) * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split('T')[0] + 'T00:00:00';
-    this.structure = this.createRandomStructure();
-    return this;
-  }
-
-  public build(): CreateStructuredWorkoutRequest {
-    return {
-      athleteId: this.athleteId,
-      title: this.title,
-      workoutTypeValueId: this.workoutTypeValueId,
-      workoutDay: this.workoutDay,
-      structure: this.structure,
-      metadata: this.metadata,
-    };
-  }
-
-  public buildCreateRequest(): CreateStructuredWorkoutRequest {
-    return {
-      athleteId: this.athleteId,
-      title: this.title,
-      workoutTypeValueId: this.workoutTypeValueId,
-      workoutDay: this.workoutDay,
-      structure: this.structure,
-      metadata: this.metadata,
-    };
-  }
-
-  private createDefaultStructure(): WorkoutStructure {
-    // Create a simple 3-step workout: warm-up, main set, cool-down
-    const warmUpStep = createWorkoutStep(
-      'Warm-up',
-      createWorkoutLength(600, 'second'), // 10 minutes
-      [createWorkoutTarget(60, 70)],
-      'warmUp'
-    );
-
-    const mainSetStep = createWorkoutStep(
-      'Main Set',
-      createWorkoutLength(1200, 'second'), // 20 minutes
-      [createWorkoutTarget(80, 90)],
-      'active'
-    );
-
-    const coolDownStep = createWorkoutStep(
-      'Cool-down',
-      createWorkoutLength(300, 'second'), // 5 minutes
-      [createWorkoutTarget(50, 60)],
-      'coolDown'
-    );
-
-    const step1Element = createWorkoutStructureElement(
-      'step',
-      createWorkoutLength(600, 'second'),
-      [warmUpStep],
-      0,
-      600
-    );
-
-    const step2Element = createWorkoutStructureElement(
-      'step',
-      createWorkoutLength(1200, 'second'),
-      [mainSetStep],
-      600,
-      1800
-    );
-
-    const step3Element = createWorkoutStructureElement(
-      'step',
-      createWorkoutLength(300, 'second'),
-      [coolDownStep],
-      1800,
-      2100
-    );
-
-    return createWorkoutStructure(
-      [step1Element, step2Element, step3Element],
+/**
+ * WorkoutStep Builder
+ * Creates individual workout steps with proper domain factory usage
+ */
+export const workoutStepBuilder = new Factory()
+  .attr('name', () => `Step ${randomNumber(1, 10)}`)
+  .attr('length', () => createWorkoutLength(randomNumber(300, 3600), 'second'))
+  .attr('targets', () => [workoutTargetBuilder.build()])
+  .attr('type', () => 'active')
+  .option('name', 'Default Step')
+  .option('duration', 600)
+  .option('targetMin', 70)
+  .option('targetMax', 85)
+  .option('stepType', 'active')
+  .after((step, options) => {
+    // Use domain factory to create proper step
+    return createWorkoutStep(
+      options.name || step.name,
+      createWorkoutLength(options.duration || step.length.value, 'second'),
       [
-        [0, 0],
-        [600, 0],
-        [1800, 0],
-        [2100, 0],
+        workoutTargetBuilder.build({
+          min: options.targetMin,
+          max: options.targetMax,
+        }),
       ],
-      'duration',
-      'percentOfThresholdPace',
-      'target'
+      options.stepType || step.type
     );
-  }
+  });
 
-  private createRandomStructure(): WorkoutStructure {
-    const stepCount = randomNumber(2, 5);
-    const elements: WorkoutStructureElement[] = [];
-    let currentTime = 0;
+/**
+ * WorkoutStructureElement Builder
+ * Creates structure elements that contain workout steps
+ */
+export const workoutStructureElementBuilder = new Factory()
+  .attr('type', () => 'step')
+  .attr('length', () => createWorkoutLength(randomNumber(300, 3600), 'second'))
+  .attr('steps', () => [workoutStepBuilder.build()])
+  .attr('startTime', () => 0)
+  .attr('endTime', () => randomNumber(600, 3600))
+  .option('elementType', 'step')
+  .option('duration', 1200)
+  .option('stepCount', 1)
+  .after((element, options) => {
+    const steps = Array.from({ length: options.stepCount || 1 }, () =>
+      workoutStepBuilder.build()
+    );
 
-    for (let i = 0; i < stepCount; i++) {
-      const stepDuration = randomNumber(300, 1800); // 5-30 minutes
-      const stepName = `Step ${i + 1}`;
-      const intensityClass = this.getRandomIntensityClass();
+    return createWorkoutStructureElement(
+      options.elementType || element.type,
+      createWorkoutLength(options.duration || element.length.value, 'second'),
+      steps,
+      element.startTime,
+      element.endTime
+    );
+  });
 
-      const minValue = randomNumber(60, 85);
-      const maxValue = randomNumber(minValue + 5, 100);
-      const step = createWorkoutStep(
-        stepName,
-        createWorkoutLength(stepDuration, 'second'),
-        [createWorkoutTarget(minValue, maxValue)],
-        intensityClass
-      );
+/**
+ * WorkoutStructure Builder
+ * Creates complete workout structures with multiple elements
+ * Demonstrates complex nested structure creation
+ */
+export const workoutStructureBuilder = new Factory()
+  .attr('elements', () => [
+    workoutStructureElementBuilder.build({
+      elementType: 'step',
+      duration: 600,
+      stepCount: 1,
+    }),
+    workoutStructureElementBuilder.build({
+      elementType: 'step',
+      duration: 1200,
+      stepCount: 1,
+    }),
+    workoutStructureElementBuilder.build({
+      elementType: 'step',
+      duration: 300,
+      stepCount: 1,
+    }),
+  ])
+  .attr('transitions', () => [
+    [0, 0],
+    [600, 0],
+    [1800, 0],
+    [2100, 0],
+  ])
+  .attr('lengthType', () => 'duration')
+  .attr('intensityType', () => 'percentOfThresholdPace')
+  .attr('targetType', () => 'target')
+  .option('elementCount', 3)
+  .option('includeWarmup', true)
+  .option('includeCooldown', true)
+  .after((structure, options) => {
+    const elements = [];
 
-      const element = createWorkoutStructureElement(
-        'step',
-        createWorkoutLength(stepDuration, 'second'),
-        [step],
-        currentTime,
-        currentTime + stepDuration
-      );
-
-      elements.push(element);
-      currentTime += stepDuration;
+    // Add warmup if requested
+    if (options.includeWarmup) {
+      const warmupElement = workoutStructureElementBuilder.build({
+        elementType: 'step',
+        duration: 600,
+        stepCount: 1,
+      });
+      elements.push(warmupElement);
     }
 
-    const polyline = elements.map((_, index) => [
-      (index / elements.length) * 100,
-      randomNumber(0, 100),
-    ]);
+    // Add main elements
+    const mainElementCount =
+      options.elementCount -
+      (options.includeWarmup ? 1 : 0) -
+      (options.includeCooldown ? 1 : 0);
+    for (let i = 0; i < mainElementCount; i++) {
+      const element = workoutStructureElementBuilder.build({
+        elementType: 'step',
+        duration: 1200,
+        stepCount: 1,
+      });
+      elements.push(element);
+    }
+
+    // Add cooldown if requested
+    if (options.includeCooldown) {
+      const cooldownElement = workoutStructureElementBuilder.build({
+        elementType: 'step',
+        duration: 300,
+        stepCount: 1,
+      });
+      elements.push(cooldownElement);
+    }
+
+    // Build transitions array
+    const transitions = [[0, 0]];
+    let time = 0;
+    for (const element of elements) {
+      time += element.length.value;
+      transitions.push([time, 0]);
+    }
 
     return createWorkoutStructure(
       elements,
-      polyline,
-      'duration',
-      'percentOfThresholdPace',
-      'target'
+      transitions,
+      structure.lengthType,
+      structure.intensityType,
+      structure.targetType
     );
-  }
+  });
 
-  private getRandomIntensityClass(): 'active' | 'rest' | 'warmUp' | 'coolDown' {
-    const classes: ('active' | 'rest' | 'warmUp' | 'coolDown')[] = [
-      'active',
-      'rest',
-      'warmUp',
-      'coolDown',
-    ];
-    return classes[randomNumber(0, classes.length - 1)] || 'active';
-  }
+/**
+ * CreateStructuredWorkoutRequest Builder
+ * Creates structured workout request data with proper structure dependencies
+ */
+export const structuredWorkoutRequestBuilder =
+  new Factory<CreateStructuredWorkoutRequest>()
+    .attr('athleteId', () => randomNumber(1000, 9999))
+    .attr('title', () => `Test Structured Workout ${randomNumber(1, 100)}`)
+    .attr('workoutTypeValueId', () => randomNumber(1, 5))
+    .attr('workoutDay', () => {
+      const date = new Date(
+        Date.now() + randomNumber(-30, 30) * 24 * 60 * 60 * 1000
+      );
+      return date.toISOString().split('T')[0] + 'T00:00:00';
+    })
+    .attr('structure', () => workoutStructureBuilder.build())
+    .attr('metadata', () => undefined)
+    .option('includeWarmup', true)
+    .option('includeCooldown', true)
+    .option('elementCount', 3)
+    .after((request, options) => {
+      // Create structure with options
+      const structure = workoutStructureBuilder.build({
+        includeWarmup: options.includeWarmup,
+        includeCooldown: options.includeCooldown,
+        elementCount: options.elementCount,
+      });
 
-  public static default(): CreateStructuredWorkoutRequest {
-    return new StructuredWorkoutDataFixture().build();
-  }
+      return {
+        ...request,
+        structure,
+      };
+    });
 
-  public static random(): CreateStructuredWorkoutRequest {
-    return new StructuredWorkoutDataFixture().withRandomData().build();
-  }
+/**
+ * Predefined Structure Builders for Common Workout Types
+ * These demonstrate reusable builders for common patterns
+ */
 
-  public static withIntervals(): CreateStructuredWorkoutRequest {
-    // Create a workout with intervals
-    const warmUpStep = createWorkoutStep(
-      'Warm-up',
-      createWorkoutLength(300, 'second'), // 5 minutes
-      [createWorkoutTarget(60, 70)],
-      'warmUp'
-    );
+/**
+ * Simple Workout Structure Builder
+ * Creates a basic 3-step workout: warmup, main, cooldown
+ */
+export const simpleWorkoutStructureBuilder = new Factory()
+  .extend(workoutStructureBuilder)
+  .option('includeWarmup', true)
+  .option('includeCooldown', true)
+  .option('elementCount', 1);
 
-    const intervalStep = createWorkoutStep(
-      'Interval',
-      createWorkoutLength(120, 'second'), // 2 minutes
-      [createWorkoutTarget(85, 95)],
-      'active'
-    );
+/**
+ * Interval Workout Structure Builder
+ * Creates interval workouts with multiple high-intensity periods
+ */
+export const intervalWorkoutStructureBuilder = new Factory()
+  .extend(workoutStructureBuilder)
+  .option('intervalCount', 5)
+  .option('intervalDuration', 300)
+  .option('restDuration', 180)
+  .after((_, options) => {
+    const elements = [];
 
-    const restStep = createWorkoutStep(
-      'Rest',
-      createWorkoutLength(60, 'second'), // 1 minute
-      [createWorkoutTarget(50, 60)],
-      'rest'
-    );
-
-    const coolDownStep = createWorkoutStep(
-      'Cool-down',
-      createWorkoutLength(300, 'second'), // 5 minutes
-      [createWorkoutTarget(60, 70)],
-      'coolDown'
-    );
-
-    // Create repetition element for intervals
-    const repetitionElement = createWorkoutStructureElement(
-      'repetition',
-      createWorkoutLength(4, 'repetition'),
-      [intervalStep, restStep],
-      300, // Start after warm-up
-      300 + 4 * (120 + 60) // 4 intervals * (2min + 1min rest)
-    );
-
-    const warmUpElement = createWorkoutStructureElement(
-      'step',
-      createWorkoutLength(300, 'second'),
-      [warmUpStep],
-      0,
-      300
-    );
-
-    const coolDownElement = createWorkoutStructureElement(
-      'step',
-      createWorkoutLength(300, 'second'),
-      [coolDownStep],
-      300 + 4 * (120 + 60), // After intervals
-      300 + 4 * (120 + 60) + 300 // After cool-down
-    );
-
-    const structure = createWorkoutStructure(
-      [warmUpElement, repetitionElement, coolDownElement],
-      [
-        [0, 0],
-        [300, 0],
-        [300 + 4 * (120 + 60), 0],
-        [300 + 4 * (120 + 60) + 300, 0],
-      ],
-      'duration',
-      'percentOfThresholdPace',
-      'target'
-    );
-
-    return new StructuredWorkoutDataFixture()
-      .withTitle('Interval Training Workout')
-      .withStructure(structure)
-      .withMetadata({
-        description: 'A challenging interval workout with 4x2min intervals',
-        userTags: 'interval, running, advanced',
-        plannedMetrics: {
-          totalTimePlanned: 0.5, // 30 minutes
-          tssPlanned: 85.5,
-          ifPlanned: 0.85,
-        },
+    // Warmup
+    elements.push(
+      workoutStructureElementBuilder.build({
+        elementType: 'step',
+        duration: 600,
+        stepCount: 1,
       })
-      .build();
-  }
+    );
 
-  public static defaultCreateRequest(): CreateStructuredWorkoutRequest {
-    return new StructuredWorkoutDataFixture().buildCreateRequest();
-  }
+    // Intervals
+    for (let i = 0; i < options.intervalCount; i++) {
+      // High intensity interval
+      elements.push(
+        workoutStructureElementBuilder.build({
+          elementType: 'step',
+          duration: options.intervalDuration,
+          stepCount: 1,
+        })
+      );
 
-  public static randomCreateRequest(): CreateStructuredWorkoutRequest {
-    return new StructuredWorkoutDataFixture()
-      .withRandomData()
-      .buildCreateRequest();
-  }
-}
+      // Rest period (except after last interval)
+      if (i < options.intervalCount - 1) {
+        elements.push(
+          workoutStructureElementBuilder.build({
+            elementType: 'step',
+            duration: options.restDuration,
+            stepCount: 1,
+          })
+        );
+      }
+    }
+
+    // Cooldown
+    elements.push(
+      workoutStructureElementBuilder.build({
+        elementType: 'step',
+        duration: 300,
+        stepCount: 1,
+      })
+    );
+
+    // Build transitions
+    const transitions = [[0, 0]];
+    let time = 0;
+    for (const element of elements) {
+      time += element.length.value;
+      transitions.push([time, 0]);
+    }
+
+    return createWorkoutStructure(
+      elements,
+      transitions,
+      'duration',
+      'percentOfThresholdPace',
+      'target'
+    );
+  });

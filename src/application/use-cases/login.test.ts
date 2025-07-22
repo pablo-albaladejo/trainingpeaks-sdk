@@ -5,7 +5,7 @@
 
 import { faker } from '@faker-js/faker';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuthTokenFixture, UserFixture } from '../../__fixtures__/auth.fixture';
+import { authTokenBuilder, userBuilder } from '../../__fixtures__/auth.fixture';
 import { randomNumber, randomString } from '../../__fixtures__/utils.fixture';
 import { AuthRepository } from '../ports/auth';
 import { createLoginUseCase, LoginRequest, LoginResponse } from './login';
@@ -38,8 +38,8 @@ describe('Login Use Case', () => {
       const password = faker.internet.password();
       const request: LoginRequest = { username, password };
 
-      const expectedToken = AuthTokenFixture.random();
-      const expectedUser = UserFixture.random();
+      const expectedToken = authTokenBuilder.build();
+      const expectedUser = userBuilder.build();
       const expectedResponse: LoginResponse = {
         token: expectedToken,
         user: expectedUser,
@@ -73,8 +73,8 @@ describe('Login Use Case', () => {
       const password = 'testpassword';
       const request: LoginRequest = { username, password };
 
-      const expectedToken = AuthTokenFixture.default();
-      const expectedUser = UserFixture.default();
+      const expectedToken = authTokenBuilder.build();
+      const expectedUser = userBuilder.build();
       const expectedResponse: LoginResponse = {
         token: expectedToken,
         user: expectedUser,
@@ -135,12 +135,12 @@ describe('Login Use Case', () => {
         password: 'P@ssw0rd!',
       };
 
-      const expectedToken = new AuthTokenFixture()
-        .withAccessToken('special-token')
-        .build();
-      const expectedUser = new UserFixture()
-        .withName('user@domain.com')
-        .build();
+      const expectedToken = authTokenBuilder.build({
+        accessToken: 'special-token',
+      });
+      const expectedUser = userBuilder.build({
+        name: 'user@domain.com',
+      });
       const expectedResponse: LoginResponse = {
         token: expectedToken,
         user: expectedUser,
@@ -173,16 +173,16 @@ describe('Login Use Case', () => {
         password: 'testpassword',
       };
 
-      const expectedToken = new AuthTokenFixture()
-        .withAccessToken('access-123')
-        .withRefreshToken('refresh-456')
-        .withExpiresIn(7200)
-        .withTokenType('Bearer')
-        .build();
-      const expectedUser = new UserFixture()
-        .withId('123')
-        .withName('Test User')
-        .build();
+      const expectedToken = authTokenBuilder.build({
+        accessToken: 'access-123',
+        refreshToken: 'refresh-456',
+        expiresAt: new Date(Date.now() + 7200 * 1000),
+        tokenType: 'Bearer',
+      });
+      const expectedUser = userBuilder.build({
+        id: '123',
+        name: 'Test User',
+      });
       const expectedResponse: LoginResponse = {
         token: expectedToken,
         user: expectedUser,
@@ -214,8 +214,8 @@ describe('Login Use Case', () => {
         password: randomString(randomNumber(8, 20)),
       };
 
-      const expectedToken = AuthTokenFixture.random();
-      const expectedUser = UserFixture.random();
+      const expectedToken = authTokenBuilder.build();
+      const expectedUser = userBuilder.build();
       const expectedResponse: LoginResponse = {
         token: expectedToken,
         user: expectedUser,

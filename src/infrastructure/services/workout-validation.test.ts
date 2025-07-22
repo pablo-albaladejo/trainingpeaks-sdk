@@ -4,8 +4,8 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { StructuredWorkoutDataFixture } from '../../__fixtures__/structured-workout-data.fixture';
-import { WorkoutDataFixture } from '../../__fixtures__/workout-data.fixture';
+import { structuredWorkoutRequestBuilder } from '../../__fixtures__/structured-workout-data.fixture';
+import { workoutDataBuilder } from '../../__fixtures__/workout-data.fixture';
 import {
   WorkoutFileProcessingError,
   WorkoutQuotaExceededError,
@@ -180,7 +180,7 @@ describe('Workout Validation Service', () => {
 
   describe('validateWorkoutData', () => {
     it('should pass validation for valid workout data', () => {
-      const data = WorkoutDataFixture.default();
+      const data = workoutDataBuilder.build();
       expect(() => validateWorkoutData(data)).not.toThrow();
     });
 
@@ -197,13 +197,13 @@ describe('Workout Validation Service', () => {
     });
 
     it('should throw error for missing name', () => {
-      const data = { ...WorkoutDataFixture.default(), name: '' };
+      const data = { ...workoutDataBuilder.build(), name: '' };
       expect(() => validateWorkoutData(data)).toThrow(WorkoutValidationError);
     });
 
     it('should validate optional fields when present', () => {
       const data = {
-        ...WorkoutDataFixture.default(),
+        ...workoutDataBuilder.build(),
         description: 'a'.repeat(1001), // Too long
       };
       expect(() => validateWorkoutData(data)).toThrow(WorkoutValidationError);
@@ -244,7 +244,7 @@ describe('Workout Validation Service', () => {
 
   describe('validateStructuredWorkoutRequest', () => {
     it('should pass validation for valid request', () => {
-      const request = StructuredWorkoutDataFixture.defaultCreateRequest();
+      const request = structuredWorkoutRequestBuilder.build();
       expect(() => validateStructuredWorkoutRequest(request)).not.toThrow();
     });
 
@@ -258,7 +258,7 @@ describe('Workout Validation Service', () => {
     });
 
     it('should throw error for missing required fields', () => {
-      const baseRequest = StructuredWorkoutDataFixture.defaultCreateRequest();
+      const baseRequest = structuredWorkoutRequestBuilder.build();
 
       expect(() =>
         validateStructuredWorkoutRequest({ ...baseRequest, title: '' })
@@ -286,12 +286,12 @@ describe('Workout Validation Service', () => {
 
   describe('validateWorkoutUpload', () => {
     it('should pass validation for workout without file', () => {
-      const data = WorkoutDataFixture.default();
+      const data = workoutDataBuilder.build();
       expect(() => validateWorkoutUpload(data)).not.toThrow();
     });
 
     it('should pass validation for workout with file', () => {
-      const data = WorkoutDataFixture.default();
+      const data = workoutDataBuilder.build();
       const file = createWorkoutFile(
         'test.tcx',
         '<tcx>...</tcx>',
@@ -307,7 +307,7 @@ describe('Workout Validation Service', () => {
     });
 
     it('should throw error for invalid file', () => {
-      const data = WorkoutDataFixture.default();
+      const data = workoutDataBuilder.build();
       const invalidFile = {
         fileName: 'test.txt',
         content: 'content',
@@ -1313,7 +1313,7 @@ describe('Workout Validation Service', () => {
 
   describe('integration scenarios', () => {
     it('should validate complex workout upload scenario', () => {
-      const workoutData = WorkoutDataFixture.default();
+      const workoutData = workoutDataBuilder.build();
       const file = createWorkoutFile(
         'test.tcx',
         '<tcx>...</tcx>',

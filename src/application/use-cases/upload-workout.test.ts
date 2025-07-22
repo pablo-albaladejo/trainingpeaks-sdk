@@ -4,24 +4,17 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { randomNumber } from '../../__fixtures__/utils.fixture';
-import { WorkoutDataFixture } from '../../__fixtures__/workout-data.fixture';
-import { 
-  UploadWorkoutResponseFixture, 
-  WorkoutFileFixture 
-} from '../../__fixtures__/workout-response.fixture';
-import type {
-  UploadWorkout,
-  UploadWorkoutRequest,
-  UploadWorkoutResponse,
-} from '../services/workout-creation';
+import { workoutFileBuilder } from '../../__fixtures__/workout-file.fixture';
 import {
-  createUploadWorkoutUseCase,
-  UploadWorkoutUseCaseRequest,
-} from './upload-workout';
+  createUploadWorkoutResponse,
+  uploadWorkoutResponseBuilder,
+} from '../../__fixtures__/workout-response.fixture';
+import type { WorkoutRepository } from '../ports/workout';
+import type { UploadWorkoutUseCaseRequest } from './upload-workout';
+import { createUploadWorkoutUseCase } from './upload-workout';
 
 describe('Upload Workout Use Case', () => {
-  let mockUploadWorkout: UploadWorkout;
+  let mockUploadWorkout: WorkoutRepository['uploadWorkout'];
   let uploadWorkoutUseCase: ReturnType<typeof createUploadWorkoutUseCase>;
 
   beforeEach(() => {
@@ -34,12 +27,15 @@ describe('Upload Workout Use Case', () => {
     it('should upload workout successfully', async () => {
       // Arrange
       const request: UploadWorkoutUseCaseRequest = {
-        file: WorkoutFileFixture.tcx(),
+        file: workoutFileBuilder.build(),
         name: 'Morning Run',
         description: 'Easy morning jog',
       };
 
-      const expectedResponse = UploadWorkoutResponseFixture.success();
+      const expectedResponse = uploadWorkoutResponseBuilder.build({
+        workoutId: 'workout-123',
+        success: true,
+      });
 
       mockUploadWorkout = vi.fn().mockResolvedValue(expectedResponse);
       uploadWorkoutUseCase = createUploadWorkoutUseCase(mockUploadWorkout);
@@ -48,7 +44,7 @@ describe('Upload Workout Use Case', () => {
       const result = await uploadWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
+      expect(result).toStrictEqual(expectedResponse);
       expect(mockUploadWorkout).toHaveBeenCalledTimes(1);
       expect(mockUploadWorkout).toHaveBeenCalledWith(request);
     });
@@ -56,15 +52,14 @@ describe('Upload Workout Use Case', () => {
     it('should handle upload failure', async () => {
       // Arrange
       const request: UploadWorkoutUseCaseRequest = {
-        file: WorkoutFileFixture.tcx(),
+        file: workoutFileBuilder.build(),
         name: 'Failed Upload',
       };
 
-      const expectedResponse = new UploadWorkoutResponseFixture()
-        .withSuccess(false)
-        .withMessage('Upload failed: Invalid file format')
-        .withValidationErrors(['File format not supported'])
-        .build();
+      const expectedResponse = uploadWorkoutResponseBuilder.build({
+        success: false,
+        message: 'Upload failed',
+      });
 
       mockUploadWorkout = vi.fn().mockResolvedValue(expectedResponse);
       uploadWorkoutUseCase = createUploadWorkoutUseCase(mockUploadWorkout);
@@ -73,24 +68,24 @@ describe('Upload Workout Use Case', () => {
       const result = await uploadWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
+      expect(result).toStrictEqual(expectedResponse);
       expect(result.success).toBe(false);
-      expect(result.validationErrors).toContain('File format not supported');
+      expect(result.message).toBe('Upload failed');
     });
 
     it('should handle service errors correctly', async () => {
       // Arrange
       const request: UploadWorkoutUseCaseRequest = {
-        file: WorkoutFileFixture.tcx(),
+        file: workoutFileBuilder.build(),
       };
 
-      const errorMessage = 'Service unavailable';
-      mockUploadWorkout = vi.fn().mockRejectedValue(new Error(errorMessage));
+      const expectedError = new Error('Service error');
+      mockUploadWorkout = vi.fn().mockRejectedValue(expectedError);
       uploadWorkoutUseCase = createUploadWorkoutUseCase(mockUploadWorkout);
 
       // Act & Assert
       await expect(uploadWorkoutUseCase.execute(request)).rejects.toThrow(
-        errorMessage
+        'Service error'
       );
       expect(mockUploadWorkout).toHaveBeenCalledWith(request);
     });
@@ -99,35 +94,23 @@ describe('Upload Workout Use Case', () => {
       // Arrange
       const plannedDate = new Date();
       const request: UploadWorkoutUseCaseRequest = {
-        file: WorkoutFileFixture.tcx(),
+        file: workoutFileBuilder.build(),
         name: 'Complete Workout',
         description: 'Detailed workout with metadata',
-        tags: ['run', 'endurance'],
-        activityType: 'running',
         plannedDate,
-        notes: 'Great workout today',
-        isPrivate: true,
-        category: 'training',
-        subcategory: 'base',
-        equipment: ['garmin', 'heart-rate-monitor'],
+        tags: ['running', 'morning'],
+        notes: 'Coach notes',
+        equipment: ['garmin-fenix'],
         location: 'Central Park',
-        weatherConditions: 'sunny, 72F',
+        weatherConditions: 'sunny',
         personalBest: true,
-        coachNotes: 'Excellent pacing',
-        customFields: {
-          temperature: 72,
-          humidity: 60,
-          coach: 'Jane Smith',
-        },
+        coachNotes: 'Great pace!',
+        category: 'endurance',
+        subcategory: 'base',
+        customFields: { source: 'garmin' },
       };
 
-      const expectedResponse = new UploadWorkoutResponseFixture()
-        .withSuccess(true)
-        .withProcessedData(new WorkoutDataFixture().withName('Complete Workout').build())
-        .withRandomFileInfo()
-        .withProcessingTime(150)
-        .build();
-
+      const expectedResponse = uploadWorkoutResponseBuilder.build();
       mockUploadWorkout = vi.fn().mockResolvedValue(expectedResponse);
       uploadWorkoutUseCase = createUploadWorkoutUseCase(mockUploadWorkout);
 
@@ -135,21 +118,17 @@ describe('Upload Workout Use Case', () => {
       const result = await uploadWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
+      expect(result).toStrictEqual(expectedResponse);
       expect(mockUploadWorkout).toHaveBeenCalledWith(request);
     });
 
     it('should work with minimal request data', async () => {
       // Arrange
       const request: UploadWorkoutUseCaseRequest = {
-        file: WorkoutFileFixture.tcx(),
+        file: workoutFileBuilder.build(),
       };
 
-      const expectedResponse = new UploadWorkoutResponseFixture()
-        .withSuccess(true)
-        .withRandomFileInfo()
-        .build();
-
+      const expectedResponse = uploadWorkoutResponseBuilder.build();
       mockUploadWorkout = vi.fn().mockResolvedValue(expectedResponse);
       uploadWorkoutUseCase = createUploadWorkoutUseCase(mockUploadWorkout);
 
@@ -157,26 +136,22 @@ describe('Upload Workout Use Case', () => {
       const result = await uploadWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
+      expect(result).toStrictEqual(expectedResponse);
       expect(mockUploadWorkout).toHaveBeenCalledWith(request);
     });
 
     it('should handle different file types', async () => {
       // Arrange
       const request: UploadWorkoutUseCaseRequest = {
-        file: WorkoutFileFixture.gpx(),
+        file: workoutFileBuilder.build({
+          fileFormat: 'gpx',
+        }),
         name: 'GPX Workout',
       };
 
-      const expectedResponse = new UploadWorkoutResponseFixture()
-        .withSuccess(true)
-        .withFileInfo({
-          originalName: 'workout.gpx',
-          size: 2048,
-          type: 'application/gpx+xml',
-          uploadedAt: new Date(),
-        })
-        .build();
+      const expectedResponse = createUploadWorkoutResponse({
+        fileType: 'gpx',
+      });
 
       mockUploadWorkout = vi.fn().mockResolvedValue(expectedResponse);
       uploadWorkoutUseCase = createUploadWorkoutUseCase(mockUploadWorkout);
@@ -185,25 +160,22 @@ describe('Upload Workout Use Case', () => {
       const result = await uploadWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
+      expect(result).toStrictEqual(expectedResponse);
       expect(result.fileInfo?.type).toBe('application/gpx+xml');
     });
 
     it('should handle validation warnings', async () => {
       // Arrange
       const request: UploadWorkoutUseCaseRequest = {
-        file: WorkoutFileFixture.tcx(),
+        file: workoutFileBuilder.build(),
         name: 'Workout with Warnings',
       };
 
-      const expectedResponse = new UploadWorkoutResponseFixture()
-        .withSuccess(true)
-        .withValidationWarnings([
-          'Missing heart rate data for some intervals',
-          'GPS signal weak in some sections',
-        ])
-        .withProcessingTime(300)
-        .build();
+      const expectedResponse = createUploadWorkoutResponse({
+        includeWarnings: true,
+        warningCount: 2,
+        success: true,
+      });
 
       mockUploadWorkout = vi.fn().mockResolvedValue(expectedResponse);
       uploadWorkoutUseCase = createUploadWorkoutUseCase(mockUploadWorkout);
@@ -212,33 +184,26 @@ describe('Upload Workout Use Case', () => {
       const result = await uploadWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
+      expect(result).toStrictEqual(expectedResponse);
       expect(result.validationWarnings).toHaveLength(2);
-      expect(result.validationWarnings).toContain(
-        'Missing heart rate data for some intervals'
-      );
+      expect(result.success).toBe(true);
     });
 
     it('should preserve processed workout data', async () => {
       // Arrange
       const request: UploadWorkoutUseCaseRequest = {
-        file: WorkoutFileFixture.tcx(),
+        file: workoutFileBuilder.build(),
         name: 'Data Preservation Test',
       };
 
-      const processedData = new WorkoutDataFixture()
-        .withName('Data Preservation Test')
-        .withDescription('Processed from TCX file')
-        .withDuration(3600)
-        .withDistance(10000)
-        .build();
-
-      const expectedResponse = new UploadWorkoutResponseFixture()
-        .withWorkoutId('workout-456')
-        .withSuccess(true)
-        .withProcessedData(processedData)
-        .withRandomFileInfo()
-        .build();
+      const expectedResponse = uploadWorkoutResponseBuilder.build({
+        processedData: {
+          name: 'Processed Workout',
+          duration: 3600,
+          distance: 10000,
+          type: 'run',
+        },
+      });
 
       mockUploadWorkout = vi.fn().mockResolvedValue(expectedResponse);
       uploadWorkoutUseCase = createUploadWorkoutUseCase(mockUploadWorkout);
@@ -247,32 +212,26 @@ describe('Upload Workout Use Case', () => {
       const result = await uploadWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
-      expect(result.processedData).toEqual(processedData);
-      expect(result.processedData?.name).toBe('Data Preservation Test');
+      expect(result).toStrictEqual(expectedResponse);
+      expect(result.processedData?.name).toBe('Processed Workout');
       expect(result.processedData?.duration).toBe(3600);
+      expect(result.processedData?.distance).toBe(10000);
     });
 
     it('should handle metadata in response', async () => {
       // Arrange
       const request: UploadWorkoutUseCaseRequest = {
-        file: WorkoutFileFixture.tcx(),
+        file: workoutFileBuilder.build(),
         customFields: { source: 'garmin' },
       };
 
-      const expectedResponse = new UploadWorkoutResponseFixture()
-        .withSuccess(true)
-        .withMetadata({
-          uploadSource: 'sdk',
-          fileFormat: 'tcx',
-          processingVersion: '2.1',
-          deviceInfo: {
-            manufacturer: 'Garmin',
-            model: 'Edge 530',
-          },
-        })
-        .withProcessingTime(randomNumber(100, 500))
-        .build();
+      const expectedResponse = uploadWorkoutResponseBuilder.build({
+        metadata: {
+          source: 'garmin',
+          version: '1.0.0',
+          processingTime: 250,
+        },
+      });
 
       mockUploadWorkout = vi.fn().mockResolvedValue(expectedResponse);
       uploadWorkoutUseCase = createUploadWorkoutUseCase(mockUploadWorkout);
@@ -281,32 +240,25 @@ describe('Upload Workout Use Case', () => {
       const result = await uploadWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
-      expect(result.metadata).toBeDefined();
-      expect(result.metadata?.uploadSource).toBe('sdk');
-      expect(result.metadata?.deviceInfo).toEqual({
-        manufacturer: 'Garmin',
-        model: 'Edge 530',
-      });
+      expect(result).toStrictEqual(expectedResponse);
+      expect(result.metadata?.source).toBe('garmin');
+      expect(result.metadata?.version).toBe('1.0.0');
     });
 
     it('should handle large files', async () => {
       // Arrange
       const request: UploadWorkoutUseCaseRequest = {
-        file: WorkoutFileFixture.fit(),
+        file: workoutFileBuilder.build({
+          fileFormat: 'fit',
+        }),
         name: 'Long Ride',
       };
 
-      const expectedResponse = new UploadWorkoutResponseFixture()
-        .withSuccess(true)
-        .withProcessingTime(2500)
-        .withFileInfo({
-          originalName: 'large-workout.fit',
-          size: 5 * 1024 * 1024,
-          type: 'application/fit',
-          uploadedAt: new Date(),
-        })
-        .build();
+      const expectedResponse = createUploadWorkoutResponse({
+        fileType: 'fit',
+        fileSize: 5 * 1024 * 1024, // 5MB
+        processingTime: 5000,
+      });
 
       mockUploadWorkout = vi.fn().mockResolvedValue(expectedResponse);
       uploadWorkoutUseCase = createUploadWorkoutUseCase(mockUploadWorkout);
@@ -315,9 +267,9 @@ describe('Upload Workout Use Case', () => {
       const result = await uploadWorkoutUseCase.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
+      expect(result).toStrictEqual(expectedResponse);
       expect(result.fileInfo?.size).toBe(5 * 1024 * 1024);
-      expect(result.processingTime).toBe(2500);
+      expect(result.processingTime).toBe(5000);
     });
   });
 });

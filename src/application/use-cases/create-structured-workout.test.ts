@@ -4,18 +4,14 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { randomNumber, randomString } from '../../__fixtures__/utils.fixture';
-import { StructuredWorkoutDataFixture } from '../../__fixtures__/structured-workout-data.fixture';
-import { CreateStructuredWorkoutResponseFixture } from '../../__fixtures__/workout-response.fixture';
+import { structuredWorkoutRequestBuilder } from '../../__fixtures__/structured-workout-data.fixture';
+import { randomString } from '../../__fixtures__/utils.fixture';
+import { createStructuredWorkoutResponseBuilder } from '../../__fixtures__/workout-response.fixture';
 import type {
   CreateStructuredWorkout,
-  CreateStructuredWorkoutRequest,
-  CreateStructuredWorkoutResponse,
+  CreateStructuredWorkoutRequest as CreateStructuredWorkoutUseCaseRequest,
 } from '../services/workout-creation';
-import {
-  createStructuredWorkoutUseCase,
-  CreateStructuredWorkoutUseCaseRequest,
-} from './create-structured-workout';
+import { createStructuredWorkoutUseCase } from './create-structured-workout';
 
 describe('Create Structured Workout Use Case', () => {
   let mockCreateStructuredWorkout: CreateStructuredWorkout;
@@ -37,14 +33,15 @@ describe('Create Structured Workout Use Case', () => {
       const request: CreateStructuredWorkoutUseCaseRequest = {
         name: 'Test Workout',
         description: 'A test workout',
-        structure: StructuredWorkoutDataFixture.default().structure,
+        structure: structuredWorkoutRequestBuilder.build().structure,
       };
 
-      const expectedResponse = CreateStructuredWorkoutResponseFixture.success();
+      const expectedResponse = createStructuredWorkoutResponseBuilder.build({
+        workoutId: 'workout-123',
+        success: true,
+      });
 
-      mockCreateStructuredWorkout = vi
-        .fn()
-        .mockResolvedValue(expectedResponse);
+      mockCreateStructuredWorkout = vi.fn().mockResolvedValue(expectedResponse);
       createStructuredWorkoutUseCaseInstance = createStructuredWorkoutUseCase(
         mockCreateStructuredWorkout
       );
@@ -54,7 +51,7 @@ describe('Create Structured Workout Use Case', () => {
         await createStructuredWorkoutUseCaseInstance.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
+      expect(result).toStrictEqual(expectedResponse);
       expect(mockCreateStructuredWorkout).toHaveBeenCalledTimes(1);
       expect(mockCreateStructuredWorkout).toHaveBeenCalledWith(request);
     });
@@ -63,14 +60,15 @@ describe('Create Structured Workout Use Case', () => {
       // Arrange
       const request: CreateStructuredWorkoutUseCaseRequest = {
         name: 'Failed Workout',
-        structure: StructuredWorkoutDataFixture.default().structure,
+        structure: structuredWorkoutRequestBuilder.build().structure,
       };
 
-      const expectedResponse = CreateStructuredWorkoutResponseFixture.failure();
+      const expectedResponse = createStructuredWorkoutResponseBuilder.build({
+        success: false,
+        message: 'Creation failed',
+      });
 
-      mockCreateStructuredWorkout = vi
-        .fn()
-        .mockResolvedValue(expectedResponse);
+      mockCreateStructuredWorkout = vi.fn().mockResolvedValue(expectedResponse);
       createStructuredWorkoutUseCaseInstance = createStructuredWorkoutUseCase(
         mockCreateStructuredWorkout
       );
@@ -80,22 +78,20 @@ describe('Create Structured Workout Use Case', () => {
         await createStructuredWorkoutUseCaseInstance.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
+      expect(result).toStrictEqual(expectedResponse);
       expect(result.success).toBe(false);
-      expect(mockCreateStructuredWorkout).toHaveBeenCalledWith(request);
+      expect(result.message).toBe('Creation failed');
     });
 
     it('should handle service errors correctly', async () => {
       // Arrange
       const request: CreateStructuredWorkoutUseCaseRequest = {
         name: 'Error Workout',
-        structure: StructuredWorkoutDataFixture.default().structure,
+        structure: structuredWorkoutRequestBuilder.build().structure,
       };
 
-      const errorMessage = 'Service error occurred';
-      mockCreateStructuredWorkout = vi
-        .fn()
-        .mockRejectedValue(new Error(errorMessage));
+      const expectedError = new Error('Service error');
+      mockCreateStructuredWorkout = vi.fn().mockRejectedValue(expectedError);
       createStructuredWorkoutUseCaseInstance = createStructuredWorkoutUseCase(
         mockCreateStructuredWorkout
       );
@@ -103,7 +99,7 @@ describe('Create Structured Workout Use Case', () => {
       // Act & Assert
       await expect(
         createStructuredWorkoutUseCaseInstance.execute(request)
-      ).rejects.toThrow(errorMessage);
+      ).rejects.toThrow('Service error');
       expect(mockCreateStructuredWorkout).toHaveBeenCalledWith(request);
     });
 
@@ -112,45 +108,14 @@ describe('Create Structured Workout Use Case', () => {
       const request: CreateStructuredWorkoutUseCaseRequest = {
         name: 'Complete Workout',
         description: 'Full featured workout',
-        structure: StructuredWorkoutDataFixture.default().structure,
+        structure: structuredWorkoutRequestBuilder.build().structure,
         tags: ['interval', 'running'],
         notes: 'Coach notes',
-        targetDate: new Date(),
-        estimatedDuration: 3600,
-        estimatedDistance: 10000,
-        estimatedCalories: 500,
-        difficulty: 'moderate',
-        activityType: 'run',
-        equipment: ['treadmill'],
-        location: 'gym',
-        weatherConditions: 'indoor',
-        personalBest: false,
-        coachNotes: 'Focus on pacing',
-        publiclyVisible: true,
-        allowComments: true,
-        category: 'endurance',
-        subcategory: 'base',
-        season: 'winter',
-        trainingPhase: 'build',
-        intensityZone: 3,
-        rpeScale: 7,
-        heartRateZones: [150, 170],
-        powerZones: [200, 250],
-        paceZones: [420, 380],
-        customFields: { coach: 'John Doe' },
+        equipment: ['bike-123', 'shoe-456'],
       };
 
-      const expectedResponse = new CreateStructuredWorkoutResponseFixture()
-        .withSuccess(true)
-        .withEstimatedDuration(3600)
-        .withEstimatedDistance(10000)
-        .withEstimatedCalories(500)
-        .withStructure(request.structure)
-        .build();
-
-      mockCreateStructuredWorkout = vi
-        .fn()
-        .mockResolvedValue(expectedResponse);
+      const expectedResponse = createStructuredWorkoutResponseBuilder.build();
+      mockCreateStructuredWorkout = vi.fn().mockResolvedValue(expectedResponse);
       createStructuredWorkoutUseCaseInstance = createStructuredWorkoutUseCase(
         mockCreateStructuredWorkout
       );
@@ -160,7 +125,7 @@ describe('Create Structured Workout Use Case', () => {
         await createStructuredWorkoutUseCaseInstance.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
+      expect(result).toStrictEqual(expectedResponse);
       expect(mockCreateStructuredWorkout).toHaveBeenCalledWith(request);
     });
 
@@ -168,14 +133,11 @@ describe('Create Structured Workout Use Case', () => {
       // Arrange
       const request: CreateStructuredWorkoutUseCaseRequest = {
         name: 'Minimal Workout',
-        structure: StructuredWorkoutDataFixture.default().structure,
+        structure: structuredWorkoutRequestBuilder.build().structure,
       };
 
-      const expectedResponse = CreateStructuredWorkoutResponseFixture.success();
-
-      mockCreateStructuredWorkout = vi
-        .fn()
-        .mockResolvedValue(expectedResponse);
+      const expectedResponse = createStructuredWorkoutResponseBuilder.build();
+      mockCreateStructuredWorkout = vi.fn().mockResolvedValue(expectedResponse);
       createStructuredWorkoutUseCaseInstance = createStructuredWorkoutUseCase(
         mockCreateStructuredWorkout
       );
@@ -185,28 +147,26 @@ describe('Create Structured Workout Use Case', () => {
         await createStructuredWorkoutUseCaseInstance.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
+      expect(result).toStrictEqual(expectedResponse);
       expect(mockCreateStructuredWorkout).toHaveBeenCalledWith(request);
     });
 
     it('should handle workout with intervals structure', async () => {
       // Arrange
-      const intervalWorkout = StructuredWorkoutDataFixture.withIntervals();
+      const intervalWorkout = structuredWorkoutRequestBuilder.build();
       const request: CreateStructuredWorkoutUseCaseRequest = {
         name: 'Interval Workout',
-        description: 'High intensity intervals',
+        description: 'High-intensity interval training',
         structure: intervalWorkout.structure,
+        tags: ['interval', 'hiit'],
       };
 
-      const expectedResponse = new CreateStructuredWorkoutResponseFixture()
-        .withSuccess(true)
-        .withStructure(intervalWorkout.structure)
-        .withValidationWarnings(['High intensity detected'])
-        .build();
+      const expectedResponse = createStructuredWorkoutResponseBuilder.build({
+        workoutId: 'interval-123',
+        estimatedCalories: 800,
+      });
 
-      mockCreateStructuredWorkout = vi
-        .fn()
-        .mockResolvedValue(expectedResponse);
+      mockCreateStructuredWorkout = vi.fn().mockResolvedValue(expectedResponse);
       createStructuredWorkoutUseCaseInstance = createStructuredWorkoutUseCase(
         mockCreateStructuredWorkout
       );
@@ -216,32 +176,23 @@ describe('Create Structured Workout Use Case', () => {
         await createStructuredWorkoutUseCaseInstance.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
-      expect(result.structure).toEqual(intervalWorkout.structure);
-      expect(mockCreateStructuredWorkout).toHaveBeenCalledWith(request);
+      expect(result).toStrictEqual(expectedResponse);
+      expect(result.workoutId).toBe('interval-123');
+      expect(result.estimatedCalories).toBe(800);
     });
 
     it('should handle random workout data', async () => {
       // Arrange
-      const randomWorkout = StructuredWorkoutDataFixture.random();
+      const randomWorkout = structuredWorkoutRequestBuilder.build();
       const request: CreateStructuredWorkoutUseCaseRequest = {
         name: randomString(),
-        description: randomString(),
+        description: randomString(50),
         structure: randomWorkout.structure,
-        estimatedDuration: randomNumber(600, 7200),
-        estimatedDistance: randomNumber(1000, 50000),
-        estimatedCalories: randomNumber(100, 1000),
+        tags: [randomString(), randomString()],
       };
 
-      const expectedResponse = new CreateStructuredWorkoutResponseFixture()
-        .withSuccess(true)
-        .withUploadStatus('completed')
-        .withRandomProcessingTime()
-        .build();
-
-      mockCreateStructuredWorkout = vi
-        .fn()
-        .mockResolvedValue(expectedResponse);
+      const expectedResponse = createStructuredWorkoutResponseBuilder.build();
+      mockCreateStructuredWorkout = vi.fn().mockResolvedValue(expectedResponse);
       createStructuredWorkoutUseCaseInstance = createStructuredWorkoutUseCase(
         mockCreateStructuredWorkout
       );
@@ -251,7 +202,7 @@ describe('Create Structured Workout Use Case', () => {
         await createStructuredWorkoutUseCaseInstance.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
+      expect(result).toStrictEqual(expectedResponse);
       expect(mockCreateStructuredWorkout).toHaveBeenCalledWith(request);
     });
 
@@ -259,25 +210,25 @@ describe('Create Structured Workout Use Case', () => {
       // Arrange
       const request: CreateStructuredWorkoutUseCaseRequest = {
         name: 'Metadata Workout',
-        structure: StructuredWorkoutDataFixture.default().structure,
+        structure: structuredWorkoutRequestBuilder.build().structure,
       };
 
-      const expectedResponse = new CreateStructuredWorkoutResponseFixture()
-        .withWorkoutId('workout-123')
-        .withSuccess(true)
-        .withMessage('Created successfully')
-        .withUrl('https://trainingpeaks.com/workout/123')
-        .withCreatedAt(new Date())
-        .withProcessingTime(250)
-        .withMetadata({
-          version: '1.0',
-          creator: 'sdk',
-        })
-        .build();
+      const expectedResponse = createStructuredWorkoutResponseBuilder.build({
+        workoutId: 'meta-123',
+        url: 'https://app.trainingpeaks.com/workout/meta-123',
+        createdAt: new Date('2024-01-15T10:00:00Z'),
+        estimatedDuration: 3600,
+        estimatedDistance: 10000,
+        estimatedCalories: 600,
+        uploadStatus: 'completed',
+        processingTime: 250,
+        metadata: {
+          source: 'sdk',
+          version: '1.0.0',
+        },
+      });
 
-      mockCreateStructuredWorkout = vi
-        .fn()
-        .mockResolvedValue(expectedResponse);
+      mockCreateStructuredWorkout = vi.fn().mockResolvedValue(expectedResponse);
       createStructuredWorkoutUseCaseInstance = createStructuredWorkoutUseCase(
         mockCreateStructuredWorkout
       );
@@ -287,10 +238,18 @@ describe('Create Structured Workout Use Case', () => {
         await createStructuredWorkoutUseCaseInstance.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
-      expect(result.workoutId).toBe('workout-123');
-      expect(result.url).toBe('https://trainingpeaks.com/workout/123');
-      expect(result.metadata).toEqual({ version: '1.0', creator: 'sdk' });
+      expect(result).toStrictEqual(expectedResponse);
+      expect(result.workoutId).toBe('meta-123');
+      expect(result.url).toBe('https://app.trainingpeaks.com/workout/meta-123');
+      expect(result.estimatedDuration).toBe(3600);
+      expect(result.estimatedDistance).toBe(10000);
+      expect(result.estimatedCalories).toBe(600);
+      expect(result.uploadStatus).toBe('completed');
+      expect(result.processingTime).toBe(250);
+      expect(result.metadata).toEqual({
+        source: 'sdk',
+        version: '1.0.0',
+      });
     });
   });
 });

@@ -1,303 +1,256 @@
 /**
  * WorkoutFile Fixtures
- * Provides test data for the WorkoutFile value object
+ * Factory pattern fixtures for creating WorkoutFile value objects using rosie and faker
+ *
+ * This fixture demonstrates:
+ * - Separate builders for complex content structures
+ * - Proper use of domain factory functions
+ * - Reusable builders for different file formats
+ * - Dependencies between file properties
  */
 
 import type { WorkoutFile } from '@/domain';
-import {
-  createWorkoutFile,
-  createWorkoutFileFromBuffer,
-} from '@/infrastructure/services/domain-factories';
 import { faker } from '@faker-js/faker';
-import { randomNumber } from './utils.fixture';
+import { Factory } from 'rosie';
 
 /**
- * WorkoutFile Fixture
+ * TCX Content Builder
+ * Creates TCX XML content for workout files
+ * Demonstrates complex structure creation with proper builder separation
  */
-export class WorkoutFileFixture {
-  private workoutFile: Partial<{
-    fileName: string;
-    content: string;
-    mimeType: string;
-  }> = {};
+export const tcxContentBuilder = new Factory()
+  .attr('activityId', () => faker.date.recent().toISOString())
+  .attr('sport', () =>
+    faker.helpers.arrayElement(['Running', 'Biking', 'Swimming'])
+  )
+  .attr('startTime', () => faker.date.recent().toISOString())
+  .attr('duration', () => faker.number.int({ min: 600, max: 7200 }))
+  .attr('distance', () => faker.number.int({ min: 1000, max: 50000 }))
+  .option('sport', 'Running')
+  .option('includeTrackpoints', true)
+  .option('trackpointCount', 10)
+  .after((content, options) => {
+    const trackpoints = options.includeTrackpoints
+      ? generateTrackpoints(options.trackpointCount, content.duration)
+      : '';
 
-  withFileName(fileName: string): this {
-    this.workoutFile.fileName = fileName;
-    return this;
-  }
-
-  withRandomFileName(): this {
-    const extensions = ['.tcx', '.gpx', '.fit', '.xml'];
-    const extension = faker.helpers.arrayElement(extensions);
-    this.workoutFile.fileName = `${faker.lorem.word()}${extension}`;
-    return this;
-  }
-
-  withTcxFileName(): this {
-    this.workoutFile.fileName = `${faker.lorem.word()}.tcx`;
-    return this;
-  }
-
-  withGpxFileName(): this {
-    this.workoutFile.fileName = `${faker.lorem.word()}.gpx`;
-    return this;
-  }
-
-  withFitFileName(): this {
-    this.workoutFile.fileName = `${faker.lorem.word()}.fit`;
-    return this;
-  }
-
-  withXmlFileName(): this {
-    this.workoutFile.fileName = `${faker.lorem.word()}.xml`;
-    return this;
-  }
-
-  withLongFileName(): this {
-    // Create a name exactly at the limit (255 characters)
-    const longName = 'a'.repeat(251); // 251 + '.tcx' = 255
-    this.workoutFile.fileName = `${longName}.tcx`;
-    return this;
-  }
-
-  withTooLongFileName(): this {
-    // Create a name that exceeds the limit
-    const longName = 'a'.repeat(252); // 252 + '.tcx' = 256
-    this.workoutFile.fileName = `${longName}.tcx`;
-    return this;
-  }
-
-  withContent(content: string): this {
-    this.workoutFile.content = content;
-    return this;
-  }
-
-  withRandomContent(): this {
-    this.workoutFile.content = faker.lorem.paragraphs(randomNumber(3, 10));
-    return this;
-  }
-
-  withTcxContent(): this {
-    this.workoutFile.content = `<?xml version="1.0" encoding="UTF-8"?>
-<TrainingCenterDatabase 
-  xsi:schemaLocation="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2 http://www.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd"
-  xmlns:ns5="http://www.garmin.com/xmlschemas/ActivityGoals/v1"
-  xmlns:ns3="http://www.garmin.com/xmlschemas/ActivityExtension/v2"
-  xmlns:ns2="http://www.garmin.com/xmlschemas/UserProfile/v2"
-  xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    return `<?xml version="1.0"?>
+<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2">
   <Activities>
-    <Activity Sport="Running">
-      <Id>2024-01-15T10:00:00.000Z</Id>
-      <Lap StartTime="2024-01-15T10:00:00.000Z">
-        <TotalTimeSeconds>1800.0</TotalTimeSeconds>
-        <DistanceMeters>5000.0</DistanceMeters>
-        <Calories>300</Calories>
-        <AverageHeartRateBpm><Value>150</Value></AverageHeartRateBpm>
-        <MaximumHeartRateBpm><Value>170</Value></MaximumHeartRateBpm>
+    <Activity Sport="${options.sport || content.sport}">
+      <Id>${content.activityId}</Id>
+      <Lap StartTime="${content.startTime}">
+        <TotalTimeSeconds>${content.duration}</TotalTimeSeconds>
+        <DistanceMeters>${content.distance}</DistanceMeters>
+        <Track>
+          ${trackpoints}
+        </Track>
       </Lap>
     </Activity>
   </Activities>
 </TrainingCenterDatabase>`;
-    return this;
-  }
+  });
 
-  withGpxContent(): this {
-    this.workoutFile.content = `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Test Creator" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+/**
+ * GPX Content Builder
+ * Creates GPX XML content for workout files
+ */
+export const gpxContentBuilder = new Factory()
+  .attr('activityId', () => faker.date.recent().toISOString())
+  .attr('startTime', () => faker.date.recent().toISOString())
+  .attr('duration', () => faker.number.int({ min: 600, max: 7200 }))
+  .attr('distance', () => faker.number.int({ min: 1000, max: 50000 }))
+  .option('includeTrackpoints', true)
+  .option('trackpointCount', 10)
+  .after((content, options) => {
+    const trackpoints = options.includeTrackpoints
+      ? generateGpxTrackpoints(options.trackpointCount, content.duration)
+      : '';
+
+    return `<?xml version="1.0"?>
+<gpx version="1.1" creator="TrainingPeaks SDK" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata>
-    <time>2024-01-15T10:00:00Z</time>
+    <time>${content.startTime}</time>
   </metadata>
   <trk>
-    <name>Test Track</name>
+    <name>Workout ${content.activityId}</name>
     <trkseg>
-      <trkpt lat="40.7128" lon="-74.0060">
-        <ele>10.0</ele>
-        <time>2024-01-15T10:00:00Z</time>
-      </trkpt>
-      <trkpt lat="40.7129" lon="-74.0061">
-        <ele>11.0</ele>
-        <time>2024-01-15T10:00:01Z</time>
-      </trkpt>
+      ${trackpoints}
     </trkseg>
   </trk>
 </gpx>`;
-    return this;
+  });
+
+/**
+ * FIT Content Builder
+ * Creates binary FIT content for workout files
+ * Demonstrates lazy evaluation for heavy structures
+ */
+export const fitContentBuilder = new Factory()
+  .attr('activityId', () => faker.date.recent().toISOString())
+  .attr('duration', () => faker.number.int({ min: 600, max: 7200 }))
+  .attr('distance', () => faker.number.int({ min: 1000, max: 50000 }))
+  .option('includeHeartRate', true)
+  .option('includePower', false)
+  .option('includeGPS', true)
+  .after((content, options) => {
+    // Simulate FIT binary content (in real implementation, this would generate actual FIT data)
+    const fitData = {
+      header: {
+        protocolVersion: 20,
+        profileVersion: 1008,
+        dataSize: 0,
+        dataType: '.FIT',
+      },
+      activity: {
+        timestamp: content.activityId,
+        totalTimerTime: content.duration,
+        totalDistance: content.distance,
+        includeHeartRate: options.includeHeartRate,
+        includePower: options.includePower,
+        includeGPS: options.includeGPS,
+      },
+    };
+
+    // Convert to binary-like string for testing
+    return Buffer.from(JSON.stringify(fitData)).toString('base64');
+  });
+
+/**
+ * WorkoutFile Builder
+ * Creates WorkoutFile value objects with proper content dependencies
+ */
+export const workoutFileBuilder = new Factory<WorkoutFile>()
+  .attr('fileName', () => `${faker.lorem.word()}.tcx`)
+  .attr('content', () => tcxContentBuilder.build())
+  .attr('mimeType', () => 'application/tcx+xml')
+  .option('fileFormat', 'tcx')
+  .option('includeTrackpoints', true)
+  .option('trackpointCount', 10)
+  .after((file, options) => {
+    let content: string;
+    let mimeType: string;
+
+    switch (options.fileFormat) {
+      case 'gpx':
+        content = gpxContentBuilder.build({
+          includeTrackpoints: options.includeTrackpoints,
+          trackpointCount: options.trackpointCount,
+        });
+        mimeType = 'application/gpx+xml';
+        break;
+      case 'fit':
+        content = fitContentBuilder.build({
+          includeHeartRate: options.includeHeartRate,
+          includePower: options.includePower,
+          includeGPS: options.includeGPS,
+        });
+        mimeType = 'application/octet-stream';
+        break;
+      case 'tcx':
+      default:
+        content = tcxContentBuilder.build({
+          sport: options.sport,
+          includeTrackpoints: options.includeTrackpoints,
+          trackpointCount: options.trackpointCount,
+        });
+        mimeType = 'application/tcx+xml';
+        break;
+    }
+
+    return {
+      fileName: file.fileName.replace(
+        /\.[^.]+$/,
+        `.${options.fileFormat || 'tcx'}`
+      ),
+      content,
+      mimeType,
+    };
+  });
+
+/**
+ * Predefined File Builders for Common Formats
+ * These demonstrate reusable builders for common file types
+ */
+
+/**
+ * TCX WorkoutFile Builder
+ * Creates TCX format workout files
+ */
+export const tcxWorkoutFileBuilder = new Factory()
+  .extend(workoutFileBuilder)
+  .option('fileFormat', 'tcx')
+  .option('sport', 'Running')
+  .option('includeTrackpoints', true);
+
+/**
+ * GPX WorkoutFile Builder
+ * Creates GPX format workout files
+ */
+export const gpxWorkoutFileBuilder = new Factory()
+  .extend(workoutFileBuilder)
+  .option('fileFormat', 'gpx')
+  .option('includeTrackpoints', true);
+
+/**
+ * FIT WorkoutFile Builder
+ * Creates FIT format workout files
+ */
+export const fitWorkoutFileBuilder = new Factory()
+  .extend(workoutFileBuilder)
+  .option('fileFormat', 'fit')
+  .option('includeHeartRate', true)
+  .option('includePower', false)
+  .option('includeGPS', true);
+
+/**
+ * Helper Functions for Trackpoint Generation
+ * These are kept as helper functions since they generate simple data structures
+ * and are used by multiple builders
+ */
+
+function generateTrackpoints(count: number, totalDuration: number): string {
+  const points = [];
+  const interval = totalDuration / count;
+
+  for (let i = 0; i < count; i++) {
+    const time = i * interval;
+    const lat = 40.7128 + (Math.random() - 0.5) * 0.01;
+    const lon = -74.006 + (Math.random() - 0.5) * 0.01;
+    const altitude = 10 + Math.random() * 100;
+    const heartRate = 120 + Math.random() * 60;
+
+    points.push(`<Trackpoint>
+        <Time>${new Date(Date.now() + time * 1000).toISOString()}</Time>
+        <Position>
+          <LatitudeDegrees>${lat.toFixed(6)}</LatitudeDegrees>
+          <LongitudeDegrees>${lon.toFixed(6)}</LongitudeDegrees>
+        </Position>
+        <AltitudeMeters>${altitude.toFixed(1)}</AltitudeMeters>
+        <HeartRateBpm>
+          <Value>${Math.round(heartRate)}</Value>
+        </HeartRateBpm>
+      </Trackpoint>`);
   }
 
-  withFitContent(): this {
-    // FIT files are binary, but for testing we'll use a placeholder
-    this.workoutFile.content = 'FIT_BINARY_DATA_PLACEHOLDER';
-    return this;
+  return points.join('\n          ');
+}
+
+function generateGpxTrackpoints(count: number, totalDuration: number): string {
+  const points = [];
+  const interval = totalDuration / count;
+
+  for (let i = 0; i < count; i++) {
+    const time = i * interval;
+    const lat = 40.7128 + (Math.random() - 0.5) * 0.01;
+    const lon = -74.006 + (Math.random() - 0.5) * 0.01;
+    const elevation = 10 + Math.random() * 100;
+
+    points.push(`<trkpt lat="${lat.toFixed(6)}" lon="${lon.toFixed(6)}">
+        <ele>${elevation.toFixed(1)}</ele>
+        <time>${new Date(Date.now() + time * 1000).toISOString()}</time>
+      </trkpt>`);
   }
 
-  withEmptyContent(): this {
-    this.workoutFile.content = '';
-    return this;
-  }
-
-  withWhitespaceContent(): this {
-    this.workoutFile.content = '   \n\t   ';
-    return this;
-  }
-
-  withLargeContent(): this {
-    // Create content just under the 10MB limit
-    const sizeInMB = 9; // 9MB
-    const contentSize = sizeInMB * 1024 * 1024;
-    this.workoutFile.content = 'x'.repeat(contentSize);
-    return this;
-  }
-
-  withTooLargeContent(): this {
-    // Create content that exceeds the 10MB limit
-    const sizeInMB = 11; // 11MB
-    const contentSize = sizeInMB * 1024 * 1024;
-    this.workoutFile.content = 'x'.repeat(contentSize);
-    return this;
-  }
-
-  withMimeType(mimeType: string): this {
-    this.workoutFile.mimeType = mimeType;
-    return this;
-  }
-
-  withRandomMimeType(): this {
-    const validMimeTypes = [
-      'application/gpx+xml',
-      'application/tcx+xml',
-      'application/fit',
-      'text/csv',
-      'application/json',
-    ];
-    this.workoutFile.mimeType = faker.helpers.arrayElement(validMimeTypes);
-    return this;
-  }
-
-  withTcxMimeType(): this {
-    this.workoutFile.mimeType = 'application/tcx+xml';
-    return this;
-  }
-
-  withGpxMimeType(): this {
-    this.workoutFile.mimeType = 'application/gpx+xml';
-    return this;
-  }
-
-  withFitMimeType(): this {
-    this.workoutFile.mimeType = 'application/fit';
-    return this;
-  }
-
-  withCsvMimeType(): this {
-    this.workoutFile.mimeType = 'text/csv';
-    return this;
-  }
-
-  withJsonMimeType(): this {
-    this.workoutFile.mimeType = 'application/json';
-    return this;
-  }
-
-  withInvalidMimeType(): this {
-    this.workoutFile.mimeType = 'application/invalid';
-    return this;
-  }
-
-  withEmptyMimeType(): this {
-    this.workoutFile.mimeType = '';
-    return this;
-  }
-
-  build(): WorkoutFile {
-    return createWorkoutFile(
-      this.workoutFile.fileName || 'workout.tcx',
-      this.workoutFile.content || this.getDefaultTcxContent(),
-      this.workoutFile.mimeType || 'application/tcx+xml'
-    );
-  }
-
-  buildFromBuffer(): WorkoutFile {
-    const content = this.workoutFile.content || this.getDefaultTcxContent();
-    const buffer = Buffer.from(content, 'utf8');
-    return createWorkoutFileFromBuffer(
-      this.workoutFile.fileName || 'workout.tcx',
-      buffer,
-      this.workoutFile.mimeType || 'application/tcx+xml'
-    );
-  }
-
-  private getDefaultTcxContent(): string {
-    return `<?xml version="1.0"?>
-<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2">
-  <Activities>
-    <Activity Sport="Running">
-      <Id>2024-01-15T10:00:00.000Z</Id>
-    </Activity>
-  </Activities>
-</TrainingCenterDatabase>`;
-  }
-
-  /**
-   * Static factory methods
-   */
-  static default(): WorkoutFile {
-    return new WorkoutFileFixture().build();
-  }
-
-  static random(): WorkoutFile {
-    return new WorkoutFileFixture()
-      .withRandomFileName()
-      .withRandomContent()
-      .withRandomMimeType()
-      .build();
-  }
-
-  static tcxFile(): WorkoutFile {
-    return new WorkoutFileFixture()
-      .withTcxFileName()
-      .withTcxContent()
-      .withTcxMimeType()
-      .build();
-  }
-
-  static gpxFile(): WorkoutFile {
-    return new WorkoutFileFixture()
-      .withGpxFileName()
-      .withGpxContent()
-      .withGpxMimeType()
-      .build();
-  }
-
-  static fitFile(): WorkoutFile {
-    return new WorkoutFileFixture()
-      .withFitFileName()
-      .withFitContent()
-      .withFitMimeType()
-      .build();
-  }
-
-  static csvFile(): WorkoutFile {
-    return new WorkoutFileFixture()
-      .withFileName('workout.xml') // Use .xml extension since .csv is not allowed
-      .withContent('time,distance,heartrate\n0,0,120\n60,100,150')
-      .withCsvMimeType()
-      .build();
-  }
-
-  static jsonFile(): WorkoutFile {
-    return new WorkoutFileFixture()
-      .withFileName('workout.xml') // Use .xml extension since .json is not allowed
-      .withContent('{"type":"workout","duration":3600,"distance":10000}')
-      .withJsonMimeType()
-      .build();
-  }
-
-  static largeFile(): WorkoutFile {
-    return new WorkoutFileFixture()
-      .withTcxFileName()
-      .withLargeContent()
-      .withTcxMimeType()
-      .build();
-  }
+  return points.join('\n      ');
 }

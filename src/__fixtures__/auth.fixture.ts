@@ -1,307 +1,193 @@
+/**
+ * Auth Test Fixtures
+ * Factory pattern fixtures for creating authentication-related test data using rosie and faker
+ *
+ * This fixture demonstrates:
+ * - Dependencies between related attributes (expiresAt and refreshToken)
+ * - Reusable builders for common authentication patterns
+ * - Proper handling of optional fields and metadata
+ * - Consistent token and user structure patterns
+ */
+
 import type { AuthToken, Credentials, User } from '@/domain';
-import {
-  createAuthToken,
-  createCredentials,
-  createUser,
-} from '@/infrastructure/services/domain-factories';
 import { faker } from '@faker-js/faker';
-import { randomNumber } from './utils.fixture';
+import { Factory } from 'rosie';
 
 /**
- * AuthToken Test Fixture
- * Builder pattern fixture for creating AuthToken entities in tests
+ * UserPreferences Builder
+ * Creates user preference objects with realistic defaults
  */
-export class AuthTokenFixture {
-  private token: Partial<{
-    accessToken: string;
-    refreshToken?: string;
-    expiresAt: Date;
-    tokenType: string;
-  }> = {};
-
-  /**
-   * Set access token
-   */
-  withAccessToken(accessToken: string): this {
-    this.token.accessToken = accessToken;
-    return this;
-  }
-
-  /**
-   * Set random access token
-   */
-  withRandomAccessToken(): this {
-    this.token.accessToken = faker.string.alphanumeric(32);
-    return this;
-  }
-
-  /**
-   * Set refresh token
-   */
-  withRefreshToken(refreshToken: string): this {
-    this.token.refreshToken = refreshToken;
-    return this;
-  }
-
-  /**
-   * Set random refresh token
-   */
-  withRandomRefreshToken(): this {
-    this.token.refreshToken = faker.string.alphanumeric(32);
-    return this;
-  }
-
-  /**
-   * Set expires at date
-   */
-  withExpiresAt(expiresAt: Date): this {
-    this.token.expiresAt = expiresAt;
-    return this;
-  }
-
-  /**
-   * Set expiration from seconds (converts to Date)
-   */
-  withExpiresIn(expiresInSeconds: number): this {
-    this.token.expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
-    return this;
-  }
-
-  /**
-   * Set random expiration (1-120 minutes from now)
-   */
-  withRandomExpiresIn(): this {
-    const expiresInSeconds = randomNumber(60, 7200); // 1 minute to 2 hours
-    this.token.expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
-    return this;
-  }
-
-  /**
-   * Set token type
-   */
-  withTokenType(tokenType: string): this {
-    this.token.tokenType = tokenType;
-    return this;
-  }
-
-  /**
-   * Build AuthToken
-   */
-  build(): AuthToken {
-    const expiresAt =
-      this.token.expiresAt || new Date(Date.now() + 3600 * 1000); // Default 1 hour
-
-    const authToken = createAuthToken(
-      this.token.accessToken || faker.string.alphanumeric(32),
-      this.token.tokenType || 'Bearer',
-      expiresAt,
-      this.token.refreshToken || faker.string.alphanumeric(32)
-    );
-    return authToken;
-  }
-
-  /**
-   * Build default AuthToken
-   */
-  static default(): AuthToken {
-    return new AuthTokenFixture().build();
-  }
-
-  /**
-   * Build random AuthToken
-   */
-  static random(): AuthToken {
-    return new AuthTokenFixture()
-      .withRandomAccessToken()
-      .withRandomRefreshToken()
-      .withRandomExpiresIn()
-      .build();
-  }
-}
-
-/**
- * User Test Fixture
- * Builder pattern fixture for creating User entities in tests
- */
-export class UserFixture {
-  private user: Partial<{
-    id: string;
-    name: string;
-    avatar: string;
-    preferences: Record<string, unknown>;
-  }> = {};
-
-  /**
-   * Set user ID
-   */
-  withId(id: string): this {
-    this.user.id = id;
-    return this;
-  }
-
-  /**
-   * Set random user ID
-   */
-  withRandomId(): this {
-    this.user.id = faker.string.uuid();
-    return this;
-  }
-
-  /**
-   * Set user name
-   */
-  withName(name: string): this {
-    this.user.name = name;
-    return this;
-  }
-
-  /**
-   * Set random user name
-   */
-  withRandomName(): this {
-    this.user.name = faker.person.fullName();
-    return this;
-  }
-
-  /**
-   * Set user avatar
-   */
-  withAvatar(avatar: string): this {
-    this.user.avatar = avatar;
-    return this;
-  }
-
-  /**
-   * Set random user avatar
-   */
-  withRandomAvatar(): this {
-    this.user.avatar = faker.image.avatar();
-    return this;
-  }
-
-  /**
-   * Set user preferences
-   */
-  withPreferences(preferences: Record<string, unknown>): this {
-    this.user.preferences = preferences;
-    return this;
-  }
-
-  /**
-   * Set random user preferences
-   */
-  withRandomPreferences(): this {
-    this.user.preferences = {
-      timezone: faker.location.timeZone(),
-      units: faker.helpers.arrayElement(['metric', 'imperial']),
-      language: faker.helpers.arrayElement(['en', 'es', 'fr', 'de']),
+export const userPreferencesBuilder = new Factory()
+  .attr('timezone', () => faker.location.timeZone())
+  .attr('units', () => faker.helpers.arrayElement(['metric', 'imperial']))
+  .attr('language', () => faker.helpers.arrayElement(['en', 'es', 'fr', 'de']))
+  .attr('theme', () => faker.helpers.arrayElement(['light', 'dark', 'auto']))
+  .attr('notifications', () => faker.datatype.boolean())
+  .option('timezone', 'UTC')
+  .option('units', 'metric')
+  .option('language', 'en')
+  .option('theme', 'light')
+  .option('notifications', true)
+  .after((preferences, options) => {
+    return {
+      timezone: options.timezone || preferences.timezone,
+      units: options.units || preferences.units,
+      language: options.language || preferences.language,
+      theme: options.theme || preferences.theme,
+      notifications:
+        options.notifications !== undefined
+          ? options.notifications
+          : preferences.notifications,
     };
-    return this;
-  }
-
-  /**
-   * Build User
-   */
-  build(): User {
-    return createUser(
-      this.user.id || faker.string.uuid(),
-      this.user.name || faker.person.fullName(),
-      this.user.avatar || faker.image.avatar(),
-      this.user.preferences || { theme: 'dark', units: 'metric' }
-    );
-  }
-
-  /**
-   * Build default User
-   */
-  static default(): User {
-    return new UserFixture().build();
-  }
-
-  /**
-   * Build random User
-   */
-  static random(): User {
-    return new UserFixture()
-      .withRandomId()
-      .withRandomName()
-      .withRandomAvatar()
-      .withRandomPreferences()
-      .build();
-  }
-}
+  });
 
 /**
- * Credentials Test Fixture
- * Builder pattern fixture for creating Credentials value objects in tests
+ * AuthToken Builder
+ * Creates AuthToken entities with proper expiration dependencies
  */
-export class CredentialsFixture {
-  private credentials: Partial<{
-    username: string;
-    password: string;
-  }> = {};
+export const authTokenBuilder = new Factory<AuthToken>()
+  .attr('accessToken', () => faker.string.alphanumeric(32))
+  .attr('tokenType', () =>
+    faker.helpers.arrayElement(['Bearer', 'JWT', 'OAuth'])
+  )
+  .attr('expiresAt', () => new Date(Date.now() + 60 * 60 * 1000)) // Default: 1 hour from now
+  .attr('refreshToken', () => faker.string.alphanumeric(32))
+  .after((token) => {
+    return {
+      accessToken: token.accessToken,
+      tokenType: token.tokenType,
+      expiresAt: token.expiresAt.getTime(),
+      refreshToken: token.refreshToken,
+    };
+  });
 
-  /**
-   * Set username
-   */
-  withUsername(username: string): this {
-    this.credentials.username = username;
-    return this;
-  }
+/**
+ * Helper function to create tokens with specific expiration
+ */
+export const createAuthToken = (
+  options: { expiresInMinutes?: number } = {}
+) => {
+  const expiresAt = new Date(
+    Date.now() + (options.expiresInMinutes || 60) * 60 * 1000
+  );
+  return authTokenBuilder.build({
+    expiresAt,
+  });
+};
 
-  /**
-   * Set random username
-   */
-  withRandomUsername(): this {
-    this.credentials.username = faker.internet.userName();
-    return this;
-  }
+/**
+ * User Builder
+ * Creates User entities with preference dependencies
+ */
+export const userBuilder = new Factory<User>()
+  .attr('id', () => faker.string.uuid())
+  .attr('name', () => faker.person.fullName())
+  .attr('avatar', () => faker.image.avatar())
+  .attr('preferences', () => userPreferencesBuilder.build())
+  .after((user, options) => {
+    const preferences = userPreferencesBuilder.build({
+      timezone: options.timezone || 'UTC',
+      units: options.units || 'metric',
+      language: options.language || 'en',
+      theme: options.theme || 'light',
+      notifications:
+        options.notifications !== undefined ? options.notifications : true,
+    });
 
-  /**
-   * Set password
-   */
-  withPassword(password: string): this {
-    this.credentials.password = password;
-    return this;
-  }
+    return {
+      id: options.id || user.id,
+      name: options.name || user.name,
+      avatar: options.avatar || user.avatar,
+      preferences,
+    };
+  });
 
-  /**
-   * Set random password
-   */
-  withRandomPassword(): this {
-    this.credentials.password = faker.internet.password();
-    return this;
-  }
+/**
+ * Credentials Builder
+ * Creates Credentials value objects with validation patterns
+ */
+export const credentialsBuilder = new Factory<Credentials>()
+  .attr('username', () => faker.internet.userName())
+  .attr('password', () => faker.internet.password())
+  .option('username', 'testuser')
+  .option('password', 'testpass123')
+  .option('passwordLength', 12)
+  .after((credentials, options) => {
+    return {
+      username: options.username || credentials.username,
+      password:
+        options.password ||
+        faker.internet.password({ length: options.passwordLength }),
+    };
+  });
 
-  /**
-   * Build Credentials
-   */
-  build(): Credentials {
-    return createCredentials(
-      this.credentials.username || faker.internet.userName(),
-      this.credentials.password || faker.internet.password()
-    );
-  }
+/**
+ * Predefined Builders for Common Authentication Scenarios
+ * These demonstrate reusable builders for common patterns
+ */
 
-  /**
-   * Build default Credentials
-   */
-  static default(): Credentials {
-    return new CredentialsFixture().build();
-  }
+/**
+ * Valid AuthToken Builder
+ * Creates valid, non-expired auth tokens
+ */
+export const validAuthTokenBuilder = new Factory()
+  .extend(authTokenBuilder)
+  .option('expiresInMinutes', 60)
+  .option('includeRefreshToken', true)
+  .option('tokenType', 'Bearer');
 
-  /**
-   * Build random Credentials
-   */
-  static random(): Credentials {
-    return new CredentialsFixture()
-      .withRandomUsername()
-      .withRandomPassword()
-      .build();
-  }
-}
+/**
+ * Expired AuthToken Builder
+ * Creates expired auth tokens for testing expiration scenarios
+ */
+export const expiredAuthTokenBuilder = new Factory()
+  .extend(authTokenBuilder)
+  .option('expiresInMinutes', -60) // Expired 1 hour ago
+  .option('includeRefreshToken', true)
+  .option('tokenType', 'Bearer');
 
-// Export builders
-export const authTokenBuilder = new AuthTokenFixture();
-export const userBuilder = new UserFixture();
-export const credentialsBuilder = new CredentialsFixture();
+/**
+ * Admin User Builder
+ * Creates admin users with specific preferences
+ */
+export const adminUserBuilder = new Factory()
+  .extend(userBuilder)
+  .option('name', 'Admin User')
+  .option('timezone', 'UTC')
+  .option('units', 'metric')
+  .option('language', 'en')
+  .option('theme', 'dark')
+  .option('notifications', true);
+
+/**
+ * Guest User Builder
+ * Creates guest users with minimal preferences
+ */
+export const guestUserBuilder = new Factory()
+  .extend(userBuilder)
+  .option('name', 'Guest User')
+  .option('timezone', 'America/New_York')
+  .option('units', 'imperial')
+  .option('language', 'en')
+  .option('theme', 'light')
+  .option('notifications', false);
+
+/**
+ * Valid Credentials Builder
+ * Creates valid credentials for testing
+ */
+export const validCredentialsBuilder = new Factory()
+  .extend(credentialsBuilder)
+  .option('username', 'validuser')
+  .option('password', 'validpass123')
+  .option('passwordLength', 12);
+
+/**
+ * Invalid Credentials Builder
+ * Creates invalid credentials for testing error scenarios
+ */
+export const invalidCredentialsBuilder = new Factory()
+  .extend(credentialsBuilder)
+  .option('username', '')
+  .option('password', '')
+  .option('passwordLength', 0);

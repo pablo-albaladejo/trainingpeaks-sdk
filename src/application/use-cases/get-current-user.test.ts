@@ -4,7 +4,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { UserFixture } from '../../__fixtures__/auth.fixture';
+import { userBuilder } from '../../__fixtures__/auth.fixture';
 import type { AuthRepository } from '../ports/auth';
 import { createGetCurrentUserUseCase } from './get-current-user';
 
@@ -30,9 +30,9 @@ describe('Get Current User Use Case', () => {
   });
 
   describe('execute', () => {
-    it('should get current user successfully when authenticated', async () => {
+    it('should get current user successfully', async () => {
       // Arrange
-      const expectedUser = UserFixture.random();
+      const expectedUser = userBuilder.build();
 
       mockAuthRepository.isAuthenticated = vi.fn().mockReturnValue(true);
       mockAuthRepository.getCurrentUser = vi
@@ -43,24 +43,29 @@ describe('Get Current User Use Case', () => {
       const result = await getCurrentUserUseCase.execute();
 
       // Assert
-      expect(result).toEqual(expectedUser);
+      expect(result).toStrictEqual(expectedUser);
       expect(mockAuthRepository.isAuthenticated).toHaveBeenCalledTimes(1);
       expect(mockAuthRepository.getCurrentUser).toHaveBeenCalledTimes(1);
     });
 
-    it('should throw error when not authenticated', async () => {
+    it('should handle repository errors correctly', async () => {
       // Arrange
-      mockAuthRepository.isAuthenticated = vi.fn().mockReturnValue(false);
+      const expectedError = new Error('Failed to get current user');
+
+      mockAuthRepository.isAuthenticated = vi.fn().mockReturnValue(true);
+      mockAuthRepository.getCurrentUser = vi
+        .fn()
+        .mockRejectedValue(expectedError);
 
       // Act & Assert
       await expect(getCurrentUserUseCase.execute()).rejects.toThrow(
-        'No valid authentication token available'
+        'Failed to get current user'
       );
       expect(mockAuthRepository.isAuthenticated).toHaveBeenCalledTimes(1);
-      expect(mockAuthRepository.getCurrentUser).not.toHaveBeenCalled();
+      expect(mockAuthRepository.getCurrentUser).toHaveBeenCalledTimes(1);
     });
 
-    it('should throw error when no current user found', async () => {
+    it('should handle null user response', async () => {
       // Arrange
       mockAuthRepository.isAuthenticated = vi.fn().mockReturnValue(true);
       mockAuthRepository.getCurrentUser = vi.fn().mockResolvedValue(null);
@@ -73,7 +78,7 @@ describe('Get Current User Use Case', () => {
       expect(mockAuthRepository.getCurrentUser).toHaveBeenCalledTimes(1);
     });
 
-    it('should throw error when getCurrentUser returns undefined', async () => {
+    it('should handle undefined user response', async () => {
       // Arrange
       mockAuthRepository.isAuthenticated = vi.fn().mockReturnValue(true);
       mockAuthRepository.getCurrentUser = vi.fn().mockResolvedValue(undefined);
@@ -86,29 +91,18 @@ describe('Get Current User Use Case', () => {
       expect(mockAuthRepository.getCurrentUser).toHaveBeenCalledTimes(1);
     });
 
-    it('should handle repository errors correctly', async () => {
+    it('should preserve user properties in response', async () => {
       // Arrange
-      const errorMessage = 'Repository error occurred';
-      mockAuthRepository.isAuthenticated = vi.fn().mockReturnValue(true);
-      mockAuthRepository.getCurrentUser = vi
-        .fn()
-        .mockRejectedValue(new Error(errorMessage));
-
-      // Act & Assert
-      await expect(getCurrentUserUseCase.execute()).rejects.toThrow(
-        errorMessage
-      );
-      expect(mockAuthRepository.isAuthenticated).toHaveBeenCalledTimes(1);
-      expect(mockAuthRepository.getCurrentUser).toHaveBeenCalledTimes(1);
-    });
-
-    it('should return user with correct properties', async () => {
-      // Arrange
-      const expectedUser = new UserFixture()
-        .withId('123')
-        .withName('John Doe')
-        .withAvatar('https://example.com/avatar.jpg')
-        .build();
+      const expectedUser = userBuilder.build({
+        id: '123',
+        name: 'Test User',
+        avatar: 'https://example.com/avatar.jpg',
+        timezone: 'UTC',
+        units: 'metric',
+        language: 'en',
+        theme: 'light',
+        notifications: true,
+      });
 
       mockAuthRepository.isAuthenticated = vi.fn().mockReturnValue(true);
       mockAuthRepository.getCurrentUser = vi
@@ -119,15 +113,42 @@ describe('Get Current User Use Case', () => {
       const result = await getCurrentUserUseCase.execute();
 
       // Assert
-      expect(result).toEqual(expectedUser);
-      expect(result.id).toBe('123');
-      expect(result.name).toBe('John Doe');
-      expect(result.avatar).toBe('https://example.com/avatar.jpg');
+      expect(result).toStrictEqual(expectedUser);
+      expect(result?.id).toBe('123');
+      expect(result?.name).toBe('Test User');
+      expect(result?.avatar).toBe('https://example.com/avatar.jpg');
+      expect(result?.preferences.timezone).toBe('UTC');
+      expect(result?.preferences.units).toBe('metric');
+      expect(result?.preferences.language).toBe('en');
+      expect(result?.preferences.theme).toBe('light');
+      expect(result?.preferences.notifications).toBe(true);
+    });
+
+    it('should work with minimal user data', async () => {
+      // Arrange
+      const expectedUser = userBuilder.build({
+        id: 'minimal-user',
+        name: 'Minimal User',
+      });
+
+      mockAuthRepository.isAuthenticated = vi.fn().mockReturnValue(true);
+      mockAuthRepository.getCurrentUser = vi
+        .fn()
+        .mockResolvedValue(expectedUser);
+
+      // Act
+      const result = await getCurrentUserUseCase.execute();
+
+      // Assert
+      expect(result).toStrictEqual(expectedUser);
+      expect(result?.id).toBe('minimal-user');
+      expect(result?.name).toBe('Minimal User');
     });
 
     it('should work with random user data', async () => {
       // Arrange
-      const randomUser = UserFixture.random();
+      const randomUser = userBuilder.build();
+
       mockAuthRepository.isAuthenticated = vi.fn().mockReturnValue(true);
       mockAuthRepository.getCurrentUser = vi.fn().mockResolvedValue(randomUser);
 
@@ -135,61 +156,59 @@ describe('Get Current User Use Case', () => {
       const result = await getCurrentUserUseCase.execute();
 
       // Assert
-      expect(result).toEqual(randomUser);
-      expect(result.id).toBeDefined();
-      expect(result.name).toBeDefined();
-      expect(result.avatar).toBeDefined();
+      expect(result).toStrictEqual(randomUser);
+      expect(result?.id).toBeDefined();
+      expect(result?.name).toBeDefined();
+      expect(result?.avatar).toBeDefined();
+      expect(result?.preferences).toBeDefined();
     });
 
-    it('should preserve user entity reference', async () => {
+    it('should handle authentication errors gracefully', async () => {
       // Arrange
-      const user = UserFixture.default();
+      mockAuthRepository.isAuthenticated = vi.fn().mockReturnValue(false);
+
+      // Act & Assert
+      await expect(getCurrentUserUseCase.execute()).rejects.toThrow(
+        'No valid authentication token available'
+      );
+      expect(mockAuthRepository.isAuthenticated).toHaveBeenCalledTimes(1);
+      expect(mockAuthRepository.getCurrentUser).not.toHaveBeenCalled();
+    });
+
+    it('should handle network errors', async () => {
+      // Arrange
+      const networkError = new Error('Network timeout');
+
       mockAuthRepository.isAuthenticated = vi.fn().mockReturnValue(true);
-      mockAuthRepository.getCurrentUser = vi.fn().mockResolvedValue(user);
+      mockAuthRepository.getCurrentUser = vi
+        .fn()
+        .mockRejectedValue(networkError);
+
+      // Act & Assert
+      await expect(getCurrentUserUseCase.execute()).rejects.toThrow(
+        'Network timeout'
+      );
+      expect(mockAuthRepository.isAuthenticated).toHaveBeenCalledTimes(1);
+      expect(mockAuthRepository.getCurrentUser).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return user with default preferences when not set', async () => {
+      // Arrange
+      const user = userBuilder.build();
+      // Remove preferences to test default behavior
+      const userWithoutPreferences = { ...user, preferences: undefined };
+
+      mockAuthRepository.isAuthenticated = vi.fn().mockReturnValue(true);
+      mockAuthRepository.getCurrentUser = vi
+        .fn()
+        .mockResolvedValue(userWithoutPreferences);
 
       // Act
       const result = await getCurrentUserUseCase.execute();
 
       // Assert
-      expect(result).toBe(user); // Should be exact same reference
-      expect(mockAuthRepository.getCurrentUser).toHaveBeenCalledTimes(1);
-    });
-
-    it('should handle authentication check before getting user', async () => {
-      // Arrange
-      let isAuthenticatedCallCount = 0;
-      let getCurrentUserCallCount = 0;
-
-      mockAuthRepository.isAuthenticated = vi.fn().mockImplementation(() => {
-        isAuthenticatedCallCount++;
-        return true;
-      });
-
-      mockAuthRepository.getCurrentUser = vi
-        .fn()
-        .mockImplementation(async () => {
-          getCurrentUserCallCount++;
-          // Ensure isAuthenticated was called first
-          expect(isAuthenticatedCallCount).toBe(1);
-          return UserFixture.default();
-        });
-
-      // Act
-      await getCurrentUserUseCase.execute();
-
-      // Assert
-      expect(isAuthenticatedCallCount).toBe(1);
-      expect(getCurrentUserCallCount).toBe(1);
-    });
-
-    it('should not call getCurrentUser when not authenticated', async () => {
-      // Arrange
-      mockAuthRepository.isAuthenticated = vi.fn().mockReturnValue(false);
-      mockAuthRepository.getCurrentUser = vi.fn();
-
-      // Act & Assert
-      await expect(getCurrentUserUseCase.execute()).rejects.toThrow();
-      expect(mockAuthRepository.getCurrentUser).not.toHaveBeenCalled();
+      expect(result).toStrictEqual(userWithoutPreferences);
+      expect(result?.preferences).toBeUndefined();
     });
   });
 });

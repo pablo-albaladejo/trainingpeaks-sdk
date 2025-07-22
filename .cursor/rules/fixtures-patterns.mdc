@@ -1,0 +1,310 @@
+---
+alwaysApply: false
+---
+
+# Test Fixtures Patterns with Rosie Factory
+
+## 🏗️ Base Structure Requirements
+
+All fixtures MUST follow this base structure:
+
+```typescript
+/**
+ * [Entity Name] Fixtures
+ * Factory pattern fixtures for creating [Entity] using rosie and faker
+ *
+ * This fixture demonstrates:
+ * - [Key patterns and features]
+ * - [Dependencies and relationships]
+ * - [Reusable patterns]
+ */
+
+import type { [EntityType] } from '@/domain';
+import { faker } from '@faker-js/faker';
+import { Factory } from 'rosie';
+import { randomNumber, randomString } from './utils.fixture';
+
+/**
+ * [Entity] Builder
+ * Creates [Entity] with proper [dependencies/relationships]
+ */
+export const [entityName]Builder = new Factory<[EntityType]>()
+  .attr('property', () => faker.[generator]())
+  .option('optionName', defaultValue)
+  .after((entity, options) => {
+    // Custom logic here
+    return entity;
+  });
+```
+
+## 📋 Core Patterns
+
+### 1. **Simple Attributes**
+
+- Use `faker` generators for realistic data
+- Define options with `.option()` for customization
+- Use `.after()` for post-processing logic
+
+### 2. **Nested Objects**
+
+- **ALWAYS** create separate builders for complex nested objects
+- Define simple objects inline
+- Use `.build()` multiple times for arrays of objects
+
+### 3. **Relationships**
+
+- Import builders of other entities
+- Use Rosie dependencies when necessary
+- Maintain consistency in related IDs
+
+### 4. **Dependencies**
+
+- Use `.after()` for attributes that depend on others
+- Validate data relationships
+- Ensure data consistency
+
+### 5. **Arrays**
+
+- Use `Array.from({ length: count }, () => builder.build())`
+- Create reusable builders for array elements
+
+## 🚨 CRITICAL Rules
+
+### **Complex Structures MUST Have Separate Builders**
+
+```typescript
+// ✅ CORRECT: Separate builder for complex structure
+export const userPreferencesBuilder = new Factory()
+  .attr('timezone', () => faker.location.timeZone())
+  .attr('units', () => faker.helpers.arrayElement(['metric', 'imperial']));
+
+export const userBuilder = new Factory<User>().attr('preferences', () =>
+  userPreferencesBuilder.build()
+);
+```
+
+```typescript
+// ❌ WRONG: Helper functions for structures
+export const createUserPreferences = () => ({
+  timezone: faker.location.timeZone(),
+  units: faker.helpers.arrayElement(['metric', 'imperial']),
+});
+```
+
+### **Never Use Helper Functions for Structures**
+
+- Helper functions should ONLY be used for simple data generation
+- Complex structures MUST be modeled as builders
+- Use builders for anything that could be reused
+
+### **Use Rosie Dependencies for Attribute Relationships**
+
+```typescript
+// ✅ CORRECT: Using .after() for dependencies
+export const authTokenBuilder = new Factory<AuthToken>()
+  .option('expiresInMinutes', 60)
+  .after((token, options) => {
+    const expiresAt = new Date(
+      Date.now() + options.expiresInMinutes * 60 * 1000
+    );
+    return { ...token, expiresAt: expiresAt.getTime() };
+  });
+```
+
+## 🎯 Reusable Components
+
+### **Predefined Builders for Common Patterns**
+
+```typescript
+/**
+ * Valid [Entity] Builder
+ * Creates valid [entity] for testing
+ */
+export const valid[Entity]Builder = new Factory()
+  .extend([entity]Builder)
+  .option('option1', 'validValue')
+  .option('option2', 'validValue');
+
+/**
+ * Invalid [Entity] Builder
+ * Creates invalid [entity] for error testing
+ */
+export const invalid[Entity]Builder = new Factory()
+  .extend([entity]Builder)
+  .option('option1', 'invalidValue');
+```
+
+## 📁 File Organization
+
+### **Required File Structure**
+
+```
+src/__fixtures__/
+├── [entity-name].fixture.ts          # Main entity fixtures
+├── [entity-name]-[type].fixture.ts   # Specialized fixtures
+└── utils.fixture.ts                  # Shared utilities
+```
+
+### **Import Patterns**
+
+```typescript
+// ✅ CORRECT: Use @ alias for imports
+import type { Entity } from '@/domain';
+import { faker } from '@faker-js/faker';
+import { Factory } from 'rosie';
+import { randomNumber } from './utils.fixture';
+```
+
+## 🔧 Builder Configuration
+
+### **Options Pattern**
+
+```typescript
+.option('optionName', defaultValue)
+.option('includeFeature', false)
+.option('customValue', undefined)
+```
+
+### **After Hook Pattern**
+
+```typescript
+.after((entity, options) => {
+  // Validate and transform data
+  if (options.customValue !== undefined) {
+    entity.property = options.customValue;
+  }
+
+  // Handle dependencies
+  if (options.includeFeature) {
+    entity.feature = featureBuilder.build();
+  }
+
+  return entity;
+});
+```
+
+## 📊 Data Validation Patterns
+
+### **Ensure Data Consistency**
+
+```typescript
+.after((entity, options) => {
+  // Ensure max is always greater than min
+  if (entity.max <= entity.min) {
+    entity.max = entity.min + randomNumber(5, 20);
+  }
+  return entity;
+});
+```
+
+### **Handle Optional Fields**
+
+```typescript
+.after((entity, options) => {
+  return {
+    ...entity,
+    optionalField: options.includeOptional ? value : undefined
+  };
+});
+```
+
+## 🎨 Documentation Requirements
+
+### **Builder Documentation**
+
+```typescript
+/**
+ * [Builder Name] Builder
+ * Creates [description] with [key features]
+ * Demonstrates [patterns used]
+ */
+```
+
+### **Complex Builder Documentation**
+
+```typescript
+/**
+ * [Complex Builder] Builder
+ * Creates [complex structure] with proper builder separation:
+ * - [Feature 1] builders for [purpose]
+ * - [Feature 2] builders for [purpose]
+ * - Proper use of domain factory functions
+ * - Dependencies between related attributes
+ */
+```
+
+## 🧪 Testing Builders
+
+### **Validate Complex Builders Separately**
+
+```typescript
+describe('[Builder Name]', () => {
+  it('should create valid [entity]', () => {
+    const entity = [entity]Builder.build();
+    expect(entity.property).toBeDefined();
+  });
+
+  it('should respect options', () => {
+    const entity = [entity]Builder.build({ option: 'value' });
+    expect(entity.property).toBe('value');
+  });
+});
+```
+
+## ⚡ Performance Considerations
+
+### **Lazy Evaluation for Heavy Structures**
+
+```typescript
+.after((entity, options) => {
+  // Only generate heavy data when needed
+  if (options.includeHeavyData) {
+    entity.heavyData = generateHeavyData();
+  }
+  return entity;
+});
+```
+
+### **Caching for Shared Builders**
+
+```typescript
+// Reuse builders across fixtures
+import { userPreferencesBuilder } from './auth.fixture';
+```
+
+## 🔄 Temporal Relationships
+
+### **Handle Time-Based Data**
+
+```typescript
+.after((entity, options) => {
+  const now = Date.now();
+  return {
+    ...entity,
+    createdAt: new Date(now - options.ageInDays * 24 * 60 * 60 * 1000),
+    updatedAt: new Date(now)
+  };
+});
+```
+
+## 📝 Principal Rules Summary
+
+1. **Complex structures MUST have separate builders**
+2. **Helper functions should NEVER be used for structures modelable as builders**
+3. **Use Rosie dependencies for attribute relationships**
+4. **Reusable components should have builders**
+5. **Complex builders should be documented**
+6. **Complex builders should be tested separately**
+7. **Always use faker for realistic data generation**
+8. **Maintain consistency in related data**
+9. **Handle optional fields gracefully**
+10. **Use proper TypeScript typing**
+
+## 📚 Reference Files
+
+- [auth.fixture.ts](mdc:src/__fixtures__/auth.fixture.ts) - Authentication fixtures with token expiration patterns
+- [workout-data.fixture.ts](mdc:src/__fixtures__/workout-data.fixture.ts) - Workout data with type-specific patterns
+- [workout-file.fixture.ts](mdc:src/__fixtures__/workout-file.fixture.ts) - File fixtures with content builders
+- [structured-workout-data.fixture.ts](mdc:src/__fixtures__/structured-workout-data.fixture.ts) - Complex nested structures
+- [workout-response.fixture.ts](mdc:src/__fixtures__/workout-response.fixture.ts) - Response patterns with dependencies
+- [utils.fixture.ts](mdc:src/__fixtures__/utils.fixture.ts) - Shared utility functions

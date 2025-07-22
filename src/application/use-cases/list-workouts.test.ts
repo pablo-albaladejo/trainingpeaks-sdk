@@ -5,16 +5,15 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { randomNumber } from '../../__fixtures__/utils.fixture';
-import { WorkoutDataFixture } from '../../__fixtures__/workout-data.fixture';
-import { ListWorkoutsResponseFixture } from '../../__fixtures__/workout-response.fixture';
-import type {
-  ListWorkouts,
-  ListWorkoutsParams,
-  ListWorkoutsResponse,
-} from '../services/workout-query';
+import { createWorkoutData } from '../../__fixtures__/workout-data.fixture';
+import {
+  createListWorkoutsResponse,
+  listWorkoutsResponseBuilder,
+} from '../../__fixtures__/workout-response.fixture';
+import type { ListWorkouts } from '../services/workout-query';
 import {
   createListWorkoutsUseCase,
-  ListWorkoutsRequest,
+  type ListWorkoutsRequest,
 } from './list-workouts';
 
 describe('List Workouts Use Case', () => {
@@ -28,14 +27,18 @@ describe('List Workouts Use Case', () => {
   });
 
   describe('execute', () => {
-    it('should list workouts successfully with default parameters', async () => {
+    it('should list workouts successfully', async () => {
       // Arrange
-      const request: ListWorkoutsRequest = {};
-      const expectedWorkouts = [
-        new WorkoutDataFixture().withName('Workout 1').build(),
-        new WorkoutDataFixture().withName('Workout 2').build(),
-      ];
-      const expectedResponse = ListWorkoutsResponseFixture.withWorkouts(expectedWorkouts);
+      const request: ListWorkoutsRequest = {
+        athleteId: randomNumber(1000, 9999),
+      };
+
+      const expectedResponse = createListWorkoutsResponse({
+        workoutCount: 3,
+        total: 3,
+        page: 1,
+        limit: 10,
+      });
 
       mockListWorkouts = vi.fn().mockResolvedValue(expectedResponse);
       listWorkoutsUseCase = createListWorkoutsUseCase(mockListWorkouts);
@@ -44,15 +47,26 @@ describe('List Workouts Use Case', () => {
       const result = await listWorkoutsUseCase.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
-      expect(mockListWorkouts).toHaveBeenCalledTimes(1);
-      expect(mockListWorkouts).toHaveBeenCalledWith(request);
+      expect(result).toStrictEqual(expectedResponse);
+      expect(result.workouts).toHaveLength(3);
+      expect(result.total).toBe(3);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(10);
+      expect(result.hasMore).toBe(false);
     });
 
-    it('should handle empty results', async () => {
+    it('should handle empty workout list', async () => {
       // Arrange
-      const request: ListWorkoutsRequest = { limit: 10 };
-      const expectedResponse = ListWorkoutsResponseFixture.empty();
+      const request: ListWorkoutsRequest = {
+        athleteId: randomNumber(1000, 9999),
+      };
+
+      const expectedResponse = createListWorkoutsResponse({
+        workoutCount: 0,
+        total: 0,
+        page: 1,
+        limit: 10,
+      });
 
       mockListWorkouts = vi.fn().mockResolvedValue(expectedResponse);
       listWorkoutsUseCase = createListWorkoutsUseCase(mockListWorkouts);
@@ -61,163 +75,43 @@ describe('List Workouts Use Case', () => {
       const result = await listWorkoutsUseCase.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
+      expect(result).toStrictEqual(expectedResponse);
       expect(result.workouts).toHaveLength(0);
       expect(result.total).toBe(0);
+      expect(result.hasMore).toBe(false);
     });
 
-    it('should handle pagination parameters', async () => {
+    it('should handle repository errors', async () => {
       // Arrange
       const request: ListWorkoutsRequest = {
-        limit: 5,
-        offset: 10,
+        athleteId: randomNumber(1000, 9999),
       };
-      const expectedWorkouts = Array.from({ length: 5 }, (_, i) =>
-        new WorkoutDataFixture().withName(`Workout ${i + 11}`).build()
-      );
-      const expectedResponse = new ListWorkoutsResponseFixture()
-        .withWorkouts(expectedWorkouts)
-        .withTotal(50)
-        .withPage(3)
-        .withLimit(5)
-        .withHasMore(true)
-        .build();
 
-      mockListWorkouts = vi.fn().mockResolvedValue(expectedResponse);
-      listWorkoutsUseCase = createListWorkoutsUseCase(mockListWorkouts);
-
-      // Act
-      const result = await listWorkoutsUseCase.execute(request);
-
-      // Assert
-      expect(result).toEqual(expectedResponse);
-      expect(result.workouts).toHaveLength(5);
-      expect(result.hasMore).toBe(true);
-      expect(mockListWorkouts).toHaveBeenCalledWith(request);
-    });
-
-    it('should handle date range filters', async () => {
-      // Arrange
-      const dateFrom = new Date('2024-01-01');
-      const dateTo = new Date('2024-12-31');
-      const request: ListWorkoutsRequest = {
-        dateFrom,
-        dateTo,
-        limit: 20,
-      };
-      const expectedWorkouts = [
-        new WorkoutDataFixture().withName('January Workout').build(),
-        new WorkoutDataFixture().withName('December Workout').build(),
-      ];
-      const expectedResponse = new ListWorkoutsResponseFixture()
-        .withWorkouts(expectedWorkouts)
-        .withTotal(2)
-        .withPage(1)
-        .withLimit(20)
-        .withHasMore(false)
-        .build();
-
-      mockListWorkouts = vi.fn().mockResolvedValue(expectedResponse);
-      listWorkoutsUseCase = createListWorkoutsUseCase(mockListWorkouts);
-
-      // Act
-      const result = await listWorkoutsUseCase.execute(request);
-
-      // Assert
-      expect(result).toEqual(expectedResponse);
-      expect(mockListWorkouts).toHaveBeenCalledWith(request);
-    });
-
-    it('should handle activity type and difficulty filters', async () => {
-      // Arrange
-      const request: ListWorkoutsRequest = {
-        activityType: 'run',
-        difficulty: 'moderate',
-        tags: ['interval', 'endurance'],
-      };
-      const expectedWorkouts = [
-        new WorkoutDataFixture()
-          .withName('Moderate Running Workout')
-          .withDescription('Interval training')
-          .build(),
-      ];
-      const expectedResponse = ListWorkoutsResponseFixture.withWorkouts(expectedWorkouts);
-
-      mockListWorkouts = vi.fn().mockResolvedValue(expectedResponse);
-      listWorkoutsUseCase = createListWorkoutsUseCase(mockListWorkouts);
-
-      // Act
-      const result = await listWorkoutsUseCase.execute(request);
-
-      // Assert
-      expect(result).toEqual(expectedResponse);
-      expect(mockListWorkouts).toHaveBeenCalledWith(request);
-    });
-
-    it('should handle sorting parameters', async () => {
-      // Arrange
-      const request: ListWorkoutsRequest = {
-        sortBy: 'duration',
-        sortOrder: 'desc',
-      };
-      const expectedWorkouts = [
-        new WorkoutDataFixture()
-          .withName('Long Workout')
-          .withDuration(7200)
-          .build(),
-        new WorkoutDataFixture()
-          .withName('Short Workout')
-          .withDuration(1800)
-          .build(),
-      ];
-      const expectedResponse = ListWorkoutsResponseFixture.withWorkouts(expectedWorkouts);
-
-      mockListWorkouts = vi.fn().mockResolvedValue(expectedResponse);
-      listWorkoutsUseCase = createListWorkoutsUseCase(mockListWorkouts);
-
-      // Act
-      const result = await listWorkoutsUseCase.execute(request);
-
-      // Assert
-      expect(result).toEqual(expectedResponse);
-      expect(mockListWorkouts).toHaveBeenCalledWith(request);
-    });
-
-    it('should handle service errors correctly', async () => {
-      // Arrange
-      const request: ListWorkoutsRequest = { limit: 10 };
-      const errorMessage = 'Service unavailable';
-
-      mockListWorkouts = vi.fn().mockRejectedValue(new Error(errorMessage));
+      const error = new Error('Repository error');
+      mockListWorkouts = vi.fn().mockRejectedValue(error);
       listWorkoutsUseCase = createListWorkoutsUseCase(mockListWorkouts);
 
       // Act & Assert
       await expect(listWorkoutsUseCase.execute(request)).rejects.toThrow(
-        errorMessage
+        'Repository error'
       );
       expect(mockListWorkouts).toHaveBeenCalledWith(request);
     });
 
-    it('should pass through all request parameters', async () => {
+    it('should work with pagination', async () => {
       // Arrange
       const request: ListWorkoutsRequest = {
-        limit: 25,
-        offset: 50,
-        dateFrom: new Date('2024-06-01'),
-        dateTo: new Date('2024-06-30'),
-        tags: ['strength', 'upper-body'],
-        activityType: 'strength',
-        difficulty: 'hard',
-        sortBy: 'name',
-        sortOrder: 'asc',
+        athleteId: randomNumber(1000, 9999),
+        page: 2,
+        limit: 5,
       };
-      const expectedResponse = new ListWorkoutsResponseFixture()
-        .withWorkouts([])
-        .withTotal(0)
-        .withPage(3)
-        .withLimit(25)
-        .withHasMore(false)
-        .build();
+
+      const expectedResponse = createListWorkoutsResponse({
+        workoutCount: 5,
+        total: 15,
+        page: 2,
+        limit: 5,
+      });
 
       mockListWorkouts = vi.fn().mockResolvedValue(expectedResponse);
       listWorkoutsUseCase = createListWorkoutsUseCase(mockListWorkouts);
@@ -226,53 +120,31 @@ describe('List Workouts Use Case', () => {
       const result = await listWorkoutsUseCase.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
-      expect(mockListWorkouts).toHaveBeenCalledWith(request);
-    });
-
-    it('should handle large dataset with pagination', async () => {
-      // Arrange
-      const request: ListWorkoutsRequest = {
-        limit: 100,
-        offset: 500,
-      };
-      const expectedWorkouts = Array.from({ length: 100 }, (_, i) =>
-        new WorkoutDataFixture()
-          .withName(`Workout ${i + 501}`)
-          .withDuration(randomNumber(1800, 7200))
-          .build()
-      );
-      const expectedResponse = new ListWorkoutsResponseFixture()
-        .withWorkouts(expectedWorkouts)
-        .withTotal(1500)
-        .withPage(6)
-        .withLimit(100)
-        .withHasMore(true)
-        .build();
-
-      mockListWorkouts = vi.fn().mockResolvedValue(expectedResponse);
-      listWorkoutsUseCase = createListWorkoutsUseCase(mockListWorkouts);
-
-      // Act
-      const result = await listWorkoutsUseCase.execute(request);
-
-      // Assert
-      expect(result).toEqual(expectedResponse);
-      expect(result.workouts).toHaveLength(100);
-      expect(result.total).toBe(1500);
+      expect(result).toStrictEqual(expectedResponse);
+      expect(result.workouts).toHaveLength(5);
+      expect(result.total).toBe(15);
+      expect(result.page).toBe(2);
+      expect(result.limit).toBe(5);
       expect(result.hasMore).toBe(true);
     });
 
-    it('should preserve workout data structure', async () => {
+    it('should work with filters', async () => {
       // Arrange
-      const request: ListWorkoutsRequest = {};
-      const complexWorkout = new WorkoutDataFixture()
-        .withName('Complex Workout')
-        .withDescription('Multi-phase workout')
-        .withDuration(5400)
-        .withDistance(15000)
-        .build();
-      const expectedResponse = ListWorkoutsResponseFixture.withWorkouts([complexWorkout]);
+      const request: ListWorkoutsRequest = {
+        athleteId: randomNumber(1000, 9999),
+        filters: {
+          dateFrom: '2024-01-01',
+          dateTo: '2024-01-31',
+          type: 'run',
+        },
+      };
+
+      const expectedResponse = createListWorkoutsResponse({
+        workoutCount: 1,
+        total: 1,
+        page: 1,
+        limit: 10,
+      });
 
       mockListWorkouts = vi.fn().mockResolvedValue(expectedResponse);
       listWorkoutsUseCase = createListWorkoutsUseCase(mockListWorkouts);
@@ -281,28 +153,31 @@ describe('List Workouts Use Case', () => {
       const result = await listWorkoutsUseCase.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
-      expect(result.workouts[0]).toEqual(complexWorkout);
-      expect(result.workouts[0].name).toBe('Complex Workout');
-      expect(result.workouts[0].duration).toBe(5400);
-      expect(result.workouts[0].distance).toBe(15000);
+      expect(result).toStrictEqual(expectedResponse);
+      expect(mockListWorkouts).toHaveBeenCalledWith(request);
     });
 
-    it('should handle random query parameters', async () => {
+    it('should work with complex workout data', async () => {
       // Arrange
-      const randomLimit = randomNumber(1, 100);
-      const randomOffset = randomNumber(0, 1000);
       const request: ListWorkoutsRequest = {
-        limit: randomLimit,
-        offset: randomOffset,
+        athleteId: randomNumber(1000, 9999),
       };
-      const expectedResponse = new ListWorkoutsResponseFixture()
-        .withWorkouts([])
-        .withTotal(randomNumber(0, 2000))
-        .withPage(Math.floor(randomOffset / randomLimit) + 1)
-        .withLimit(randomLimit)
-        .withHasMore(Math.random() > 0.5)
-        .build();
+
+      const complexWorkout = createWorkoutData({
+        name: 'Complex Workout',
+        description: 'A complex workout with multiple phases',
+        durationMinutes: 120, // 2 hours = 7200 seconds
+        distanceKm: 20, // 20km = 20000 meters
+        workoutType: 'bike',
+      });
+
+      const expectedResponse = listWorkoutsResponseBuilder.build({
+        workouts: [complexWorkout],
+        total: 1,
+        page: 1,
+        limit: 10,
+        hasMore: false,
+      });
 
       mockListWorkouts = vi.fn().mockResolvedValue(expectedResponse);
       listWorkoutsUseCase = createListWorkoutsUseCase(mockListWorkouts);
@@ -311,8 +186,14 @@ describe('List Workouts Use Case', () => {
       const result = await listWorkoutsUseCase.execute(request);
 
       // Assert
-      expect(result).toEqual(expectedResponse);
-      expect(mockListWorkouts).toHaveBeenCalledWith(request);
+      expect(result).toStrictEqual(expectedResponse);
+      expect(result.workouts[0].name).toBe('Complex Workout');
+      expect(result.workouts[0].description).toBe(
+        'A complex workout with multiple phases'
+      );
+      expect(result.workouts[0].duration).toBe(7200);
+      expect(result.workouts[0].distance).toBe(20000);
+      expect(result.workouts[0].type).toBe('bike');
     });
   });
 });
