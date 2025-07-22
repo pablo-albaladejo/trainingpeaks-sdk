@@ -1,54 +1,371 @@
 /**
- * Workout Structure Value Object
- * Represents the complete structure of a workout with elements, polyline, and metadata
+ * Workout Structure Value Objects
+ * Domain value objects using Zod schemas for validation
  */
 
-import { ValidationError } from '@/domain/errors';
 import {
-  WorkoutLength,
-  WorkoutLengthUnit,
-} from '@/domain/value-objects/workout-length';
-import {
-  WorkoutIntensityClass,
-  WorkoutStep,
-} from '@/domain/value-objects/workout-step';
+  WorkoutLengthSchema,
+  WorkoutStepSchema,
+  WorkoutStructureElementSchema,
+  WorkoutStructureSchema,
+  WorkoutTargetSchema,
+  type WorkoutIntensityClass,
+  type WorkoutIntensityMetric,
+  type WorkoutIntensityTargetType,
+  type WorkoutLength as WorkoutLengthData,
+  type WorkoutLengthMetric,
+  type WorkoutLengthUnit,
+  type WorkoutStep as WorkoutStepData,
+  type WorkoutStructure as WorkoutStructureData,
+  type WorkoutStructureElement as WorkoutStructureElementData,
+  type WorkoutTarget as WorkoutTargetData,
+} from '@/domain/schemas/workout-structure.schema';
 
-export type WorkoutElementType = 'step' | 'repetition';
-export type WorkoutLengthMetric = 'duration' | 'distance';
-export type WorkoutIntensityMetric =
-  | 'percentOfThresholdPace'
-  | 'percentOfThresholdPower'
-  | 'heartRate'
-  | 'power'
-  | 'pace'
-  | 'speed';
-export type WorkoutIntensityTargetType = 'target' | 'range';
+/**
+ * WorkoutLength Value Object
+ */
+export class WorkoutLength {
+  private constructor(private readonly _data: WorkoutLengthData) {}
 
-export type WorkoutStructureElement = {
-  /** Element type */
-  type: WorkoutElementType;
-  /** Element length */
-  length: WorkoutLength;
-  /** Steps within this element */
-  steps: WorkoutStep[];
-  /** Start time in seconds */
-  begin: number;
-  /** End time in seconds */
-  end: number;
-};
-
-export class WorkoutStructure {
-  private constructor(
-    private readonly _structure: WorkoutStructureElement[],
-    private readonly _polyline: number[][],
-    private readonly _primaryLengthMetric: WorkoutLengthMetric,
-    private readonly _primaryIntensityMetric: WorkoutIntensityMetric,
-    private readonly _primaryIntensityTargetOrRange: WorkoutIntensityTargetType
-  ) {
-    this.validateStructure();
-    this.validatePolyline();
-    this.validateMetrics();
+  public static create(value: number, unit: WorkoutLengthUnit): WorkoutLength {
+    const data = { value, unit };
+    const validated = WorkoutLengthSchema.parse(data);
+    return new WorkoutLength(validated);
   }
+
+  public static fromData(data: WorkoutLengthData): WorkoutLength {
+    const validated = WorkoutLengthSchema.parse(data);
+    return new WorkoutLength(validated);
+  }
+
+  public get value(): number {
+    return this._data.value;
+  }
+
+  public get unit(): WorkoutLengthUnit {
+    return this._data.unit;
+  }
+
+  public toData(): WorkoutLengthData {
+    return { ...this._data };
+  }
+
+  public toSeconds(): number | null {
+    switch (this._data.unit) {
+      case 'second':
+        return this._data.value;
+      case 'minute':
+        return this._data.value * 60;
+      case 'hour':
+        return this._data.value * 3600;
+      default:
+        return null;
+    }
+  }
+
+  public toMeters(): number | null {
+    switch (this._data.unit) {
+      case 'meter':
+        return this._data.value;
+      case 'kilometer':
+        return this._data.value * 1000;
+      case 'mile':
+        return this._data.value * 1609.344;
+      default:
+        return null;
+    }
+  }
+
+  public isTimeUnit(): boolean {
+    return ['second', 'minute', 'hour'].includes(this._data.unit);
+  }
+
+  public isDistanceUnit(): boolean {
+    return ['meter', 'kilometer', 'mile'].includes(this._data.unit);
+  }
+
+  public isRepetitionUnit(): boolean {
+    return this._data.unit === 'repetition';
+  }
+
+  public equals(other: WorkoutLength): boolean {
+    return (
+      this._data.value === other._data.value &&
+      this._data.unit === other._data.unit
+    );
+  }
+
+  public toString(): string {
+    return `${this._data.value} ${this._data.unit}${this._data.value !== 1 ? 's' : ''}`;
+  }
+}
+
+/**
+ * WorkoutTarget Value Object
+ */
+export class WorkoutTarget {
+  private constructor(private readonly _data: WorkoutTargetData) {}
+
+  public static create(minValue: number, maxValue: number): WorkoutTarget {
+    const data = { minValue, maxValue };
+    const validated = WorkoutTargetSchema.parse(data);
+    return new WorkoutTarget(validated);
+  }
+
+  public static fromData(data: WorkoutTargetData): WorkoutTarget {
+    const validated = WorkoutTargetSchema.parse(data);
+    return new WorkoutTarget(validated);
+  }
+
+  public get minValue(): number {
+    return this._data.minValue;
+  }
+
+  public get maxValue(): number {
+    return this._data.maxValue;
+  }
+
+  public toData(): WorkoutTargetData {
+    return { ...this._data };
+  }
+
+  public isSingleTarget(): boolean {
+    return this._data.minValue === this._data.maxValue;
+  }
+
+  public isRangeTarget(): boolean {
+    return this._data.minValue < this._data.maxValue;
+  }
+
+  public getRangeWidth(): number {
+    return this._data.maxValue - this._data.minValue;
+  }
+
+  public getMidpoint(): number {
+    return (this._data.minValue + this._data.maxValue) / 2;
+  }
+
+  public isValueInRange(value: number): boolean {
+    return value >= this._data.minValue && value <= this._data.maxValue;
+  }
+
+  public equals(other: WorkoutTarget): boolean {
+    return (
+      this._data.minValue === other._data.minValue &&
+      this._data.maxValue === other._data.maxValue
+    );
+  }
+
+  public toString(): string {
+    if (this.isSingleTarget()) {
+      return `${this._data.minValue}`;
+    }
+    return `${this._data.minValue}-${this._data.maxValue}`;
+  }
+}
+
+/**
+ * WorkoutStep Value Object
+ */
+export class WorkoutStep {
+  private constructor(private readonly _data: WorkoutStepData) {}
+
+  public static create(
+    name: string,
+    length: WorkoutLength,
+    targets: WorkoutTarget[],
+    intensityClass: WorkoutIntensityClass,
+    openDuration: boolean = false
+  ): WorkoutStep {
+    const data = {
+      name,
+      length: length.toData(),
+      targets: targets.map((t) => t.toData()),
+      intensityClass,
+      openDuration,
+    };
+    const validated = WorkoutStepSchema.parse(data);
+    return new WorkoutStep(validated);
+  }
+
+  public static fromData(data: WorkoutStepData): WorkoutStep {
+    const validated = WorkoutStepSchema.parse(data);
+    return new WorkoutStep(validated);
+  }
+
+  public get name(): string {
+    return this._data.name;
+  }
+
+  public get length(): WorkoutLength {
+    return WorkoutLength.fromData(this._data.length);
+  }
+
+  public get targets(): WorkoutTarget[] {
+    return this._data.targets.map((t) => WorkoutTarget.fromData(t));
+  }
+
+  public get intensityClass(): WorkoutIntensityClass {
+    return this._data.intensityClass;
+  }
+
+  public get openDuration(): boolean {
+    return this._data.openDuration;
+  }
+
+  public toData(): WorkoutStepData {
+    return { ...this._data };
+  }
+
+  public isRest(): boolean {
+    return this._data.intensityClass === 'rest';
+  }
+
+  public isActive(): boolean {
+    return this._data.intensityClass === 'active';
+  }
+
+  public isWarmUp(): boolean {
+    return this._data.intensityClass === 'warmUp';
+  }
+
+  public isCoolDown(): boolean {
+    return this._data.intensityClass === 'coolDown';
+  }
+
+  public getPrimaryTarget(): WorkoutTarget | null {
+    return this._data.targets.length > 0
+      ? WorkoutTarget.fromData(this._data.targets[0]!)
+      : null;
+  }
+
+  public getDurationInSeconds(): number | null {
+    return this.length.toSeconds();
+  }
+
+  public getDistanceInMeters(): number | null {
+    return this.length.toMeters();
+  }
+
+  public equals(other: WorkoutStep): boolean {
+    return (
+      this._data.name === other._data.name &&
+      this.length.equals(other.length) &&
+      this._data.intensityClass === other._data.intensityClass &&
+      this._data.openDuration === other._data.openDuration &&
+      this._data.targets.length === other._data.targets.length &&
+      this._data.targets.every((target, index) => {
+        const otherTarget = other._data.targets[index];
+        return (
+          otherTarget &&
+          target.minValue === otherTarget.minValue &&
+          target.maxValue === otherTarget.maxValue
+        );
+      })
+    );
+  }
+
+  public toString(): string {
+    const duration = this.getDurationInSeconds();
+    const distance = this.getDistanceInMeters();
+
+    let description = `${this._data.name} (${this._data.intensityClass})`;
+
+    if (duration !== null) {
+      description += ` - ${duration}s`;
+    } else if (distance !== null) {
+      description += ` - ${distance}m`;
+    } else {
+      description += ` - ${this.length.toString()}`;
+    }
+
+    if (this._data.targets.length > 0) {
+      description += ` @ ${this._data.targets.map((t) => `${t.minValue}-${t.maxValue}`).join(', ')}`;
+    }
+
+    return description;
+  }
+}
+
+/**
+ * WorkoutStructureElement Value Object
+ */
+export class WorkoutStructureElement {
+  private constructor(private readonly _data: WorkoutStructureElementData) {}
+
+  public static create(
+    type: 'step' | 'repetition',
+    length: WorkoutLength,
+    steps: WorkoutStep[],
+    begin: number,
+    end: number
+  ): WorkoutStructureElement {
+    const data = {
+      type,
+      length: length.toData(),
+      steps: steps.map((s) => s.toData()),
+      begin,
+      end,
+    };
+    const validated = WorkoutStructureElementSchema.parse(data);
+    return new WorkoutStructureElement(validated);
+  }
+
+  public static fromData(
+    data: WorkoutStructureElementData
+  ): WorkoutStructureElement {
+    const validated = WorkoutStructureElementSchema.parse(data);
+    return new WorkoutStructureElement(validated);
+  }
+
+  public get type(): 'step' | 'repetition' {
+    return this._data.type;
+  }
+
+  public get length(): WorkoutLength {
+    return WorkoutLength.fromData(this._data.length);
+  }
+
+  public get steps(): WorkoutStep[] {
+    return this._data.steps.map((s) => WorkoutStep.fromData(s));
+  }
+
+  public get begin(): number {
+    return this._data.begin;
+  }
+
+  public get end(): number {
+    return this._data.end;
+  }
+
+  public toData(): WorkoutStructureElementData {
+    return { ...this._data };
+  }
+
+  public getDuration(): number {
+    return this._data.end - this._data.begin;
+  }
+
+  public equals(other: WorkoutStructureElement): boolean {
+    return (
+      this._data.type === other._data.type &&
+      this.length.equals(other.length) &&
+      this._data.begin === other._data.begin &&
+      this._data.end === other._data.end &&
+      this._data.steps.length === other._data.steps.length &&
+      this._data.steps.every((step, index) => {
+        const otherStep = other._data.steps[index];
+        return otherStep && step.name === otherStep.name;
+      })
+    );
+  }
+}
+
+/**
+ * WorkoutStructure Value Object
+ */
+export class WorkoutStructure {
+  private constructor(private readonly _data: WorkoutStructureData) {}
 
   public static create(
     structure: WorkoutStructureElement[],
@@ -57,230 +374,116 @@ export class WorkoutStructure {
     primaryIntensityMetric: WorkoutIntensityMetric,
     primaryIntensityTargetOrRange: WorkoutIntensityTargetType
   ): WorkoutStructure {
-    return new WorkoutStructure(
-      structure,
+    const data = {
+      structure: structure.map((s) => s.toData()),
       polyline,
       primaryLengthMetric,
       primaryIntensityMetric,
-      primaryIntensityTargetOrRange
-    );
+      primaryIntensityTargetOrRange,
+    };
+    const validated = WorkoutStructureSchema.parse(data);
+    return new WorkoutStructure(validated);
   }
 
-  /**
-   * Create from API format
-   */
-  public static fromApiFormat(data: {
-    structure: {
-      type: WorkoutElementType;
-      length: { value: number; unit: string };
-      steps: {
-        name: string;
-        length: { value: number; unit: string };
-        targets: { minValue: number; maxValue: number }[];
-        intensityClass: string;
-        openDuration: boolean;
-      }[];
-      begin: number;
-      end: number;
-    }[];
-    polyline: number[][];
-    primaryLengthMetric: WorkoutLengthMetric;
-    primaryIntensityMetric: WorkoutIntensityMetric;
-    primaryIntensityTargetOrRange: WorkoutIntensityTargetType;
-  }): WorkoutStructure {
-    const structure = data.structure.map((element) => ({
-      type: element.type,
-      length: WorkoutLength.fromApiFormat(
-        element.length as { value: number; unit: WorkoutLengthUnit }
-      ),
-      steps: element.steps.map((step) =>
-        WorkoutStep.fromApiFormat({
-          ...step,
-          intensityClass: step.intensityClass as WorkoutIntensityClass,
-        })
-      ),
-      begin: element.begin,
-      end: element.end,
-    }));
-
-    return WorkoutStructure.create(
-      structure,
-      data.polyline,
-      data.primaryLengthMetric,
-      data.primaryIntensityMetric,
-      data.primaryIntensityTargetOrRange
-    );
+  public static fromData(data: WorkoutStructureData): WorkoutStructure {
+    const validated = WorkoutStructureSchema.parse(data);
+    return new WorkoutStructure(validated);
   }
 
   public get structure(): WorkoutStructureElement[] {
-    return this._structure.map((element) => ({
-      ...element,
-      steps: [...element.steps], // Deep copy steps
-    }));
+    return this._data.structure.map((s) => WorkoutStructureElement.fromData(s));
   }
 
   public get polyline(): number[][] {
-    return this._polyline.map((point) => [...point]); // Deep copy polyline
+    return [...this._data.polyline];
   }
 
   public get primaryLengthMetric(): WorkoutLengthMetric {
-    return this._primaryLengthMetric;
+    return this._data.primaryLengthMetric;
   }
 
   public get primaryIntensityMetric(): WorkoutIntensityMetric {
-    return this._primaryIntensityMetric;
+    return this._data.primaryIntensityMetric;
   }
 
   public get primaryIntensityTargetOrRange(): WorkoutIntensityTargetType {
-    return this._primaryIntensityTargetOrRange;
+    return this._data.primaryIntensityTargetOrRange;
   }
 
-  /**
-   * Get total duration of the workout in seconds
-   */
+  public toData(): WorkoutStructureData {
+    return { ...this._data };
+  }
+
   public getTotalDuration(): number {
-    if (this._structure.length === 0) {
-      return 0;
-    }
-
-    return Math.max(...this._structure.map((element) => element.end));
+    return this._data.structure.reduce((total, element) => {
+      return total + (element.end - element.begin);
+    }, 0);
   }
 
-  /**
-   * Get all steps in the workout
-   */
   public getAllSteps(): WorkoutStep[] {
-    return this._structure.flatMap((element) => element.steps);
+    return this._data.structure.flatMap((element) =>
+      element.steps.map((step) => WorkoutStep.fromData(step))
+    );
   }
 
-  /**
-   * Get all active steps (excluding rest)
-   */
   public getActiveSteps(): WorkoutStep[] {
     return this.getAllSteps().filter((step) => step.isActive());
   }
 
-  /**
-   * Get all rest steps
-   */
   public getRestSteps(): WorkoutStep[] {
     return this.getAllSteps().filter((step) => step.isRest());
   }
 
-  /**
-   * Get elements by type
-   */
   public getElementsByType(
-    type: WorkoutElementType
+    type: 'step' | 'repetition'
   ): WorkoutStructureElement[] {
-    return this._structure.filter((element) => element.type === type);
+    return this.structure.filter((element) => element.type === type);
   }
 
-  /**
-   * Get repetition elements
-   */
   public getRepetitions(): WorkoutStructureElement[] {
     return this.getElementsByType('repetition');
   }
 
-  /**
-   * Get step elements
-   */
   public getStepElements(): WorkoutStructureElement[] {
     return this.getElementsByType('step');
   }
 
-  /**
-   * Check if workout is time-based
-   */
   public isTimeBased(): boolean {
-    return this._primaryLengthMetric === 'duration';
+    return this._data.primaryLengthMetric === 'duration';
   }
 
-  /**
-   * Check if workout is distance-based
-   */
   public isDistanceBased(): boolean {
-    return this._primaryLengthMetric === 'distance';
+    return this._data.primaryLengthMetric === 'distance';
   }
 
-  /**
-   * Convert to API format
-   */
-  public toApiFormat(): {
-    structure: {
-      type: WorkoutElementType;
-      length: { value: number; unit: string };
-      steps: {
-        name: string;
-        length: { value: number; unit: string };
-        targets: { minValue: number; maxValue: number }[];
-        intensityClass: string;
-        openDuration: boolean;
-      }[];
-      begin: number;
-      end: number;
-    }[];
-    polyline: number[][];
-    primaryLengthMetric: WorkoutLengthMetric;
-    primaryIntensityMetric: WorkoutIntensityMetric;
-    primaryIntensityTargetOrRange: WorkoutIntensityTargetType;
-  } {
-    return {
-      structure: this._structure.map((element) => ({
-        type: element.type,
-        length: element.length.toApiFormat(),
-        steps: element.steps.map((step) => step.toApiFormat()),
-        begin: element.begin,
-        end: element.end,
-      })),
-      polyline: this._polyline,
-      primaryLengthMetric: this._primaryLengthMetric,
-      primaryIntensityMetric: this._primaryIntensityMetric,
-      primaryIntensityTargetOrRange: this._primaryIntensityTargetOrRange,
-    };
+  public calculateAverageIntensity(): number {
+    const steps = this.getAllSteps();
+    if (steps.length === 0) return 0;
+
+    const totalIntensity = steps.reduce((sum, step) => {
+      const primaryTarget = step.getPrimaryTarget();
+      const stepIntensity = primaryTarget ? primaryTarget.getMidpoint() : 0;
+      return sum + stepIntensity;
+    }, 0);
+
+    return totalIntensity / steps.length;
   }
 
-  /**
-   * Check equality with another WorkoutStructure
-   */
   public equals(other: WorkoutStructure): boolean {
     return (
-      this._primaryLengthMetric === other._primaryLengthMetric &&
-      this._primaryIntensityMetric === other._primaryIntensityMetric &&
-      this._primaryIntensityTargetOrRange ===
-        other._primaryIntensityTargetOrRange &&
-      this._structure.length === other._structure.length &&
-      this._structure.every((element, index) => {
-        const otherElement = other._structure[index];
-        return (
-          otherElement &&
-          element.type === otherElement.type &&
-          element.length.equals(otherElement.length) &&
-          element.begin === otherElement.begin &&
-          element.end === otherElement.end &&
-          element.steps.length === otherElement.steps.length &&
-          element.steps.every((step, stepIndex) => {
-            const otherStep = otherElement.steps[stepIndex];
-            return otherStep && step.equals(otherStep);
-          })
-        );
-      }) &&
-      this._polyline.length === other._polyline.length &&
-      this._polyline.every((point, index) => {
-        const otherPoint = other._polyline[index];
-        return (
-          otherPoint &&
-          point.length === otherPoint.length &&
-          point.every((value, valueIndex) => value === otherPoint[valueIndex])
-        );
+      this._data.primaryLengthMetric === other._data.primaryLengthMetric &&
+      this._data.primaryIntensityMetric ===
+        other._data.primaryIntensityMetric &&
+      this._data.primaryIntensityTargetOrRange ===
+        other._data.primaryIntensityTargetOrRange &&
+      this._data.structure.length === other._data.structure.length &&
+      this._data.structure.every((element, index) => {
+        const otherElement = other._data.structure[index];
+        return otherElement && element.type === otherElement.type;
       })
     );
   }
 
-  /**
-   * String representation
-   */
   public toString(): string {
     const duration = this.getTotalDuration();
     const stepCount = this.getAllSteps().length;
@@ -288,129 +491,5 @@ export class WorkoutStructure {
     const repetitionCount = this.getRepetitions().length;
 
     return `Workout Structure (${duration}s, ${stepCount} steps, ${activeStepCount} active, ${repetitionCount} repetitions)`;
-  }
-
-  /**
-   * Create a new structure with additional element
-   */
-  public withElement(element: WorkoutStructureElement): WorkoutStructure {
-    return new WorkoutStructure(
-      [...this._structure, element],
-      this._polyline,
-      this._primaryLengthMetric,
-      this._primaryIntensityMetric,
-      this._primaryIntensityTargetOrRange
-    );
-  }
-
-  /**
-   * Create a new structure with updated polyline
-   */
-  public withPolyline(polyline: number[][]): WorkoutStructure {
-    return new WorkoutStructure(
-      this._structure,
-      polyline,
-      this._primaryLengthMetric,
-      this._primaryIntensityMetric,
-      this._primaryIntensityTargetOrRange
-    );
-  }
-
-  private validateStructure(): void {
-    if (!Array.isArray(this._structure)) {
-      throw new ValidationError('Workout structure must be an array');
-    }
-
-    if (this._structure.length === 0) {
-      throw new ValidationError('Workout structure cannot be empty');
-    }
-
-    // Validate that elements don't overlap
-    for (let i = 0; i < this._structure.length - 1; i++) {
-      const current = this._structure[i];
-      const next = this._structure[i + 1];
-
-      if (current && next && current.end > next.begin) {
-        throw new ValidationError(
-          `Workout structure elements overlap: element ${i} ends at ${current.end} but element ${i + 1} begins at ${next.begin}`
-        );
-      }
-    }
-
-    // Validate each element
-    this._structure.forEach((element, index) => {
-      if (element.begin < 0) {
-        throw new ValidationError(
-          `Workout structure element ${index} has negative begin time: ${element.begin}`
-        );
-      }
-
-      if (element.end <= element.begin) {
-        throw new ValidationError(
-          `Workout structure element ${index} has invalid time range: ${element.begin} to ${element.end}`
-        );
-      }
-
-      if (element.steps.length === 0) {
-        throw new ValidationError(
-          `Workout structure element ${index} has no steps`
-        );
-      }
-    });
-  }
-
-  private validatePolyline(): void {
-    if (!Array.isArray(this._polyline)) {
-      throw new ValidationError('Workout polyline must be an array');
-    }
-
-    this._polyline.forEach((point, index) => {
-      if (!Array.isArray(point) || point.length !== 2) {
-        throw new ValidationError(
-          `Workout polyline point ${index} must be an array of exactly 2 numbers`
-        );
-      }
-
-      if (
-        !point.every(
-          (value) => typeof value === 'number' && Number.isFinite(value)
-        )
-      ) {
-        throw new ValidationError(
-          `Workout polyline point ${index} contains invalid values`
-        );
-      }
-    });
-  }
-
-  private validateMetrics(): void {
-    const validLengthMetrics: WorkoutLengthMetric[] = ['duration', 'distance'];
-    const validIntensityMetrics: WorkoutIntensityMetric[] = [
-      'percentOfThresholdPace',
-      'percentOfThresholdPower',
-      'heartRate',
-      'power',
-      'pace',
-      'speed',
-    ];
-    const validTargetTypes: WorkoutIntensityTargetType[] = ['target', 'range'];
-
-    if (!validLengthMetrics.includes(this._primaryLengthMetric)) {
-      throw new ValidationError(
-        `Invalid primary length metric: ${this._primaryLengthMetric}`
-      );
-    }
-
-    if (!validIntensityMetrics.includes(this._primaryIntensityMetric)) {
-      throw new ValidationError(
-        `Invalid primary intensity metric: ${this._primaryIntensityMetric}`
-      );
-    }
-
-    if (!validTargetTypes.includes(this._primaryIntensityTargetOrRange)) {
-      throw new ValidationError(
-        `Invalid primary intensity target type: ${this._primaryIntensityTargetOrRange}`
-      );
-    }
   }
 }

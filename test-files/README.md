@@ -1,8 +1,8 @@
 # Test Files Directory
 
-This directory contains sample workout files for integration testing with the TrainingPeaks SDK's Function-First Architecture.
+This directory has sample workout files for testing with the TrainingPeaks SDK.
 
-## File Types
+## Types of files
 
 - **GPX**: GPS Exchange Format files for GPS-based workouts
 - **TCX**: Training Center XML files from Garmin devices
@@ -10,9 +10,9 @@ This directory contains sample workout files for integration testing with the Tr
 
 ## Usage
 
-These files are used by the integration tests to validate actual file upload functionality using the SDK's factory function patterns. The integration tests create test files dynamically, but you can also place real workout files here for more comprehensive testing.
+These files are used by the integration tests to check that file upload works using the SDK's function patterns. The integration tests create test files automatically, but you can also put real workout files here for more complete testing.
 
-### Integration Testing with Function-First Architecture
+### Integration testing with function-first architecture
 
 The integration tests use the new `createTrainingPeaksClient()` factory function:
 
@@ -26,17 +26,17 @@ const client = createTrainingPeaksClient({
 });
 ```
 
-## Environment Setup
+## Environment setup
 
-Before running integration tests, ensure you have:
+Before running integration tests, make sure you have:
 
-1. **Environment Configuration**:
+1. **Environment setup**:
 
    ```bash
    cp .env.example .env
    ```
 
-2. **Fill in your TrainingPeaks credentials** in `.env`:
+2. **Add your TrainingPeaks login details** in `.env`:
 
    ```env
    TRAININGPEAKS_TEST_USERNAME=your-test-username
@@ -45,12 +45,12 @@ Before running integration tests, ensure you have:
    TRAININGPEAKS_WEB_HEADLESS=true
    ```
 
-3. **Install Playwright browsers** (for web authentication):
+3. **Install Playwright browsers** (for web login):
    ```bash
    npx playwright install chromium
    ```
 
-## Running Integration Tests
+## Running integration tests
 
 ```bash
 # Run only integration tests
@@ -66,26 +66,26 @@ npm run test:coverage:all
 npm run test:watch:integration
 ```
 
-## Test Architecture
+## Test architecture
 
-The integration tests follow the same Function-First principles as the main SDK:
+The integration tests follow the same function-first principles as the main SDK:
 
-- **Factory Functions**: Tests use `createTrainingPeaksClient()` instead of class constructors
-- **Dependency Injection**: Test dependencies are injected via function parameters
-- **Immutable Patterns**: Test data follows immutable patterns
-- **Type Safety**: Full TypeScript coverage in test scenarios
+- **Factory functions**: Tests use `createTrainingPeaksClient()` instead of class constructors
+- **Dependency injection**: Test dependencies are passed via function parameters
+- **Immutable patterns**: Test data follows immutable patterns
+- **Type safety**: Full TypeScript coverage in test scenarios
 
-## Sample Test Workflow
+## Sample test workflow
 
-1. **Client Creation**: Factory function creates test client
-2. **Authentication**: Real browser simulation or API authentication
-3. **File Upload**: Test various workout file formats
-4. **Validation**: Verify upload success and data integrity
-5. **Cleanup**: Remove test data to avoid pollution
+1. **Client creation**: Factory function creates test client
+2. **Login**: Real browser simulation or API login
+3. **File upload**: Test various workout file formats
+4. **Check results**: Make sure upload worked and data is correct
+5. **Cleanup**: Remove test data to keep things clean
 
-## Test Data Guidelines
+## Test data guidelines
 
-- **Use anonymized data**: Remove personal information from workout files
+- **Use anonymous data**: Remove personal information from workout files
 - **Keep files small**: Use minimal data sets for faster test execution
 - **Test variety**: Include different file formats and data scenarios
 - **Edge cases**: Test boundary conditions and error scenarios
@@ -94,9 +94,9 @@ The integration tests follow the same Function-First principles as the main SDK:
 
 **⚠️ Important**:
 
-- Never commit real credentials or sensitive workout data to version control
+- Never commit real login details or sensitive workout data to version control
 - Use dedicated test accounts for integration testing
-- Ensure test data is anonymized and doesn't contain personal information
+- Make sure test data is anonymous and doesn't have personal information
 - Use headless browser mode in CI/CD environments
 
 ## Documentation References

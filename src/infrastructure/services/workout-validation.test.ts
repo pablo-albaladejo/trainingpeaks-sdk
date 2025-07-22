@@ -3,15 +3,15 @@
  * Comprehensive tests for all validation functions
  */
 
+import { beforeEach, describe, expect, it } from 'vitest';
+import { StructuredWorkoutDataFixture } from '../../__fixtures__/structured-workout-data.fixture';
+import { WorkoutDataFixture } from '../../__fixtures__/workout-data.fixture';
 import {
   WorkoutFileProcessingError,
   WorkoutQuotaExceededError,
   WorkoutValidationError,
-} from '@/domain/errors/workout-errors';
-import { WorkoutFile } from '@/domain/value-objects/workout-file';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { StructuredWorkoutDataFixture } from '../../__fixtures__/structured-workout-data.fixture';
-import { WorkoutDataFixture } from '../../__fixtures__/workout-data.fixture';
+} from '../../domain/errors/workout-errors';
+import { createWorkoutFile } from '../../infrastructure/services/domain-factories';
 import {
   validateAthleteId,
   validateFileUpload,
@@ -100,7 +100,7 @@ describe('Workout Validation Service', () => {
 
   describe('validateWorkoutFile', () => {
     it('should pass validation for valid workout file', () => {
-      const file = WorkoutFile.create(
+      const file = createWorkoutFile(
         'test.tcx',
         '<tcx>...</tcx>',
         'application/tcx+xml'
@@ -292,7 +292,7 @@ describe('Workout Validation Service', () => {
 
     it('should pass validation for workout with file', () => {
       const data = WorkoutDataFixture.default();
-      const file = WorkoutFile.create(
+      const file = createWorkoutFile(
         'test.tcx',
         '<tcx>...</tcx>',
         'application/tcx+xml'
@@ -667,87 +667,128 @@ describe('Workout Validation Service', () => {
   describe('validateWorkoutStructure', () => {
     it('should pass validation for valid structure', () => {
       const structure = {
-        elements: [{ type: 'warmup' }],
-        polyline: [
-          [1.0, 2.0],
-          [3.0, 4.0],
+        structure: [
+          {
+            type: 'step' as const,
+            length: { value: 600, unit: 'second' as const },
+            steps: [],
+            begin: 0,
+            end: 600,
+          },
         ],
-        metrics: { distance: 1000 },
+        polyline: [[1.0, 2.0]],
+        primaryLengthMetric: 'duration' as const,
+        primaryIntensityMetric: 'heartRate' as const,
+        primaryIntensityTargetOrRange: 'target' as const,
       };
-      expect(() => validateWorkoutStructure(structure)).not.toThrow();
+      expect(() => validateWorkoutStructure(600, structure)).not.toThrow();
     });
 
-    it('should throw error for non-object structure', () => {
-      expect(() => validateWorkoutStructure(null as any)).toThrow(
-        WorkoutValidationError
-      );
-      expect(() => validateWorkoutStructure('not-object' as any)).toThrow(
-        WorkoutValidationError
-      );
-    });
-
-    it('should throw error for non-array elements', () => {
+    it('should throw error when duration does not match structure duration', () => {
       const structure = {
-        elements: 'not-array',
-        polyline: [],
-        metrics: {},
+        structure: [
+          {
+            type: 'step' as const,
+            length: { value: 600, unit: 'second' as const },
+            steps: [],
+            begin: 0,
+            end: 600,
+          },
+        ],
+        polyline: [[1.0, 2.0]],
+        primaryLengthMetric: 'duration' as const,
+        primaryIntensityMetric: 'heartRate' as const,
+        primaryIntensityTargetOrRange: 'target' as const,
       };
-      expect(() => validateWorkoutStructure(structure as any)).toThrow(
+      expect(() => validateWorkoutStructure(300, structure)).toThrow(
         WorkoutValidationError
       );
+    });
+
+    it('should pass validation when structure is undefined', () => {
+      expect(() => validateWorkoutStructure(600, undefined)).not.toThrow();
+    });
+
+    it('should pass validation for non-object structure (undefined)', () => {
+      expect(() => validateWorkoutStructure(600, null)).not.toThrow();
+    });
+
+    it('should pass validation for non-object structure (string)', () => {
+      expect(() => validateWorkoutStructure(600, 'not-object')).not.toThrow();
+    });
+
+    it('should pass validation for non-array elements', () => {
+      const structure = {
+        structure: 'not-array',
+        polyline: [],
+        primaryLengthMetric: 'duration',
+        primaryIntensityMetric: 'heartRate',
+        primaryIntensityTargetOrRange: 'target',
+      };
+      expect(() => validateWorkoutStructure(600, structure)).not.toThrow();
     });
 
     it('should throw error for non-array polyline', () => {
       const structure = {
-        elements: [],
+        structure: [],
         polyline: 'not-array',
-        metrics: {},
+        primaryLengthMetric: 'duration',
+        primaryIntensityMetric: 'heartRate',
+        primaryIntensityTargetOrRange: 'target',
       };
-      expect(() => validateWorkoutStructure(structure as any)).toThrow(
+      expect(() => validateWorkoutStructure(600, structure)).toThrow(
         WorkoutValidationError
       );
     });
 
     it('should throw error for non-object metrics', () => {
       const structure = {
-        elements: [],
+        structure: [],
         polyline: [],
-        metrics: 'not-object',
+        primaryLengthMetric: 'not-object',
+        primaryIntensityMetric: 'heartRate',
+        primaryIntensityTargetOrRange: 'target',
       };
-      expect(() => validateWorkoutStructure(structure as any)).toThrow(
+      expect(() => validateWorkoutStructure(600, structure)).toThrow(
         WorkoutValidationError
       );
     });
 
     it('should throw error for invalid element', () => {
       const structure = {
-        elements: ['not-object'],
+        structure: ['not-object'],
         polyline: [],
-        metrics: {},
+        primaryLengthMetric: 'duration',
+        primaryIntensityMetric: 'heartRate',
+        primaryIntensityTargetOrRange: 'target',
       };
-      expect(() => validateWorkoutStructure(structure as any)).toThrow(
+      expect(() => validateWorkoutStructure(600, structure)).toThrow(
         WorkoutValidationError
       );
     });
 
     it('should throw error for invalid polyline point', () => {
       const structure = {
-        elements: [],
+        structure: [],
         polyline: [[1.0]], // Only one coordinate
-        metrics: {},
+        primaryLengthMetric: 'duration',
+        primaryIntensityMetric: 'heartRate',
+        primaryIntensityTargetOrRange: 'target',
       };
-      expect(() => validateWorkoutStructure(structure as any)).toThrow(
+      expect(() => validateWorkoutStructure(600, structure)).toThrow(
         WorkoutValidationError
       );
     });
 
     it('should throw error for non-numeric polyline coordinates', () => {
       const structure = {
-        elements: [],
+        structure: [],
         polyline: [['1.0', 2.0]], // String coordinate
-        metrics: {},
+        primaryLengthMetric: 'duration',
+        primaryIntensityMetric: 'heartRate',
+        primaryIntensityTargetOrRange: 'target',
       };
-      expect(() => validateWorkoutStructure(structure as any)).toThrow(
+      expect(() => validateWorkoutStructure(600, structure)).toThrow(
         WorkoutValidationError
       );
     });
@@ -1273,7 +1314,7 @@ describe('Workout Validation Service', () => {
   describe('integration scenarios', () => {
     it('should validate complex workout upload scenario', () => {
       const workoutData = WorkoutDataFixture.default();
-      const file = WorkoutFile.create(
+      const file = createWorkoutFile(
         'test.tcx',
         '<tcx>...</tcx>',
         'application/tcx+xml'

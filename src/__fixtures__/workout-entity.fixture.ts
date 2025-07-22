@@ -3,8 +3,13 @@
  * Provides test data for the Workout domain entity
  */
 
-import { Workout } from '@/domain/entities/workout';
-import { WorkoutStructure } from '@/domain/value-objects/workout-structure';
+import type { Workout } from '@/domain/entities/workout';
+import type { WorkoutStructure } from '@/domain/value-objects/workout-structure-simple';
+import {
+  createStructuredWorkout,
+  createWorkout,
+  createWorkoutFromFile,
+} from '@/infrastructure/services/domain-factories';
 import { faker } from '@faker-js/faker';
 import { StructuredWorkoutDataFixture } from './structured-workout-data.fixture';
 import { randomNumber } from './utils.fixture';
@@ -219,7 +224,7 @@ export class WorkoutFixture {
   }
 
   build(): Workout {
-    return Workout.create(
+    return createWorkout(
       this.workout.id || faker.string.uuid(),
       this.workout.name || faker.lorem.words(3),
       this.workout.description || faker.lorem.sentence(),
@@ -237,7 +242,7 @@ export class WorkoutFixture {
   }
 
   buildFromFile(): Workout {
-    return Workout.fromFile(
+    return createWorkoutFromFile(
       this.workout.id || faker.string.uuid(),
       this.workout.fileName || 'workout.tcx',
       this.workout.fileContent ||
@@ -259,7 +264,7 @@ export class WorkoutFixture {
       this.workout.structure ||
       StructuredWorkoutDataFixture.default().structure;
 
-    return Workout.createStructured(
+    return createStructuredWorkout(
       this.workout.id || faker.string.uuid(),
       this.workout.name || faker.lorem.words(3),
       this.workout.description || faker.lorem.sentence(),

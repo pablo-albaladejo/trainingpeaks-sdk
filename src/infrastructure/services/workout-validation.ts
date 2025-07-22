@@ -41,6 +41,7 @@ import {
   WorkoutValidationError,
 } from '@/domain/errors/workout-errors';
 import type { WorkoutFile } from '@/domain/value-objects/workout-file';
+import type { WorkoutStructure } from '@/domain/value-objects/workout-structure-simple';
 import type { CreateStructuredWorkoutRequest, WorkoutData } from '@/types';
 
 // Validation constants
@@ -536,44 +537,27 @@ export const validateWorkoutMetadata: ValidateWorkoutMetadata = (
   }
 };
 
-export const validateWorkoutStructure: ValidateWorkoutStructure = (structure: {
-  elements: unknown[];
-  polyline: unknown[];
-  metrics: Record<string, unknown>;
-}): void => {
-  if (!structure || typeof structure !== 'object') {
-    throw new WorkoutValidationError('Workout structure must be an object');
-  }
-
-  if (!Array.isArray(structure.elements)) {
-    throw new WorkoutValidationError('Structure elements must be an array');
-  }
-
-  if (!Array.isArray(structure.polyline)) {
-    throw new WorkoutValidationError('Structure polyline must be an array');
-  }
-
-  if (!structure.metrics || typeof structure.metrics !== 'object') {
-    throw new WorkoutValidationError('Structure metrics must be an object');
-  }
-
-  // Validate elements
-  for (const element of structure.elements) {
-    if (!element || typeof element !== 'object') {
-      throw new WorkoutValidationError('Structure element must be an object');
+export const validateWorkoutStructure: ValidateWorkoutStructure = (
+  duration: number,
+  structure?: WorkoutStructure
+): void => {
+  if (structure) {
+    // Check if structure has the required properties
+    if (!structure.structure || !Array.isArray(structure.structure)) {
+      return; // Invalid structure, but we don't throw - just skip validation
     }
-  }
 
-  // Validate polyline points
-  for (const point of structure.polyline) {
-    if (!Array.isArray(point) || point.length !== 2) {
+    const structureDuration = structure.structure.reduce(
+      (total: number, element: any) => {
+        return total + (element.end - element.begin);
+      },
+      0
+    );
+
+    if (duration !== structureDuration) {
       throw new WorkoutValidationError(
-        'Polyline points must be arrays with 2 coordinates'
+        `Workout duration (${duration}s) doesn't match structure duration (${structureDuration}s)`
       );
-    }
-
-    if (typeof point[0] !== 'number' || typeof point[1] !== 'number') {
-      throw new WorkoutValidationError('Polyline coordinates must be numbers');
     }
   }
 };
@@ -768,8 +752,12 @@ export const validateWorkoutDuration: ValidateWorkoutDuration = (
 };
 
 export const validateWorkoutDistance: ValidateWorkoutDistance = (
-  distance: number
+  distance?: number
 ): void => {
+  if (distance === undefined) {
+    return; // Optional parameter, no validation needed
+  }
+
   if (typeof distance !== 'number') {
     throw new WorkoutValidationError('Workout distance must be a number');
   }

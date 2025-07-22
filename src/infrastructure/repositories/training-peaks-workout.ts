@@ -18,6 +18,10 @@ import {
 } from '@/domain/errors/workout-errors';
 import { WorkoutFile } from '@/domain/value-objects/workout-file';
 import { workoutLogger } from '@/infrastructure/logging/logger';
+import {
+  createWorkout,
+  createWorkoutFile,
+} from '@/infrastructure/services/domain-factories';
 import { TrainingPeaksWorkoutApiAdapter } from '@/infrastructure/workout/trainingpeaks-api-adapter';
 import {
   CreateStructuredWorkoutRequest,
@@ -111,7 +115,7 @@ export const createTrainingPeaksWorkoutRepository = (
         mimeType,
       });
 
-      const workoutFile = WorkoutFile.create(
+      const workoutFile = createWorkoutFile(
         filename,
         buffer.toString(),
         mimeType
@@ -193,15 +197,20 @@ export const createTrainingPeaksWorkoutRepository = (
       }
 
       // Convert WorkoutData to Workout entity
-      return Workout.create(
+      return createWorkout(
         workoutId,
         workoutData.name,
         workoutData.description || '',
         new Date(workoutData.date || Date.now()),
         workoutData.duration || 0,
-        workoutData.distance || 0,
+        workoutData.distance,
         workoutData.type || 'OTHER',
-        []
+        undefined, // tags not in WorkoutData
+        undefined, // fileContent not in WorkoutData
+        undefined, // fileName not in WorkoutData
+        undefined, // createdAt not in WorkoutData
+        undefined, // updatedAt not in WorkoutData
+        undefined // structure not in WorkoutData
       );
     } catch (error) {
       workoutLogger.error('Failed to get workout via repository', {
@@ -227,15 +236,20 @@ export const createTrainingPeaksWorkoutRepository = (
 
       // Convert WorkoutData[] to Workout[]
       return workoutDataList.map((workoutData, index) =>
-        Workout.create(
+        createWorkout(
           `workout_${index}`,
           workoutData.name,
           workoutData.description || '',
           new Date(workoutData.date || Date.now()),
           workoutData.duration || 0,
-          workoutData.distance || 0,
+          workoutData.distance,
           workoutData.type || 'OTHER',
-          []
+          undefined, // tags not in WorkoutData
+          undefined, // fileContent not in WorkoutData
+          undefined, // fileName not in WorkoutData
+          undefined, // createdAt not in WorkoutData
+          undefined, // updatedAt not in WorkoutData
+          undefined // structure not in WorkoutData
         )
       );
     } catch (error) {
@@ -265,12 +279,21 @@ export const createTrainingPeaksWorkoutRepository = (
       }
 
       // Update the workout with new metadata
-      const updatedWorkout = existingWorkout.withUpdatedMetadata({
-        name: data.name,
-        description: data.description,
-        activityType: data.type,
-        tags: [],
-      });
+      const updatedWorkout = createWorkout(
+        existingWorkout.id,
+        data.name || existingWorkout.name,
+        data.description || existingWorkout.description,
+        existingWorkout.date,
+        existingWorkout.duration,
+        existingWorkout.distance,
+        data.type || existingWorkout.activityType,
+        undefined, // tags
+        existingWorkout.fileContent,
+        existingWorkout.fileName,
+        existingWorkout.createdAt,
+        new Date(), // updatedAt
+        existingWorkout.structure
+      );
 
       return updatedWorkout;
     } catch (error) {

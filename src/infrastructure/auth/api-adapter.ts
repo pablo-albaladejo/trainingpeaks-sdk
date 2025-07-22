@@ -12,6 +12,10 @@ import { AuthToken } from '@/domain/entities/auth-token';
 import { User } from '@/domain/entities/user';
 import { AuthenticationError, NetworkError } from '@/domain/errors';
 import { Credentials } from '@/domain/value-objects/credentials';
+import {
+  createAuthToken,
+  createUser,
+} from '@/infrastructure/services/domain-factories';
 import axios, { AxiosInstance } from 'axios';
 
 export class ApiAuthAdapter implements AuthenticationPort {
@@ -54,7 +58,7 @@ export class ApiAuthAdapter implements AuthenticationPort {
       }
 
       // Create AuthToken entity
-      const authToken = AuthToken.create(
+      const authToken = createAuthToken(
         tokenResponse.data.access_token,
         tokenResponse.data.token_type || 'Bearer',
         new Date(Date.now() + tokenResponse.data.expires_in * 1000),
@@ -73,7 +77,7 @@ export class ApiAuthAdapter implements AuthenticationPort {
       }
 
       // Create User entity
-      const user = User.create(
+      const user = createUser(
         String(userResponse.data.user.userId),
         userResponse.data.user.username || credentials.username,
         userResponse.data.user.firstName || credentials.username,
@@ -111,7 +115,7 @@ export class ApiAuthAdapter implements AuthenticationPort {
         throw new AuthenticationError('No access token received from refresh');
       }
 
-      return AuthToken.create(
+      return createAuthToken(
         response.data.access_token,
         response.data.token_type || 'Bearer',
         new Date(Date.now() + response.data.expires_in * 1000),

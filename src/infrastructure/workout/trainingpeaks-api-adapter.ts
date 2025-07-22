@@ -12,6 +12,7 @@ import { getSDKConfig } from '@/config';
 import { WorkoutUploadError } from '@/domain/errors/workout-errors';
 import { WorkoutFile } from '@/domain/value-objects/workout-file';
 import { networkLogger, workoutLogger } from '@/infrastructure/logging/logger';
+import { calculatePlannedMetrics } from '@/infrastructure/services/workout-metrics';
 import {
   CreateStructuredWorkoutRequest,
   CreateStructuredWorkoutResponse,
@@ -244,6 +245,34 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
         athleteId: request.athleteId,
       });
 
+      // Calculate planned metrics automatically if not provided
+      const providedMetrics = request.metadata?.plannedMetrics;
+      const calculatedMetrics = calculatePlannedMetrics(
+        request.structure,
+        request.metadata?.athleteWeight || 70,
+        request.metadata?.activityType || 'RUN'
+      );
+
+      // Use provided metrics if available, otherwise use calculated ones
+      const plannedMetrics = {
+        totalTimePlanned:
+          providedMetrics?.totalTimePlanned ??
+          calculatedMetrics.totalTimePlanned,
+        tssPlanned: providedMetrics?.tssPlanned ?? calculatedMetrics.tssPlanned,
+        ifPlanned: providedMetrics?.ifPlanned ?? calculatedMetrics.ifPlanned,
+        velocityPlanned:
+          providedMetrics?.velocityPlanned ?? calculatedMetrics.velocityPlanned,
+        caloriesPlanned:
+          providedMetrics?.caloriesPlanned ?? calculatedMetrics.caloriesPlanned,
+        distancePlanned:
+          providedMetrics?.distancePlanned ?? calculatedMetrics.distancePlanned,
+        elevationGainPlanned:
+          providedMetrics?.elevationGainPlanned ??
+          calculatedMetrics.elevationGainPlanned,
+        energyPlanned:
+          providedMetrics?.energyPlanned ?? calculatedMetrics.energyPlanned,
+      };
+
       // Build the full API request payload
       const apiRequest: StructuredWorkoutRequest = {
         athleteId: request.athleteId,
@@ -265,37 +294,32 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
         hasPrivateWorkoutNoteForCaller: false,
         publicSettingValue: request.metadata?.publicSettingValue || 2,
         distance: null,
-        distancePlanned:
-          request.metadata?.plannedMetrics?.distancePlanned || null,
+        distancePlanned: plannedMetrics.distancePlanned,
         distanceCustomized: null,
         distanceUnitsCustomized: null,
         totalTime: null,
-        totalTimePlanned:
-          request.metadata?.plannedMetrics?.totalTimePlanned || null,
+        totalTimePlanned: plannedMetrics.totalTimePlanned,
         heartRateMinimum: null,
         heartRateMaximum: null,
         heartRateAverage: null,
         calories: null,
-        caloriesPlanned:
-          request.metadata?.plannedMetrics?.caloriesPlanned || null,
+        caloriesPlanned: plannedMetrics.caloriesPlanned,
         tssActual: null,
-        tssPlanned: request.metadata?.plannedMetrics?.tssPlanned || null,
+        tssPlanned: plannedMetrics.tssPlanned,
         tssSource: 0,
         if: null,
-        ifPlanned: request.metadata?.plannedMetrics?.ifPlanned || null,
+        ifPlanned: plannedMetrics.ifPlanned,
         velocityAverage: null,
-        velocityPlanned:
-          request.metadata?.plannedMetrics?.velocityPlanned || null,
+        velocityPlanned: plannedMetrics.velocityPlanned,
         velocityMaximum: null,
         normalizedSpeedActual: null,
         normalizedPowerActual: null,
         powerAverage: null,
         powerMaximum: null,
         energy: null,
-        energyPlanned: request.metadata?.plannedMetrics?.energyPlanned || null,
+        energyPlanned: plannedMetrics.energyPlanned,
         elevationGain: null,
-        elevationGainPlanned:
-          request.metadata?.plannedMetrics?.elevationGainPlanned || null,
+        elevationGainPlanned: plannedMetrics.elevationGainPlanned,
         elevationLoss: null,
         elevationMinimum: null,
         elevationAverage: null,
@@ -316,7 +340,7 @@ export class TrainingPeaksWorkoutApiAdapter implements WorkoutServicePort {
         complianceTssPercent: null,
         rpe: null,
         feeling: null,
-        structure: request.structure.toApiFormat() as WorkoutStructure,
+        structure: request.structure.toData() as WorkoutStructure,
         orderOnDay: null,
         personalRecordCount: 0,
         syncedTo: null,

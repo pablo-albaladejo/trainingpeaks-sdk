@@ -1,6 +1,6 @@
 # TrainingPeaks SDK
 
-A TypeScript SDK for TrainingPeaks API integration with authentication and workout upload capabilities.
+A simple TypeScript library to connect with TrainingPeaks. It helps you log in and upload workouts.
 
 ![npm](https://img.shields.io/npm/v/trainingpeaks-sdk)
 ![Node Version](https://img.shields.io/node/v/trainingpeaks-sdk)
@@ -9,67 +9,67 @@ A TypeScript SDK for TrainingPeaks API integration with authentication and worko
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/pablo-albaladejo/trainingpeaks-sdk?utm_source=oss&utm_medium=github&utm_campaign=pablo-albaladejo%2Ftrainingpeaks-sdk&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
-## 🚨 Migration Notice
+## 🚨 Important Changes
 
-**Version 2.0.0 introduces Function-First Architecture with breaking changes.**
+**Version 2.0.0 has breaking changes.**
 
-If you're upgrading from v1.x, please see the [Migration Guide](MIGRATION.md) for detailed instructions on updating your code.
+If you're upgrading from version 1.x, check the [Migration Guide](MIGRATION.md) for how to update your code.
 
-**Quick Migration Summary:**
+**Quick changes:**
 
-- Replace `new TrainingPeaksClient()` with `createTrainingPeaksClient()`
+- Change `new TrainingPeaksClient()` to `createTrainingPeaksClient()`
 - Update imports: `import { createTrainingPeaksClient } from 'trainingpeaks-sdk'`
-- See [MIGRATION.md](MIGRATION.md) for complete migration instructions
+- See [MIGRATION.md](MIGRATION.md) for all the changes
 
-## Features
+## What it can do
 
-- 🔐 **Web-based Authentication** - Real browser simulation for TrainingPeaks login
-- 📤 **Workout Upload** - Support for GPX, TCX, and FIT files
-- 🎯 **TypeScript Support** - Full type safety and IntelliSense
-- 🔄 **Auto Token Refresh** - Automatic token management
-- 🌐 **Cross-platform** - Works in Node.js and browsers
-- 📊 **Multiple Auth Patterns** - Simple and advanced authentication patterns
-- ✅ **Comprehensive Tests** - Unit and integration test coverage
-- 🛠️ **Developer-friendly** - Full ESLint/Prettier setup with commit hooks
-- 🏗️ **Clean Architecture** - Hexagonal architecture with Function-First patterns
+- 🔐 **Login** - Uses a real browser to log in to TrainingPeaks
+- 📤 **Upload workouts** - Works with GPX, TCX, and FIT files
+- 🎯 **TypeScript** - Full type checking and auto-complete
+- 🔄 **Automatic tokens** - Handles login tokens for you
+- 🌐 **Works everywhere** - Node.js and web browsers
+- 📊 **Easy or advanced** - Simple or complex login options
+- ✅ **Well tested** - Has lots of tests to make sure it works
+- 🛠️ **Developer friendly** - Good code formatting and hooks
+- 🏗️ **Clean code** - Well organized and easy to understand
 
-## Installation
+## How to install
 
 ```bash
 npm install trainingpeaks-sdk
 ```
 
-For web authentication, Playwright browsers are also required:
+For web login, you also need to install a browser:
 
 ```bash
 npx playwright install chromium
 ```
 
-## Quick Start
+## How to use it
 
-### Web Authentication (Recommended)
+### Web login (Best option)
 
-The SDK uses browser simulation to authenticate with TrainingPeaks, which is the most reliable method:
+This library uses a real browser to log in to TrainingPeaks. This works best:
 
 ```typescript
 import { createTrainingPeaksClient } from 'trainingpeaks-sdk';
 
 const client = createTrainingPeaksClient({
-  authMethod: 'web', // Uses browser simulation
+  authMethod: 'web', // Use browser to log in
   webAuth: {
-    headless: true, // Set to false to see the browser
-    timeout: 30000, // 30 seconds timeout
+    headless: true, // Set to false to see the browser window
+    timeout: 30000, // Wait up to 30 seconds
   },
-  debug: true, // Enable debug logging
+  debug: true, // Show what's happening
 });
 
-// Simple authentication
+// Log in
 await client.login({
   username: 'your-username',
   password: 'your-password',
 });
 
-console.log('Authenticated!', client.isReady());
+console.log('Logged in!', client.isReady());
 console.log('User ID:', client.getUserId());
 
 // Upload a workout
@@ -91,9 +91,9 @@ const result = await workoutUploader.uploadWorkout({
 console.log('Upload result:', result);
 ```
 
-### API Authentication (Fallback)
+### API login (Backup option)
 
-For testing or when browsers are not available:
+For testing or when you can't use a browser:
 
 ```typescript
 const client = createTrainingPeaksClient({
@@ -102,11 +102,11 @@ const client = createTrainingPeaksClient({
 });
 ```
 
-## Authentication Patterns
+## Different ways to log in
 
-### Simple Authentication
+### Simple login
 
-Perfect for straightforward use cases:
+Easy way for most users:
 
 ```typescript
 import { createTrainingPeaksClient } from 'trainingpeaks-sdk';
@@ -116,20 +116,20 @@ const client = createTrainingPeaksClient({
   debug: true,
 });
 
-// Login once, SDK handles everything
+// Log in once, library handles the rest
 await client.login({
   username: 'your-username',
   password: 'your-password',
 });
 
-// All subsequent calls are automatically authenticated
+// Now you can upload workouts without logging in again
 const uploader = client.getWorkoutUploader();
 await uploader.uploadWorkout(workoutData);
 ```
 
-### Advanced Authentication
+### Advanced login
 
-For more control over token management:
+For more control over login tokens:
 
 ```typescript
 import { createTrainingPeaksClient } from 'trainingpeaks-sdk';
@@ -139,7 +139,7 @@ const client = createTrainingPeaksClient({
   webAuth: { headless: false }, // Show browser for debugging
 });
 
-// Get token for manual management
+// Get login token to manage yourself
 const token = await client.loginAdvanced({
   username: 'your-username',
   password: 'your-password',
@@ -148,7 +148,7 @@ const token = await client.loginAdvanced({
 console.log('Access token:', token.accessToken);
 console.log('Expires at:', new Date(token.expiresAt));
 
-// Set up event listeners
+// Listen for login events
 client.onAuthLogin((token) => {
   console.log(
     'Logged in with token:',
@@ -161,37 +161,37 @@ client.onAuthLogout(() => {
 });
 
 client.onAuthError((error) => {
-  console.error('Auth error:', error.message);
+  console.error('Login error:', error.message);
 });
 ```
 
-### Token Sharing
+### Sharing login tokens
 
-Share tokens between multiple client instances:
+Share login tokens between multiple clients:
 
 ```typescript
-// Client 1 - performs authentication
+// Client 1 - logs in
 const authClient = createTrainingPeaksClient({ authMethod: 'web' });
 await authClient.login(credentials);
 const token = authClient.getAuthToken();
 
-// Client 2 - uses existing token
+// Client 2 - uses the same token
 const uploadClient = createTrainingPeaksClient({ authMethod: 'api' });
 uploadClient.setAuthToken(token);
 
-// Both clients are now authenticated
+// Both clients can now work
 console.log(authClient.isReady()); // true
 console.log(uploadClient.isReady()); // true
 ```
 
-## Workout Upload
+## How to upload workouts
 
-### File Upload Examples
+### Upload workout files
 
 ```typescript
 const uploader = client.getWorkoutUploader();
 
-// GPX file upload
+// Upload a GPX file
 await uploader.uploadWorkout({
   name: 'Cycling Workout',
   description: 'Weekend ride',
@@ -206,7 +206,7 @@ await uploader.uploadWorkout({
   },
 });
 
-// TCX file upload
+// Upload a TCX file
 await uploader.uploadWorkout({
   name: 'Swim Training',
   type: 'SWIM',
@@ -217,7 +217,7 @@ await uploader.uploadWorkout({
   },
 });
 
-// FIT file upload
+// Upload a FIT file
 await uploader.uploadWorkout({
   name: 'Running Workout',
   type: 'RUN',
@@ -229,9 +229,9 @@ await uploader.uploadWorkout({
 });
 ```
 
-### Manual Workout Data
+### Upload without files
 
-Upload workout data without files:
+Add workout data without a file:
 
 ```typescript
 await uploader.uploadWorkout({
@@ -240,61 +240,61 @@ await uploader.uploadWorkout({
   date: '2024-01-01',
   duration: 2700, // 45 minutes
   type: 'OTHER',
-  // No fileData - manual entry
+  // No fileData - just the workout info
 });
 ```
 
-## Configuration
+## Setup
 
-### Environment Variables
+### Environment variables
 
-For integration tests:
+For testing:
 
 ```bash
-# Copy .env.example to .env and configure:
+# Copy the example file and edit it:
 cp .env.example .env
 ```
 
 ```env
-# Authentication method: 'web' or 'api'
+# How to log in: 'web' or 'api'
 TRAININGPEAKS_AUTH_METHOD=web
 
-# Your TrainingPeaks credentials
+# Your TrainingPeaks username and password
 TRAININGPEAKS_TEST_USERNAME=your-username
 TRAININGPEAKS_TEST_PASSWORD=your-password
 
-# Web authentication settings
+# Browser settings
 TRAININGPEAKS_WEB_HEADLESS=true
 TRAININGPEAKS_WEB_TIMEOUT=30000
 ```
 
-### Client Configuration
+### Client setup
 
 ```typescript
 const client = createTrainingPeaksClient({
-  // Authentication method
+  // How to log in
   authMethod: 'web', // 'web' | 'api'
 
-  // Base configuration
+  // Basic settings
   baseUrl: 'https://api.trainingpeaks.com',
   timeout: 30000,
   debug: true,
 
-  // Web authentication specific
+  // Browser settings
   webAuth: {
-    headless: true, // Run browser in background
-    timeout: 30000, // Browser timeout
-    executablePath: '', // Custom browser path (optional)
+    headless: true, // Hide browser window
+    timeout: 30000, // How long to wait
+    executablePath: '', // Custom browser location (optional)
   },
 
-  // Custom headers
+  // Extra headers
   headers: {
     'Custom-Header': 'value',
   },
 });
 ```
 
-## Development
+## For developers
 
 ### Setup
 
@@ -304,13 +304,13 @@ cd trainingpeaks-sdk
 npm install
 ```
 
-#### Development Commands
+#### Commands for development
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run build:watch` - Build in watch mode
 
-#### Testing
+#### Running tests
 
 - `npm run test` - Run unit tests only
 - `npm run test:unit` - Run unit tests only
@@ -321,40 +321,40 @@ npm install
 - `npm run test:coverage` - Run unit tests with coverage
 - `npm run test:coverage:all` - Run all tests with coverage
 
-#### Integration Tests
+#### Integration tests
 
-Integration tests validate the SDK against real TrainingPeaks API endpoints and require actual credentials.
+These tests check the library against real TrainingPeaks. You need real login details.
 
-**Setup:**
+**How to set up:**
 
 1. Copy `.env.example` to `.env`
-2. Fill in your TrainingPeaks test credentials:
+2. Add your TrainingPeaks test login details:
    ```bash
    TRAININGPEAKS_TEST_USERNAME=your-test-username
    TRAININGPEAKS_TEST_PASSWORD=your-test-password
    TRAININGPEAKS_AUTH_METHOD=web  # Use 'web' for real browser testing
    ```
 
-**Web Authentication Tests:**
+**Web login tests:**
 
 ```bash
-# Test with real browser simulation (requires credentials)
+# Test with real browser (needs login details)
 TRAININGPEAKS_AUTH_METHOD=web npm run test:integration
 
-# Test with API endpoints (uses placeholders)
+# Test with API only (uses fake data)
 TRAININGPEAKS_AUTH_METHOD=api npm run test:integration
 ```
 
-**Note:** Integration tests will skip automatically if credentials are not configured.
+**Note:** Tests will skip if you don't have login details set up.
 
-#### Code Quality
+#### Code quality
 
 - `npm run lint` - Lint code
 - `npm run lint:fix` - Fix linting issues
 - `npm run format` - Format code with Prettier
 - `npm run format:check` - Check code formatting
 
-#### Git Hooks
+#### Git hooks
 
 - Pre-commit: Runs linting and tests
 - Commit-msg: Validates conventional commit format
@@ -371,13 +371,13 @@ npm run release:minor  # Minor version (1.0.0 -> 1.1.0)
 npm run release:major  # Major version (1.0.0 -> 2.0.0)
 ```
 
-## API Reference
+## How to use the code
 
 ### createTrainingPeaksClient
 
-Factory function that creates a TrainingPeaks client instance with hexagonal architecture patterns.
+This function creates a new TrainingPeaks client for you to use.
 
-#### Usage
+#### How to use it
 
 ```typescript
 import { createTrainingPeaksClient } from 'trainingpeaks-sdk';
@@ -385,96 +385,96 @@ import { createTrainingPeaksClient } from 'trainingpeaks-sdk';
 const client = createTrainingPeaksClient(config?: TrainingPeaksConfig);
 ```
 
-#### Returns
+#### What it gives you
 
-Returns a `TrainingPeaksClient` object with the following methods:
+Returns a client object with these methods:
 
-- `login(credentials)` - Simple authentication
-- `loginAdvanced(credentials)` - Advanced authentication with token return
-- `logout()` - Logout and clear session
-- `isReady()` - Check if client is authenticated
-- `getAuthToken()` - Get current auth token
-- `setAuthToken(token)` - Set auth token manually
-- `getUserId()` - Get user ID (web auth only)
-- `getWorkoutUploader()` - Get workout uploader instance
+- `login(credentials)` - Simple login
+- `loginAdvanced(credentials)` - Advanced login with token return
+- `logout()` - Log out and clear session
+- `isReady()` - Check if logged in
+- `getAuthToken()` - Get current login token
+- `setAuthToken(token)` - Set login token manually
+- `getUserId()` - Get user ID (web login only)
+- `getWorkoutUploader()` - Get workout uploader
 
-#### Event Listeners
+#### Event listeners
 
-- `onAuthLogin(callback)` - Token received
-- `onAuthLogout(callback)` - Logged out
-- `onAuthTokenRefresh(callback)` - Token refreshed
-- `onAuthTokenExpired(callback)` - Token expired
-- `onAuthError(callback)` - Authentication error
+- `onAuthLogin(callback)` - When login succeeds
+- `onAuthLogout(callback)` - When logged out
+- `onAuthTokenRefresh(callback)` - When token refreshes
+- `onAuthTokenExpired(callback)` - When token expires
+- `onAuthError(callback)` - When login fails
 
 ### WorkoutUploader
 
-Handle workout uploads to TrainingPeaks.
+Handles uploading workouts to TrainingPeaks.
 
 #### Methods
 
-- `uploadWorkout(data)` - Upload workout with optional file
+- `uploadWorkout(data)` - Upload a workout (with or without file)
 
-### Error Types
+### Types of errors
 
-- `AuthenticationError` - Authentication failed
-- `NetworkError` - Network/HTTP errors
-- `ValidationError` - Invalid data
+- `AuthenticationError` - Login failed
+- `NetworkError` - Network or internet problems
+- `ValidationError` - Bad or missing data
 - `UploadError` - Upload failed
 
-## Architecture
+## How it's built
 
-### Hexagonal Architecture (Clean Architecture)
+### Clean code structure
 
-This SDK follows **hexagonal architecture** principles with a **Function-First** approach:
+This library is built with clean, organized code:
 
-#### Core Principles
+#### Main ideas
 
-- **Function-First**: Uses factory functions instead of classes for services, use cases, and repositories
-- **Dependency Injection**: Function-based dependency injection for clean separation of concerns
-- **Immutability**: Promotes immutable data patterns and pure functions
-- **Type Safety**: Full TypeScript support with interface contracts
+- **Function-First**: Uses functions instead of classes (easier to test)
+- **Dependency Injection**: Parts of the code don't depend on each other directly
+- **Immutability**: Data doesn't change once created (safer)
+- **Type Safety**: Full TypeScript support (catches errors early)
 
-#### Layer Structure
+#### Code organization
 
 ```
 src/
-├── domain/                 # Pure business logic
-│   ├── entities/          # Domain entities (classes with behavior)
-│   ├── value-objects/     # Immutable value objects
-│   ├── events/            # Domain events
-│   └── errors/            # Domain-specific errors
-├── application/           # Use cases and orchestration
-│   ├── use-cases/         # Business use-case implementations (functions)
-│   ├── services/          # Application services (functions)
-│   └── ports/             # Interfaces for repositories
-├── infrastructure/        # External adapters
-│   ├── repositories/      # Data access (factory functions)
-│   ├── auth/              # Authentication adapters
-│   ├── workout/           # Workout service adapters
-│   └── storage/           # Storage adapters
-└── interfaces/            # Entry points (controllers, handlers)
+├── domain/                 # Core business rules
+│   ├── entities/          # Main objects (User, Workout)
+│   ├── value-objects/     # Small data pieces
+│   ├── events/            # Things that happen
+│   └── errors/            # Error types
+├── application/           # What the app does
+│   ├── use-cases/         # Main actions (login, upload)
+│   ├── services/          # Helper functions
+│   └── ports/             # Interfaces
+├── infrastructure/        # External connections
+│   ├── repositories/      # Data storage
+│   ├── auth/              # Login handling
+│   ├── workout/           # Workout handling
+│   └── storage/           # File storage
+└── interfaces/            # Entry points
 ```
 
-#### Key Benefits
+#### Why this helps
 
-1. **Testability**: Easy to mock dependencies with function-based patterns
-2. **Flexibility**: Can swap implementations without changing business logic
-3. **Maintainability**: Clear separation of concerns
-4. **Performance**: No class instantiation overhead
-5. **Composability**: Functions can be easily composed and combined
+1. **Easy testing**: Simple to test individual parts
+2. **Flexible**: Can change parts without breaking others
+3. **Easy to maintain**: Clear separation of different concerns
+4. **Fast**: Functions are faster than classes
+5. **Composable**: Functions work well together
 
-### Web Authentication Flow
+### How web login works
 
-1. **Browser Launch**: Playwright launches Chromium browser
-2. **Navigation**: Navigate to TrainingPeaks login page
-3. **Form Interaction**: Fill credentials and submit
-4. **Token Interception**: Listen for API calls and extract tokens
-5. **Token Storage**: Store tokens for API calls
+1. **Open browser**: Start a browser window
+2. **Go to TrainingPeaks**: Navigate to the login page
+3. **Fill form**: Enter username and password
+4. **Get tokens**: Capture login tokens from the page
+5. **Save tokens**: Store tokens to use for API calls
 
-### Function-First Patterns
+### Function examples
 
 ```typescript
-// ✅ Use factory functions for services
+// ✅ Example: Create a user service function
 export const createUserService = (userRepository: UserRepository) => ({
   getUser: async (id: string) => {
     return await userRepository.findById(id);
@@ -484,7 +484,7 @@ export const createUserService = (userRepository: UserRepository) => ({
   },
 });
 
-// ✅ Use cases are also factory functions
+// ✅ Example: Create a login function
 export const createLoginUseCase =
   (authRepository: AuthRepository) => async (credentials: LoginCredentials) => {
     return await authRepository.authenticate(credentials);

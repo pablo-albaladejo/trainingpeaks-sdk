@@ -100,7 +100,7 @@ export const createStructuredWorkoutFromSimpleStructure =
   ): CreateStructuredWorkoutFromSimpleStructure =>
   async (
     name: string,
-    structure: SimpleWorkoutStructure
+    structure: any // TODO: Define proper type
   ): Promise<CreateStructuredWorkoutResponse> => {
     try {
       workoutLogger.info('Creating structured workout from simple structure', {
@@ -142,7 +142,7 @@ export const createStructuredWorkoutFromSimpleStructure =
       workoutLogger.error(
         'Failed to create structured workout from simple structure',
         {
-          name: request.name,
+          name: name,
           error: error instanceof Error ? error.message : 'Unknown error',
           errorType:
             error instanceof Error ? error.constructor.name : 'Unknown',
@@ -157,7 +157,7 @@ export const createStructuredWorkoutFromSimpleStructure =
         'Failed to create structured workout from simple structure',
         {
           operation: 'createStructuredWorkoutFromSimpleStructure',
-          name: request.name,
+          name: name,
         },
         error instanceof Error ? error : undefined
       );

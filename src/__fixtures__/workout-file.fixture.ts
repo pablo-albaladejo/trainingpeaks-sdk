@@ -3,9 +3,13 @@
  * Provides test data for the WorkoutFile value object
  */
 
+import type { WorkoutFile } from '@/domain/value-objects/workout-file';
+import {
+  createWorkoutFile,
+  createWorkoutFileFromBuffer,
+} from '@/infrastructure/services/domain-factories';
 import { faker } from '@faker-js/faker';
-import { WorkoutFile } from '@/domain/value-objects/workout-file';
-import { randomNumber, randomString } from './utils.fixture';
+import { randomNumber } from './utils.fixture';
 
 /**
  * WorkoutFile Fixture
@@ -206,7 +210,7 @@ export class WorkoutFileFixture {
   }
 
   build(): WorkoutFile {
-    return WorkoutFile.create(
+    return createWorkoutFile(
       this.workoutFile.fileName || 'workout.tcx',
       this.workoutFile.content || this.getDefaultTcxContent(),
       this.workoutFile.mimeType || 'application/tcx+xml'
@@ -216,7 +220,7 @@ export class WorkoutFileFixture {
   buildFromBuffer(): WorkoutFile {
     const content = this.workoutFile.content || this.getDefaultTcxContent();
     const buffer = Buffer.from(content, 'utf8');
-    return WorkoutFile.fromBuffer(
+    return createWorkoutFileFromBuffer(
       this.workoutFile.fileName || 'workout.tcx',
       buffer,
       this.workoutFile.mimeType || 'application/tcx+xml'

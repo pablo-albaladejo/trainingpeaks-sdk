@@ -345,6 +345,10 @@ export type CreateStructuredWorkoutRequest = {
     coachComments?: string;
     /** Public setting value */
     publicSettingValue?: number;
+    /** Athlete weight in kg for metric calculations */
+    athleteWeight?: number;
+    /** Activity type for metric calculations */
+    activityType?: 'BIKE' | 'RUN' | 'SWIM' | 'OTHER';
     /** Planned metrics */
     plannedMetrics?: {
       totalTimePlanned?: number;

@@ -6,6 +6,7 @@
 import { StoragePort } from '@/application/ports/storage';
 import { AuthToken } from '@/domain/entities/auth-token';
 import { User } from '@/domain/entities/user';
+import { isTokenExpired } from '@/infrastructure/services/auth-business-logic';
 
 export class InMemoryStorageAdapter implements StoragePort {
   private storedToken: AuthToken | null = null;
@@ -17,7 +18,7 @@ export class InMemoryStorageAdapter implements StoragePort {
 
   public async getToken(): Promise<AuthToken | null> {
     // Check if token is expired
-    if (this.storedToken && this.storedToken.isExpired()) {
+    if (this.storedToken && isTokenExpired(this.storedToken.expiresAt)) {
       this.storedToken = null;
     }
 
@@ -43,6 +44,6 @@ export class InMemoryStorageAdapter implements StoragePort {
 
   public async hasValidAuth(): Promise<boolean> {
     const token = await this.getToken();
-    return token !== null && !token.isExpired();
+    return token !== null && !isTokenExpired(token.expiresAt);
   }
 }

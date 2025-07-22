@@ -4,12 +4,18 @@
  */
 
 import type { WorkoutFile } from '@/domain/value-objects/workout-file';
+import type { WorkoutStructure } from '@/domain/value-objects/workout-structure-simple';
 import type { CreateStructuredWorkoutRequest, WorkoutData } from '@/types';
 
-/**
- * Validates workout ID format and existence
- */
-export type ValidateWorkoutId = (workoutId: string) => void;
+export type ValidateWorkoutId = (id: string) => void;
+export type ValidateWorkoutName = (name: string) => void;
+export type ValidateWorkoutDate = (date: Date) => void;
+export type ValidateWorkoutDuration = (duration: number) => void;
+export type ValidateWorkoutDistance = (distance?: number) => void;
+export type ValidateWorkoutStructure = (
+  duration: number,
+  structure?: WorkoutStructure
+) => void;
 
 /**
  * Validates workout file data
@@ -112,15 +118,6 @@ export type ValidateWorkoutMetadata = (
 ) => void;
 
 /**
- * Validates workout structure data
- */
-export type ValidateWorkoutStructure = (structure: {
-  elements: unknown[];
-  polyline: unknown[];
-  metrics: Record<string, unknown>;
-}) => void;
-
-/**
  * Validates workout targets
  */
 export type ValidateWorkoutTargets = (
@@ -153,24 +150,9 @@ export type ValidateWorkoutFileConstraints = (
 ) => void;
 
 /**
- * Validates workout name format
- */
-export type ValidateWorkoutName = (name: string) => void;
-
-/**
  * Validates workout description
  */
 export type ValidateWorkoutDescription = (description: string) => void;
-
-/**
- * Validates workout duration
- */
-export type ValidateWorkoutDuration = (duration: number) => void;
-
-/**
- * Validates workout distance
- */
-export type ValidateWorkoutDistance = (distance: number) => void;
 
 /**
  * Validates workout tags

@@ -1,6 +1,11 @@
-import { AuthToken } from '@/domain/entities/auth-token';
-import { User } from '@/domain/entities/user';
-import { Credentials } from '@/domain/value-objects/credentials';
+import type { AuthToken } from '@/domain/entities/auth-token';
+import type { User } from '@/domain/entities/user';
+import type { Credentials } from '@/domain/value-objects/credentials';
+import {
+  createAuthToken,
+  createCredentials,
+  createUser,
+} from '@/infrastructure/services/domain-factories';
 import { faker } from '@faker-js/faker';
 import { randomNumber } from './utils.fixture';
 
@@ -88,7 +93,7 @@ export class AuthTokenFixture {
     const expiresAt =
       this.token.expiresAt || new Date(Date.now() + 3600 * 1000); // Default 1 hour
 
-    const authToken = AuthToken.create(
+    const authToken = createAuthToken(
       this.token.accessToken || faker.string.alphanumeric(32),
       this.token.tokenType || 'Bearer',
       expiresAt,
@@ -200,11 +205,11 @@ export class UserFixture {
    * Build User
    */
   build(): User {
-    return User.create(
+    return createUser(
       this.user.id || faker.string.uuid(),
       this.user.name || faker.person.fullName(),
       this.user.avatar || faker.image.avatar(),
-      this.user.preferences
+      this.user.preferences || { theme: 'dark', units: 'metric' }
     );
   }
 
@@ -274,7 +279,7 @@ export class CredentialsFixture {
    * Build Credentials
    */
   build(): Credentials {
-    return Credentials.create(
+    return createCredentials(
       this.credentials.username || faker.internet.userName(),
       this.credentials.password || faker.internet.password()
     );

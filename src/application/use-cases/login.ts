@@ -6,7 +6,7 @@
 import type { AuthRepository } from '@/application/ports/auth';
 import type { AuthToken } from '@/domain/entities/auth-token';
 import type { User } from '@/domain/entities/user';
-import { Credentials } from '@/domain/value-objects/credentials';
+import { createCredentials } from '@/infrastructure/services/domain-factories';
 
 export type LoginRequest = {
   username: string;
@@ -30,7 +30,7 @@ export const executeLoginUseCase =
   (authRepository: AuthRepository): ExecuteLoginUseCase =>
   async (request: LoginRequest): Promise<LoginResponse> => {
     // Create credentials from request
-    const credentials = Credentials.create(request.username, request.password);
+    const credentials = createCredentials(request.username, request.password);
 
     // Authenticate user
     const authToken = await authRepository.authenticate(credentials);

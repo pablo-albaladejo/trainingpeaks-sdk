@@ -3,14 +3,13 @@
  * Provides test data for structured workout operations
  */
 
-import { StructuredWorkoutData } from '@/application/services/workout-manager';
-import { WorkoutLength } from '@/domain/value-objects/workout-length';
-import { WorkoutStep } from '@/domain/value-objects/workout-step';
 import {
+  WorkoutLength,
+  WorkoutStep,
   WorkoutStructure,
   WorkoutStructureElement,
+  WorkoutTarget,
 } from '@/domain/value-objects/workout-structure';
-import { WorkoutTarget } from '@/domain/value-objects/workout-target';
 import { CreateStructuredWorkoutRequest } from '@/types/index';
 import { randomNumber } from './utils.fixture';
 
@@ -21,7 +20,7 @@ export class StructuredWorkoutDataFixture {
   private workoutDay: string =
     new Date().toISOString().split('T')[0] + 'T00:00:00';
   private structure: WorkoutStructure = this.createDefaultStructure();
-  private metadata: StructuredWorkoutData['metadata'] = undefined;
+  private metadata: CreateStructuredWorkoutRequest['metadata'] = undefined;
 
   public withAthleteId(athleteId: number): StructuredWorkoutDataFixture {
     this.athleteId = athleteId;
@@ -53,7 +52,7 @@ export class StructuredWorkoutDataFixture {
   }
 
   public withMetadata(
-    metadata: StructuredWorkoutData['metadata']
+    metadata: CreateStructuredWorkoutRequest['metadata']
   ): StructuredWorkoutDataFixture {
     this.metadata = metadata;
     return this;
@@ -71,7 +70,7 @@ export class StructuredWorkoutDataFixture {
     return this;
   }
 
-  public build(): StructuredWorkoutData {
+  public build(): CreateStructuredWorkoutRequest {
     return {
       athleteId: this.athleteId,
       title: this.title,
@@ -117,27 +116,27 @@ export class StructuredWorkoutDataFixture {
     );
 
     const elements: WorkoutStructureElement[] = [
-      {
-        type: 'step',
-        length: WorkoutLength.create(600, 'second'),
-        steps: [warmUpStep],
-        begin: 0,
-        end: 600,
-      },
-      {
-        type: 'step',
-        length: WorkoutLength.create(1200, 'second'),
-        steps: [mainSetStep],
-        begin: 600,
-        end: 1800,
-      },
-      {
-        type: 'step',
-        length: WorkoutLength.create(300, 'second'),
-        steps: [coolDownStep],
-        begin: 1800,
-        end: 2100,
-      },
+      WorkoutStructureElement.create(
+        'step',
+        WorkoutLength.create(600, 'second'),
+        [warmUpStep],
+        0,
+        600
+      ),
+      WorkoutStructureElement.create(
+        'step',
+        WorkoutLength.create(1200, 'second'),
+        [mainSetStep],
+        600,
+        1800
+      ),
+      WorkoutStructureElement.create(
+        'step',
+        WorkoutLength.create(300, 'second'),
+        [coolDownStep],
+        1800,
+        2100
+      ),
     ];
 
     const polyline: number[][] = [
@@ -190,16 +189,18 @@ export class StructuredWorkoutDataFixture {
       const repetitions = isRepetition ? randomNumber(2, 4) : 1;
       const totalDuration = elementDuration * repetitions;
 
-      elements.push({
-        type: isRepetition ? 'repetition' : 'step',
-        length: WorkoutLength.create(
-          isRepetition ? repetitions : elementDuration,
-          isRepetition ? 'repetition' : 'second'
-        ),
-        steps,
-        begin: currentTime,
-        end: currentTime + totalDuration,
-      });
+      elements.push(
+        WorkoutStructureElement.create(
+          isRepetition ? 'repetition' : 'step',
+          WorkoutLength.create(
+            isRepetition ? repetitions : elementDuration,
+            isRepetition ? 'repetition' : 'second'
+          ),
+          steps,
+          currentTime,
+          currentTime + totalDuration
+        )
+      );
 
       currentTime += totalDuration;
     }
@@ -228,27 +229,28 @@ export class StructuredWorkoutDataFixture {
       'warmUp',
       'coolDown',
     ];
-    return classes[randomNumber(0, classes.length - 1)];
+    const index = randomNumber(0, classes.length - 1);
+    return classes[index] || 'active';
   }
 
   /**
    * Create a default structured workout
    */
-  public static default(): StructuredWorkoutData {
+  public static default(): CreateStructuredWorkoutRequest {
     return new StructuredWorkoutDataFixture().build();
   }
 
   /**
    * Create a random structured workout
    */
-  public static random(): StructuredWorkoutData {
+  public static random(): CreateStructuredWorkoutRequest {
     return new StructuredWorkoutDataFixture().withRandomData().build();
   }
 
   /**
    * Create a structured workout with intervals
    */
-  public static withIntervals(): StructuredWorkoutData {
+  public static withIntervals(): CreateStructuredWorkoutRequest {
     const fixture = new StructuredWorkoutDataFixture();
 
     // Create interval structure
@@ -281,27 +283,27 @@ export class StructuredWorkoutDataFixture {
     );
 
     const elements: WorkoutStructureElement[] = [
-      {
-        type: 'step',
-        length: WorkoutLength.create(600, 'second'),
-        steps: [warmUpStep],
-        begin: 0,
-        end: 600,
-      },
-      {
-        type: 'repetition',
-        length: WorkoutLength.create(5, 'repetition'),
-        steps: [intervalStep, recoveryStep],
-        begin: 600,
-        end: 2400, // 5 * (240 + 120) = 1800 + 600 = 2400
-      },
-      {
-        type: 'step',
-        length: WorkoutLength.create(300, 'second'),
-        steps: [coolDownStep],
-        begin: 2400,
-        end: 2700,
-      },
+      WorkoutStructureElement.create(
+        'step',
+        WorkoutLength.create(600, 'second'),
+        [warmUpStep],
+        0,
+        600
+      ),
+      WorkoutStructureElement.create(
+        'repetition',
+        WorkoutLength.create(5, 'repetition'),
+        [intervalStep, recoveryStep],
+        600,
+        2400 // 5 * (240 + 120) = 1800 + 600 = 2400
+      ),
+      WorkoutStructureElement.create(
+        'step',
+        WorkoutLength.create(300, 'second'),
+        [coolDownStep],
+        2400,
+        2700
+      ),
     ];
 
     const polyline: number[][] = [

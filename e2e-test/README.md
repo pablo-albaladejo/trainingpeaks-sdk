@@ -1,44 +1,44 @@
 # TrainingPeaks SDK - E2E Tests
 
-This directory contains comprehensive end-to-end tests for the TrainingPeaks SDK npm package, based on integration test patterns and best practices.
+This directory has complete end-to-end tests for the TrainingPeaks SDK npm package, based on integration test patterns and best practices.
 
-## 🎯 Purpose
+## 🎯 What these tests do
 
-These E2E tests verify that the built SDK works correctly in real-world scenarios, ensuring:
+These E2E tests check that the built SDK works correctly in real situations, making sure:
 
-- ✅ **Import/Export functionality** works in both ES Modules and CommonJS
+- ✅ **Import/Export** works in both ES Modules and CommonJS
 - ✅ **API surface** is complete and accessible
-- ✅ **Configuration management** works with various patterns
-- ✅ **Authentication flow** works as expected
-- ✅ **Workout management** functions properly
-- ✅ **Error handling** is robust
+- ✅ **Configuration** works with different patterns
+- ✅ **Login flow** works as expected
+- ✅ **Workout management** works properly
+- ✅ **Error handling** is strong
 - ✅ **Type safety** is maintained
 - ✅ **State management** is consistent
-- ✅ **Compatibility** across different usage patterns
+- ✅ **Compatibility** across different ways of using it
 
-## 🔧 Environment Setup
+## 🔧 Environment setup
 
-### Automatic .env Loading
+### Automatic .env loading
 
 The E2E tests automatically load environment variables from the `.env` file in the project root. This is the same pattern used by integration tests.
 
-### Required Environment Variables
+### Required environment variables
 
-The E2E tests use the same configuration pattern as integration tests. You must set these environment variables in your `.env` file in the project root:
+The E2E tests use the same setup pattern as integration tests. You must set these environment variables in your `.env` file in the project root:
 
 ```bash
-# Required: TrainingPeaks credentials
+# Required: TrainingPeaks login details
 TRAININGPEAKS_TEST_USERNAME=your-test-username
 TRAININGPEAKS_TEST_PASSWORD=your-test-password
 
-# Optional: Configuration overrides
+# Optional: Settings you can change
 TRAININGPEAKS_WEB_HEADLESS=true                    # Default: true
 TRAININGPEAKS_WEB_TIMEOUT=30000                    # Default: 30000ms
 TRAININGPEAKS_AUTH_METHOD=web                      # Default: web
 TRAININGPEAKS_BASE_URL=https://www.trainingpeaks.com
 ```
 
-### Setup Instructions
+### How to set up
 
 1. **Create or edit `.env` file** in the project root:
 

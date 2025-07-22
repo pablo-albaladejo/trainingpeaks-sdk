@@ -12,6 +12,10 @@ import { AuthToken } from '@/domain/entities/auth-token';
 import { User } from '@/domain/entities/user';
 import { Credentials } from '@/domain/value-objects/credentials';
 import { authLogger, browserLogger } from '@/infrastructure/logging/logger';
+import {
+  createAuthToken,
+  createUser,
+} from '@/infrastructure/services/domain-factories';
 import { Browser, chromium, Page, Response } from 'playwright-core';
 
 type InterceptedData = {
@@ -63,10 +67,11 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
       }
 
       // Create user from intercepted data
-      const user = User.create(
-        interceptedData.userId,
+      const user = createUser(
+        String(interceptedData.userId),
         credentials.username,
-        credentials.username // Use username as name for now
+        credentials.username, // Use username as name for now
+        undefined // No preferences data available in interceptedData
       );
 
       return {
@@ -291,7 +296,7 @@ export class WebBrowserAuthAdapter implements AuthenticationPort {
       }
 
       // Create AuthToken entity
-      interceptedData.token = AuthToken.create(
+      interceptedData.token = createAuthToken(
         json.token.access_token,
         'Bearer',
         new Date(Date.now() + this.sdkConfig.tokens.defaultExpiration),

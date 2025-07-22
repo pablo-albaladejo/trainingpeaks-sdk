@@ -1,30 +1,17 @@
-import { ValidationError } from '@/domain/errors';
-
 /**
  * User Domain Entity
- * Represents a TrainingPeaks user in the domain
+ * Represents a TrainingPeaks user in the domain - pure data container
  */
 
 export class User {
-  private constructor(
+  constructor(
     private readonly _id: string,
     private readonly _name: string,
     private readonly _avatar?: string,
-    private readonly _preferences?: Record<string, any>
-  ) {
-    this.validateId();
-    this.validateName();
-  }
+    private readonly _preferences?: Record<string, unknown>
+  ) {}
 
-  public static create(
-    id: string,
-    name: string,
-    avatar?: string,
-    preferences?: Record<string, any>
-  ): User {
-    return new User(id, name, avatar, preferences);
-  }
-
+  // Getters only - no business logic
   public get id(): string {
     return this._id;
   }
@@ -37,23 +24,7 @@ export class User {
     return this._avatar;
   }
 
-  public get preferences(): Record<string, any> | undefined {
+  public get preferences(): Record<string, unknown> | undefined {
     return this._preferences;
-  }
-
-  public equals(other: User): boolean {
-    return this._id === other._id;
-  }
-
-  private validateId(): void {
-    if (!this._id || this._id.trim().length === 0) {
-      throw new ValidationError('User ID cannot be empty');
-    }
-  }
-
-  private validateName(): void {
-    if (!this._name || this._name.trim().length === 0) {
-      throw new ValidationError('User name cannot be empty');
-    }
   }
 }

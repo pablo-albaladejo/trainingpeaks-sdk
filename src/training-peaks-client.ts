@@ -5,9 +5,9 @@
 
 import { getSDKConfig, type TrainingPeaksClientConfig } from '@/config';
 import { AuthenticationError } from '@/domain/errors';
-import { Credentials } from '@/domain/value-objects/credentials';
 import { authLogger } from '@/infrastructure/logging/logger';
 import { createTrainingPeaksAuthRepository } from '@/infrastructure/repositories/training-peaks-auth';
+import { createCredentials } from '@/infrastructure/services/domain-factories';
 import { createWorkoutManager } from './workout-manager';
 
 /**
@@ -50,7 +50,7 @@ export class TrainingPeaksClient {
       }
 
       // Create credentials value object
-      const credentials = Credentials.create(username, password);
+      const credentials = createCredentials(username, password);
 
       // Authenticate using real repository
       const token = await this.authRepository.authenticate(credentials);
