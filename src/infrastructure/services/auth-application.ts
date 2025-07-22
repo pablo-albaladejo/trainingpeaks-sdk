@@ -16,49 +16,112 @@ import type {
 } from '@/application/services/auth-application';
 import type { AuthToken } from '@/domain/entities/auth-token';
 import type { User } from '@/domain/entities/user';
+import { SDKError } from '@/domain/errors';
 
 export const login =
   (authRepository: AuthRepository): Login =>
   async (request: LoginRequest): Promise<LoginResponse> => {
-    const token = await authRepository.authenticate(request.credentials);
-    const user = await authRepository.getCurrentUser();
+    try {
+      const token = await authRepository.authenticate(request.credentials);
+      const user = await authRepository.getCurrentUser();
 
-    if (user) {
-      return {
-        token,
-        user,
-      };
+      if (user) {
+        return {
+          token,
+          user,
+        };
+      }
+
+      throw SDKError.userNotFound({
+        operation: 'login',
+        resource: 'user',
+        userId: request.credentials.username,
+      });
+    } catch (error) {
+      if (error instanceof SDKError) {
+        throw error;
+      }
+
+      throw SDKError.authFailed(
+        'Failed to get user after authentication',
+        {
+          operation: 'login',
+          resource: 'user',
+          userId: request.credentials.username,
+        },
+        error instanceof Error ? error : undefined
+      );
     }
-
-    throw new Error('Failed to get user after authentication');
   };
 
 export const logout =
   (authRepository: AuthRepository): Logout =>
   async (): Promise<void> => {
-    await authRepository.clearAuth();
+    try {
+      await authRepository.clearAuth();
+    } catch (error) {
+      throw SDKError.fromError(
+        error instanceof Error ? error : new Error('Logout failed'),
+        'AUTH_1001',
+        { operation: 'logout' }
+      );
+    }
   };
 
 export const getCurrentUser =
   (authRepository: AuthRepository): GetCurrentUser =>
   async (): Promise<User | null> => {
-    return await authRepository.getCurrentUser();
+    try {
+      return await authRepository.getCurrentUser();
+    } catch (error) {
+      throw SDKError.fromError(
+        error instanceof Error
+          ? error
+          : new Error('Failed to get current user'),
+        'AUTH_1006',
+        { operation: 'getCurrentUser' }
+      );
+    }
   };
 
 export const isAuthenticated =
   (authRepository: AuthRepository): IsAuthenticated =>
   (): boolean => {
-    return authRepository.isAuthenticated();
+    try {
+      return authRepository.isAuthenticated();
+    } catch (error) {
+      // For boolean operations, we log the error but return false instead of throwing
+      console.error('Error checking authentication status:', error);
+      return false;
+    }
   };
 
 export const getCurrentToken =
   (authRepository: AuthRepository): GetCurrentToken =>
   (): AuthToken | null => {
-    return authRepository.getCurrentToken();
+    try {
+      return authRepository.getCurrentToken();
+    } catch (error) {
+      throw SDKError.fromError(
+        error instanceof Error
+          ? error
+          : new Error('Failed to get current token'),
+        'AUTH_1003',
+        { operation: 'getCurrentToken' }
+      );
+    }
   };
 
 export const getUserId =
   (authRepository: AuthRepository): GetUserId =>
   (): string | null => {
-    return authRepository.getUserId();
+    try {
+      return authRepository.getUserId();
+    } catch (error) {
+      throw SDKError.fromError(
+        error instanceof Error ? error : new Error('Failed to get user ID'),
+        'AUTH_1006',
+        { operation: 'getUserId' }
+      );
+    }
   };

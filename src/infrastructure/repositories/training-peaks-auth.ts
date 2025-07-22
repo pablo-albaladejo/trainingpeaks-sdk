@@ -1,36 +1,29 @@
 /**
- * TrainingPeaks Authentication Repository
- * Handles authentication operations with TrainingPeaks API using real authentication adapters
+ * TrainingPeaks Authentication Repository Implementation
+ * Handles authentication with TrainingPeaks using multiple adapters
  */
 
-import { type AuthRepository } from '@/application';
+import type { AuthRepository } from '@/application/ports/auth';
 import { getSDKConfig } from '@/config';
-import { AuthToken } from '@/domain/entities/auth-token';
-import { User } from '@/domain/entities/user';
-import { Credentials } from '@/domain/value-objects/credentials';
+import type { AuthToken } from '@/domain/entities/auth-token';
+import type { User } from '@/domain/entities/user';
+import { SDKError } from '@/domain/errors';
+import type { Credentials } from '@/domain/value-objects/credentials';
 import { ApiAuthAdapter } from '@/infrastructure/auth/api-adapter';
 import { WebBrowserAuthAdapter } from '@/infrastructure/browser/web-auth-adapter';
-import { authLogger } from '@/infrastructure/logging/logger';
+import { logError, logInfo, logWarn } from '@/infrastructure/services/logger';
+import { InMemoryStorageAdapter } from '@/infrastructure/storage/in-memory-adapter';
 
-/**
- * Current authentication state
- */
-let currentUser: User | null = null;
-let currentToken: AuthToken | null = null;
+const authLogger = {
+  info: logInfo(),
+  error: logError(),
+  warn: logWarn(),
+};
 
-/**
- * TrainingPeaks Authentication Repository
- * Implements the AuthRepository interface for TrainingPeaks authentication
- * Uses real authentication adapters (Web Browser or API) instead of mock data
- */
 export const createTrainingPeaksAuthRepository = (): AuthRepository => {
-  const sdkConfig = getSDKConfig();
+  let currentUser: User | null = null;
+  let currentToken: AuthToken | null = null;
 
-  // Initialize authentication adapters
-  const webAuthAdapter = new WebBrowserAuthAdapter();
-  const apiAuthAdapter = new ApiAuthAdapter();
-
-  // Helper methods
   const setCurrentUser = (user: User | null): void => {
     currentUser = user;
   };
@@ -44,18 +37,20 @@ export const createTrainingPeaksAuthRepository = (): AuthRepository => {
     currentToken = null;
   };
 
-  // Repository implementation
   const authenticate = async (credentials: Credentials): Promise<AuthToken> => {
     try {
       authLogger.info('Starting authentication process', {
         username: credentials.username,
-        method: 'real',
       });
 
-      // Determine which authentication method to use
+      const sdkConfig = getSDKConfig();
+      const apiAuthAdapter = new ApiAuthAdapter();
+      const webAuthAdapter = new WebBrowserAuthAdapter();
+      const storageAdapter = new InMemoryStorageAdapter();
+
       const authConfig = {
         baseUrl: sdkConfig.urls.baseUrl,
-        timeout: sdkConfig.timeouts.webAuth,
+        timeout: sdkConfig.timeouts.apiAuth,
         debug: sdkConfig.debug.logAuth,
         headers: sdkConfig.requests.defaultHeaders,
         webAuth: {
@@ -75,7 +70,11 @@ export const createTrainingPeaksAuthRepository = (): AuthRepository => {
         authLogger.info('Using API authentication');
         authResult = await apiAuthAdapter.authenticate(credentials, authConfig);
       } else {
-        throw new Error('No suitable authentication adapter found');
+        throw SDKError.fileError(
+          'AUTH_1005',
+          'No suitable authentication adapter found',
+          { operation: 'authenticate', username: credentials.username }
+        );
       }
 
       // Store authentication data
@@ -94,7 +93,19 @@ export const createTrainingPeaksAuthRepository = (): AuthRepository => {
         error: error instanceof Error ? error.message : 'Unknown error',
         errorType: error instanceof Error ? error.constructor.name : 'Unknown',
       });
-      throw error;
+
+      if (error instanceof SDKError) {
+        throw error;
+      }
+
+      throw SDKError.authFailed(
+        'Authentication process failed',
+        {
+          operation: 'authenticate',
+          username: credentials.username,
+        },
+        error instanceof Error ? error : undefined
+      );
     }
   };
 
@@ -111,11 +122,19 @@ export const createTrainingPeaksAuthRepository = (): AuthRepository => {
     try {
       authLogger.info('Refreshing authentication token');
 
+      const sdkConfig = getSDKConfig();
+      const apiAuthAdapter = new ApiAuthAdapter();
+
       const authConfig = {
         baseUrl: sdkConfig.urls.baseUrl,
         timeout: sdkConfig.timeouts.apiAuth,
         debug: sdkConfig.debug.logAuth,
         headers: sdkConfig.requests.defaultHeaders,
+        webAuth: {
+          headless: sdkConfig.browser.headless,
+          timeout: sdkConfig.timeouts.webAuth,
+          executablePath: sdkConfig.browser.executablePath,
+        },
       };
 
       // Try API refresh first (more efficient)
@@ -129,14 +148,28 @@ export const createTrainingPeaksAuthRepository = (): AuthRepository => {
         return newToken;
       } else {
         // Fallback to web authentication if API is not available
-        throw new Error('Token refresh not supported for web authentication');
+        throw SDKError.fileError(
+          'AUTH_1009',
+          'Token refresh not supported for web authentication',
+          { operation: 'refreshToken' }
+        );
       }
     } catch (error) {
       authLogger.error('Token refresh failed', {
         error: error instanceof Error ? error.message : 'Unknown error',
         errorType: error instanceof Error ? error.constructor.name : 'Unknown',
       });
-      throw error;
+
+      if (error instanceof SDKError) {
+        throw error;
+      }
+
+      throw SDKError.fileError(
+        'AUTH_1004',
+        'Token refresh failed',
+        { operation: 'refreshToken' },
+        error instanceof Error ? error : undefined
+      );
     }
   };
 
@@ -169,11 +202,11 @@ export const createTrainingPeaksAuthRepository = (): AuthRepository => {
   };
 
   const storeUser = async (user: User): Promise<void> => {
-    authLogger.info('Storing user information', { userId: user.id });
+    authLogger.info('Storing user information');
     setCurrentUser(user);
   };
 
-  const repository: AuthRepository = {
+  return {
     authenticate,
     getCurrentUser,
     clearAuth,
@@ -184,6 +217,4 @@ export const createTrainingPeaksAuthRepository = (): AuthRepository => {
     storeToken,
     storeUser,
   };
-
-  return repository;
 };

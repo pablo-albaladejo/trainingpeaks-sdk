@@ -9,12 +9,12 @@ import type {
   CreateStructuredWorkoutFromSimpleStructure,
   CreateStructuredWorkoutRequest,
   CreateStructuredWorkoutResponse,
-  SimpleWorkoutStructure,
   UploadWorkout,
   UploadWorkoutRequest,
   UploadWorkoutResponse,
 } from '@/application/services/workout-creation';
-import { workoutLogger } from '@/infrastructure/logging/logger';
+import { SDKError } from '@/domain/errors';
+import { logError, logInfo } from '@/infrastructure/services/logger';
 import {
   validateWorkoutDescription,
   validateWorkoutFile,
@@ -22,6 +22,11 @@ import {
   validateWorkoutName,
   validateWorkoutTags,
 } from '@/infrastructure/services/workout-validation';
+
+const workoutLogger = {
+  info: logInfo(),
+  error: logError(),
+};
 
 export const createStructuredWorkout =
   (workoutRepository: WorkoutRepository): CreateStructuredWorkout =>
@@ -34,7 +39,7 @@ export const createStructuredWorkout =
         activityType: request.activityType,
       });
 
-      // Validate request components
+      // Validate basic inputs
       validateWorkoutName(request.name);
       if (request.description) {
         validateWorkoutDescription(request.description);
@@ -46,7 +51,14 @@ export const createStructuredWorkout =
         validateWorkoutMetadata(request.customFields);
       }
 
-      // Create workout via repository
+      // Validate structure
+      if (!request.structure || Object.keys(request.structure).length === 0) {
+        throw SDKError.workoutValidationFailed(
+          'Workout structure must be provided',
+          { operation: 'createStructuredWorkout', name: request.name }
+        );
+      }
+
       const workoutId = `workout_${Date.now()}`;
 
       // TODO: Implement actual repository call
@@ -62,10 +74,6 @@ export const createStructuredWorkout =
         success: true,
         message: 'Structured workout created successfully',
         createdAt: new Date(),
-        estimatedDuration: request.estimatedDuration,
-        estimatedDistance: request.estimatedDistance,
-        estimatedCalories: request.estimatedCalories,
-        structure: request.structure,
       };
     } catch (error) {
       workoutLogger.error('Failed to create structured workout', {
@@ -73,7 +81,16 @@ export const createStructuredWorkout =
         error: error instanceof Error ? error.message : 'Unknown error',
         errorType: error instanceof Error ? error.constructor.name : 'Unknown',
       });
-      throw error;
+
+      if (error instanceof SDKError) {
+        throw error;
+      }
+
+      throw SDKError.workoutCreationFailed(
+        'Failed to create structured workout',
+        { operation: 'createStructuredWorkout', name: request.name },
+        error instanceof Error ? error : undefined
+      );
     }
   };
 
@@ -95,8 +112,9 @@ export const createStructuredWorkoutFromSimpleStructure =
 
       // Validate structure components
       if (!structure.main || structure.main.length === 0) {
-        throw new Error(
-          'Workout structure must have at least one main segment'
+        throw SDKError.workoutValidationFailed(
+          'Workout structure must have at least one main segment',
+          { operation: 'createStructuredWorkoutFromSimpleStructure', name }
         );
       }
 
@@ -124,13 +142,25 @@ export const createStructuredWorkoutFromSimpleStructure =
       workoutLogger.error(
         'Failed to create structured workout from simple structure',
         {
-          name,
+          name: request.name,
           error: error instanceof Error ? error.message : 'Unknown error',
           errorType:
             error instanceof Error ? error.constructor.name : 'Unknown',
         }
       );
-      throw error;
+
+      if (error instanceof SDKError) {
+        throw error;
+      }
+
+      throw SDKError.workoutCreationFailed(
+        'Failed to create structured workout from simple structure',
+        {
+          operation: 'createStructuredWorkoutFromSimpleStructure',
+          name: request.name,
+        },
+        error instanceof Error ? error : undefined
+      );
     }
   };
 
@@ -188,6 +218,18 @@ export const uploadWorkout =
         error: error instanceof Error ? error.message : 'Unknown error',
         errorType: error instanceof Error ? error.constructor.name : 'Unknown',
       });
-      throw error;
+
+      if (error instanceof SDKError) {
+        throw error;
+      }
+
+      throw SDKError.workoutUploadFailed(
+        'Failed to upload workout',
+        {
+          operation: 'uploadWorkout',
+          fileName: request.file.fileName,
+        },
+        error instanceof Error ? error : undefined
+      );
     }
   };

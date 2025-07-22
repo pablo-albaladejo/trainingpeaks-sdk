@@ -28,6 +28,7 @@ import type {
   LogWarn,
   LogWithLevel,
 } from '@/application/services/logger';
+import { type ErrorCode } from '@/domain/errors/error-codes';
 import {
   AuthenticationError,
   AuthorizationError,
@@ -37,6 +38,7 @@ import {
   UploadError,
   ValidationError,
 } from '@/domain/errors/index';
+import type { SDKErrorContext } from '@/domain/errors/sdk-error';
 import { WorkoutValidationError } from '@/domain/errors/workout-errors';
 
 /**
@@ -95,7 +97,11 @@ export const getStatusCodeFromError =
   (): GetStatusCodeFromError =>
   (error: Error): number => {
     if (error instanceof TrainingPeaksError) {
-      return error.statusCode || 500;
+      // Check for custom status code in context
+      if (error.context && 'customStatusCode' in error.context) {
+        return error.context.customStatusCode as number;
+      }
+      return error.statusCode;
     }
 
     if (
@@ -153,6 +159,31 @@ export const getErrorCodeFromError =
       error.constructor.name === 'WorkoutSyncError'
     ) {
       return (error as TrainingPeaksError).code;
+    }
+
+    // Handle specific error types with their expected codes
+    if (error instanceof ValidationError) {
+      return 'VALIDATION_ERROR';
+    }
+
+    if (error instanceof AuthenticationError) {
+      return 'AUTHENTICATION_ERROR';
+    }
+
+    if (error instanceof AuthorizationError) {
+      return 'AUTHORIZATION_ERROR';
+    }
+
+    if (error instanceof NetworkError) {
+      return 'NETWORK_ERROR';
+    }
+
+    if (error instanceof UploadError) {
+      return 'UPLOAD_ERROR';
+    }
+
+    if (error instanceof RateLimitError) {
+      return 'RATE_LIMIT_ERROR';
     }
 
     // Handle generic Error class
@@ -388,12 +419,26 @@ export const createError =
     statusCode: number = 500,
     context?: ErrorContext
   ): TrainingPeaksError => {
-    const error = new TrainingPeaksError(message, code, statusCode);
+    // Only include context if enrichment is enabled
+    const errorContext: SDKErrorContext | undefined =
+      config.enableContextEnrichment && context
+        ? {
+            ...context,
+            userId: context?.userId?.toString(),
+            customStatusCode: statusCode,
+          }
+        : undefined;
 
-    if (context && config.enableContextEnrichment) {
-      // Add context to error object
-      Object.defineProperty(error, 'context', {
-        value: context,
+    const error = new TrainingPeaksError(
+      message,
+      code as ErrorCode,
+      errorContext
+    );
+
+    // Override the statusCode if needed
+    if (statusCode !== 500) {
+      Object.defineProperty(error, 'statusCode', {
+        value: statusCode,
         writable: false,
         enumerable: true,
         configurable: false,
