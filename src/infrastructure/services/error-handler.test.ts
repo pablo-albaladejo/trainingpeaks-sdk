@@ -4,6 +4,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ErrorSeverity } from '../../application/services/error-handler';
 import {
   AuthenticationError,
   AuthorizationError,
@@ -19,7 +20,7 @@ import {
   WorkoutOperationNotAllowedError,
   WorkoutValidationError,
 } from '../../domain/errors/workout-errors';
-import { createErrorHandlerService, ErrorSeverity } from './error-handler';
+import { createErrorHandlerService } from './error-handler';
 
 // Mock logger
 const mockLogger = {

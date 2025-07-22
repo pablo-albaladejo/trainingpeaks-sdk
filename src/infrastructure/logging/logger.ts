@@ -41,14 +41,19 @@ export type LogEntry = {
 };
 
 /**
- * External logger type that users can implement
+ * Output target type for configurable logging
  */
-export type ExternalLogger = {
+export type LogOutputTarget = {
   debug(message: string, data?: unknown): void;
   info(message: string, data?: unknown): void;
   warn(message: string, data?: unknown): void;
   error(message: string, data?: unknown): void;
 };
+
+/**
+ * External logger type that users can implement
+ */
+export type ExternalLogger = LogOutputTarget;
 
 /**
  * Logger configuration type
@@ -66,6 +71,8 @@ export type LoggerConfig = {
   };
   /** External logger implementation (optional) */
   externalLogger?: ExternalLogger;
+  /** Output target for logging (optional, defaults to console) */
+  outputTarget?: LogOutputTarget;
   /** Enable JSON format for structured logging */
   jsonFormat: boolean;
   /** Custom prefix for all log messages */
@@ -73,44 +80,83 @@ export type LoggerConfig = {
 };
 
 /**
- * Default console logger implementation
+ * Default console output target implementation
  */
-class ConsoleLogger implements ExternalLogger {
-  debug(message: string, data?: unknown): void {
+export const consoleOutputTarget: LogOutputTarget = {
+  debug: (message: string, data?: unknown): void => {
     if (data !== undefined) {
       console.debug(message, data);
     } else {
       console.debug(message);
     }
-  }
+  },
 
-  info(message: string, data?: unknown): void {
+  info: (message: string, data?: unknown): void => {
     if (data !== undefined) {
       console.info(message, data);
     } else {
       console.info(message);
     }
-  }
+  },
 
-  warn(message: string, data?: unknown): void {
+  warn: (message: string, data?: unknown): void => {
     if (data !== undefined) {
       console.warn(message, data);
     } else {
       console.warn(message);
     }
-  }
+  },
 
-  error(message: string, data?: unknown): void {
+  error: (message: string, data?: unknown): void => {
     if (data !== undefined) {
       console.error(message, data);
     } else {
       console.error(message);
     }
+  },
+};
+
+/**
+ * Silent output target that outputs nothing
+ */
+export const silentOutputTarget: LogOutputTarget = {
+  debug: (): void => {
+    /* silent */
+  },
+  info: (): void => {
+    /* silent */
+  },
+  warn: (): void => {
+    /* silent */
+  },
+  error: (): void => {
+    /* silent */
+  },
+};
+
+/**
+ * Default console logger implementation (deprecated, use outputTarget instead)
+ */
+class ConsoleLogger implements ExternalLogger {
+  debug(message: string, data?: unknown): void {
+    consoleOutputTarget.debug(message, data);
+  }
+
+  info(message: string, data?: unknown): void {
+    consoleOutputTarget.info(message, data);
+  }
+
+  warn(message: string, data?: unknown): void {
+    consoleOutputTarget.warn(message, data);
+  }
+
+  error(message: string, data?: unknown): void {
+    consoleOutputTarget.error(message, data);
   }
 }
 
 /**
- * Silent logger that outputs nothing
+ * Silent logger that outputs nothing (deprecated, use outputTarget instead)
  */
 class SilentLogger implements ExternalLogger {
   debug(): void {
@@ -132,7 +178,7 @@ class SilentLogger implements ExternalLogger {
  */
 export class Logger {
   private config: LoggerConfig;
-  private externalLogger: ExternalLogger;
+  private outputTarget: LogOutputTarget;
 
   constructor(config?: Partial<LoggerConfig>) {
     // Get SDK configuration to respect existing debug settings
@@ -155,13 +201,15 @@ export class Logger {
     // Merge with user configuration
     this.config = { ...defaultConfig, ...config };
 
-    // Set up external logger
-    if (this.config.externalLogger) {
-      this.externalLogger = this.config.externalLogger;
+    // Set up output target with priority: outputTarget > externalLogger > console/silent
+    if (this.config.outputTarget) {
+      this.outputTarget = this.config.outputTarget;
+    } else if (this.config.externalLogger) {
+      this.outputTarget = this.config.externalLogger;
     } else if (this.config.level === LogLevel.SILENT) {
-      this.externalLogger = new SilentLogger();
+      this.outputTarget = silentOutputTarget;
     } else {
-      this.externalLogger = new ConsoleLogger();
+      this.outputTarget = consoleOutputTarget;
     }
   }
 
@@ -171,19 +219,23 @@ export class Logger {
   public configure(config: Partial<LoggerConfig>): void {
     this.config = { ...this.config, ...config };
 
-    // Update external logger if needed
-    if (config.externalLogger) {
-      this.externalLogger = config.externalLogger;
+    // Update output target if needed
+    if (config.outputTarget) {
+      this.outputTarget = config.outputTarget;
+    } else if (config.externalLogger) {
+      this.outputTarget = config.externalLogger;
     } else if (
       this.config.level === LogLevel.SILENT &&
+      !config.outputTarget &&
       !config.externalLogger
     ) {
-      this.externalLogger = new SilentLogger();
+      this.outputTarget = silentOutputTarget;
     } else if (
+      !config.outputTarget &&
       !config.externalLogger &&
-      this.externalLogger instanceof SilentLogger
+      this.outputTarget === silentOutputTarget
     ) {
-      this.externalLogger = new ConsoleLogger();
+      this.outputTarget = consoleOutputTarget;
     }
   }
 
@@ -235,7 +287,7 @@ export class Logger {
       category,
       message
     );
-    this.externalLogger.debug(formattedMessage, data);
+    this.outputTarget.debug(formattedMessage, data);
   }
 
   /**
@@ -249,7 +301,7 @@ export class Logger {
       category,
       message
     );
-    this.externalLogger.info(formattedMessage, data);
+    this.outputTarget.info(formattedMessage, data);
   }
 
   /**
@@ -263,7 +315,7 @@ export class Logger {
       category,
       message
     );
-    this.externalLogger.warn(formattedMessage, data);
+    this.outputTarget.warn(formattedMessage, data);
   }
 
   /**
@@ -277,7 +329,7 @@ export class Logger {
       category,
       message
     );
-    this.externalLogger.error(formattedMessage, data);
+    this.outputTarget.error(formattedMessage, data);
   }
 
   /**
@@ -292,6 +344,13 @@ export class Logger {
    */
   public getConfig(): LoggerConfig {
     return { ...this.config };
+  }
+
+  /**
+   * Get current output target
+   */
+  public getOutputTarget(): LogOutputTarget {
+    return this.outputTarget;
   }
 }
 

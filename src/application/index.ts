@@ -30,6 +30,26 @@ export {
   type LoggerConfig,
 } from './services/logger';
 
+// Error Handler Services
+export {
+  type ApiResponse,
+  type ClassifyErrorSeverity,
+  type CreateError,
+  type EnrichErrorContext,
+  type ErrorContext,
+  type ErrorHandlerConfig,
+  type ErrorResponse,
+  type ErrorSeverity,
+  type GetErrorCodeFromError,
+  type GetStatusCodeFromError,
+  type HandleError,
+  type HandleSuccess,
+  type RetryOperation,
+  type SuccessResponse,
+  type ValidateResult,
+  type WrapAsyncOperation,
+} from './services/error-handler';
+
 // Auth Application Services - Individual Functions
 export {
   type LoginRequest as AuthLoginRequest,

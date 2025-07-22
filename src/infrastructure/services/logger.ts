@@ -54,7 +54,10 @@ export const silentOutputTarget: LogOutputTarget = {
 };
 
 // Helper function to create logger logic
-const createLoggerLogic = (config: LoggerConfig = {}) => {
+const createLoggerLogic = (
+  config: LoggerConfig = {},
+  outputTarget: LogOutputTarget = consoleOutputTarget
+) => {
   const logLevel = config.level || 'info';
   const enableTimestamp = config.enableTimestamp ?? true;
   const enableColors = config.enableColors ?? true;
@@ -114,59 +117,68 @@ const createLoggerLogic = (config: LoggerConfig = {}) => {
     }
 
     const formatted = formatMessage(level, message, context);
-
-    if (level === 'error') {
-      console.error(formatted);
-    } else if (level === 'warn') {
-      console.warn(formatted);
-    } else if (level === 'debug') {
-      console.debug(formatted);
-    } else {
-      console.log(formatted);
-    }
+    outputTarget.write(level, formatted);
   };
 
   return { logMessage };
 };
 
 export const logInfo =
-  (config: LoggerConfig = {}): LogInfo =>
+  (
+    config: LoggerConfig = {},
+    outputTarget: LogOutputTarget = consoleOutputTarget
+  ): LogInfo =>
   (message: string, context?: LogContext): void => {
-    const { logMessage } = createLoggerLogic(config);
+    const { logMessage } = createLoggerLogic(config, outputTarget);
     logMessage('info', message, context);
   };
 
 export const logError =
-  (config: LoggerConfig = {}): LogError =>
+  (
+    config: LoggerConfig = {},
+    outputTarget: LogOutputTarget = consoleOutputTarget
+  ): LogError =>
   (message: string, context?: LogContext): void => {
-    const { logMessage } = createLoggerLogic(config);
+    const { logMessage } = createLoggerLogic(config, outputTarget);
     logMessage('error', message, context);
   };
 
 export const logWarn =
-  (config: LoggerConfig = {}): LogWarn =>
+  (
+    config: LoggerConfig = {},
+    outputTarget: LogOutputTarget = consoleOutputTarget
+  ): LogWarn =>
   (message: string, context?: LogContext): void => {
-    const { logMessage } = createLoggerLogic(config);
+    const { logMessage } = createLoggerLogic(config, outputTarget);
     logMessage('warn', message, context);
   };
 
 export const logDebug =
-  (config: LoggerConfig = {}): LogDebug =>
+  (
+    config: LoggerConfig = {},
+    outputTarget: LogOutputTarget = consoleOutputTarget
+  ): LogDebug =>
   (message: string, context?: LogContext): void => {
-    const { logMessage } = createLoggerLogic(config);
+    const { logMessage } = createLoggerLogic(config, outputTarget);
     logMessage('debug', message, context);
   };
 
 export const logWithLevel =
-  (config: LoggerConfig = {}): LogWithLevel =>
+  (
+    config: LoggerConfig = {},
+    outputTarget: LogOutputTarget = consoleOutputTarget
+  ): LogWithLevel =>
   (level: LogLevel, message: string, context?: LogContext): void => {
-    const { logMessage } = createLoggerLogic(config);
+    const { logMessage } = createLoggerLogic(config, outputTarget);
     logMessage(level, message, context);
   };
 
 // Keep the existing grouped functions for backward compatibility
-export const createLoggerService = (config: LoggerConfig = {}) => {
-  const { logMessage } = createLoggerLogic(config);
+export const createLoggerService = (
+  config: LoggerConfig = {},
+  outputTarget: LogOutputTarget = consoleOutputTarget
+) => {
+  const { logMessage } = createLoggerLogic(config, outputTarget);
 
   return {
     info: (message: string, context?: LogContext): void => {

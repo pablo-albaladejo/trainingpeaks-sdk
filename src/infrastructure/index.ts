@@ -27,6 +27,11 @@ export {
   createLoggerService,
   createLoggerWithTarget,
   createSilentLogger,
+  logDebug,
+  logError,
+  logInfo,
+  logWarn,
+  logWithLevel,
   silentOutputTarget,
 } from './services/logger';
 
@@ -63,16 +68,24 @@ export {
   validateWorkoutId,
 } from './services/workout-validation';
 
-// Error handling
+// Error handling - Individual functions
 export {
-  ErrorSeverity,
+  classifyErrorSeverity,
+  createError,
+  enrichErrorContext,
+  getErrorCodeFromError,
+  getStatusCodeFromError,
+  handleError,
+  handleSuccess,
+  retryOperation,
+  validateResult,
+  wrapAsyncOperation,
+} from './services/error-handler';
+
+// Error handling - Backward compatibility
+export {
   createErrorHandlerService,
-  type ApiResponse,
-  type ErrorContext,
-  type ErrorHandlerConfig,
   type ErrorHandlerService,
-  type ErrorResponse,
-  type SuccessResponse,
 } from './services/error-handler';
 
 // HTTP handlers

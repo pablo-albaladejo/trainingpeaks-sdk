@@ -1,8 +1,33 @@
 /**
  * Error Handler Service Implementation
- * Provides centralized error handling with context enrichment and structured logging
+ * Individual function implementations that receive dependencies as parameters
  */
 
+import type {
+  ApiResponse,
+  ClassifyErrorSeverity,
+  CreateError,
+  EnrichErrorContext,
+  ErrorContext,
+  ErrorHandlerConfig,
+  ErrorResponse,
+  GetErrorCodeFromError,
+  GetStatusCodeFromError,
+  HandleError,
+  HandleSuccess,
+  RetryOperation,
+  SuccessResponse,
+  ValidateResult,
+  WrapAsyncOperation,
+} from '@/application/services/error-handler';
+import { ErrorSeverity } from '@/application/services/error-handler';
+import type {
+  LogDebug,
+  LogError,
+  LogInfo,
+  LogWarn,
+  LogWithLevel,
+} from '@/application/services/logger';
 import {
   AuthenticationError,
   AuthorizationError,
@@ -15,112 +40,17 @@ import {
 import { WorkoutValidationError } from '@/domain/errors/workout-errors';
 
 /**
- * Error context type for enriching error information
- */
-export type ErrorContext = {
-  operation?: string;
-  userId?: string | number;
-  workoutId?: string;
-  requestId?: string;
-  timestamp?: Date;
-  metadata?: Record<string, unknown>;
-};
-
-/**
- * Structured error response type
- */
-export type ErrorResponse = {
-  success: false;
-  error: {
-    code: string;
-    message: string;
-    details?: string[];
-    context?: ErrorContext;
-    stackTrace?: string;
-  };
-  statusCode: number;
-  timestamp: Date;
-};
-
-/**
- * Success response type
- */
-export type SuccessResponse<T = unknown> = {
-  success: true;
-  data: T;
-  statusCode: number;
-  timestamp: Date;
-};
-
-/**
- * Generic response type
- */
-export type ApiResponse<T = unknown> = SuccessResponse<T> | ErrorResponse;
-
-/**
- * Error classification enum
- */
-export enum ErrorSeverity {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  CRITICAL = 'critical',
-}
-
-/**
- * Error handler configuration
- */
-export type ErrorHandlerConfig = {
-  enableStackTrace: boolean;
-  enableContextEnrichment: boolean;
-  logLevel: 'error' | 'warn' | 'info' | 'debug';
-  maxRetryAttempts: number;
-  retryDelay: number;
-  delayFn?: (ms: number) => Promise<void>;
-};
-
-/**
  * Default delay function using setTimeout
  */
 const defaultDelayFn = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Error Handler Service Factory
+ * Classify error severity based on error type
  */
-import type {
-  LogDebug,
-  LogError,
-  LogInfo,
-  LogWarn,
-  LogWithLevel,
-} from '@/application/services/logger';
-
-export const createErrorHandlerService = (
-  logger: {
-    info: LogInfo;
-    error: LogError;
-    warn: LogWarn;
-    debug: LogDebug;
-    log: LogWithLevel;
-  },
-  config: Partial<ErrorHandlerConfig> = {}
-) => {
-  const defaultConfig: ErrorHandlerConfig = {
-    enableStackTrace: false,
-    enableContextEnrichment: true,
-    logLevel: 'error',
-    maxRetryAttempts: 3,
-    retryDelay: 1000,
-    delayFn: defaultDelayFn,
-  };
-
-  const finalConfig = { ...defaultConfig, ...config };
-
-  /**
-   * Classify error severity based on error type
-   */
-  const classifyErrorSeverity = (error: Error): ErrorSeverity => {
+export const classifyErrorSeverity =
+  (): ClassifyErrorSeverity =>
+  (error: Error): ErrorSeverity => {
     // Check for validation errors
     if (
       error instanceof ValidationError ||
@@ -158,10 +88,12 @@ export const createErrorHandlerService = (
     return ErrorSeverity.CRITICAL;
   };
 
-  /**
-   * Get status code from error type
-   */
-  const getStatusCodeFromError = (error: Error): number => {
+/**
+ * Get status code from error type
+ */
+export const getStatusCodeFromError =
+  (): GetStatusCodeFromError =>
+  (error: Error): number => {
     if (error instanceof TrainingPeaksError) {
       return error.statusCode || 500;
     }
@@ -196,10 +128,12 @@ export const createErrorHandlerService = (
     return 500;
   };
 
-  /**
-   * Extract error code from error type
-   */
-  const getErrorCodeFromError = (error: Error): string => {
+/**
+ * Extract error code from error type
+ */
+export const getErrorCodeFromError =
+  (): GetErrorCodeFromError =>
+  (error: Error): string => {
     if (error instanceof TrainingPeaksError) {
       return error.code;
     }
@@ -230,14 +164,13 @@ export const createErrorHandlerService = (
     return className.replace('Error', '').toUpperCase();
   };
 
-  /**
-   * Enrich error context with additional information
-   */
-  const enrichErrorContext = (
-    error: Error,
-    context: ErrorContext = {}
-  ): ErrorContext => {
-    if (!finalConfig.enableContextEnrichment) {
+/**
+ * Enrich error context with additional information
+ */
+export const enrichErrorContext =
+  (config: ErrorHandlerConfig): EnrichErrorContext =>
+  (error: Error, context: ErrorContext = {}): ErrorContext => {
+    if (!config.enableContextEnrichment) {
       return context;
     }
 
@@ -282,22 +215,34 @@ export const createErrorHandlerService = (
     return enrichedContext;
   };
 
-  /**
-   * Log error with appropriate level and context
-   */
-  const logError = (
-    error: Error,
-    context: ErrorContext,
-    severity: ErrorSeverity
-  ) => {
-    const logMessage = `${severity.toUpperCase()} - ${error.message}`;
+/**
+ * Handle error with full context and return structured response
+ */
+export const handleError =
+  (
+    logger: {
+      info: LogInfo;
+      error: LogError;
+      warn: LogWarn;
+      debug: LogDebug;
+      log: LogWithLevel;
+    },
+    config: ErrorHandlerConfig
+  ): HandleError =>
+  (error: Error, context: ErrorContext = {}): ErrorResponse => {
+    const enrichedContext = enrichErrorContext(config)(error, context);
+    const severity = classifyErrorSeverity()(error);
+    const statusCode = getStatusCodeFromError()(error);
+    const errorCode = getErrorCodeFromError()(error);
 
+    // Log the error
+    const logMessage = `${severity.toUpperCase()} - ${error.message}`;
     const logContext = {
-      ...context,
+      ...enrichedContext,
       errorName: error.constructor.name,
       errorMessage: error.message,
       severity,
-      ...(finalConfig.enableStackTrace && { stackTrace: error.stack }),
+      ...(config.enableStackTrace && { stackTrace: error.stack }),
     };
 
     switch (severity) {
@@ -312,22 +257,6 @@ export const createErrorHandlerService = (
         logger.error(logMessage, logContext);
         break;
     }
-  };
-
-  /**
-   * Handle error with full context and return structured response
-   */
-  const handleError = (
-    error: Error,
-    context: ErrorContext = {}
-  ): ErrorResponse => {
-    const enrichedContext = enrichErrorContext(error, context);
-    const severity = classifyErrorSeverity(error);
-    const statusCode = getStatusCodeFromError(error);
-    const errorCode = getErrorCodeFromError(error);
-
-    // Log the error
-    logError(error, enrichedContext, severity);
 
     // Create structured error response
     const errorResponse: ErrorResponse = {
@@ -336,7 +265,7 @@ export const createErrorHandlerService = (
         code: errorCode,
         message: error.message,
         context: enrichedContext,
-        ...(finalConfig.enableStackTrace && { stackTrace: error.stack }),
+        ...(config.enableStackTrace && { stackTrace: error.stack }),
       },
       statusCode,
       timestamp: new Date(),
@@ -353,13 +282,12 @@ export const createErrorHandlerService = (
     return errorResponse;
   };
 
-  /**
-   * Handle success response
-   */
-  const handleSuccess = <T>(
-    data: T,
-    statusCode: number = 200
-  ): SuccessResponse<T> => {
+/**
+ * Handle success response
+ */
+export const handleSuccess =
+  (): HandleSuccess =>
+  <T>(data: T, statusCode: number = 200): SuccessResponse<T> => {
     return {
       success: true,
       data,
@@ -368,32 +296,51 @@ export const createErrorHandlerService = (
     };
   };
 
-  /**
-   * Wrap async operations with error handling
-   */
-  const wrapAsyncOperation = <T>(
-    operation: () => Promise<T>,
-    context: ErrorContext = {}
-  ) => {
-    return async (): Promise<ApiResponse<T>> => {
-      try {
-        const result = await operation();
-        return handleSuccess(result);
-      } catch (error) {
-        return handleError(error as Error, context);
-      }
-    };
+/**
+ * Wrap async operations with error handling
+ */
+export const wrapAsyncOperation =
+  (
+    logger: {
+      info: LogInfo;
+      error: LogError;
+      warn: LogWarn;
+      debug: LogDebug;
+      log: LogWithLevel;
+    },
+    config: ErrorHandlerConfig
+  ): WrapAsyncOperation =>
+  <T>(operation: () => Promise<T>, context: ErrorContext = {}) =>
+  async (): Promise<ApiResponse<T>> => {
+    try {
+      const result = await operation();
+      return handleSuccess()(result);
+    } catch (error) {
+      return handleError(logger, config)(error as Error, context);
+    }
   };
 
-  /**
-   * Retry operation with exponential backoff
-   */
-  const retryOperation = async <T>(
+/**
+ * Retry operation with exponential backoff
+ */
+export const retryOperation =
+  (
+    logger: {
+      info: LogInfo;
+      error: LogError;
+      warn: LogWarn;
+      debug: LogDebug;
+      log: LogWithLevel;
+    },
+    config: ErrorHandlerConfig
+  ): RetryOperation =>
+  async <T>(
     operation: () => Promise<T>,
     context: ErrorContext = {},
-    maxAttempts: number = finalConfig.maxRetryAttempts
+    maxAttempts: number = config.maxRetryAttempts
   ): Promise<T> => {
     let lastError: Error;
+    const delayFn = config.delayFn || defaultDelayFn;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -423,17 +370,19 @@ export const createErrorHandlerService = (
         });
 
         // Wait before retrying with exponential backoff
-        await finalConfig.delayFn!(finalConfig.retryDelay * 2 ** (attempt - 1));
+        await delayFn(config.retryDelay * 2 ** (attempt - 1));
       }
     }
 
     throw lastError!;
   };
 
-  /**
-   * Create error from string message with context
-   */
-  const createError = (
+/**
+ * Create error from string message with context
+ */
+export const createError =
+  (config: ErrorHandlerConfig): CreateError =>
+  (
     message: string,
     code: string,
     statusCode: number = 500,
@@ -441,7 +390,7 @@ export const createErrorHandlerService = (
   ): TrainingPeaksError => {
     const error = new TrainingPeaksError(message, code, statusCode);
 
-    if (context && finalConfig.enableContextEnrichment) {
+    if (context && config.enableContextEnrichment) {
       // Add context to error object
       Object.defineProperty(error, 'context', {
         value: context,
@@ -454,32 +403,55 @@ export const createErrorHandlerService = (
     return error;
   };
 
-  /**
-   * Validate and transform result
-   */
-  const validateResult =
-    <T>(
-      validator: (data: T) => boolean,
-      errorMessage: string = 'Validation failed'
-    ) =>
-    (result: T): T => {
-      if (!validator(result)) {
-        throw new ValidationError(errorMessage);
-      }
-      return result;
-    };
+/**
+ * Validate and transform result
+ */
+export const validateResult =
+  (): ValidateResult =>
+  <T>(
+    validator: (data: T) => boolean,
+    errorMessage: string = 'Validation failed'
+  ) =>
+  (result: T): T => {
+    if (!validator(result)) {
+      throw new ValidationError(errorMessage);
+    }
+    return result;
+  };
+
+// Keep the existing grouped function for backward compatibility
+export const createErrorHandlerService = (
+  logger: {
+    info: LogInfo;
+    error: LogError;
+    warn: LogWarn;
+    debug: LogDebug;
+    log: LogWithLevel;
+  },
+  config: Partial<ErrorHandlerConfig> = {}
+) => {
+  const defaultConfig: ErrorHandlerConfig = {
+    enableStackTrace: false,
+    enableContextEnrichment: true,
+    logLevel: 'error',
+    maxRetryAttempts: 3,
+    retryDelay: 1000,
+    delayFn: defaultDelayFn,
+  };
+
+  const finalConfig = { ...defaultConfig, ...config };
 
   return {
-    handleError,
-    handleSuccess,
-    wrapAsyncOperation,
-    retryOperation,
-    createError,
-    validateResult,
-    classifyErrorSeverity,
-    getStatusCodeFromError,
-    getErrorCodeFromError,
-    enrichErrorContext,
+    handleError: handleError(logger, finalConfig),
+    handleSuccess: handleSuccess(),
+    wrapAsyncOperation: wrapAsyncOperation(logger, finalConfig),
+    retryOperation: retryOperation(logger, finalConfig),
+    createError: createError(finalConfig),
+    validateResult: validateResult(),
+    classifyErrorSeverity: classifyErrorSeverity(),
+    getStatusCodeFromError: getStatusCodeFromError(),
+    getErrorCodeFromError: getErrorCodeFromError(),
+    enrichErrorContext: enrichErrorContext(finalConfig),
   };
 };
 
