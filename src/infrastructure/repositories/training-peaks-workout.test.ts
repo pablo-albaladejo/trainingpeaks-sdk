@@ -33,7 +33,7 @@ vi.mock('../../config', () => ({
   getSDKConfig: vi.fn(() => ({
     urls: {
       baseUrl: 'https://trainingpeaks.com',
-      apiBaseUrl: 'https://api.trainingpeaks.com',
+      apiBaseUrl: 'https://tpapi.trainingpeaks.com',
       loginUrl: 'https://trainingpeaks.com/login',
       appUrl: 'https://trainingpeaks.com/app',
     },
@@ -96,7 +96,7 @@ describe('TrainingPeaks Workout Repository', () => {
     config = {
       urls: {
         baseUrl: 'https://trainingpeaks.com',
-        apiBaseUrl: 'https://api.trainingpeaks.com',
+        apiBaseUrl: 'https://tpapi.trainingpeaks.com',
         loginUrl: 'https://trainingpeaks.com/login',
         appUrl: 'https://trainingpeaks.com/app',
       },

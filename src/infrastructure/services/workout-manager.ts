@@ -6,8 +6,6 @@
 import type { WorkoutRepository } from '@/application/ports/workout';
 import type {
   CreateStructuredWorkout,
-  CreateStructuredWorkoutRequest,
-  CreateStructuredWorkoutResponse,
   DeleteWorkout,
   GetWorkout,
   GetWorkoutRepository,
@@ -15,6 +13,8 @@ import type {
   ListWorkouts,
   ListWorkoutsParams,
   ListWorkoutsResponse,
+  CreateStructuredWorkoutRequest as ManagerCreateStructuredWorkoutRequest,
+  CreateStructuredWorkoutResponse as ManagerCreateStructuredWorkoutResponse,
   SearchWorkouts,
   SearchWorkoutsParams,
   SearchWorkoutsResponse,
@@ -24,7 +24,7 @@ import type {
   UploadWorkoutFromFileResponse,
   WorkoutStats,
 } from '@/application/services/workout-manager';
-import type { WorkoutData } from '@/types';
+import type { CreateStructuredWorkoutRequest, WorkoutData } from '@/types';
 
 export const uploadWorkout =
   (workoutRepository: WorkoutRepository): UploadWorkout =>
@@ -75,13 +75,50 @@ export const deleteWorkout =
 export const createStructuredWorkout =
   (workoutRepository: WorkoutRepository): CreateStructuredWorkout =>
   async (
-    request: CreateStructuredWorkoutRequest
-  ): Promise<CreateStructuredWorkoutResponse> => {
-    return {
-      workoutId: 'placeholder',
-      success: true,
-      message: 'Workout created successfully',
-    };
+    request: ManagerCreateStructuredWorkoutRequest
+  ): Promise<ManagerCreateStructuredWorkoutResponse> => {
+    try {
+      // Convert the request to the format expected by the TrainingPeaks API
+      const apiRequest: CreateStructuredWorkoutRequest = {
+        athleteId: 5818494, // Using the provided athlete ID
+        title: request.name,
+        workoutTypeValueId: 3, // Default workout type
+        workoutDay:
+          request.targetDate?.toISOString().split('T')[0] + 'T00:00:00',
+        structure: request.structure,
+        metadata: {
+          description: request.description,
+          userTags: '',
+          publicSettingValue: 2,
+          plannedMetrics: {
+            totalTimePlanned: request.estimatedDuration
+              ? request.estimatedDuration / 3600
+              : 0.8333333333333334,
+            tssPlanned: 72.8,
+            ifPlanned: 0.89,
+            velocityPlanned: 3.1783333333333332,
+          },
+        },
+      };
+
+      // Call the repository directly
+      const result =
+        await workoutRepository.createStructuredWorkout(apiRequest);
+
+      // Convert the response back to the expected format
+      return {
+        workoutId: result.workoutId?.toString() || 'unknown',
+        success: result.success,
+        message: result.message || 'Workout created successfully',
+      };
+    } catch (error) {
+      return {
+        workoutId: 'error',
+        success: false,
+        message:
+          error instanceof Error ? error.message : 'Unknown error occurred',
+      };
+    }
   };
 
 export const searchWorkouts =

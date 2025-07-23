@@ -3,6 +3,7 @@
  * Tests for the centralized configuration system
  */
 
+import { faker } from '@faker-js/faker';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   getSDKConfig,
@@ -29,7 +30,7 @@ describe('Configuration System', () => {
 
       // Assert
       expect(config.urls.baseUrl).toBe('https://www.trainingpeaks.com');
-      expect(config.urls.apiBaseUrl).toBe('https://api.trainingpeaks.com');
+      expect(config.urls.apiBaseUrl).toBe('https://tpapi.trainingpeaks.com');
       expect(config.urls.loginUrl).toBe('https://home.trainingpeaks.com/login');
       expect(config.urls.appUrl).toBe('https://app.trainingpeaks.com');
       expect(config.debug.enabled).toBe(false);
@@ -40,7 +41,8 @@ describe('Configuration System', () => {
   describe('Environment Variables Override', () => {
     it('should override defaults with environment variables', () => {
       // Arrange
-      process.env.TRAININGPEAKS_BASE_URL = 'https://custom.trainingpeaks.com';
+      const customBaseUrl = faker.internet.url();
+      process.env.TRAININGPEAKS_BASE_URL = customBaseUrl;
       process.env.TRAININGPEAKS_DEBUG = 'true';
       process.env.TRAININGPEAKS_DEBUG_AUTH = 'true';
 
@@ -48,47 +50,47 @@ describe('Configuration System', () => {
       const config = getSDKConfig();
 
       // Assert
-      expect(config.urls.baseUrl).toBe('https://custom.trainingpeaks.com');
-      expect(config.urls.apiBaseUrl).toBe('https://api.trainingpeaks.com'); // Still default
+      expect(config.urls.baseUrl).toBe(customBaseUrl);
+      expect(config.urls.apiBaseUrl).toBe('https://tpapi.trainingpeaks.com');
       expect(config.debug.enabled).toBe(true);
       expect(config.debug.logAuth).toBe(true);
     });
 
     it('should handle all URL environment variables', () => {
       // Arrange
-      process.env.TRAININGPEAKS_BASE_URL =
-        'https://custom-base.trainingpeaks.com';
-      process.env.TRAININGPEAKS_API_BASE_URL =
-        'https://custom-api.trainingpeaks.com';
-      process.env.TRAININGPEAKS_LOGIN_URL =
-        'https://custom-login.trainingpeaks.com';
-      process.env.TRAININGPEAKS_APP_URL =
-        'https://custom-app.trainingpeaks.com';
+      const customBaseUrl = faker.internet.url();
+      const customApiUrl = faker.internet.url();
+      const customLoginUrl = faker.internet.url();
+      const customAppUrl = faker.internet.url();
+
+      process.env.TRAININGPEAKS_BASE_URL = customBaseUrl;
+      process.env.TRAININGPEAKS_API_BASE_URL = customApiUrl;
+      process.env.TRAININGPEAKS_LOGIN_URL = customLoginUrl;
+      process.env.TRAININGPEAKS_APP_URL = customAppUrl;
 
       // Act
       const config = getSDKConfig();
 
       // Assert
-      expect(config.urls.baseUrl).toBe('https://custom-base.trainingpeaks.com');
-      expect(config.urls.apiBaseUrl).toBe(
-        'https://custom-api.trainingpeaks.com'
-      );
-      expect(config.urls.loginUrl).toBe(
-        'https://custom-login.trainingpeaks.com'
-      );
-      expect(config.urls.appUrl).toBe('https://custom-app.trainingpeaks.com');
+      expect(config.urls.baseUrl).toBe(customBaseUrl);
+      expect(config.urls.apiBaseUrl).toBe(customApiUrl);
+      expect(config.urls.loginUrl).toBe(customLoginUrl);
+      expect(config.urls.appUrl).toBe(customAppUrl);
     });
   });
 
   describe('Client Configuration Override', () => {
     it('should override environment variables with client configuration', () => {
       // Arrange
-      process.env.TRAININGPEAKS_BASE_URL = 'https://env.trainingpeaks.com';
+      const envBaseUrl = faker.internet.url();
+      const clientBaseUrl = faker.internet.url();
+
+      process.env.TRAININGPEAKS_BASE_URL = envBaseUrl;
       process.env.TRAININGPEAKS_DEBUG = 'true';
 
       const clientConfig: TrainingPeaksClientConfig = {
         urls: {
-          baseUrl: 'https://client.trainingpeaks.com',
+          baseUrl: clientBaseUrl,
         },
         debug: {
           enabled: false,
@@ -99,16 +101,17 @@ describe('Configuration System', () => {
       const config = getSDKConfig(clientConfig);
 
       // Assert
-      expect(config.urls.baseUrl).toBe('https://client.trainingpeaks.com'); // Client overrides env
+      expect(config.urls.baseUrl).toBe(clientBaseUrl); // Client overrides env
       expect(config.debug.enabled).toBe(false); // Client overrides env
-      expect(config.urls.apiBaseUrl).toBe('https://api.trainingpeaks.com'); // Still default
+      expect(config.urls.apiBaseUrl).toBe('https://tpapi.trainingpeaks.com'); // Still default
     });
 
     it('should allow partial client configuration', () => {
       // Arrange
+      const partialBaseUrl = faker.internet.url();
       const clientConfig: TrainingPeaksClientConfig = {
         urls: {
-          baseUrl: 'https://partial.trainingpeaks.com',
+          baseUrl: partialBaseUrl,
         },
         // No debug config provided
       };
@@ -117,8 +120,8 @@ describe('Configuration System', () => {
       const config = getSDKConfig(clientConfig);
 
       // Assert
-      expect(config.urls.baseUrl).toBe('https://partial.trainingpeaks.com');
-      expect(config.urls.apiBaseUrl).toBe('https://api.trainingpeaks.com'); // Still default
+      expect(config.urls.baseUrl).toBe(partialBaseUrl);
+      expect(config.urls.apiBaseUrl).toBe('https://tpapi.trainingpeaks.com'); // Still default
       expect(config.debug.enabled).toBe(false); // Still default
     });
   });
@@ -126,12 +129,15 @@ describe('Configuration System', () => {
   describe('Configuration Priority', () => {
     it('should follow correct priority: defaults < environment < client', () => {
       // Arrange
-      process.env.TRAININGPEAKS_BASE_URL = 'https://env.trainingpeaks.com';
+      const envBaseUrl = faker.internet.url();
+      const clientBaseUrl = faker.internet.url();
+
+      process.env.TRAININGPEAKS_BASE_URL = envBaseUrl;
       process.env.TRAININGPEAKS_DEBUG = 'true';
 
       const clientConfig: TrainingPeaksClientConfig = {
         urls: {
-          baseUrl: 'https://client.trainingpeaks.com',
+          baseUrl: clientBaseUrl,
         },
         debug: {
           enabled: false,
@@ -143,11 +149,11 @@ describe('Configuration System', () => {
 
       // Assert
       // Client config should override environment variables
-      expect(config.urls.baseUrl).toBe('https://client.trainingpeaks.com');
+      expect(config.urls.baseUrl).toBe(clientBaseUrl);
       expect(config.debug.enabled).toBe(false);
 
       // Environment variables should override defaults for non-client-specified values
-      expect(config.urls.apiBaseUrl).toBe('https://api.trainingpeaks.com'); // Default (no env override)
+      expect(config.urls.apiBaseUrl).toBe('https://tpapi.trainingpeaks.com'); // Default (no env override)
       expect(config.debug.logAuth).toBe(false); // Default (no env override)
     });
   });
@@ -251,9 +257,10 @@ describe('Configuration System', () => {
     });
 
     it('should merge partial configurations correctly', () => {
+      const customBaseUrl = faker.internet.url();
       const partialConfig: TrainingPeaksClientConfig = {
         urls: {
-          baseUrl: 'https://custom.trainingpeaks.com',
+          baseUrl: customBaseUrl,
         },
         debug: {
           enabled: true,
@@ -262,8 +269,8 @@ describe('Configuration System', () => {
 
       const config = mergeWithDefaultConfig(partialConfig);
 
-      expect(config.urls.baseUrl).toBe('https://custom.trainingpeaks.com');
-      expect(config.urls.apiBaseUrl).toBe('https://api.trainingpeaks.com'); // Default preserved
+      expect(config.urls.baseUrl).toBe(customBaseUrl);
+      expect(config.urls.apiBaseUrl).toBe('https://tpapi.trainingpeaks.com'); // Default preserved
       expect(config.debug.enabled).toBe(true);
       expect(config.debug.logAuth).toBe(false); // Default preserved
     });

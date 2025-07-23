@@ -3,6 +3,7 @@
  * High-level API for workout operations
  */
 
+import type { AuthRepository } from '@/application/ports/auth';
 import type { WorkoutRepository } from '@/application/ports/workout';
 import { getSDKConfig, type TrainingPeaksClientConfig } from '@/config';
 import { createTrainingPeaksWorkoutRepository } from '@/infrastructure/repositories/training-peaks-workout';
@@ -22,7 +23,10 @@ import { TrainingPeaksWorkoutApiAdapter } from '@/infrastructure/workout/trainin
 /**
  * Create workout manager with real TrainingPeaks integration
  */
-export const createWorkoutManager = (config?: TrainingPeaksClientConfig) => {
+export const createWorkoutManager = (
+  config?: TrainingPeaksClientConfig,
+  authRepository?: AuthRepository
+) => {
   // Get SDK configuration with optional overrides
   const sdkConfig = getSDKConfig(config);
 
@@ -54,7 +58,8 @@ export const createWorkoutManager = (config?: TrainingPeaksClientConfig) => {
         timeout: sdkConfig.timeouts.default,
         retries: sdkConfig.requests.retryAttempts,
         headers: sdkConfig.requests.defaultHeaders,
-      }
+      },
+      authRepository
     );
 
   // Note: The repository factory should handle adapter registration internally

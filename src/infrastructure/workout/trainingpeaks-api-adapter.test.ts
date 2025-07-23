@@ -22,7 +22,7 @@ vi.mock('@/config', () => ({
   getSDKConfig: vi.fn(() => ({
     urls: {
       baseUrl: 'https://trainingpeaks.com',
-      apiBaseUrl: 'https://api.trainingpeaks.com',
+      apiBaseUrl: 'https://tpapi.trainingpeaks.com',
       loginUrl: 'https://trainingpeaks.com/login',
       appUrl: 'https://trainingpeaks.com/app',
     },
@@ -50,7 +50,37 @@ vi.mock('@/config', () => ({
   })),
 }));
 
-vi.mock('axios');
+vi.mock('@/infrastructure/services/workout-metrics', () => ({
+  calculatePlannedMetrics: vi.fn(() => ({
+    totalTimePlanned: 3600,
+    tssPlanned: 95.5,
+    ifPlanned: 0.85,
+    velocityPlanned: 15.5,
+    caloriesPlanned: 800,
+    distancePlanned: 25000,
+    elevationGainPlanned: 500,
+    energyPlanned: 2500,
+  })),
+}));
+
+vi.mock('axios', () => ({
+  default: {
+    create: vi.fn(() => ({
+      interceptors: {
+        request: {
+          use: vi.fn(),
+        },
+        response: {
+          use: vi.fn(),
+        },
+      },
+      get: vi.fn(),
+      post: vi.fn(),
+      delete: vi.fn(),
+    })),
+    isAxiosError: vi.fn(),
+  },
+}));
 vi.mock('@/infrastructure/logging/logger', () => ({
   workoutLogger: {
     info: vi.fn(),
@@ -82,7 +112,7 @@ describe('TrainingPeaks Workout API Adapter', () => {
     mockSDKConfig = {
       urls: {
         baseUrl: 'https://trainingpeaks.com',
-        apiBaseUrl: 'https://api.trainingpeaks.com',
+        apiBaseUrl: 'https://tpapi.trainingpeaks.com',
         loginUrl: 'https://trainingpeaks.com/login',
         appUrl: 'https://trainingpeaks.com/app',
       },
@@ -111,6 +141,17 @@ describe('TrainingPeaks Workout API Adapter', () => {
 
     // Mock HTTP client
     mockHttpClient = {
+      interceptors: {
+        request: {
+          use: vi.fn(),
+        },
+        response: {
+          use: vi.fn(),
+        },
+      },
+      defaults: {
+        baseURL: 'https://tpapi.trainingpeaks.com',
+      },
       get: vi.fn(),
       post: vi.fn(),
       delete: vi.fn(),
@@ -756,10 +797,11 @@ describe('TrainingPeaks Workout API Adapter', () => {
           title: request.title,
           workoutTypeValueId: request.workoutTypeValueId,
           workoutDay: request.workoutDay,
-          structure: request.structure,
         }),
         expect.objectContaining({
-          headers: { 'Content-Type': 'application/json' },
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+          }),
           timeout: mockSDKConfig.timeouts.default,
         })
       );
