@@ -101,7 +101,7 @@ export type TrainingPeaksClientConfig = {
 const HARDCODED_DEFAULTS: TrainingPeaksSDKConfig = {
   urls: {
     baseUrl: 'https://www.trainingpeaks.com',
-    apiBaseUrl: 'https://api.trainingpeaks.com',
+    apiBaseUrl: 'https://tpapi.trainingpeaks.com',
     loginUrl: 'https://home.trainingpeaks.com/login',
     appUrl: 'https://app.trainingpeaks.com',
   },

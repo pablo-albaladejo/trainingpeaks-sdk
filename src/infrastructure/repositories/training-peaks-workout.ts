@@ -3,6 +3,7 @@
  * Connects domain workout operations to infrastructure adapters
  */
 
+import type { AuthRepository } from '@/application/ports/auth';
 import {
   FileSystemPort,
   UploadResult,
@@ -34,7 +35,8 @@ import {
  */
 export const createTrainingPeaksWorkoutRepository = (
   fileSystemAdapter: FileSystemPort,
-  config: WorkoutServiceConfig
+  config: WorkoutServiceConfig,
+  authRepository?: AuthRepository
 ): WorkoutRepository => {
   const workoutServices: WorkoutServicePort[] = [];
 
@@ -49,21 +51,50 @@ export const createTrainingPeaksWorkoutRepository = (
    * Get the appropriate workout service for the current configuration
    */
   const getWorkoutService = (): WorkoutServicePort => {
+    workoutLogger.info('Looking for workout service', {
+      baseUrl: config.baseUrl,
+      availableServices: workoutServices.length,
+    });
+
+    // Log each service's canHandle result
+    workoutServices.forEach((service, index) => {
+      const canHandle = service.canHandle(config);
+      workoutLogger.info(`Service ${index} canHandle result`, {
+        serviceType: service.constructor.name,
+        canHandle,
+        baseUrl: config.baseUrl,
+      });
+    });
+
     const service = workoutServices.find((s) => s.canHandle(config));
 
     if (!service) {
+      workoutLogger.error('No suitable workout service found', {
+        baseUrl: config.baseUrl,
+        availableServices: workoutServices.length,
+      });
       throw new WorkoutServiceUnavailableError(
         'TrainingPeaks',
         'No suitable workout service found for the current configuration'
       );
     }
 
+    workoutLogger.info('Found suitable workout service', {
+      baseUrl: config.baseUrl,
+      serviceType: service.constructor.name,
+    });
+
     return service;
   };
 
-  // Register the TrainingPeaks API adapter
-  const apiAdapter = new TrainingPeaksWorkoutApiAdapter();
+  // Register the TrainingPeaks API adapter with auth repository
+  const apiAdapter = new TrainingPeaksWorkoutApiAdapter(authRepository);
   registerWorkoutService(apiAdapter);
+
+  workoutLogger.info('Registered TrainingPeaks API adapter', {
+    hasAuthRepository: !!authRepository,
+    adapterType: apiAdapter.constructor.name,
+  });
 
   workoutLogger.info(
     'TrainingPeaks workout repository created with API adapter',

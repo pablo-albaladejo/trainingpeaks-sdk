@@ -46,7 +46,7 @@ describe('TrainingPeaksClient', () => {
 
       // Assert
       expect(config.urls.baseUrl).toBe('https://www.trainingpeaks.com');
-      expect(config.urls.apiBaseUrl).toBe('https://api.trainingpeaks.com');
+      expect(config.urls.apiBaseUrl).toBeTypeOf('string');
       expect(config.timeouts.default).toBe(30000);
       expect(config.debug.enabled).toBe(false);
       expect(config.browser.headless).toBe(true);

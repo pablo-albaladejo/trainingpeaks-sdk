@@ -1,0 +1,418 @@
+---
+description: TypeScript coding standards and best practices for npm libraries
+globs: **/*.ts,**/*.js,**/*.mjs
+alwaysApply: false
+---
+
+# TypeScript Coding Standards for NPM Libraries
+
+## Code Style and Formatting
+
+### General Principles
+
+- Use TypeScript strict mode
+- Prefer explicit types over implicit inference
+- Use meaningful variable and function names
+- Follow consistent naming conventions
+
+### Naming Conventions
+
+```typescript
+// Interfaces: PascalCase with descriptive names
+interface UserRepository {}
+interface CreateUserInput {}
+
+// Classes: PascalCase
+class UserService {}
+class ValidationError {}
+
+// Functions: camelCase
+function createUser() {}
+function validateEmail() {}
+
+// Constants: UPPER_SNAKE_CASE
+const MAX_RETRY_ATTEMPTS = 3;
+const DEFAULT_TIMEOUT = 5000;
+
+// Private members: prefix with underscore
+private _internalMethod() {}
+private _privateProperty: string;
+```
+
+### Type Definitions
+
+#### Public API Types
+
+```typescript
+// Export public types from dedicated files
+// types.ts
+export interface User {
+    id: string;
+    email: string;
+    name: string;
+}
+
+export interface CreateUserOptions {
+    email: string;
+    name: string;
+    validateEmail?: boolean;
+}
+```
+
+#### Internal Types
+
+```typescript
+// Use internal types for implementation details
+interface InternalUserData {
+    id: string;
+    email: string;
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+```
+
+## Function Design
+
+### Function Signatures
+
+```typescript
+// Prefer explicit return types for public APIs
+export function createUser(options: CreateUserOptions): Promise<User> {
+    // implementation
+}
+
+// Use overloads for complex function signatures
+export function processData(input: string): string;
+export function processData(input: number): number;
+export function processData(input: string | number): string | number {
+    // implementation
+}
+```
+
+### Parameter Design
+
+```typescript
+// Use options objects for functions with many parameters
+interface ProcessOptions {
+    timeout?: number;
+    retries?: number;
+    validate?: boolean;
+}
+
+export function processWithOptions(options: ProcessOptions = {}): Promise<void> {
+    const { timeout = 5000, retries = 3, validate = true } = options;
+    // implementation
+}
+```
+
+### Error Handling
+
+```typescript
+// Define custom error types
+export class ValidationError extends Error {
+    constructor(
+        message: string,
+        public readonly field: string,
+    ) {
+        super(message);
+        this.name = 'ValidationError';
+    }
+}
+
+// Use Result pattern for operations that can fail
+export type Result<T, E = Error> = { success: true; data: T } | { success: false; error: E };
+
+export function safeOperation(): Result<string, ValidationError> {
+    try {
+        return { success: true, data: 'result' };
+    } catch (error) {
+        return { success: false, error: new ValidationError('Failed', 'field') };
+    }
+}
+```
+
+## Class Design
+
+### Immutability
+
+```typescript
+// Prefer immutable classes for domain entities
+export class User {
+    constructor(
+        private readonly _id: string,
+        private readonly _email: string,
+        private readonly _name: string,
+    ) {}
+
+    // Getters for readonly properties
+    get id(): string {
+        return this._id;
+    }
+    get email(): string {
+        return this._email;
+    }
+    get name(): string {
+        return this._name;
+    }
+
+    // Return new instances for modifications
+    withName(newName: string): User {
+        return new User(this._id, this._email, newName);
+    }
+}
+```
+
+### Dependency Injection
+
+```typescript
+// Use constructor injection for dependencies
+export class UserService {
+    constructor(
+        private readonly userRepository: UserRepository,
+        private readonly validator: UserValidator,
+    ) {}
+
+    async createUser(input: CreateUserInput): Promise<User> {
+        // implementation
+    }
+}
+```
+
+## Module Organization
+
+### Barrel Exports
+
+```typescript
+// index.ts - Main library exports
+export { UserService } from './services/UserService';
+export { User } from './entities/User';
+export { CreateUserInput } from './types';
+export { ValidationError } from './errors';
+
+// Avoid re-exporting internal implementation details
+```
+
+### Internal Modules
+
+```typescript
+// Use internal modules for implementation details
+// internal/validation.ts
+export function validateEmail(email: string): boolean {
+    // internal implementation
+}
+
+// Only export what's needed for the public API
+export { validateEmail } from './internal/validation';
+```
+
+## Async/Await Patterns
+
+### Promise Handling
+
+```typescript
+// Use async/await consistently
+export async function fetchUser(id: string): Promise<User> {
+    try {
+        const response = await httpClient.get(`/users/${id}`);
+        return User.fromResponse(response);
+    } catch (error) {
+        throw new UserNotFoundError(`User ${id} not found`);
+    }
+}
+
+// Handle multiple promises efficiently
+export async function fetchMultipleUsers(ids: string[]): Promise<User[]> {
+    const promises = ids.map(id => fetchUser(id));
+    return Promise.all(promises);
+}
+```
+
+### Error Propagation
+
+```typescript
+// Preserve error context when re-throwing
+export async function processUser(id: string): Promise<void> {
+    try {
+        const user = await fetchUser(id);
+        await validateUser(user);
+    } catch (error) {
+        // Add context to the error
+        throw new ProcessingError(`Failed to process user ${id}`, { cause: error });
+    }
+}
+```
+
+## Generic Types
+
+### Generic Constraints
+
+```typescript
+// Use constraints to limit generic types
+interface Identifiable {
+    id: string;
+}
+
+export function findById<T extends Identifiable>(items: T[], id: string): T | undefined {
+    return items.find(item => item.id === id);
+}
+```
+
+### Generic Utilities
+
+```typescript
+// Create reusable generic utilities
+export type DeepPartial<T> = {
+    [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
+export type RequiredFields<T, K extends keyof T> = T & Required<Pick<T, K>>;
+```
+
+## Configuration and Options
+
+### Configuration Objects
+
+```typescript
+// Use configuration objects for library setup
+export interface LibraryConfig {
+    apiKey?: string;
+    baseUrl?: string;
+    timeout?: number;
+    retries?: number;
+}
+
+export class LibraryClient {
+    private config: Required<LibraryConfig>;
+
+    constructor(config: LibraryConfig = {}) {
+        this.config = {
+            apiKey: config.apiKey ?? process.env.API_KEY ?? '',
+            baseUrl: config.baseUrl ?? 'https://api.example.com',
+            timeout: config.timeout ?? 5000,
+            retries: config.retries ?? 3,
+        };
+    }
+}
+```
+
+## Testing Patterns
+
+### Mocking
+
+```typescript
+// Use interfaces for easy mocking
+export interface HttpClient {
+    get<T>(url: string): Promise<T>;
+    post<T>(url: string, data: unknown): Promise<T>;
+}
+
+// In tests
+const mockHttpClient: HttpClient = {
+    get: vi.fn(),
+    post: vi.fn(),
+};
+```
+
+### Test Utilities
+
+```typescript
+// Create test utilities for common patterns
+export function createMockUser(overrides: Partial<User> = {}): User {
+    return {
+        id: 'test-id',
+        email: 'test@example.com',
+        name: 'Test User',
+        ...overrides,
+    };
+}
+```
+
+## Performance Considerations
+
+### Lazy Evaluation
+
+```typescript
+// Use lazy evaluation for expensive operations
+export class ExpensiveService {
+    private _cache: Map<string, Promise<Result>> | null = null;
+
+    private get cache(): Map<string, Promise<Result>> {
+        if (!this._cache) {
+            this._cache = new Map();
+        }
+        return this._cache;
+    }
+}
+```
+
+### Memory Management
+
+```typescript
+// Implement proper cleanup for resources
+export class ResourceManager {
+    private resources: Set<Disposable> = new Set();
+
+    addResource(resource: Disposable): void {
+        this.resources.add(resource);
+    }
+
+    dispose(): void {
+        for (const resource of this.resources) {
+            resource.dispose();
+        }
+        this.resources.clear();
+    }
+}
+```
+
+## Documentation
+
+### JSDoc Comments
+
+````typescript
+/**
+ * Creates a new user with the provided information.
+ *
+ * @param options - The user creation options
+ * @param options.email - The user's email address
+ * @param options.name - The user's display name
+ * @param options.validateEmail - Whether to validate the email format (default: true)
+ *
+ * @returns A promise that resolves to the created user
+ *
+ * @throws {ValidationError} When the email format is invalid
+ * @throws {UserExistsError} When a user with the email already exists
+ *
+ * @example
+ * ```typescript
+ * const user = await createUser({
+ *   email: 'john@example.com',
+ *   name: 'John Doe'
+ * });
+ * ```
+ */
+export async function createUser(options: CreateUserOptions): Promise<User> {
+    // implementation
+}
+````
+
+### Type Documentation
+
+```typescript
+/**
+ * Configuration options for the library client.
+ */
+export interface LibraryConfig {
+    /** API key for authentication */
+    apiKey?: string;
+    /** Base URL for API requests */
+    baseUrl?: string;
+    /** Request timeout in milliseconds */
+    timeout?: number;
+}
+```
+
+description: globs: alwaysApply: false
+
+---

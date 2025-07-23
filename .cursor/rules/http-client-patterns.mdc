@@ -1,0 +1,672 @@
+---
+description: HTTP client architecture and patterns for npm libraries
+globs: **/*.ts,**/*.js,**/*.mjs
+alwaysApply: false
+---
+
+# HTTP Client Patterns for NPM Libraries
+
+## Client Architecture
+
+### Base HTTP Client Interface
+
+```typescript
+// Define a base interface for HTTP operations
+export interface HttpClient {
+    get<T>(url: string, options?: RequestOptions): Promise<T>;
+    post<T>(url: string, data?: unknown, options?: RequestOptions): Promise<T>;
+    put<T>(url: string, data?: unknown, options?: RequestOptions): Promise<T>;
+    patch<T>(url: string, data?: unknown, options?: RequestOptions): Promise<T>;
+    delete<T>(url: string, options?: RequestOptions): Promise<T>;
+}
+
+export interface RequestOptions {
+    headers?: Record<string, string>;
+    timeout?: number;
+    retries?: number;
+    retryDelay?: number;
+}
+```
+
+### Configuration Interface
+
+```typescript
+export interface HttpClientConfig {
+    baseUrl: string;
+    apiKey?: string;
+    timeout?: number;
+    retries?: number;
+    retryDelay?: number;
+    headers?: Record<string, string>;
+    userAgent?: string;
+}
+
+export interface RequestConfig extends HttpClientConfig {
+    url: string;
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+    data?: unknown;
+    params?: Record<string, string | number | boolean>;
+}
+```
+
+## Implementation Patterns
+
+### Base HTTP Client Class
+
+```typescript
+export abstract class BaseHttpClient implements HttpClient {
+    protected config: Required<HttpClientConfig>;
+
+    constructor(config: HttpClientConfig) {
+        this.config = {
+            baseUrl: config.baseUrl,
+            apiKey: config.apiKey ?? '',
+            timeout: config.timeout ?? 30000,
+            retries: config.retries ?? 3,
+            retryDelay: config.retryDelay ?? 1000,
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': config.userAgent ?? 'MyLibrary/1.0.0',
+                ...config.headers,
+            },
+            userAgent: config.userAgent ?? 'MyLibrary/1.0.0',
+        };
+    }
+
+    async get<T>(url: string, options?: RequestOptions): Promise<T> {
+        return this.request<T>({
+            url,
+            method: 'GET',
+            ...options,
+        });
+    }
+
+    async post<T>(url: string, data?: unknown, options?: RequestOptions): Promise<T> {
+        return this.request<T>({
+            url,
+            method: 'POST',
+            data,
+            ...options,
+        });
+    }
+
+    async put<T>(url: string, data?: unknown, options?: RequestOptions): Promise<T> {
+        return this.request<T>({
+            url,
+            method: 'PUT',
+            data,
+            ...options,
+        });
+    }
+
+    async patch<T>(url: string, data?: unknown, options?: RequestOptions): Promise<T> {
+        return this.request<T>({
+            url,
+            method: 'PATCH',
+            data,
+            ...options,
+        });
+    }
+
+    async delete<T>(url: string, options?: RequestOptions): Promise<T> {
+        return this.request<T>({
+            url,
+            method: 'DELETE',
+            ...options,
+        });
+    }
+
+    protected abstract request<T>(config: RequestConfig): Promise<T>;
+}
+```
+
+### Axios Implementation
+
+```typescript
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { BaseHttpClient, RequestConfig } from './BaseHttpClient';
+
+export class AxiosHttpClient extends BaseHttpClient {
+    private client: AxiosInstance;
+
+    constructor(config: HttpClientConfig) {
+        super(config);
+
+        this.client = axios.create({
+            baseURL: this.config.baseUrl,
+            timeout: this.config.timeout,
+            headers: this.config.headers,
+        });
+
+        this.setupInterceptors();
+    }
+
+    protected async request<T>(config: RequestConfig): Promise<T> {
+        const axiosConfig: AxiosRequestConfig = {
+            method: config.method,
+            url: config.url,
+            data: config.data,
+            params: config.params,
+            headers: {
+                ...this.config.headers,
+                ...config.headers,
+            },
+            timeout: config.timeout ?? this.config.timeout,
+        };
+
+        if (this.config.apiKey) {
+            axiosConfig.headers = {
+                ...axiosConfig.headers,
+                Authorization: `Bearer ${this.config.apiKey}`,
+            };
+        }
+
+        try {
+            const response: AxiosResponse<T> = await this.client.request(axiosConfig);
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    private setupInterceptors(): void {
+        // Request interceptor
+        this.client.interceptors.request.use(
+            config => {
+                // Add request logging
+                console.debug(`Making ${config.method?.toUpperCase()} request to ${config.url}`);
+                return config;
+            },
+            error => {
+                return Promise.reject(error);
+            },
+        );
+
+        // Response interceptor
+        this.client.interceptors.response.use(
+            response => {
+                // Add response logging
+                console.debug(`Received ${response.status} response from ${response.config.url}`);
+                return response;
+            },
+            error => {
+                return Promise.reject(error);
+            },
+        );
+    }
+
+    private handleError(error: unknown): Error {
+        if (axios.isAxiosError(error)) {
+            return new ApiError(
+                error.response?.data?.message || error.message,
+                error.response?.status,
+                error.response?.data,
+            );
+        }
+        return error as Error;
+    }
+}
+```
+
+### Fetch Implementation
+
+```typescript
+export class FetchHttpClient extends BaseHttpClient {
+    protected async request<T>(config: RequestConfig): Promise<T> {
+        const url = new URL(config.url, this.config.baseUrl);
+
+        if (config.params) {
+            Object.entries(config.params).forEach(([key, value]) => {
+                url.searchParams.append(key, String(value));
+            });
+        }
+
+        const headers = new Headers({
+            ...this.config.headers,
+            ...config.headers,
+        });
+
+        if (this.config.apiKey) {
+            headers.set('Authorization', `Bearer ${this.config.apiKey}`);
+        }
+
+        const requestConfig: RequestInit = {
+            method: config.method,
+            headers,
+            timeout: config.timeout ?? this.config.timeout,
+        };
+
+        if (config.data && config.method !== 'GET') {
+            requestConfig.body = JSON.stringify(config.data);
+        }
+
+        try {
+            const response = await fetch(url.toString(), requestConfig);
+
+            if (!response.ok) {
+                throw new ApiError(
+                    `HTTP ${response.status}: ${response.statusText}`,
+                    response.status,
+                    await response.text(),
+                );
+            }
+
+            return await response.json();
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    private handleError(error: unknown): Error {
+        if (error instanceof ApiError) {
+            return error;
+        }
+        return new ApiError((error as Error).message);
+    }
+}
+```
+
+## Error Handling
+
+### Custom Error Types
+
+```typescript
+export class ApiError extends Error {
+    constructor(
+        message: string,
+        public statusCode?: number,
+        public responseData?: unknown,
+    ) {
+        super(message);
+        this.name = 'ApiError';
+    }
+}
+
+export class NetworkError extends Error {
+    constructor(
+        message: string,
+        public originalError?: Error,
+    ) {
+        super(message);
+        this.name = 'NetworkError';
+    }
+}
+
+export class TimeoutError extends Error {
+    constructor(
+        message: string,
+        public timeout: number,
+    ) {
+        super(message);
+        this.name = 'TimeoutError';
+    }
+}
+
+export class RateLimitError extends ApiError {
+    constructor(
+        message: string,
+        public retryAfter?: number,
+    ) {
+        super(message, 429);
+        this.name = 'RateLimitError';
+    }
+}
+```
+
+### Error Handling Utilities
+
+```typescript
+export function isApiError(error: unknown): error is ApiError {
+    return error instanceof ApiError;
+}
+
+export function isNetworkError(error: unknown): error is NetworkError {
+    return error instanceof NetworkError;
+}
+
+export function isTimeoutError(error: unknown): error is TimeoutError {
+    return error instanceof TimeoutError;
+}
+
+export function isRateLimitError(error: unknown): error is RateLimitError {
+    return error instanceof RateLimitError;
+}
+```
+
+## Retry Logic
+
+### Retry Strategy
+
+```typescript
+export interface RetryConfig {
+    maxRetries: number;
+    retryDelay: number;
+    backoffMultiplier: number;
+    retryableStatusCodes: number[];
+    retryableErrors: (error: Error) => boolean;
+}
+
+export class RetryStrategy {
+    constructor(private config: RetryConfig) {}
+
+    async execute<T>(operation: () => Promise<T>, context?: string): Promise<T> {
+        let lastError: Error;
+
+        for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {
+            try {
+                return await operation();
+            } catch (error) {
+                lastError = error as Error;
+
+                if (attempt === this.config.maxRetries) {
+                    break;
+                }
+
+                if (!this.shouldRetry(lastError)) {
+                    break;
+                }
+
+                await this.delay(attempt);
+            }
+        }
+
+        throw lastError!;
+    }
+
+    private shouldRetry(error: Error): boolean {
+        if (isApiError(error) && error.statusCode) {
+            return this.config.retryableStatusCodes.includes(error.statusCode);
+        }
+
+        return this.config.retryableErrors(error);
+    }
+
+    private async delay(attempt: number): Promise<void> {
+        const delay = this.config.retryDelay * Math.pow(this.config.backoffMultiplier, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+    }
+}
+```
+
+## Request/Response Interceptors
+
+### Interceptor Interface
+
+```typescript
+export interface RequestInterceptor {
+    onRequest(config: RequestConfig): RequestConfig | Promise<RequestConfig>;
+}
+
+export interface ResponseInterceptor {
+    onResponse<T>(response: T, config: RequestConfig): T | Promise<T>;
+    onError(error: Error, config: RequestConfig): Error | Promise<Error>;
+}
+```
+
+### Logging Interceptor
+
+```typescript
+export class LoggingInterceptor implements RequestInterceptor, ResponseInterceptor {
+    constructor(private logger: Logger) {}
+
+    onRequest(config: RequestConfig): RequestConfig {
+        this.logger.debug('Making request', {
+            method: config.method,
+            url: config.url,
+            headers: config.headers,
+        });
+        return config;
+    }
+
+    onResponse<T>(response: T, config: RequestConfig): T {
+        this.logger.debug('Received response', {
+            method: config.method,
+            url: config.url,
+            status: 'success',
+        });
+        return response;
+    }
+
+    onError(error: Error, config: RequestConfig): Error {
+        this.logger.error('Request failed', {
+            method: config.method,
+            url: config.url,
+            error: error.message,
+        });
+        return error;
+    }
+}
+```
+
+### Authentication Interceptor
+
+```typescript
+export class AuthInterceptor implements RequestInterceptor {
+    constructor(private getToken: () => string | Promise<string>) {}
+
+    async onRequest(config: RequestConfig): Promise<RequestConfig> {
+        const token = await this.getToken();
+
+        return {
+            ...config,
+            headers: {
+                ...config.headers,
+                Authorization: `Bearer ${token}`,
+            },
+        };
+    }
+}
+```
+
+## Request/Response Validation
+
+### Schema Validation
+
+```typescript
+import { z } from 'zod';
+
+export class ValidationInterceptor implements RequestInterceptor, ResponseInterceptor {
+    constructor(
+        private requestSchema?: z.ZodSchema,
+        private responseSchema?: z.ZodSchema,
+    ) {}
+
+    onRequest(config: RequestConfig): RequestConfig {
+        if (this.requestSchema && config.data) {
+            this.requestSchema.parse(config.data);
+        }
+        return config;
+    }
+
+    onResponse<T>(response: T, config: RequestConfig): T {
+        if (this.responseSchema) {
+            this.responseSchema.parse(response);
+        }
+        return response;
+    }
+
+    onError(error: Error, config: RequestConfig): Error {
+        return error;
+    }
+}
+```
+
+## Client Factory
+
+### Client Factory Pattern
+
+```typescript
+export interface HttpClientFactory {
+    create(config: HttpClientConfig): HttpClient;
+}
+
+export class DefaultHttpClientFactory implements HttpClientFactory {
+    create(config: HttpClientConfig): HttpClient {
+        const client = new AxiosHttpClient(config);
+
+        // Add interceptors
+        const retryStrategy = new RetryStrategy({
+            maxRetries: config.retries ?? 3,
+            retryDelay: config.retryDelay ?? 1000,
+            backoffMultiplier: 2,
+            retryableStatusCodes: [429, 500, 502, 503, 504],
+            retryableErrors: error => isNetworkError(error) || isTimeoutError(error),
+        });
+
+        return new RetryableHttpClient(client, retryStrategy);
+    }
+}
+```
+
+### Retryable Client Wrapper
+
+```typescript
+export class RetryableHttpClient implements HttpClient {
+    constructor(
+        private client: HttpClient,
+        private retryStrategy: RetryStrategy,
+    ) {}
+
+    async get<T>(url: string, options?: RequestOptions): Promise<T> {
+        return this.retryStrategy.execute(() => this.client.get<T>(url, options));
+    }
+
+    async post<T>(url: string, data?: unknown, options?: RequestOptions): Promise<T> {
+        return this.retryStrategy.execute(() => this.client.post<T>(url, data, options));
+    }
+
+    async put<T>(url: string, data?: unknown, options?: RequestOptions): Promise<T> {
+        return this.retryStrategy.execute(() => this.client.put<T>(url, data, options));
+    }
+
+    async patch<T>(url: string, data?: unknown, options?: RequestOptions): Promise<T> {
+        return this.retryStrategy.execute(() => this.client.patch<T>(url, data, options));
+    }
+
+    async delete<T>(url: string, options?: RequestOptions): Promise<T> {
+        return this.retryStrategy.execute(() => this.client.delete<T>(url, options));
+    }
+}
+```
+
+## Usage Examples
+
+### Basic Usage
+
+```typescript
+import { createHttpClient } from './httpClient';
+
+const client = createHttpClient({
+    baseUrl: 'https://api.example.com',
+    apiKey: process.env.API_KEY,
+    timeout: 5000,
+});
+
+// Make requests
+const users = await client.get<User[]>('/users');
+const user = await client.post<User>('/users', { name: 'John', email: 'john@example.com' });
+```
+
+### With Custom Configuration
+
+```typescript
+const client = createHttpClient({
+    baseUrl: 'https://api.example.com',
+    apiKey: process.env.API_KEY,
+    timeout: 10000,
+    retries: 5,
+    retryDelay: 2000,
+    headers: {
+        'X-Custom-Header': 'value',
+    },
+});
+```
+
+### Error Handling
+
+```typescript
+try {
+    const user = await client.get<User>('/users/123');
+} catch (error) {
+    if (isApiError(error)) {
+        console.error(`API Error: ${error.message} (${error.statusCode})`);
+    } else if (isNetworkError(error)) {
+        console.error('Network error:', error.message);
+    } else {
+        console.error('Unknown error:', error);
+    }
+}
+```
+
+## Testing
+
+### Mock HTTP Client
+
+```typescript
+export class MockHttpClient implements HttpClient {
+    private responses = new Map<string, unknown>();
+    private requests: RequestConfig[] = [];
+
+    setResponse(url: string, method: string, response: unknown): void {
+        const key = `${method}:${url}`;
+        this.responses.set(key, response);
+    }
+
+    getRequests(): RequestConfig[] {
+        return this.requests;
+    }
+
+    async get<T>(url: string, options?: RequestOptions): Promise<T> {
+        this.requests.push({ url, method: 'GET', ...options });
+        return this.getResponse<T>('GET', url);
+    }
+
+    async post<T>(url: string, data?: unknown, options?: RequestOptions): Promise<T> {
+        this.requests.push({ url, method: 'POST', data, ...options });
+        return this.getResponse<T>('POST', url);
+    }
+
+    // Implement other methods...
+
+    private getResponse<T>(method: string, url: string): T {
+        const key = `${method}:${url}`;
+        const response = this.responses.get(key);
+
+        if (response === undefined) {
+            throw new Error(`No mock response set for ${key}`);
+        }
+
+        return response as T;
+    }
+}
+```
+
+### Test Examples
+
+```typescript
+describe('HttpClient', () => {
+    let mockClient: MockHttpClient;
+
+    beforeEach(() => {
+        mockClient = new MockHttpClient();
+    });
+
+    it('should make GET request', async () => {
+        const expectedUser = { id: '1', name: 'John' };
+        mockClient.setResponse('/users/1', 'GET', expectedUser);
+
+        const user = await mockClient.get('/users/1');
+        expect(user).toEqual(expectedUser);
+    });
+
+    it('should handle API errors', async () => {
+        mockClient.setResponse('/users/999', 'GET', new ApiError('User not found', 404));
+
+        await expect(mockClient.get('/users/999')).rejects.toThrow(ApiError);
+    });
+});
+```
+
+description: globs: alwaysApply: false
+
+---

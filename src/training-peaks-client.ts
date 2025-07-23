@@ -34,8 +34,8 @@ export class TrainingPeaksClient {
     // Initialize real authentication repository with storage adapter
     this.authRepository = createTrainingPeaksAuthRepository(storage);
 
-    // Initialize workout manager with the same configuration
-    this.workoutManager = createWorkoutManager(config);
+    // Initialize workout manager with the same configuration and auth repository
+    this.workoutManager = createWorkoutManager(config, this.authRepository);
   }
 
   /**

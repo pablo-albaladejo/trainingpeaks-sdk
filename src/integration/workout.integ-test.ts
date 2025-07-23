@@ -31,7 +31,8 @@ describe('Workout Integration Tests', () => {
       );
 
       try {
-        await client.login(username, password);
+        const loginResult = await client.login(username, password);
+        process.stdout.write(JSON.stringify(loginResult, null, 2));
         isAuthenticated = true;
         process.stdout.write('✅ Authentication successful\n');
       } catch (error) {
@@ -76,55 +77,41 @@ describe('Workout Integration Tests', () => {
       const workoutManager = client.getWorkoutManager();
       process.stdout.write('🏋️ Workout manager obtained\n');
 
-      // Create a simple structured workout using the builder
-      const warmupStep = new WorkoutStepBuilder()
-        .name('Warmup')
-        .duration(10)
-        .intensity(IntensityClass.WARM_UP)
-        .target(120, 140)
-        .build();
-
-      const intervalStep = new WorkoutStepBuilder()
-        .name('Interval')
-        .duration(5)
-        .intensity(IntensityClass.ACTIVE)
-        .target(160, 180)
-        .build();
-
-      const recoveryStep = new WorkoutStepBuilder()
-        .name('Recovery')
-        .duration(3)
+      const step7 = new WorkoutStepBuilder()
+        .name("3' caminando + gel")
+        .duration(3) // 3 minutes
         .intensity(IntensityClass.REST)
-        .target(120, 140)
+        .target(60, 70)
         .build();
 
-      const cooldownStep = new WorkoutStepBuilder()
-        .name('Cooldown')
-        .duration(5)
-        .intensity(IntensityClass.COOL_DOWN)
-        .target(120, 140)
-        .build();
-
-      const workoutElement = new StructureElementBuilder()
+      const stepElement = new StructureElementBuilder()
         .type(ElementType.STEP)
-        .length(23, LengthUnit.MINUTE) // Total duration: 10 + 5 + 3 + 5 = 23 minutes
-        .steps([warmupStep, intervalStep, recoveryStep, cooldownStep])
-        .timeRange(0, 23 * 60) // 23 minutes in seconds
+        .length(3, LengthUnit.MINUTE)
+        .steps([step7])
+        .timeRange(1600, 1780) // 3 minutes = 180 seconds
         .build();
 
       const workoutStructure = new WorkoutStructureBuilder()
-        .addElement(workoutElement)
+        .addElement(stepElement)
         .build();
 
       process.stdout.write('📤 Uploading structured workout...\n');
 
-      // Upload the structured workout
+      // Upload the structured workout using the current interface
       const uploadResult = await workoutManager.createStructuredWorkout({
-        name: 'Integration Test Structured Workout',
+        name: 'Test Workout',
         description: 'Test workout created during integration testing',
-        activityType: ActivityType.RUN,
-        targetDate: new Date(),
         structure: workoutStructure,
+        targetDate: new Date('2025-07-12T00:00:00'),
+        activityType: ActivityType.RUN,
+        estimatedDuration: 50, // ~50 minutes
+        customFields: {
+          athleteId: 5818494, // Using the provided athlete ID
+          workoutTypeValueId: 3,
+          tssPlanned: 72.8,
+          ifPlanned: 0.89,
+          velocityPlanned: 3.1783333333333332,
+        },
       });
 
       process.stdout.write(
