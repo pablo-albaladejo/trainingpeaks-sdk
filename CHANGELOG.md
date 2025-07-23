@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## 1.8.0 (2025-07-23)
+
+* feat: add workout builder service and unit tests ([50631e3](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/50631e3))
+
 ## 1.7.0 (2025-07-22)
 
 * feat: integrate  codecov for test analytics ([a0a181f](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/a0a181f))
