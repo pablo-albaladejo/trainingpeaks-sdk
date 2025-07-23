@@ -3,6 +3,8 @@
  * Provides logging functionality for the SDK
  */
 
+import { withRealConsole } from '@/test.setup';
+
 /**
  * Log levels
  */
@@ -50,29 +52,47 @@ export const createLogger = (config: LoggerConfig): Logger => {
     return `${timestamp} ${prefix} [${level.toUpperCase()}] ${message}`;
   };
 
+  const logWithRealConsole = (
+    level: LogLevel,
+    message: string,
+    ...args: unknown[]
+  ) => {
+    if (shouldLog(level)) {
+      withRealConsole(() => {
+        const formattedMessage = formatMessage(level, message);
+        switch (level) {
+          case 'debug':
+            console.debug(formattedMessage, ...args);
+            break;
+          case 'info':
+            console.info(formattedMessage, ...args);
+            break;
+          case 'warn':
+            console.warn(formattedMessage, ...args);
+            break;
+          case 'error':
+            console.error(formattedMessage, ...args);
+            break;
+        }
+      });
+    }
+  };
+
   return {
     debug: (message: string, ...args: unknown[]) => {
-      if (shouldLog('debug')) {
-        console.debug(formatMessage('debug', message), ...args);
-      }
+      logWithRealConsole('debug', message, ...args);
     },
 
     info: (message: string, ...args: unknown[]) => {
-      if (shouldLog('info')) {
-        console.info(formatMessage('info', message), ...args);
-      }
+      logWithRealConsole('info', message, ...args);
     },
 
     warn: (message: string, ...args: unknown[]) => {
-      if (shouldLog('warn')) {
-        console.warn(formatMessage('warn', message), ...args);
-      }
+      logWithRealConsole('warn', message, ...args);
     },
 
     error: (message: string, ...args: unknown[]) => {
-      if (shouldLog('error')) {
-        console.error(formatMessage('error', message), ...args);
-      }
+      logWithRealConsole('error', message, ...args);
     },
   };
 };

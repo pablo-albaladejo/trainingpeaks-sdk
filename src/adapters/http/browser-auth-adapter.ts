@@ -3,6 +3,7 @@
  * Implements authentication using Playwright browser automation
  */
 
+import { createLogger } from '@/adapters/logging/logger';
 import type {
   AuthenticateUser,
   AuthenticationConfig,
@@ -13,6 +14,7 @@ import { getSDKConfig } from '@/config';
 import type { AuthToken, Credentials, User } from '@/domain';
 import { createUser } from '@/domain/entities/user';
 import { createAuthToken } from '@/domain/value-objects/auth-token';
+import { generateRandomUserAgent } from '@/shared';
 import { Browser, chromium, Page, Response } from 'playwright-core';
 
 type InterceptedData = {
@@ -52,18 +54,47 @@ export const authenticateUser: AuthenticateUser = async (
   credentials: Credentials,
   config: AuthenticationConfig
 ): Promise<{ token: AuthToken; user: User }> => {
+  const sdkConfig = getSDKConfig();
+
+  // Create logger for this adapter
+  const logger = createLogger({
+    level: sdkConfig.debug.enabled ? 'debug' : 'info',
+    enabled: sdkConfig.debug.enabled && sdkConfig.debug.logBrowser,
+  });
+
+  logger.info('🌐 Browser Auth Adapter: Starting web authentication', {
+    username: credentials.username,
+    loginUrl: sdkConfig.urls.loginUrl,
+    timeout: config.timeout || sdkConfig.timeouts.webAuth,
+  });
+
   let browser: Browser | null = null;
 
   try {
+    logger.debug('🌐 Browser Auth Adapter: Launching browser');
     browser = await launchBrowser(config);
+
+    logger.debug('🌐 Browser Auth Adapter: Setting up page');
     const page = await setupPage(browser, config);
 
-    const interceptedData = await performLogin(page, credentials, config);
+    logger.debug('🌐 Browser Auth Adapter: Performing login flow');
+    const interceptedData = await performLogin(
+      page,
+      credentials,
+      config,
+      logger
+    );
 
     if (!interceptedData.token || !interceptedData.userId) {
+      logger.error(
+        '🌐 Browser Auth Adapter: Failed to retrieve authentication data'
+      );
       throw new Error('Failed to retrieve authentication data from login flow');
     }
 
+    logger.debug(
+      '🌐 Browser Auth Adapter: Creating user from intercepted data'
+    );
     // Create user from intercepted data
     const user = createUser(
       String(interceptedData.userId),
@@ -72,15 +103,28 @@ export const authenticateUser: AuthenticateUser = async (
       undefined // No preferences data available in interceptedData
     );
 
+    logger.info(
+      '🌐 Browser Auth Adapter: Web authentication completed successfully',
+      {
+        userId: user.id,
+        tokenType: interceptedData.token.tokenType,
+        tokenExpiresAt: interceptedData.token.expiresAt,
+      }
+    );
+
     return {
       token: interceptedData.token,
       user,
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
+    logger.error('🌐 Browser Auth Adapter: Web authentication failed', {
+      error: message,
+    });
     throw new Error(`Web authentication failed: ${message}`);
   } finally {
     if (browser) {
+      logger.debug('🌐 Browser Auth Adapter: Closing browser');
       await browser.close();
     }
   }
@@ -120,8 +164,7 @@ const setupPage = async (
   config: AuthenticationConfig
 ): Promise<Page> => {
   const context = await browser.newContext({
-    userAgent:
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    userAgent: generateRandomUserAgent(),
   });
 
   const page = await context.newPage();
@@ -139,17 +182,21 @@ const setupPage = async (
 const performLogin = async (
   page: Page,
   credentials: Credentials,
-  config: AuthenticationConfig
+  config: AuthenticationConfig,
+  logger: ReturnType<typeof createLogger>
 ): Promise<InterceptedData> => {
   const interceptedData: InterceptedData = {};
 
   // Set up response listeners
-  setupAuthResponseListeners(page, interceptedData, config);
+  setupAuthResponseListeners(page, interceptedData, config, logger);
 
   // Navigate to login page
   const loginUrl = sdkConfig.urls.loginUrl;
 
-  console.info('Navigating to TrainingPeaks login page:', loginUrl);
+  logger.info('🌐 Browser Auth Adapter: Navigating to login page', {
+    url: loginUrl,
+    timeout: config.webAuth?.timeout,
+  });
 
   await page.goto(loginUrl, {
     waitUntil: 'networkidle',
@@ -157,15 +204,19 @@ const performLogin = async (
   });
 
   // Handle cookies
+  logger.debug('🌐 Browser Auth Adapter: Handling cookies');
   await handleCookies(page, config);
 
   // Fill credentials
+  logger.debug('🌐 Browser Auth Adapter: Filling credentials');
   await fillCredentials(page, credentials, config);
 
   // Submit form
+  logger.debug('🌐 Browser Auth Adapter: Submitting login form');
   await submitLoginForm(page, config);
 
   // Wait for authentication
+  logger.debug('🌐 Browser Auth Adapter: Waiting for authentication');
   await waitForAuthentication(page, config);
 
   return interceptedData;
@@ -177,7 +228,8 @@ const performLogin = async (
 const setupAuthResponseListeners = (
   page: Page,
   interceptedData: InterceptedData,
-  config: AuthenticationConfig
+  config: AuthenticationConfig,
+  logger: ReturnType<typeof createLogger>
 ): void => {
   page.on('response', async (response) => {
     const url = response.url();
@@ -187,9 +239,9 @@ const setupAuthResponseListeners = (
     }
 
     if (url.includes('/users/v3/token')) {
-      await handleTokenResponse(response, interceptedData, config);
+      await handleTokenResponse(response, interceptedData, config, logger);
     } else if (url.includes('/users/v3/user')) {
-      await handleUserResponse(response, interceptedData, config);
+      await handleUserResponse(response, interceptedData, config, logger);
     }
   });
 };
@@ -385,23 +437,27 @@ const waitForAuthentication = async (
 const handleTokenResponse = async (
   response: Response,
   interceptedData: InterceptedData,
-  config: AuthenticationConfig
+  config: AuthenticationConfig,
+  logger: ReturnType<typeof createLogger>
 ): Promise<void> => {
   try {
     if (!response.ok()) {
-      if (config.debug) {
-        console.warn('Token response failed', {
-          status: response.status(),
-          url: response.url(),
-        });
-      }
+      logger.warn('🌐 Browser Auth Adapter: Token response failed', {
+        status: response.status(),
+        url: response.url(),
+      });
       return;
     }
 
     const json = await parseJsonResponse<TokenResponse>(response, config);
     if (!json?.token?.access_token) {
+      logger.debug('🌐 Browser Auth Adapter: No access token in response');
       return;
     }
+
+    logger.debug(
+      '🌐 Browser Auth Adapter: Creating AuthToken from intercepted data'
+    );
 
     // Create AuthToken entity
     interceptedData.token = createAuthToken(
@@ -411,9 +467,17 @@ const handleTokenResponse = async (
       json.token.refresh_token
     );
 
-    console.info('Successfully intercepted auth token');
+    logger.info(
+      '🌐 Browser Auth Adapter: Successfully intercepted auth token',
+      {
+        tokenType: interceptedData.token.tokenType,
+        tokenExpiresAt: interceptedData.token.expiresAt,
+      }
+    );
   } catch (error) {
-    console.error('Error processing token response', { error });
+    logger.error('🌐 Browser Auth Adapter: Error processing token response', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
   }
 };
 
@@ -423,30 +487,34 @@ const handleTokenResponse = async (
 const handleUserResponse = async (
   response: Response,
   interceptedData: InterceptedData,
-  config: AuthenticationConfig
+  config: AuthenticationConfig,
+  logger: ReturnType<typeof createLogger>
 ): Promise<void> => {
   try {
     if (!response.ok()) {
-      if (config.debug) {
-        console.warn('User response failed', {
-          status: response.status(),
-          url: response.url(),
-        });
-      }
+      logger.warn('🌐 Browser Auth Adapter: User response failed', {
+        status: response.status(),
+        url: response.url(),
+      });
       return;
     }
 
     const json = await parseJsonResponse<UserResponse>(response, config);
     if (!json?.user?.userId) {
+      logger.debug('🌐 Browser Auth Adapter: No user ID in response');
       return;
     }
 
     // Store user ID as string
     interceptedData.userId = String(json.user.userId);
 
-    console.info('Successfully intercepted user ID');
+    logger.info('🌐 Browser Auth Adapter: Successfully intercepted user ID', {
+      userId: interceptedData.userId,
+    });
   } catch (error) {
-    console.error('Error processing user response', { error });
+    logger.error('🌐 Browser Auth Adapter: Error processing user response', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
   }
 };
 

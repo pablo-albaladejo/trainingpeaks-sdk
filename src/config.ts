@@ -502,6 +502,7 @@ export function validateConfig(config: TrainingPeaksSDKConfig): void {
 
 /**
  * Get configuration from environment variables or defaults
+ * Guarantees a complete configuration with all default values
  */
 export function getSDKConfig(
   userConfig: TrainingPeaksClientConfig = {}

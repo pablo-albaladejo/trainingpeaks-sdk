@@ -10,6 +10,7 @@ import {
   apiAuthenticateUser,
   apiCanHandleAuthConfig,
   apiRefreshAuthToken,
+  createLogger,
   webAuthenticateUser,
   webCanHandleAuthConfig,
 } from '@/adapters';
@@ -36,7 +37,10 @@ export interface TrainingPeaksClient {
   /**
    * Login with username and password
    */
-  login: (username: string, password: string) => Promise<{
+  login: (
+    username: string,
+    password: string
+  ) => Promise<{
     success: boolean;
     user?: any;
     error?: string;
@@ -66,10 +70,23 @@ export interface TrainingPeaksClient {
  * Creates a new TrainingPeaks client instance
  * This is the main factory function that handles dependency injection
  */
-export const createTrainingPeaksClient = (config: TrainingPeaksClientConfig = {}): TrainingPeaksClient => {
+export const createTrainingPeaksClient = (
+  config: TrainingPeaksClientConfig = {}
+): TrainingPeaksClient => {
   // Get SDK configuration with client overrides
   const sdkConfig = getSDKConfig(config);
 
+  // Initialize logger based on debug configuration
+  const logger = createLogger({
+    level: sdkConfig.debug.enabled ? 'debug' : 'info',
+    enabled: sdkConfig.debug.enabled,
+  });
+
+  logger.info('🔧 TrainingPeaks Client initialized', {
+    debug: sdkConfig.debug,
+    timeouts: sdkConfig.timeouts,
+    urls: sdkConfig.urls,
+  });
   // Create auth service
   const authService = createAuthService({
     authAdapters: [
@@ -132,9 +149,7 @@ export const createTrainingPeaksClient = (config: TrainingPeaksClientConfig = {}
     authService.getCurrentUser
   );
 
-  const getUserUseCase = executeGetUserUseCase(
-    authService.getCurrentUser
-  );
+  const getUserUseCase = executeGetUserUseCase(authService.getCurrentUser);
 
   // Return the client interface with all public methods
   return {
@@ -142,20 +157,44 @@ export const createTrainingPeaksClient = (config: TrainingPeaksClientConfig = {}
      * Login with username and password
      */
     login: async (username: string, password: string) => {
+      logger.info('🔐 Login attempt started', {
+        username: username,
+        passwordLength: password?.length || 0,
+        debugAuth: sdkConfig.debug.logAuth,
+      });
+
       try {
         const result = await loginUseCase({
           credentials: { username, password },
         });
 
+        logger.info('📊 Login result received', {
+          success: result.success,
+          hasUser: !!result.user,
+          hasError: !!result.error,
+        });
+
         if (result.success) {
           isAuthenticatedFlag = true;
+          logger.info(
+            '✅ Authentication successful - user is now authenticated'
+          );
+        } else {
+          logger.warn('❌ Authentication failed', {
+            error: result.error,
+          });
         }
 
         return result;
       } catch (error) {
+        logger.error('💥 Login error occurred', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+
         return {
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error occurred',
+          error:
+            error instanceof Error ? error.message : 'Unknown error occurred',
         };
       }
     },
@@ -164,12 +203,29 @@ export const createTrainingPeaksClient = (config: TrainingPeaksClientConfig = {}
      * Get current user information
      */
     getUser: async () => {
+      logger.info('👤 GetUser attempt started', {
+        isAuthenticated: isAuthenticatedFlag,
+      });
+
       try {
-        return await getUserUseCase();
+        const result = await getUserUseCase();
+
+        logger.info('📊 GetUser result received', {
+          success: result.success,
+          hasUser: !!result.user,
+          hasError: !!result.error,
+        });
+
+        return result;
       } catch (error) {
+        logger.error('💥 GetUser error occurred', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+
         return {
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error occurred',
+          error:
+            error instanceof Error ? error.message : 'Unknown error occurred',
         };
       }
     },
@@ -177,17 +233,34 @@ export const createTrainingPeaksClient = (config: TrainingPeaksClientConfig = {}
     /**
      * Check if client is authenticated
      */
-    isAuthenticated: () => isAuthenticatedFlag,
+    isAuthenticated: () => {
+      logger.debug('🔍 Checking authentication status', {
+        isAuthenticated: isAuthenticatedFlag,
+      });
+      return isAuthenticatedFlag;
+    },
 
     /**
      * Get user ID (if authenticated)
      */
     getUserId: () => {
+      logger.debug('🆔 Getting user ID', {
+        isAuthenticated: isAuthenticatedFlag,
+      });
+
       if (!isAuthenticatedFlag) {
+        logger.debug('🆔 User not authenticated, returning null');
         return null;
       }
+
       // This would typically retrieve from storage
-      return null;
+      const userId = null;
+
+      logger.debug('🆔 User ID result', {
+        userId: userId,
+      });
+
+      return userId;
     },
   };
-}; 
+};

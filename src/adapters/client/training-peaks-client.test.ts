@@ -34,6 +34,12 @@ vi.mock('@/config', () => ({
   getSDKConfig: vi.fn(() => ({
     urls: { apiBaseUrl: 'https://api.trainingpeaks.com' },
     timeouts: { apiAuth: 5000 },
+    debug: {
+      enabled: false,
+      logAuth: false,
+      logNetwork: false,
+      logBrowser: false,
+    },
   })),
 }));
 

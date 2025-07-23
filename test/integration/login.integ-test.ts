@@ -23,10 +23,10 @@ describe('TrainingPeaks Client Login Integration', () => {
     client = createTrainingPeaksClient({
       // Use test configuration
       debug: {
-        enabled: false,
-        logAuth: false,
-        logNetwork: false,
-        logBrowser: false,
+        enabled: true,
+        logAuth: true,
+        logNetwork: true,
+        logBrowser: true,
       },
     });
   });

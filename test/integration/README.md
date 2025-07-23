@@ -73,13 +73,35 @@ cp .env.example .env
 Edit the root `.env` file and add your actual TrainingPeaks test credentials:
 
 ```env
+# Required for integration tests
 TRAININGPEAKS_TEST_USERNAME=your_actual_test_username
 TRAININGPEAKS_TEST_PASSWORD=your_actual_test_password
+
+# Optional: Authentication method
+TRAININGPEAKS_AUTH_METHOD=web
+
+# Optional: Debug settings
+TRAININGPEAKS_DEBUG=true
+TRAININGPEAKS_DEBUG_AUTH=true
+TRAININGPEAKS_DEBUG_NETWORK=true
+TRAININGPEAKS_DEBUG_BROWSER=true
 ```
 
 ### 3. Load Environment Variables
 
 The tests will automatically load environment variables from the root `.env` file.
+
+### 4. Available Environment Variables
+
+The `.env.example` file contains all available environment variables with descriptions:
+
+- **Required**: `TRAININGPEAKS_TEST_USERNAME`, `TRAININGPEAKS_TEST_PASSWORD`
+- **Authentication**: `TRAININGPEAKS_AUTH_METHOD`, `TRAININGPEAKS_BASE_URL`, etc.
+- **Web Settings**: `TRAININGPEAKS_WEB_HEADLESS`, `TRAININGPEAKS_WEB_TIMEOUT`, etc.
+- **Debug**: `TRAININGPEAKS_DEBUG`, `TRAININGPEAKS_DEBUG_AUTH`, etc.
+- **Advanced**: Timeouts, retry settings, token configuration, etc.
+
+See `.env.example` for the complete list with descriptions.
 
 ## Running Tests
 
