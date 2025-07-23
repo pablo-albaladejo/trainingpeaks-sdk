@@ -5,6 +5,7 @@
 
 import type { WorkoutFile, WorkoutStructure } from '@/domain';
 import type { WorkoutData } from '@/types';
+import { ActivityType, Difficulty } from '@/types';
 
 /**
  * Request parameters for creating a structured workout
@@ -19,8 +20,8 @@ export type CreateStructuredWorkoutRequest = {
   estimatedDuration?: number;
   estimatedDistance?: number;
   estimatedCalories?: number;
-  difficulty?: 'easy' | 'moderate' | 'hard' | 'extreme';
-  activityType?: 'run' | 'bike' | 'swim' | 'strength' | 'other';
+  difficulty?: Difficulty;
+  activityType?: ActivityType;
   equipment?: string[];
   location?: string;
   weatherConditions?: string;

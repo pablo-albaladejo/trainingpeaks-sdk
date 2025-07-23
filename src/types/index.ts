@@ -1,6 +1,115 @@
 /**
  * TrainingPeaks SDK Types
+ * Centralized type definitions for the TrainingPeaks SDK
  */
+
+// Centralized Enums for String Literals
+export enum ElementType {
+  STEP = 'step',
+  REPETITION = 'repetition',
+}
+
+export enum LengthUnit {
+  SECOND = 'second',
+  MINUTE = 'minute',
+  HOUR = 'hour',
+  REPETITION = 'repetition',
+  METER = 'meter',
+  KILOMETER = 'kilometer',
+  MILE = 'mile',
+}
+
+export enum LengthMetric {
+  DURATION = 'duration',
+  DISTANCE = 'distance',
+}
+
+export enum IntensityMetric {
+  PERCENT_OF_THRESHOLD_PACE = 'percentOfThresholdPace',
+  PERCENT_OF_THRESHOLD_POWER = 'percentOfThresholdPower',
+  HEART_RATE = 'heartRate',
+  POWER = 'power',
+  PACE = 'pace',
+  SPEED = 'speed',
+}
+
+export enum IntensityTargetType {
+  TARGET = 'target',
+  RANGE = 'range',
+}
+
+export enum IntensityClass {
+  ACTIVE = 'active',
+  REST = 'rest',
+  WARM_UP = 'warmUp',
+  COOL_DOWN = 'coolDown',
+}
+
+export enum Difficulty {
+  EASY = 'easy',
+  MODERATE = 'moderate',
+  HARD = 'hard',
+  EXTREME = 'extreme',
+}
+
+export enum ActivityType {
+  RUN = 'run',
+  BIKE = 'bike',
+  SWIM = 'swim',
+  STRENGTH = 'strength',
+  OTHER = 'other',
+}
+
+export enum AuthMethod {
+  WEB = 'web',
+  API = 'api',
+}
+
+export enum ErrorType {
+  VALIDATION_ERROR = 'VALIDATION_ERROR',
+  AUTHENTICATION_ERROR = 'AUTHENTICATION_ERROR',
+  AUTHORIZATION_ERROR = 'AUTHORIZATION_ERROR',
+  NETWORK_ERROR = 'NETWORK_ERROR',
+  UPLOAD_ERROR = 'UPLOAD_ERROR',
+  RATE_LIMIT_ERROR = 'RATE_LIMIT_ERROR',
+  ERROR = 'ERROR',
+}
+
+export enum OperationType {
+  LOGIN = 'login',
+  LOGOUT = 'logout',
+  GET_CURRENT_USER = 'getCurrentUser',
+  GET_CURRENT_TOKEN = 'getCurrentToken',
+  GET_USER_ID = 'getUserId',
+}
+
+export enum WorkoutTypeInternal {
+  STRUCTURED = 'structured',
+  FILE = 'file',
+  MANUAL = 'manual',
+  FILE_BASED = 'file-based',
+  SIMPLE = 'simple',
+}
+
+export enum SortOption {
+  DATE = 'date',
+  NAME = 'name',
+  DURATION = 'duration',
+  DISTANCE = 'distance',
+}
+
+export enum LoginMethod {
+  WEB = 'web',
+  CREDENTIALS = 'credentials',
+}
+
+export enum SimpleWorkoutElementType {
+  WARMUP = 'warmup',
+  INTERVAL = 'interval',
+  RECOVERY = 'recovery',
+  COOLDOWN = 'cooldown',
+  STEADY = 'steady',
+}
 
 import type { WorkoutStructure as WorkoutStructureValueObject } from '@/domain';
 
@@ -14,7 +123,7 @@ export type TrainingPeaksConfig = {
   /** Enable debug logging */
   debug?: boolean;
   /** Authentication method to use */
-  authMethod?: 'web' | 'api';
+  authMethod?: AuthMethod;
   /** Web authentication configuration */
   webAuth?: {
     /** Whether to run browser in headless mode */
@@ -110,7 +219,7 @@ export type WorkoutStructureStep = {
   /** Intensity targets */
   targets: WorkoutTarget[];
   /** Intensity class */
-  intensityClass: 'active' | 'rest' | 'warmUp' | 'coolDown';
+  intensityClass: IntensityClass;
   /** Whether duration is open */
   openDuration: boolean;
 };
@@ -119,14 +228,7 @@ export type WorkoutLength = {
   /** Length value */
   value: number;
   /** Length unit */
-  unit:
-    | 'second'
-    | 'minute'
-    | 'hour'
-    | 'repetition'
-    | 'meter'
-    | 'kilometer'
-    | 'mile';
+  unit: LengthUnit;
 };
 
 export type WorkoutTarget = {
@@ -138,7 +240,7 @@ export type WorkoutTarget = {
 
 export type WorkoutStructureElement = {
   /** Element type */
-  type: 'step' | 'repetition';
+  type: ElementType;
   /** Element length */
   length: WorkoutLength;
   /** Steps within this element */
@@ -155,17 +257,11 @@ export type WorkoutStructure = {
   /** Polyline coordinates for visualization */
   polyline: number[][];
   /** Primary length metric */
-  primaryLengthMetric: 'duration' | 'distance';
+  primaryLengthMetric: LengthMetric;
   /** Primary intensity metric */
-  primaryIntensityMetric:
-    | 'percentOfThresholdPace'
-    | 'percentOfThresholdPower'
-    | 'heartRate'
-    | 'power'
-    | 'pace'
-    | 'speed';
+  primaryIntensityMetric: IntensityMetric;
   /** Primary intensity target type */
-  primaryIntensityTargetOrRange: 'target' | 'range';
+  primaryIntensityTargetOrRange: IntensityTargetType;
 };
 
 export type StructuredWorkoutRequest = {
@@ -348,7 +444,7 @@ export type CreateStructuredWorkoutRequest = {
     /** Athlete weight in kg for metric calculations */
     athleteWeight?: number;
     /** Activity type for metric calculations */
-    activityType?: 'BIKE' | 'RUN' | 'SWIM' | 'OTHER';
+    activityType?: WorkoutType;
     /** Planned metrics */
     plannedMetrics?: {
       totalTimePlanned?: number;
@@ -410,22 +506,16 @@ export type RetryConfig = {
 
 // Simple Workout Structure Types (without timeRange and polyline)
 export type SimpleWorkoutStructureElement = {
-  type: 'step' | 'repetition';
+  type: ElementType;
   length: WorkoutLength;
   steps: WorkoutStructureStep[];
 };
 
 export type SimpleWorkoutStructure = {
   structure: SimpleWorkoutStructureElement[];
-  primaryLengthMetric: 'duration' | 'distance';
-  primaryIntensityMetric:
-    | 'percentOfThresholdPace'
-    | 'percentOfThresholdPower'
-    | 'heartRate'
-    | 'power'
-    | 'pace'
-    | 'speed';
-  intensityTargetType: 'target' | 'range';
+  primaryLengthMetric: LengthMetric;
+  primaryIntensityMetric: IntensityMetric;
+  intensityTargetType: IntensityTargetType;
 };
 
 export type CreateSimpleStructuredWorkoutRequest = {
@@ -438,8 +528,8 @@ export type CreateSimpleStructuredWorkoutRequest = {
   estimatedDuration?: number;
   estimatedDistance?: number;
   estimatedCalories?: number;
-  difficulty?: 'easy' | 'moderate' | 'hard' | 'extreme';
-  activityType?: 'run' | 'bike' | 'swim' | 'strength' | 'other';
+  difficulty?: Difficulty;
+  activityType?: ActivityType;
   equipment?: string[];
   location?: string;
   weatherConditions?: string;
@@ -469,7 +559,7 @@ export type TrainingPeaksClientConfig = {
   /** Base URL for TrainingPeaks */
   baseUrl?: string;
   /** Authentication method */
-  authMethod?: 'web' | 'api';
+  authMethod?: AuthMethod;
   /** Browser configuration for web auth */
   webAuth?: {
     headless?: boolean;

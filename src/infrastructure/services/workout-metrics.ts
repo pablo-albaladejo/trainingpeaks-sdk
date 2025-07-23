@@ -9,6 +9,7 @@ import type {
 } from '@/application/services/workout-metrics';
 import type { WorkoutStructure } from '@/domain';
 import { calculateWorkoutDurationFromStructure } from '@/infrastructure/services/workout-business-logic';
+import { IntensityClass } from '@/types';
 
 /**
  * Calculate average intensity from structure
@@ -18,7 +19,7 @@ const calculateAverageIntensityFromStructure = (
 ): number => {
   const allSteps = structure.structure.flatMap((element) => element.steps);
   const activeSteps = allSteps.filter(
-    (step) => step.intensityClass === 'active'
+    (step) => step.intensityClass === IntensityClass.ACTIVE
   );
 
   if (activeSteps.length === 0) return 0;
@@ -40,7 +41,7 @@ const calculateAverageIntensityFromStructure = (
 const getRestStepsCount = (structure: WorkoutStructure): number => {
   return structure.structure
     .flatMap((element) => element.steps)
-    .filter((step) => step.intensityClass === 'rest').length;
+    .filter((step) => step.intensityClass === IntensityClass.REST).length;
 };
 
 /**

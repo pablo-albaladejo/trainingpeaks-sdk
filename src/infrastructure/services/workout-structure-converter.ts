@@ -9,6 +9,7 @@ import type {
   WorkoutStructure,
   WorkoutStructureElement,
 } from '@/types';
+import { ElementType } from '@/types';
 
 /**
  * Convert a simple workout structure to a complete workout structure
@@ -26,7 +27,7 @@ export const convertSimpleToCompleteStructure = (
       const previousElementsDuration = simpleStructure.structure
         .slice(0, index)
         .reduce((total: number, el: SimpleWorkoutStructureElement) => {
-          if (el.type === 'repetition') {
+          if (el.type === ElementType.REPETITION) {
             // For repetitions, calculate the actual duration of all steps
             const stepsDuration = el.steps.reduce(
               (stepTotal: number, step) => stepTotal + step.length.value,
@@ -59,7 +60,7 @@ export const convertSimpleElementToComplete = (
 ): WorkoutStructureElement => {
   let endTime: number;
 
-  if (element.type === 'repetition') {
+  if (element.type === ElementType.REPETITION) {
     // For repetitions, calculate the actual duration of all steps
     const stepsDuration = element.steps.reduce(
       (stepTotal: number, step) => stepTotal + step.length.value,
@@ -87,7 +88,7 @@ export const calculateSimpleStructureDuration = (
 ): number => {
   return simpleStructure.structure.reduce(
     (total: number, element: SimpleWorkoutStructureElement) => {
-      if (element.type === 'repetition') {
+      if (element.type === ElementType.REPETITION) {
         // Validate that repetition elements have steps
         if (!element.steps || element.steps.length === 0) {
           throw new Error(

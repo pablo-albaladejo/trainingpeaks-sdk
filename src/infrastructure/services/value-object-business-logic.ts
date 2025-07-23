@@ -43,6 +43,7 @@ import type {
   IsWarmUpStep,
 } from '@/application/services/value-object-business-logic';
 import type { WorkoutLengthUnit } from '@/domain';
+import { ElementType, IntensityClass, LengthMetric, LengthUnit } from '@/types';
 
 // WorkoutLength business logic implementations
 export const convertLengthToSeconds: ConvertLengthToSeconds = (
@@ -50,11 +51,11 @@ export const convertLengthToSeconds: ConvertLengthToSeconds = (
   unit: WorkoutLengthUnit
 ): number | null => {
   switch (unit) {
-    case 'second':
+    case LengthUnit.SECOND:
       return value;
-    case 'minute':
+    case LengthUnit.MINUTE:
       return value * 60;
-    case 'hour':
+    case LengthUnit.HOUR:
       return value * 3600;
     default:
       return null;
@@ -66,11 +67,11 @@ export const convertLengthToMeters: ConvertLengthToMeters = (
   unit: WorkoutLengthUnit
 ): number | null => {
   switch (unit) {
-    case 'meter':
+    case LengthUnit.METER:
       return value;
-    case 'kilometer':
+    case LengthUnit.KILOMETER:
       return value * 1000;
-    case 'mile':
+    case LengthUnit.MILE:
       return value * 1609.344;
     default:
       return null;
@@ -78,19 +79,21 @@ export const convertLengthToMeters: ConvertLengthToMeters = (
 };
 
 export const isTimeUnit: IsTimeUnit = (unit: WorkoutLengthUnit): boolean => {
-  return ['second', 'minute', 'hour'].includes(unit);
+  return [LengthUnit.SECOND, LengthUnit.MINUTE, LengthUnit.HOUR].includes(unit);
 };
 
 export const isDistanceUnit: IsDistanceUnit = (
   unit: WorkoutLengthUnit
 ): boolean => {
-  return ['meter', 'kilometer', 'mile'].includes(unit);
+  return [LengthUnit.METER, LengthUnit.KILOMETER, LengthUnit.MILE].includes(
+    unit
+  );
 };
 
 export const isRepetitionUnit: IsRepetitionUnit = (
   unit: WorkoutLengthUnit
 ): boolean => {
-  return unit === 'repetition';
+  return unit === LengthUnit.REPETITION;
 };
 
 export const formatLengthToString: FormatLengthToString = (
@@ -167,21 +170,21 @@ export const equalsWorkoutTarget: EqualsWorkoutTarget = (
 
 // WorkoutStep business logic implementations
 export const isRestStep: IsRestStep = (intensityClass: string): boolean => {
-  return intensityClass === 'rest';
+  return intensityClass === IntensityClass.REST;
 };
 
 export const isActiveStep: IsActiveStep = (intensityClass: string): boolean => {
-  return intensityClass === 'active';
+  return intensityClass === IntensityClass.ACTIVE;
 };
 
 export const isWarmUpStep: IsWarmUpStep = (intensityClass: string): boolean => {
-  return intensityClass === 'warmUp';
+  return intensityClass === IntensityClass.WARM_UP;
 };
 
 export const isCoolDownStep: IsCoolDownStep = (
   intensityClass: string
 ): boolean => {
-  return intensityClass === 'coolDown';
+  return intensityClass === IntensityClass.COOL_DOWN;
 };
 
 export const getPrimaryTarget: GetPrimaryTarget = (
@@ -320,25 +323,25 @@ export const getElementsByType: GetElementsByType = (
 export const getRepetitions: GetRepetitions = (
   structure: unknown[]
 ): unknown[] => {
-  return getElementsByType(structure, 'repetition');
+  return getElementsByType(structure, ElementType.REPETITION);
 };
 
 export const getStepElements: GetStepElements = (
   structure: unknown[]
 ): unknown[] => {
-  return getElementsByType(structure, 'step');
+  return getElementsByType(structure, ElementType.STEP);
 };
 
 export const isTimeBasedStructure: IsTimeBasedStructure = (
   primaryLengthMetric: string
 ): boolean => {
-  return primaryLengthMetric === 'duration';
+  return primaryLengthMetric === LengthMetric.DURATION;
 };
 
 export const isDistanceBasedStructure: IsDistanceBasedStructure = (
   primaryLengthMetric: string
 ): boolean => {
-  return primaryLengthMetric === 'distance';
+  return primaryLengthMetric === LengthMetric.DISTANCE;
 };
 
 export const calculateAverageIntensity: CalculateAverageIntensity = (

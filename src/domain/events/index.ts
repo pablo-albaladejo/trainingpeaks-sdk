@@ -1,11 +1,11 @@
 /**
  * Domain Events
- *
- * Events that represent important business occurrences in the domain.
- * These events can be used for logging, notifications, or triggering side effects.
+ * Defines all domain events that can occur in the system
  */
 
-// Base Domain Event
+import { LoginMethod } from '@/types';
+
+// Base domain event interface
 export type DomainEvent = {
   readonly eventId: string;
   readonly occurredAt: Date;
@@ -20,7 +20,7 @@ export type UserLoggedInEvent = DomainEvent & {
   readonly eventType: 'USER_LOGGED_IN';
   readonly aggregateType: 'USER';
   readonly userId: string;
-  readonly loginMethod: 'web' | 'credentials';
+  readonly loginMethod: LoginMethod;
 };
 
 export type UserLoggedOutEvent = DomainEvent & {
@@ -104,7 +104,7 @@ export type AllDomainEvents =
 // Event factory helpers
 export const createUserLoggedInEvent = (
   userId: string,
-  loginMethod: 'web' | 'credentials'
+  loginMethod: LoginMethod
 ): UserLoggedInEvent => ({
   eventId: crypto.randomUUID(),
   occurredAt: new Date(),

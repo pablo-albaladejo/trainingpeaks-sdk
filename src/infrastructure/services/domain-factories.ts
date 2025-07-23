@@ -42,6 +42,7 @@ import {
   validateWorkoutTargetValues,
 } from '@/infrastructure/services/domain-validation';
 import { calculateWorkoutDurationFromStructure } from '@/infrastructure/services/workout-business-logic';
+import { ElementType } from '@/types';
 
 // Workout entity factory
 export const createWorkout = (
@@ -289,7 +290,7 @@ export const createCredentials = (
 
 // WorkoutStructureElement value object factory
 export const createWorkoutStructureElement = (
-  type: 'step' | 'repetition',
+  type: ElementType,
   length: WorkoutLength,
   steps: WorkoutStep[],
   begin: number,

@@ -3,38 +3,27 @@
  * Zod schemas for workout structure validation and serialization
  */
 
+import {
+  ElementType,
+  IntensityClass,
+  IntensityMetric,
+  IntensityTargetType,
+  LengthMetric,
+  LengthUnit,
+} from '@/types';
 import { z } from 'zod';
 
-// Base schemas
-export const WorkoutLengthUnitSchema = z.enum([
-  'second',
-  'minute',
-  'hour',
-  'repetition',
-  'meter',
-  'kilometer',
-  'mile',
-]);
+// Base schemas using centralized enums
+export const WorkoutLengthUnitSchema = z.nativeEnum(LengthUnit);
 
-export const WorkoutIntensityClassSchema = z.enum([
-  'active',
-  'rest',
-  'warmUp',
-  'coolDown',
-]);
+export const WorkoutIntensityClassSchema = z.nativeEnum(IntensityClass);
 
-export const WorkoutLengthMetricSchema = z.enum(['duration', 'distance']);
+export const WorkoutLengthMetricSchema = z.nativeEnum(LengthMetric);
 
-export const WorkoutIntensityMetricSchema = z.enum([
-  'percentOfThresholdPace',
-  'percentOfThresholdPower',
-  'heartRate',
-  'power',
-  'pace',
-  'speed',
-]);
+export const WorkoutIntensityMetricSchema = z.nativeEnum(IntensityMetric);
 
-export const WorkoutIntensityTargetTypeSchema = z.enum(['target', 'range']);
+export const WorkoutIntensityTargetTypeSchema =
+  z.nativeEnum(IntensityTargetType);
 
 // Value object schemas
 export const WorkoutLengthSchema = z.object({
@@ -63,7 +52,7 @@ export const WorkoutStepSchema = z
   .refine(
     (data) => {
       // Allow empty targets for rest steps
-      if (data.intensityClass === 'rest') return true;
+      if (data.intensityClass === IntensityClass.REST) return true;
       return data.targets.length > 0;
     },
     {
@@ -72,7 +61,7 @@ export const WorkoutStepSchema = z
     }
   );
 
-export const WorkoutElementTypeSchema = z.enum(['step', 'repetition']);
+export const WorkoutElementTypeSchema = z.nativeEnum(ElementType);
 
 export const WorkoutStructureElementSchema = z
   .object({

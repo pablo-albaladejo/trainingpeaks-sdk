@@ -4,10 +4,7 @@
  */
 
 // Main client
-export {
-  createTrainingPeaksClientWithPersistentStorage,
-  TrainingPeaksClient,
-} from './training-peaks-client';
+export { TrainingPeaksClient } from './training-peaks-client';
 
 // Configuration
 export { getSDKConfig } from './config';
@@ -56,21 +53,21 @@ export { createUploadWorkoutUseCase } from './application/use-cases/upload-worko
 
 // Workout Builder (Patrón Builder para crear entrenamientos)
 export {
+  StructureElementBuilder,
+  WorkoutStepBuilder,
+  WorkoutStructureBuilder,
   createCooldownElement,
   createCooldownStep,
   createCyclingWorkoutStructure,
-  createIntervalsElement,
   createIntervalStep,
   createIntervalWorkoutStructure,
+  createIntervalsElement,
   createRecoveryStep,
   createRestStep,
   createSweetSpotStep,
   createVO2MaxStep,
   createWarmupElement,
   createWarmupStep,
-  StructureElementBuilder,
-  WorkoutStepBuilder,
-  WorkoutStructureBuilder,
   type CyclingWorkoutConfig,
   type IntervalWorkoutConfig,
 } from './infrastructure/services/workout-builder';

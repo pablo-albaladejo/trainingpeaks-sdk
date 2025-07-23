@@ -1,11 +1,15 @@
 /**
  * Workout Builder Service
- *
- * Implements the Builder pattern for creating structured workouts
- * in a more readable and maintainable way.
+ * Provides builders and helper functions for creating workout structures
  */
 
 import type {
+  ElementType,
+  IntensityClass,
+  IntensityMetric,
+  IntensityTargetType,
+  LengthMetric,
+  LengthUnit,
   SimpleWorkoutStructure,
   SimpleWorkoutStructureElement,
   WorkoutLength,
@@ -14,62 +18,71 @@ import type {
   WorkoutStructureStep,
   WorkoutTarget,
 } from '@/types';
+import {
+  ElementType as ElementTypeEnum,
+  IntensityClass as IntensityClassEnum,
+  IntensityMetric as IntensityMetricEnum,
+  IntensityTargetType as IntensityTargetTypeEnum,
+  LengthMetric as LengthMetricEnum,
+  LengthUnit as LengthUnitEnum,
+} from '@/types';
 
-// ============================================================================
-// WORKOUT STEP BUILDER CLASS
-// ============================================================================
-
+/**
+ * Builder for creating workout steps
+ */
 export class WorkoutStepBuilder {
-  private step: Partial<WorkoutStructureStep> = {};
+  private stepName?: string;
+  private stepLength?: WorkoutLength;
+  private stepIntensityClass?: IntensityClass;
+  private stepTargets?: WorkoutTarget[];
+  private stepOpenDuration = false;
 
-  name(name: string): WorkoutStepBuilder {
-    this.step.name = name;
+  name(name: string): this {
+    this.stepName = name;
     return this;
   }
 
-  duration(minutes: number): WorkoutStepBuilder {
-    this.step.length = { value: minutes, unit: 'minute' } as WorkoutLength;
+  duration(minutes: number): this {
+    this.stepLength = { value: minutes, unit: LengthUnitEnum.MINUTE };
     return this;
   }
 
-  distance(meters: number): WorkoutStepBuilder {
-    this.step.length = { value: meters, unit: 'meter' } as WorkoutLength;
+  distance(meters: number): this {
+    this.stepLength = { value: meters, unit: LengthUnitEnum.METER };
     return this;
   }
 
-  kilometers(km: number): WorkoutStepBuilder {
-    this.step.length = { value: km * 1000, unit: 'meter' } as WorkoutLength;
+  kilometers(km: number): this {
+    this.stepLength = { value: km * 1000, unit: LengthUnitEnum.METER };
     return this;
   }
 
-  intensity(
-    intensityClass: 'active' | 'rest' | 'warmUp' | 'coolDown'
-  ): WorkoutStepBuilder {
-    this.step.intensityClass = intensityClass;
+  intensity(intensity: IntensityClass): this {
+    this.stepIntensityClass = intensity;
     return this;
   }
 
-  target(minValue: number, maxValue: number): WorkoutStepBuilder {
-    this.step.targets = [{ minValue, maxValue } as WorkoutTarget];
+  target(min: number, max: number): this {
+    this.stepTargets = [{ minValue: min, maxValue: max }];
     return this;
   }
 
-  targets(targets: WorkoutTarget[]): WorkoutStepBuilder {
-    this.step.targets = targets;
+  targets(targets: WorkoutTarget[]): this {
+    this.stepTargets = targets;
     return this;
   }
 
-  openDuration(open: boolean = true): WorkoutStepBuilder {
-    this.step.openDuration = open;
+  openDuration(open: boolean = true): this {
+    this.stepOpenDuration = open;
     return this;
   }
 
   build(): WorkoutStructureStep {
     if (
-      !this.step.name ||
-      !this.step.length ||
-      !this.step.intensityClass ||
-      !this.step.targets
+      !this.stepName ||
+      !this.stepLength ||
+      !this.stepIntensityClass ||
+      !this.stepTargets
     ) {
       throw new Error(
         'Incomplete WorkoutStep. Missing required properties: name, length, intensityClass, targets'
@@ -77,52 +90,48 @@ export class WorkoutStepBuilder {
     }
 
     return {
-      name: this.step.name,
-      length: this.step.length,
-      intensityClass: this.step.intensityClass,
-      targets: this.step.targets,
-      openDuration: this.step.openDuration ?? false,
-    } as WorkoutStructureStep;
+      name: this.stepName,
+      length: this.stepLength,
+      intensityClass: this.stepIntensityClass,
+      targets: this.stepTargets,
+      openDuration: this.stepOpenDuration,
+    };
   }
 }
 
-// ============================================================================
-// STRUCTURE ELEMENT BUILDER CLASS
-// ============================================================================
-
+/**
+ * Builder for creating structure elements
+ */
 export class StructureElementBuilder {
   private element: Partial<WorkoutStructureElement> = {};
 
-  type(elementType: 'step' | 'repetition'): StructureElementBuilder {
+  type(elementType: ElementType): this {
     this.element.type = elementType;
     return this;
   }
 
-  length(
-    value: number,
-    unit: 'minute' | 'repetition' | 'meter' | 'kilometer'
-  ): StructureElementBuilder {
-    this.element.length = { value, unit } as WorkoutLength;
+  length(value: number, unit: LengthUnit): this {
+    this.element.length = { value, unit };
     return this;
   }
 
-  steps(steps: WorkoutStructureStep[]): StructureElementBuilder {
+  steps(steps: WorkoutStructureStep[]): this {
     this.element.steps = steps;
     return this;
   }
 
-  timeRange(beginSeconds: number, endSeconds: number): StructureElementBuilder {
+  timeRange(beginSeconds: number, endSeconds: number): this {
     this.element.begin = beginSeconds;
     this.element.end = endSeconds;
     return this;
   }
 
-  begin(beginSeconds: number): StructureElementBuilder {
+  begin(beginSeconds: number): this {
     this.element.begin = beginSeconds;
     return this;
   }
 
-  end(endSeconds: number): StructureElementBuilder {
+  end(endSeconds: number): this {
     this.element.end = endSeconds;
     return this;
   }
@@ -146,64 +155,48 @@ export class StructureElementBuilder {
       steps: this.element.steps,
       begin: this.element.begin,
       end: this.element.end,
-      polyline: [],
     } as WorkoutStructureElement;
   }
 }
 
-// ============================================================================
-// WORKOUT STRUCTURE BUILDER
-// ============================================================================
-
+/**
+ * Builder for creating workout structures
+ */
 export class WorkoutStructureBuilder {
   private structure: WorkoutStructureElement[] = [];
   private polyline: number[][] = [];
-  private primaryLengthMetric: 'duration' | 'distance' = 'duration';
-  private primaryIntensityMetric:
-    | 'percentOfThresholdPace'
-    | 'percentOfThresholdPower'
-    | 'heartRate'
-    | 'power'
-    | 'pace'
-    | 'speed' = 'percentOfThresholdPace';
-  private primaryIntensityTargetOrRange: 'target' | 'range' = 'range';
+  private primaryLengthMetric: LengthMetric = LengthMetricEnum.DURATION;
+  private primaryIntensityMetric: IntensityMetric =
+    IntensityMetricEnum.PERCENT_OF_THRESHOLD_PACE;
+  private primaryIntensityTargetOrRange: IntensityTargetType =
+    IntensityTargetTypeEnum.RANGE;
 
-  addElement(element: WorkoutStructureElement): WorkoutStructureBuilder {
+  addElement(element: WorkoutStructureElement): this {
     this.structure.push(element);
     return this;
   }
 
-  addElements(elements: WorkoutStructureElement[]): WorkoutStructureBuilder {
+  addElements(elements: WorkoutStructureElement[]): this {
     this.structure.push(...elements);
     return this;
   }
 
-  setPolyline(polyline: number[][]): WorkoutStructureBuilder {
+  setPolyline(polyline: number[][]): this {
     this.polyline = polyline;
     return this;
   }
 
-  setPrimaryLengthMetric(
-    metric: 'duration' | 'distance'
-  ): WorkoutStructureBuilder {
+  setPrimaryLengthMetric(metric: LengthMetric): this {
     this.primaryLengthMetric = metric;
     return this;
   }
 
-  setPrimaryIntensityMetric(
-    metric:
-      | 'percentOfThresholdPace'
-      | 'percentOfThresholdPower'
-      | 'heartRate'
-      | 'power'
-      | 'pace'
-      | 'speed'
-  ): WorkoutStructureBuilder {
+  setPrimaryIntensityMetric(metric: IntensityMetric): this {
     this.primaryIntensityMetric = metric;
     return this;
   }
 
-  setIntensityTargetType(type: 'target' | 'range'): WorkoutStructureBuilder {
+  setIntensityTargetType(type: IntensityTargetType): this {
     this.primaryIntensityTargetOrRange = type;
     return this;
   }
@@ -224,14 +217,14 @@ export class WorkoutStructureBuilder {
 }
 
 // ============================================================================
-// HELPER FUNCTIONS FOR CREATING COMMON STEPS
+// HELPER FUNCTIONS - STEPS
 // ============================================================================
 
 export function createWarmupStep(duration: number = 10): WorkoutStructureStep {
   return new WorkoutStepBuilder()
     .name('Progressive Warmup')
     .duration(duration)
-    .intensity('warmUp')
+    .intensity(IntensityClassEnum.WARM_UP)
     .target(50, 70)
     .build();
 }
@@ -244,7 +237,7 @@ export function createIntervalStep(
   return new WorkoutStepBuilder()
     .name(name || `${duration}min Interval`)
     .duration(duration)
-    .intensity('active')
+    .intensity(IntensityClassEnum.ACTIVE)
     .target(intensity.min, intensity.max)
     .build();
 }
@@ -257,7 +250,7 @@ export function createRecoveryStep(
   return new WorkoutStepBuilder()
     .name(name || `${duration}min Recovery`)
     .duration(duration)
-    .intensity('active')
+    .intensity(IntensityClassEnum.ACTIVE)
     .target(intensity.min, intensity.max)
     .build();
 }
@@ -269,7 +262,7 @@ export function createRestStep(
   return new WorkoutStepBuilder()
     .name(name || `${duration}min Rest`)
     .duration(duration)
-    .intensity('rest')
+    .intensity(IntensityClassEnum.REST)
     .target(0, 0)
     .build();
 }
@@ -278,7 +271,7 @@ export function createCooldownStep(duration: number = 5): WorkoutStructureStep {
   return new WorkoutStepBuilder()
     .name('Cooldown')
     .duration(duration)
-    .intensity('coolDown')
+    .intensity(IntensityClassEnum.COOL_DOWN)
     .target(45, 55)
     .build();
 }
@@ -287,7 +280,7 @@ export function createSweetSpotStep(duration: number): WorkoutStructureStep {
   return new WorkoutStepBuilder()
     .name('Sweet Spot Training')
     .duration(duration)
-    .intensity('active')
+    .intensity(IntensityClassEnum.ACTIVE)
     .target(88, 93)
     .build();
 }
@@ -296,13 +289,13 @@ export function createVO2MaxStep(duration: number): WorkoutStructureStep {
   return new WorkoutStepBuilder()
     .name('VO2Max Interval')
     .duration(duration)
-    .intensity('active')
+    .intensity(IntensityClassEnum.ACTIVE)
     .target(120, 130)
     .build();
 }
 
 // ============================================================================
-// HELPER FUNCTIONS FOR CREATING COMMON ELEMENTS
+// HELPER FUNCTIONS - ELEMENTS
 // ============================================================================
 
 export function createWarmupElement(
@@ -310,8 +303,8 @@ export function createWarmupElement(
 ): WorkoutStructureElement {
   const warmupStep = createWarmupStep(duration);
   return new StructureElementBuilder()
-    .type('step')
-    .length(duration, 'minute')
+    .type(ElementTypeEnum.STEP)
+    .length(duration, LengthUnitEnum.MINUTE)
     .steps([warmupStep])
     .timeRange(0, duration * 60)
     .build();
@@ -327,14 +320,12 @@ export function createIntervalsElement(
 ): WorkoutStructureElement {
   const intervalStep = createIntervalStep(intervalDuration, intervalIntensity);
   const recoveryStep = createRecoveryStep(recoveryDuration, recoveryIntensity);
-
-  const totalDuration =
-    (intervalDuration + recoveryDuration) * numberOfIntervals;
-  const endTime = startTime + totalDuration * 60;
+  const endTime =
+    startTime + (intervalDuration + recoveryDuration) * 60 * numberOfIntervals;
 
   return new StructureElementBuilder()
-    .type('repetition')
-    .length(numberOfIntervals, 'repetition')
+    .type(ElementTypeEnum.REPETITION)
+    .length(numberOfIntervals, LengthUnitEnum.REPETITION)
     .steps([intervalStep, recoveryStep])
     .timeRange(startTime, endTime)
     .build();
@@ -346,15 +337,15 @@ export function createCooldownElement(
 ): WorkoutStructureElement {
   const cooldownStep = createCooldownStep(duration);
   return new StructureElementBuilder()
-    .type('step')
-    .length(duration, 'minute')
+    .type(ElementTypeEnum.STEP)
+    .length(duration, LengthUnitEnum.MINUTE)
     .steps([cooldownStep])
     .timeRange(startTime, startTime + duration * 60)
     .build();
 }
 
 // ============================================================================
-// HELPER FUNCTIONS FOR CREATING COMPLETE STRUCTURES
+// HELPER FUNCTIONS - COMPLETE STRUCTURES
 // ============================================================================
 
 export interface IntervalWorkoutConfig {
@@ -365,38 +356,49 @@ export interface IntervalWorkoutConfig {
   cooldownDuration?: number;
   intervalIntensity: { min: number; max: number };
   recoveryIntensity: { min: number; max: number };
-  primaryIntensityMetric?: string;
+  primaryIntensityMetric?: IntensityMetric;
 }
 
 export function createIntervalWorkoutStructure(
   config: IntervalWorkoutConfig
 ): WorkoutStructure {
-  const warmupDuration = config.warmupDuration ?? 10;
-  const cooldownDuration = config.cooldownDuration ?? 5;
+  const elements: WorkoutStructureElement[] = [];
+  let currentTime = 0;
 
-  // Create elements
+  // Add warmup (default 10 minutes if not specified)
+  const warmupDuration = config.warmupDuration ?? 10;
   const warmupElement = createWarmupElement(warmupDuration);
+  elements.push(warmupElement);
+  currentTime += warmupDuration * 60;
+
+  // Add intervals
   const intervalsElement = createIntervalsElement(
     config.numberOfIntervals,
     config.intervalDuration,
     config.recoveryDuration,
     config.intervalIntensity,
     config.recoveryIntensity,
-    warmupDuration * 60
+    currentTime
   );
-  const cooldownElement = createCooldownElement(
-    cooldownDuration,
-    intervalsElement.end
-  );
+  elements.push(intervalsElement);
+  currentTime +=
+    (config.intervalDuration + config.recoveryDuration) *
+    60 *
+    config.numberOfIntervals;
 
-  // Build complete structure
+  // Add cooldown (default 5 minutes if not specified)
+  const cooldownDuration = config.cooldownDuration ?? 5;
+  const cooldownElement = createCooldownElement(cooldownDuration, currentTime);
+  elements.push(cooldownElement);
+
   return new WorkoutStructureBuilder()
-    .addElements([warmupElement, intervalsElement, cooldownElement])
-    .setPrimaryLengthMetric('duration')
+    .addElements(elements)
+    .setPrimaryLengthMetric(LengthMetricEnum.DURATION)
     .setPrimaryIntensityMetric(
-      config.primaryIntensityMetric || 'percentOfThresholdPace'
+      config.primaryIntensityMetric ||
+        IntensityMetricEnum.PERCENT_OF_THRESHOLD_PACE
     )
-    .setIntensityTargetType('range')
+    .setIntensityTargetType(IntensityTargetTypeEnum.RANGE)
     .build();
 }
 
@@ -413,61 +415,63 @@ export interface CyclingWorkoutConfig {
 export function createCyclingWorkoutStructure(
   config: CyclingWorkoutConfig = {}
 ): WorkoutStructure {
-  const warmupDuration = config.warmupDuration ?? 15;
-  const sweetSpotDuration = config.sweetSpotDuration ?? 20;
-  const recoveryDuration = config.recoveryDuration ?? 10;
-  const vo2maxIntervals = config.vo2maxIntervals ?? 4;
-  const vo2maxDuration = config.vo2maxDuration ?? 3;
-  const vo2maxRecoveryDuration = config.vo2maxRecoveryDuration ?? 5;
-  const cooldownDuration = config.cooldownDuration ?? 15;
-
   const elements: WorkoutStructureElement[] = [];
   let currentTime = 0;
 
-  // Warmup
-  const warmupElement = createWarmupElement(warmupDuration);
-  warmupElement.begin = currentTime;
-  warmupElement.end = currentTime + warmupDuration * 60;
-  elements.push(warmupElement);
-  currentTime = warmupElement.end;
+  // Add warmup (default 15 minutes if not specified)
+  const warmupDuration = config.warmupDuration ?? 15;
+  if (warmupDuration > 0) {
+    const warmupElement = createWarmupElement(warmupDuration);
+    elements.push(warmupElement);
+    currentTime += warmupDuration * 60;
+  }
 
-  // Sweet Spot
+  // Add sweet spot training (default 20 minutes if not specified)
+  const sweetSpotDuration = config.sweetSpotDuration ?? 20;
   if (sweetSpotDuration > 0) {
     const sweetSpotStep = createSweetSpotStep(sweetSpotDuration);
     const sweetSpotElement = new StructureElementBuilder()
-      .type('step')
-      .length(sweetSpotDuration, 'minute')
+      .type(ElementTypeEnum.STEP)
+      .length(sweetSpotDuration, LengthUnitEnum.MINUTE)
       .steps([sweetSpotStep])
       .timeRange(currentTime, currentTime + sweetSpotDuration * 60)
       .build();
     elements.push(sweetSpotElement);
-    currentTime = sweetSpotElement.end;
+    currentTime += sweetSpotDuration * 60;
   }
 
-  // Recovery
+  // Add recovery (default 10 minutes if not specified)
+  const recoveryDuration = config.recoveryDuration ?? 10;
   if (recoveryDuration > 0) {
     const recoveryStep = createRecoveryStep(recoveryDuration, {
-      min: 55,
-      max: 65,
+      min: 60,
+      max: 70,
     });
     const recoveryElement = new StructureElementBuilder()
-      .type('step')
-      .length(recoveryDuration, 'minute')
+      .type(ElementTypeEnum.STEP)
+      .length(recoveryDuration, LengthUnitEnum.MINUTE)
       .steps([recoveryStep])
       .timeRange(currentTime, currentTime + recoveryDuration * 60)
       .build();
     elements.push(recoveryElement);
-    currentTime = recoveryElement.end;
+    currentTime += recoveryDuration * 60;
   }
 
-  // VO2Max intervals
+  // Add VO2Max intervals (default 4 intervals if not specified)
+  const vo2maxIntervals = config.vo2maxIntervals ?? 4;
   if (vo2maxIntervals > 0) {
+    const vo2maxDuration = config.vo2maxDuration ?? 3;
+    const vo2maxRecoveryDuration = config.vo2maxRecoveryDuration ?? 5;
+
     const vo2maxStep = createVO2MaxStep(vo2maxDuration);
-    const vo2maxRecoveryStep = createRestStep(vo2maxRecoveryDuration);
+    const vo2maxRecoveryStep = createRecoveryStep(vo2maxRecoveryDuration, {
+      min: 50,
+      max: 60,
+    });
 
     const vo2maxElement = new StructureElementBuilder()
-      .type('repetition')
-      .length(vo2maxIntervals, 'repetition')
+      .type(ElementTypeEnum.REPETITION)
+      .length(vo2maxIntervals, LengthUnitEnum.REPETITION)
       .steps([vo2maxStep, vo2maxRecoveryStep])
       .timeRange(
         currentTime,
@@ -476,110 +480,42 @@ export function createCyclingWorkoutStructure(
       )
       .build();
     elements.push(vo2maxElement);
-    currentTime = vo2maxElement.end;
+    currentTime +=
+      (vo2maxDuration + vo2maxRecoveryDuration) * 60 * vo2maxIntervals;
   }
 
-  // Cooldown
-  const cooldownElement = createCooldownElement(cooldownDuration, currentTime);
-  elements.push(cooldownElement);
+  // Add cooldown (default 15 minutes if not specified)
+  const cooldownDuration = config.cooldownDuration ?? 15;
+  if (cooldownDuration > 0) {
+    const cooldownElement = createCooldownElement(
+      cooldownDuration,
+      currentTime
+    );
+    elements.push(cooldownElement);
+  }
 
   return new WorkoutStructureBuilder()
     .addElements(elements)
-    .setPrimaryLengthMetric('duration')
-    .setPrimaryIntensityMetric('percentOfThresholdPower')
-    .setIntensityTargetType('range')
+    .setPrimaryLengthMetric(LengthMetricEnum.DURATION)
+    .setPrimaryIntensityMetric(IntensityMetricEnum.PERCENT_OF_THRESHOLD_POWER)
+    .setIntensityTargetType(IntensityTargetTypeEnum.RANGE)
     .build();
 }
 
-/**
- * Create a simple cycling workout structure
- */
-export const createSimpleCyclingWorkoutStructure = (params: {
-  warmupDuration: number;
-  intervalDuration: number;
-  recoveryDuration: number;
-  numberOfIntervals: number;
-  cooldownDuration: number;
-  intervalIntensity: { min: number; max: number };
-  recoveryIntensity: { min: number; max: number };
-  primaryIntensityMetric?:
-    | 'percentOfThresholdPace'
-    | 'percentOfThresholdPower'
-    | 'heartRate'
-    | 'power'
-    | 'pace'
-    | 'speed';
-}): WorkoutStructure => {
-  const elements: WorkoutStructureElement[] = [];
-
-  // Warm up
-  elements.push(
-    new StructureElementBuilder()
-      .type('step')
-      .length(params.warmupDuration, 'minute')
-      .steps([createWarmupStep(params.warmupDuration)])
-      .begin(0)
-      .end(params.warmupDuration * 60)
-      .build()
-  );
-
-  // Intervals
-  const intervalSteps = [
-    createIntervalStep(params.intervalDuration, params.intervalIntensity),
-    createRecoveryStep(params.recoveryDuration, params.recoveryIntensity),
-  ];
-
-  elements.push(
-    new StructureElementBuilder()
-      .type('repetition')
-      .length(params.numberOfIntervals, 'repetition')
-      .steps(intervalSteps)
-      .begin(params.warmupDuration * 60)
-      .end((params.warmupDuration + params.numberOfIntervals) * 60)
-      .build()
-  );
-
-  // Cool down
-  elements.push(
-    new StructureElementBuilder()
-      .type('step')
-      .length(params.cooldownDuration, 'minute')
-      .steps([createCooldownStep(params.cooldownDuration)])
-      .begin((params.warmupDuration + params.numberOfIntervals) * 60)
-      .end(
-        (params.warmupDuration +
-          params.numberOfIntervals +
-          params.cooldownDuration) *
-          60
-      )
-      .build()
-  );
-
-  return new WorkoutStructureBuilder()
-    .addElements(elements)
-    .setPrimaryLengthMetric('duration')
-    .setPrimaryIntensityMetric(
-      params.primaryIntensityMetric || 'percentOfThresholdPace'
-    )
-    .setIntensityTargetType('range')
-    .build();
-};
+// ============================================================================
+// SIMPLE WORKOUT STRUCTURE BUILDERS
+// ============================================================================
 
 /**
- * Simple Workout Structure Builder
- * Builds simplified workout structures without timeRange or polyline
+ * Builder for creating simple workout structures (without timeRange and polyline)
  */
 export class SimpleWorkoutStructureBuilder {
   private structure: SimpleWorkoutStructureElement[] = [];
-  private primaryLengthMetric: 'duration' | 'distance' = 'duration';
-  private primaryIntensityMetric:
-    | 'percentOfThresholdPace'
-    | 'percentOfThresholdPower'
-    | 'heartRate'
-    | 'power'
-    | 'pace'
-    | 'speed' = 'percentOfThresholdPace';
-  private intensityTargetType: 'target' | 'range' = 'range';
+  private primaryLengthMetric: LengthMetric = LengthMetricEnum.DURATION;
+  private primaryIntensityMetric: IntensityMetric =
+    IntensityMetricEnum.PERCENT_OF_THRESHOLD_PACE;
+  private intensityTargetType: IntensityTargetType =
+    IntensityTargetTypeEnum.RANGE;
 
   addElement(
     element: SimpleWorkoutStructureElement
@@ -595,28 +531,20 @@ export class SimpleWorkoutStructureBuilder {
     return this;
   }
 
-  setPrimaryLengthMetric(
-    metric: 'duration' | 'distance'
-  ): SimpleWorkoutStructureBuilder {
+  setPrimaryLengthMetric(metric: LengthMetric): SimpleWorkoutStructureBuilder {
     this.primaryLengthMetric = metric;
     return this;
   }
 
   setPrimaryIntensityMetric(
-    metric:
-      | 'percentOfThresholdPace'
-      | 'percentOfThresholdPower'
-      | 'heartRate'
-      | 'power'
-      | 'pace'
-      | 'speed'
+    metric: IntensityMetric
   ): SimpleWorkoutStructureBuilder {
     this.primaryIntensityMetric = metric;
     return this;
   }
 
   setIntensityTargetType(
-    type: 'target' | 'range'
+    type: IntensityTargetType
   ): SimpleWorkoutStructureBuilder {
     this.intensityTargetType = type;
     return this;
@@ -637,28 +565,17 @@ export class SimpleWorkoutStructureBuilder {
 }
 
 /**
- * Simple Structure Element Builder
- * Builds simplified workout structure elements without timeRange or polyline
+ * Builder for creating simple structure elements
  */
 export class SimpleStructureElementBuilder {
   private element: Partial<SimpleWorkoutStructureElement> = {};
 
-  type(type: 'step' | 'repetition'): SimpleStructureElementBuilder {
+  type(type: ElementType): SimpleStructureElementBuilder {
     this.element.type = type;
     return this;
   }
 
-  length(
-    value: number,
-    unit:
-      | 'minute'
-      | 'second'
-      | 'hour'
-      | 'repetition'
-      | 'meter'
-      | 'kilometer'
-      | 'mile'
-  ): SimpleStructureElementBuilder {
+  length(value: number, unit: LengthUnit): SimpleStructureElementBuilder {
     this.element.length = { value, unit };
     return this;
   }
@@ -682,3 +599,65 @@ export class SimpleStructureElementBuilder {
     } as SimpleWorkoutStructureElement;
   }
 }
+
+/**
+ * Helper function to create a simple cycling workout structure
+ */
+export const createSimpleCyclingWorkoutStructure = (params: {
+  warmupDuration: number;
+  intervalDuration: number;
+  recoveryDuration: number;
+  numberOfIntervals: number;
+  cooldownDuration: number;
+  intervalIntensity: { min: number; max: number };
+  recoveryIntensity: { min: number; max: number };
+  primaryIntensityMetric?: IntensityMetric;
+}): SimpleWorkoutStructure => {
+  const elements: SimpleWorkoutStructureElement[] = [];
+
+  // Add warmup
+  elements.push(
+    new SimpleStructureElementBuilder()
+      .type(ElementTypeEnum.STEP)
+      .length(params.warmupDuration, LengthUnitEnum.MINUTE)
+      .steps([createWarmupStep(params.warmupDuration)])
+      .build()
+  );
+
+  // Add intervals
+  const intervalStep = createIntervalStep(
+    params.intervalDuration,
+    params.intervalIntensity
+  );
+  const recoveryStep = createRecoveryStep(
+    params.recoveryDuration,
+    params.recoveryIntensity
+  );
+
+  elements.push(
+    new SimpleStructureElementBuilder()
+      .type(ElementTypeEnum.REPETITION)
+      .length(params.numberOfIntervals, LengthUnitEnum.REPETITION)
+      .steps([intervalStep, recoveryStep])
+      .build()
+  );
+
+  // Add cooldown
+  elements.push(
+    new SimpleStructureElementBuilder()
+      .type(ElementTypeEnum.STEP)
+      .length(params.cooldownDuration, LengthUnitEnum.MINUTE)
+      .steps([createCooldownStep(params.cooldownDuration)])
+      .build()
+  );
+
+  return new SimpleWorkoutStructureBuilder()
+    .addElements(elements)
+    .setPrimaryLengthMetric(LengthMetricEnum.DURATION)
+    .setPrimaryIntensityMetric(
+      params.primaryIntensityMetric ||
+        IntensityMetricEnum.PERCENT_OF_THRESHOLD_POWER
+    )
+    .setIntensityTargetType(IntensityTargetTypeEnum.RANGE)
+    .build();
+};

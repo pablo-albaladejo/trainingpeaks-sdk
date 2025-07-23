@@ -16,6 +16,7 @@ import type {
 } from '@/application/services/auth-application';
 import type { AuthToken, User } from '@/domain';
 import { SDKError } from '@/domain/errors';
+import { OperationType } from '@/types';
 
 export const login =
   (authRepository: AuthRepository): Login =>
@@ -32,7 +33,7 @@ export const login =
       }
 
       throw SDKError.userNotFound({
-        operation: 'login',
+        operation: OperationType.LOGIN,
         resource: 'user',
         userId: request.credentials.username,
       });
@@ -44,7 +45,7 @@ export const login =
       throw SDKError.authFailed(
         'Failed to get user after authentication',
         {
-          operation: 'login',
+          operation: OperationType.LOGIN,
           resource: 'user',
           userId: request.credentials.username,
         },
@@ -62,7 +63,7 @@ export const logout =
       throw SDKError.fromError(
         error instanceof Error ? error : new Error('Logout failed'),
         'AUTH_1001',
-        { operation: 'logout' }
+        { operation: OperationType.LOGOUT }
       );
     }
   };
@@ -78,7 +79,7 @@ export const getCurrentUser =
           ? error
           : new Error('Failed to get current user'),
         'AUTH_1006',
-        { operation: 'getCurrentUser' }
+        { operation: OperationType.GET_CURRENT_USER }
       );
     }
   };
@@ -105,8 +106,8 @@ export const getCurrentToken =
         error instanceof Error
           ? error
           : new Error('Failed to get current token'),
-        'AUTH_1003',
-        { operation: 'getCurrentToken' }
+        'AUTH_1007',
+        { operation: OperationType.GET_CURRENT_TOKEN }
       );
     }
   };
@@ -119,8 +120,8 @@ export const getUserId =
     } catch (error) {
       throw SDKError.fromError(
         error instanceof Error ? error : new Error('Failed to get user ID'),
-        'AUTH_1006',
-        { operation: 'getUserId' }
+        'AUTH_1008',
+        { operation: OperationType.GET_USER_ID }
       );
     }
   };

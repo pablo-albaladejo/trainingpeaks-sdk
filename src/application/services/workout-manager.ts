@@ -6,6 +6,7 @@
 import type { WorkoutRepository } from '@/application/ports/workout';
 import type { WorkoutFile, WorkoutStructure } from '@/domain';
 import type { WorkoutData } from '@/types';
+import { ActivityType, Difficulty, SortOption } from '@/types';
 
 /**
  * Request parameters for uploading workout from file
@@ -63,8 +64,8 @@ export type CreateStructuredWorkoutRequest = {
   estimatedDuration?: number;
   estimatedDistance?: number;
   estimatedCalories?: number;
-  difficulty?: 'easy' | 'moderate' | 'hard' | 'extreme';
-  activityType?: 'run' | 'bike' | 'swim' | 'strength' | 'other';
+  difficulty?: Difficulty;
+  activityType?: ActivityType;
   equipment?: string[];
   location?: string;
   weatherConditions?: string;
@@ -114,7 +115,7 @@ export type ListWorkoutsParams = {
   tags?: string[];
   activityType?: string;
   difficulty?: string;
-  sortBy?: 'date' | 'name' | 'duration' | 'distance';
+  sortBy?: SortOption;
   sortOrder?: 'asc' | 'desc';
 };
 

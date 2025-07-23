@@ -1,4 +1,5 @@
 import type { WorkoutStructure } from '@/domain';
+import { WorkoutTypeInternal } from '@/types';
 
 // Workout business logic
 export type HasWorkoutFile = (
@@ -20,7 +21,11 @@ export type GetFormattedDistance = (distance?: number) => string | undefined;
 export type GetWorkoutType = (
   hasStructure: boolean,
   hasFile: boolean
-) => 'structured' | 'file-based' | 'simple';
+) => WorkoutTypeInternal;
+
+export type IsStructuredWorkoutType = () => WorkoutTypeInternal;
+export type IsFileBasedWorkoutType = () => WorkoutTypeInternal;
+export type IsSimpleWorkoutType = () => WorkoutTypeInternal;
 export type GetStructureStepsCount = (structure?: WorkoutStructure) => number;
 export type GetStructureActiveStepsCount = (
   structure?: WorkoutStructure

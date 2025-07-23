@@ -4,12 +4,17 @@
  */
 
 import type { WorkoutStructure } from '@/domain';
+import {
+  ActivityType as ActivityTypeEnum,
+  SimpleWorkoutElementType,
+  WorkoutTypeInternal,
+} from '@/types';
 
 /**
  * Simple workout element for utility operations
  */
 export type SimpleWorkoutElement = {
-  type: 'warmup' | 'interval' | 'recovery' | 'cooldown' | 'steady';
+  type: SimpleWorkoutElementType;
   duration: number;
   intensity: string;
   description?: string;
@@ -20,12 +25,12 @@ export type SimpleWorkoutElement = {
 /**
  * Activity type mapping
  */
-export type ActivityType = 'run' | 'bike' | 'swim' | 'strength' | 'other';
+export type ActivityType = ActivityTypeEnum;
 
 /**
  * Workout type for internal operations
  */
-export type WorkoutType = 'structured' | 'file' | 'manual';
+export type WorkoutType = WorkoutTypeInternal;
 
 /**
  * Contract for workout utility operations

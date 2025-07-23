@@ -4,6 +4,7 @@
  */
 
 import type { WorkoutData } from '@/types';
+import { SortOption } from '@/types';
 
 /**
  * Parameters for listing workouts
@@ -16,7 +17,7 @@ export type ListWorkoutsParams = {
   tags?: string[];
   activityType?: string;
   difficulty?: string;
-  sortBy?: 'date' | 'name' | 'duration' | 'distance';
+  sortBy?: SortOption;
   sortOrder?: 'asc' | 'desc';
 };
 

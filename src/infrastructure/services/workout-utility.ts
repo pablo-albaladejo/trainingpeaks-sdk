@@ -12,6 +12,7 @@ import type {
   SimpleWorkoutElement,
   WorkoutType,
 } from '@/application/services/workout-utility';
+import { ActivityType as ActivityTypeEnum, WorkoutTypeInternal } from '@/types';
 
 export const generateWorkoutId: GenerateWorkoutId = (): string => {
   // Generate a unique workout ID with microsecond precision
@@ -47,16 +48,16 @@ export const mapWorkoutTypeToActivityType: MapWorkoutTypeToActivityType = (
 ): ActivityType => {
   // Map workout type to activity type
   const typeMapping: Record<string, ActivityType> = {
-    structured: 'run',
-    file: 'bike',
-    manual: 'other',
-    running: 'run',
-    cycling: 'bike',
-    swimming: 'swim',
-    strength: 'strength',
+    [WorkoutTypeInternal.STRUCTURED]: ActivityTypeEnum.RUN,
+    [WorkoutTypeInternal.FILE]: ActivityTypeEnum.BIKE,
+    [WorkoutTypeInternal.MANUAL]: ActivityTypeEnum.OTHER,
+    running: ActivityTypeEnum.RUN,
+    cycling: ActivityTypeEnum.BIKE,
+    swimming: ActivityTypeEnum.SWIM,
+    strength: ActivityTypeEnum.STRENGTH,
   };
 
-  return typeMapping[workoutType.toLowerCase()] || 'other';
+  return typeMapping[workoutType.toLowerCase()] || ActivityTypeEnum.OTHER;
 };
 
 export const buildStructureFromSimpleElements: BuildStructureFromSimpleElements =

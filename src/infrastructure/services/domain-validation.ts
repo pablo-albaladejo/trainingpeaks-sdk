@@ -26,6 +26,7 @@ import type {
 } from '@/application/services/domain-validation';
 import type { WorkoutStructure } from '@/domain';
 import { ValidationError } from '@/domain/errors';
+import { IntensityClass, LengthUnit } from '@/types';
 
 // Workout entity validation implementations
 export const validateWorkoutId: ValidateWorkoutId = (id: string): void => {
@@ -143,16 +144,8 @@ export const validateWorkoutLengthValue: ValidateWorkoutLengthValue = (
 export const validateWorkoutLengthUnit: ValidateWorkoutLengthUnit = (
   unit: string
 ): void => {
-  const validUnits = [
-    'second',
-    'minute',
-    'hour',
-    'repetition',
-    'meter',
-    'kilometer',
-    'mile',
-  ];
-  if (!validUnits.includes(unit)) {
+  const validUnits = Object.values(LengthUnit);
+  if (!validUnits.includes(unit as LengthUnit)) {
     throw new ValidationError(`Invalid workout length unit: ${unit}`);
   }
 };
@@ -204,7 +197,7 @@ export const validateWorkoutStepTargets: ValidateWorkoutStepTargets = (
   if (!Array.isArray(targets)) {
     throw new ValidationError('Workout step targets must be an array');
   }
-  if (targets.length === 0 && intensityClass !== 'rest') {
+  if (targets.length === 0 && intensityClass !== IntensityClass.REST) {
     throw new ValidationError(
       'Workout step has no targets but is not a rest step'
     );
@@ -213,8 +206,8 @@ export const validateWorkoutStepTargets: ValidateWorkoutStepTargets = (
 
 export const validateWorkoutStepIntensityClass: ValidateWorkoutStepIntensityClass =
   (intensityClass: string): void => {
-    const validClasses = ['active', 'rest', 'warmUp', 'coolDown'];
-    if (!validClasses.includes(intensityClass)) {
+    const validClasses = Object.values(IntensityClass);
+    if (!validClasses.includes(intensityClass as IntensityClass)) {
       throw new ValidationError(
         `Invalid workout step intensity class: ${intensityClass}`
       );

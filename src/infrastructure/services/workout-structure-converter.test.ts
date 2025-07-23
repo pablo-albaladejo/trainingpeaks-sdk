@@ -1,12 +1,20 @@
 /**
  * Workout Structure Converter Tests
- * Tests for converting simple workout structures to complete structures
+ * Unit tests for the workout structure converter functionality
  */
 
 import { describe, expect, it } from 'vitest';
 import type {
   SimpleWorkoutStructure,
   SimpleWorkoutStructureElement,
+} from '../../types';
+import {
+  ElementType,
+  IntensityClass,
+  IntensityMetric,
+  IntensityTargetType,
+  LengthMetric,
+  LengthUnit,
 } from '../../types';
 import {
   SimpleStructureElementBuilder,
@@ -25,39 +33,39 @@ describe('Workout Structure Converter', () => {
       const simpleStructure: SimpleWorkoutStructure = {
         structure: [
           {
-            type: 'step',
-            length: { value: 600, unit: 'second' }, // 10 minutes
+            type: ElementType.STEP,
+            length: { value: 600, unit: LengthUnit.SECOND }, // 10 minutes
             steps: [],
           },
           {
-            type: 'repetition',
-            length: { value: 3, unit: 'repetition' },
+            type: ElementType.REPETITION,
+            length: { value: 3, unit: LengthUnit.REPETITION },
             steps: [
               {
                 name: 'Interval',
-                length: { value: 300, unit: 'second' }, // 5 minutes
+                length: { value: 300, unit: LengthUnit.SECOND }, // 5 minutes
                 targets: [{ minValue: 85, maxValue: 95 }],
-                intensityClass: 'active',
+                intensityClass: IntensityClass.ACTIVE,
                 openDuration: false,
               },
               {
                 name: 'Recovery',
-                length: { value: 180, unit: 'second' }, // 3 minutes
+                length: { value: 180, unit: LengthUnit.SECOND }, // 3 minutes
                 targets: [{ minValue: 65, maxValue: 75 }],
-                intensityClass: 'rest',
+                intensityClass: IntensityClass.REST,
                 openDuration: false,
               },
             ],
           },
           {
-            type: 'step',
-            length: { value: 300, unit: 'second' }, // 5 minutes
+            type: ElementType.STEP,
+            length: { value: 300, unit: LengthUnit.SECOND }, // 5 minutes
             steps: [],
           },
         ],
-        primaryLengthMetric: 'duration',
-        primaryIntensityMetric: 'percentOfThresholdPace',
-        intensityTargetType: 'range',
+        primaryLengthMetric: LengthMetric.DURATION,
+        primaryIntensityMetric: IntensityMetric.PERCENT_OF_THRESHOLD_PACE,
+        intensityTargetType: IntensityTargetType.RANGE,
       };
 
       // Act
@@ -73,14 +81,14 @@ describe('Workout Structure Converter', () => {
       const simpleStructure: SimpleWorkoutStructure = {
         structure: [
           {
-            type: 'repetition',
-            length: { value: 3, unit: 'repetition' },
+            type: ElementType.REPETITION,
+            length: { value: 3, unit: LengthUnit.REPETITION },
             steps: [],
           },
         ],
-        primaryLengthMetric: 'duration',
-        primaryIntensityMetric: 'percentOfThresholdPace',
-        intensityTargetType: 'range',
+        primaryLengthMetric: LengthMetric.DURATION,
+        primaryIntensityMetric: IntensityMetric.PERCENT_OF_THRESHOLD_PACE,
+        intensityTargetType: IntensityTargetType.RANGE,
       };
 
       // Act & Assert
@@ -93,9 +101,9 @@ describe('Workout Structure Converter', () => {
       // Arrange
       const simpleStructure: SimpleWorkoutStructure = {
         structure: [],
-        primaryLengthMetric: 'duration',
-        primaryIntensityMetric: 'percentOfThresholdPace',
-        intensityTargetType: 'range',
+        primaryLengthMetric: LengthMetric.DURATION,
+        primaryIntensityMetric: IntensityMetric.PERCENT_OF_THRESHOLD_PACE,
+        intensityTargetType: IntensityTargetType.RANGE,
       };
 
       // Act
@@ -110,14 +118,14 @@ describe('Workout Structure Converter', () => {
     it('should convert simple element to complete element with correct timing', () => {
       // Arrange
       const simpleElement: SimpleWorkoutStructureElement = {
-        type: 'step',
-        length: { value: 600, unit: 'second' },
+        type: ElementType.STEP,
+        length: { value: 600, unit: LengthUnit.SECOND },
         steps: [
           {
             name: 'Warm Up',
-            length: { value: 600, unit: 'second' },
+            length: { value: 600, unit: LengthUnit.SECOND },
             targets: [{ minValue: 60, maxValue: 70 }],
-            intensityClass: 'warmUp',
+            intensityClass: IntensityClass.WARM_UP,
             openDuration: false,
           },
         ],
@@ -133,8 +141,11 @@ describe('Workout Structure Converter', () => {
       // Assert
       expect(completeElement.begin).toBe(300);
       expect(completeElement.end).toBe(900); // 300 + 600
-      expect(completeElement.type).toBe('step');
-      expect(completeElement.length).toEqual({ value: 600, unit: 'second' });
+      expect(completeElement.type).toBe(ElementType.STEP);
+      expect(completeElement.length).toEqual({
+        value: 600,
+        unit: LengthUnit.SECOND,
+      });
       expect(completeElement.polyline).toBeDefined();
       expect(Array.isArray(completeElement.polyline)).toBe(true);
     });
@@ -146,55 +157,55 @@ describe('Workout Structure Converter', () => {
       const simpleStructure: SimpleWorkoutStructure = {
         structure: [
           {
-            type: 'step',
-            length: { value: 600, unit: 'second' }, // 10 minutes
+            type: ElementType.STEP,
+            length: { value: 600, unit: LengthUnit.SECOND }, // 10 minutes
             steps: [
               {
                 name: 'Warm Up',
-                length: { value: 600, unit: 'second' },
+                length: { value: 600, unit: LengthUnit.SECOND },
                 targets: [{ minValue: 60, maxValue: 70 }],
-                intensityClass: 'warmUp',
+                intensityClass: IntensityClass.WARM_UP,
                 openDuration: false,
               },
             ],
           },
           {
-            type: 'repetition',
-            length: { value: 2, unit: 'repetition' },
+            type: ElementType.REPETITION,
+            length: { value: 2, unit: LengthUnit.REPETITION },
             steps: [
               {
                 name: 'Interval',
-                length: { value: 300, unit: 'second' },
+                length: { value: 300, unit: LengthUnit.SECOND },
                 targets: [{ minValue: 85, maxValue: 95 }],
-                intensityClass: 'active',
+                intensityClass: IntensityClass.ACTIVE,
                 openDuration: false,
               },
               {
                 name: 'Recovery',
-                length: { value: 180, unit: 'second' },
+                length: { value: 180, unit: LengthUnit.SECOND },
                 targets: [{ minValue: 65, maxValue: 75 }],
-                intensityClass: 'rest',
+                intensityClass: IntensityClass.REST,
                 openDuration: false,
               },
             ],
           },
           {
-            type: 'step',
-            length: { value: 300, unit: 'second' }, // 5 minutes
+            type: ElementType.STEP,
+            length: { value: 300, unit: LengthUnit.SECOND }, // 5 minutes
             steps: [
               {
                 name: 'Cool Down',
-                length: { value: 300, unit: 'second' },
+                length: { value: 300, unit: LengthUnit.SECOND },
                 targets: [{ minValue: 50, maxValue: 60 }],
-                intensityClass: 'coolDown',
+                intensityClass: IntensityClass.COOL_DOWN,
                 openDuration: false,
               },
             ],
           },
         ],
-        primaryLengthMetric: 'duration',
-        primaryIntensityMetric: 'percentOfThresholdPace',
-        intensityTargetType: 'range',
+        primaryLengthMetric: LengthMetric.DURATION,
+        primaryIntensityMetric: IntensityMetric.PERCENT_OF_THRESHOLD_PACE,
+        intensityTargetType: IntensityTargetType.RANGE,
       };
 
       // Act
@@ -203,11 +214,13 @@ describe('Workout Structure Converter', () => {
 
       // Assert
       expect(completeStructure.structure).toHaveLength(3);
-      expect(completeStructure.primaryLengthMetric).toBe('duration');
+      expect(completeStructure.primaryLengthMetric).toBe(LengthMetric.DURATION);
       expect(completeStructure.primaryIntensityMetric).toBe(
-        'percentOfThresholdPace'
+        IntensityMetric.PERCENT_OF_THRESHOLD_PACE
       );
-      expect(completeStructure.primaryIntensityTargetOrRange).toBe('range');
+      expect(completeStructure.primaryIntensityTargetOrRange).toBe(
+        IntensityTargetType.RANGE
+      );
       expect(completeStructure.polyline).toBeDefined();
       expect(Array.isArray(completeStructure.polyline)).toBe(true);
 
@@ -227,22 +240,22 @@ describe('Workout Structure Converter', () => {
       const simpleStructure: SimpleWorkoutStructure = {
         structure: [
           {
-            type: 'step',
-            length: { value: 1800, unit: 'second' }, // 30 minutes
+            type: ElementType.STEP,
+            length: { value: 1800, unit: LengthUnit.SECOND }, // 30 minutes
             steps: [
               {
                 name: 'Easy Run',
-                length: { value: 1800, unit: 'second' },
+                length: { value: 1800, unit: LengthUnit.SECOND },
                 targets: [{ minValue: 70, maxValue: 80 }],
-                intensityClass: 'active',
+                intensityClass: IntensityClass.ACTIVE,
                 openDuration: false,
               },
             ],
           },
         ],
-        primaryLengthMetric: 'duration',
-        primaryIntensityMetric: 'percentOfThresholdPace',
-        intensityTargetType: 'range',
+        primaryLengthMetric: LengthMetric.DURATION,
+        primaryIntensityMetric: IntensityMetric.PERCENT_OF_THRESHOLD_PACE,
+        intensityTargetType: IntensityTargetType.RANGE,
       };
 
       // Act
@@ -261,22 +274,22 @@ describe('Workout Structure Converter', () => {
       const simpleStructure: SimpleWorkoutStructure = {
         structure: [
           {
-            type: 'step',
-            length: { value: 600, unit: 'second' },
+            type: ElementType.STEP,
+            length: { value: 600, unit: LengthUnit.SECOND },
             steps: [
               {
                 name: 'Test Step',
-                length: { value: 600, unit: 'second' },
+                length: { value: 600, unit: LengthUnit.SECOND },
                 targets: [{ minValue: 75, maxValue: 85 }],
-                intensityClass: 'active',
+                intensityClass: IntensityClass.ACTIVE,
                 openDuration: false,
               },
             ],
           },
         ],
-        primaryLengthMetric: 'distance',
-        primaryIntensityMetric: 'percentOfThresholdPower',
-        intensityTargetType: 'target',
+        primaryLengthMetric: LengthMetric.DISTANCE,
+        primaryIntensityMetric: IntensityMetric.PERCENT_OF_THRESHOLD_POWER,
+        intensityTargetType: IntensityTargetType.TARGET,
       };
 
       // Act
@@ -284,11 +297,13 @@ describe('Workout Structure Converter', () => {
         convertSimpleToCompleteStructure(simpleStructure);
 
       // Assert
-      expect(completeStructure.primaryLengthMetric).toBe('distance');
+      expect(completeStructure.primaryLengthMetric).toBe(LengthMetric.DISTANCE);
       expect(completeStructure.primaryIntensityMetric).toBe(
-        'percentOfThresholdPower'
+        IntensityMetric.PERCENT_OF_THRESHOLD_POWER
       );
-      expect(completeStructure.primaryIntensityTargetOrRange).toBe('target');
+      expect(completeStructure.primaryIntensityTargetOrRange).toBe(
+        IntensityTargetType.TARGET
+      );
       expect(completeStructure.structure[0].steps[0].name).toBe('Test Step');
       expect(completeStructure.structure[0].steps[0].targets[0].minValue).toBe(
         75
@@ -304,48 +319,48 @@ describe('Workout Structure Converter', () => {
     const simpleCyclingWorkout: SimpleWorkoutStructure = {
       structure: [
         {
-          type: 'step',
-          length: { value: 10, unit: 'minute' },
+          type: ElementType.STEP,
+          length: { value: 10, unit: LengthUnit.MINUTE },
           steps: [
             {
               name: 'Warm Up',
-              length: { value: 10, unit: 'minute' },
+              length: { value: 10, unit: LengthUnit.MINUTE },
               targets: [{ minValue: 50, maxValue: 60 }],
-              intensityClass: 'warmUp',
+              intensityClass: IntensityClass.WARM_UP,
               openDuration: false,
             },
           ],
         },
         {
-          type: 'step',
-          length: { value: 40, unit: 'minute' },
+          type: ElementType.STEP,
+          length: { value: 40, unit: LengthUnit.MINUTE },
           steps: [
             {
               name: 'Active',
-              length: { value: 40, unit: 'minute' },
+              length: { value: 40, unit: LengthUnit.MINUTE },
               targets: [{ minValue: 80, maxValue: 80 }],
-              intensityClass: 'active',
+              intensityClass: IntensityClass.ACTIVE,
               openDuration: false,
             },
           ],
         },
         {
-          type: 'step',
-          length: { value: 5, unit: 'minute' },
+          type: ElementType.STEP,
+          length: { value: 5, unit: LengthUnit.MINUTE },
           steps: [
             {
               name: 'Cool Down',
-              length: { value: 5, unit: 'minute' },
+              length: { value: 5, unit: LengthUnit.MINUTE },
               targets: [{ minValue: 50, maxValue: 60 }],
-              intensityClass: 'coolDown',
+              intensityClass: IntensityClass.COOL_DOWN,
               openDuration: false,
             },
           ],
         },
       ],
-      primaryLengthMetric: 'duration',
-      primaryIntensityMetric: 'percentOfThresholdPower',
-      intensityTargetType: 'target',
+      primaryLengthMetric: LengthMetric.DURATION,
+      primaryIntensityMetric: IntensityMetric.PERCENT_OF_THRESHOLD_POWER,
+      intensityTargetType: IntensityTargetType.TARGET,
     };
 
     // Act
@@ -354,11 +369,13 @@ describe('Workout Structure Converter', () => {
 
     // Assert
     expect(completeStructure.structure).toHaveLength(3);
-    expect(completeStructure.primaryLengthMetric).toBe('duration');
+    expect(completeStructure.primaryLengthMetric).toBe(LengthMetric.DURATION);
     expect(completeStructure.primaryIntensityMetric).toBe(
-      'percentOfThresholdPower'
+      IntensityMetric.PERCENT_OF_THRESHOLD_POWER
     );
-    expect(completeStructure.primaryIntensityTargetOrRange).toBe('target');
+    expect(completeStructure.primaryIntensityTargetOrRange).toBe(
+      IntensityTargetType.TARGET
+    );
 
     // Check timing of elements
     expect(completeStructure.structure[0].begin).toBe(0);
@@ -380,21 +397,21 @@ describe('Workout Structure Converter', () => {
   it('should convert 3 repetitions of 30s active + 30s recovery using builder', () => {
     // Arrange
     const intervalsElement = new SimpleStructureElementBuilder()
-      .type('repetition')
-      .length(3, 'repetition')
+      .type(ElementType.REPETITION)
+      .length(3, LengthUnit.REPETITION)
       .steps([
         {
           name: 'Active',
-          length: { value: 30, unit: 'second' },
+          length: { value: 30, unit: LengthUnit.SECOND },
           targets: [{ minValue: 90, maxValue: 100 }],
-          intensityClass: 'active',
+          intensityClass: IntensityClass.ACTIVE,
           openDuration: false,
         },
         {
           name: 'Recovery',
-          length: { value: 30, unit: 'second' },
+          length: { value: 30, unit: LengthUnit.SECOND },
           targets: [{ minValue: 60, maxValue: 70 }],
-          intensityClass: 'active',
+          intensityClass: IntensityClass.ACTIVE,
           openDuration: false,
         },
       ])
@@ -402,9 +419,9 @@ describe('Workout Structure Converter', () => {
 
     const simpleWorkout = new SimpleWorkoutStructureBuilder()
       .addElement(intervalsElement)
-      .setPrimaryLengthMetric('duration')
-      .setPrimaryIntensityMetric('percentOfThresholdPower')
-      .setIntensityTargetType('range')
+      .setPrimaryLengthMetric(LengthMetric.DURATION)
+      .setPrimaryIntensityMetric(IntensityMetric.PERCENT_OF_THRESHOLD_POWER)
+      .setIntensityTargetType(IntensityTargetType.RANGE)
       .build();
 
     // Act
@@ -412,10 +429,10 @@ describe('Workout Structure Converter', () => {
 
     // Assert
     expect(completeStructure.structure).toHaveLength(1);
-    expect(completeStructure.structure[0].type).toBe('repetition');
+    expect(completeStructure.structure[0].type).toBe(ElementType.REPETITION);
     expect(completeStructure.structure[0].length).toEqual({
       value: 3,
-      unit: 'repetition',
+      unit: LengthUnit.REPETITION,
     });
 
     // Check timing: 3 repetitions * (30s + 30s) = 3 * 60s = 180s
@@ -427,12 +444,12 @@ describe('Workout Structure Converter', () => {
     expect(completeStructure.structure[0].steps[0].name).toBe('Active');
     expect(completeStructure.structure[0].steps[0].length).toEqual({
       value: 30,
-      unit: 'second',
+      unit: LengthUnit.SECOND,
     });
     expect(completeStructure.structure[0].steps[1].name).toBe('Recovery');
     expect(completeStructure.structure[0].steps[1].length).toEqual({
       value: 30,
-      unit: 'second',
+      unit: LengthUnit.SECOND,
     });
   });
 });

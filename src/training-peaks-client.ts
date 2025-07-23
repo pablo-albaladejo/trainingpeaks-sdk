@@ -10,7 +10,8 @@ import { authLogger } from '@/infrastructure/logging/logger';
 import { createTrainingPeaksAuthRepository } from '@/infrastructure/repositories/training-peaks-auth';
 import { createCredentials } from '@/infrastructure/services/domain-factories';
 import { InMemoryStorageAdapter } from '@/infrastructure/storage/in-memory-adapter';
-import { createWorkoutManager } from './workout-manager';
+import { AuthMethod } from '@/types';
+import { createWorkoutManager } from '@/workout-manager';
 
 /**
  * Main TrainingPeaks client
@@ -44,7 +45,9 @@ export class TrainingPeaksClient {
     try {
       authLogger.info('Starting client authentication', {
         username,
-        authMethod: this.sdkConfig.browser.headless ? 'web' : 'api',
+        authMethod: this.sdkConfig.browser.headless
+          ? AuthMethod.WEB
+          : AuthMethod.API,
       });
 
       // Validate credentials

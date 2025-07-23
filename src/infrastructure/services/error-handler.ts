@@ -40,6 +40,7 @@ import {
 } from '@/domain/errors/index';
 import type { SDKErrorContext } from '@/domain/errors/sdk-error';
 import { WorkoutValidationError } from '@/domain/errors/workout-errors';
+import { ErrorType } from '@/types';
 
 /**
  * Default delay function using setTimeout
@@ -163,33 +164,33 @@ export const getErrorCodeFromError =
 
     // Handle specific error types with their expected codes
     if (error instanceof ValidationError) {
-      return 'VALIDATION_ERROR';
+      return ErrorType.VALIDATION_ERROR;
     }
 
     if (error instanceof AuthenticationError) {
-      return 'AUTHENTICATION_ERROR';
+      return ErrorType.AUTHENTICATION_ERROR;
     }
 
     if (error instanceof AuthorizationError) {
-      return 'AUTHORIZATION_ERROR';
+      return ErrorType.AUTHORIZATION_ERROR;
     }
 
     if (error instanceof NetworkError) {
-      return 'NETWORK_ERROR';
+      return ErrorType.NETWORK_ERROR;
     }
 
     if (error instanceof UploadError) {
-      return 'UPLOAD_ERROR';
+      return ErrorType.UPLOAD_ERROR;
     }
 
     if (error instanceof RateLimitError) {
-      return 'RATE_LIMIT_ERROR';
+      return ErrorType.RATE_LIMIT_ERROR;
     }
 
     // Handle generic Error class
     const className = error.constructor.name;
     if (className === 'Error') {
-      return 'ERROR';
+      return ErrorType.ERROR;
     }
 
     return className.replace('Error', '').toUpperCase();

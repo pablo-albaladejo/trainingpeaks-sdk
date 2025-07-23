@@ -18,6 +18,12 @@ import type {
   IsTimeBasedWorkout,
 } from '@/application/services/workout-business-logic';
 import type { WorkoutStructure } from '@/domain';
+import {
+  ElementType,
+  IntensityClass,
+  LengthMetric,
+  WorkoutTypeInternal,
+} from '@/types';
 
 // Workout business logic implementations
 export const hasWorkoutFile: HasWorkoutFile = (
@@ -93,13 +99,13 @@ export const getFormattedDistance: GetFormattedDistance = (
 export const getWorkoutType: GetWorkoutType = (
   hasStructure: boolean,
   hasFile: boolean
-): 'structured' | 'file-based' | 'simple' => {
+): WorkoutTypeInternal => {
   if (hasStructure) {
-    return 'structured';
+    return WorkoutTypeInternal.STRUCTURED;
   } else if (hasFile) {
-    return 'file-based';
+    return WorkoutTypeInternal.FILE_BASED;
   } else {
-    return 'simple';
+    return WorkoutTypeInternal.SIMPLE;
   }
 };
 
@@ -116,27 +122,28 @@ export const getStructureActiveStepsCount: GetStructureActiveStepsCount = (
   if (!structure) return 0;
   return structure.structure
     .flatMap((element) => element.steps)
-    .filter((step) => step.intensityClass === 'active').length;
+    .filter((step) => step.intensityClass === IntensityClass.ACTIVE).length;
 };
 
 export const getStructureRepetitionsCount: GetStructureRepetitionsCount = (
   structure?: WorkoutStructure
 ): number => {
   if (!structure) return 0;
-  return structure.structure.filter((element) => element.type === 'repetition')
-    .length;
+  return structure.structure.filter(
+    (element) => element.type === ElementType.REPETITION
+  ).length;
 };
 
 export const isTimeBasedWorkout: IsTimeBasedWorkout = (
   structure?: WorkoutStructure
 ): boolean => {
-  return structure?.primaryLengthMetric === 'duration' || false;
+  return structure?.primaryLengthMetric === LengthMetric.DURATION || false;
 };
 
 export const isDistanceBasedWorkout: IsDistanceBasedWorkout = (
   structure?: WorkoutStructure
 ): boolean => {
-  return structure?.primaryLengthMetric === 'distance' || false;
+  return structure?.primaryLengthMetric === LengthMetric.DISTANCE || false;
 };
 
 export const equalsWorkout: EqualsWorkout = (
