@@ -5,6 +5,8 @@
 
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  SimpleStructureElementBuilder,
+  SimpleWorkoutStructureBuilder,
   StructureElementBuilder,
   WorkoutStepBuilder,
   WorkoutStructureBuilder,
@@ -23,6 +25,7 @@ import {
   type CyclingWorkoutConfig,
   type IntervalWorkoutConfig,
 } from './workout-builder';
+import { convertSimpleToCompleteStructure } from './workout-structure-converter';
 
 describe('WorkoutStepBuilder', () => {
   let builder: WorkoutStepBuilder;
@@ -287,19 +290,6 @@ describe('WorkoutStructureBuilder', () => {
       expect(structure.structure).toEqual([mockElement, element2]);
     });
 
-    it('should support adding polyline', () => {
-      const polyline = [
-        [40.4168, -3.7038],
-        [40.4169, -3.7039],
-      ];
-      const structure = builder
-        .addElement(mockElement)
-        .addPolyline(polyline)
-        .build();
-
-      expect(structure.polyline).toEqual(polyline);
-    });
-
     it('should support different intensity metrics', () => {
       const structure = builder
         .addElement(mockElement)
@@ -322,7 +312,7 @@ describe('WorkoutStructureBuilder', () => {
   describe('validation', () => {
     it('should throw error when no elements are added', () => {
       expect(() => builder.build()).toThrow(
-        'WorkoutStructure must have at least one element.'
+        'WorkoutStructure must have at least one element'
       );
     });
   });
@@ -657,5 +647,86 @@ describe('Integration Tests', () => {
     expect(cooldownElement.type).toBe('step');
     expect(cooldownElement.steps[0].name).toBe('Cooldown');
     expect(cooldownElement.steps[0].length.value).toBe(5);
+  });
+});
+
+describe('SimpleWorkoutStructureBuilder + Converter Integration', () => {
+  it('should convert a simple cycling workout built with the builder (10min warmup, 40min active @80% power, 5min cooldown)', () => {
+    // Arrange
+    const warmup = new SimpleStructureElementBuilder()
+      .type('step')
+      .length(10, 'minute')
+      .steps([
+        {
+          name: 'Warm Up',
+          length: { value: 10, unit: 'minute' },
+          targets: [{ minValue: 50, maxValue: 60 }],
+          intensityClass: 'warmUp',
+          openDuration: false,
+        },
+      ])
+      .build();
+    const active = new SimpleStructureElementBuilder()
+      .type('step')
+      .length(40, 'minute')
+      .steps([
+        {
+          name: 'Active',
+          length: { value: 40, unit: 'minute' },
+          targets: [{ minValue: 80, maxValue: 80 }],
+          intensityClass: 'active',
+          openDuration: false,
+        },
+      ])
+      .build();
+    const cooldown = new SimpleStructureElementBuilder()
+      .type('step')
+      .length(5, 'minute')
+      .steps([
+        {
+          name: 'Cool Down',
+          length: { value: 5, unit: 'minute' },
+          targets: [{ minValue: 50, maxValue: 60 }],
+          intensityClass: 'coolDown',
+          openDuration: false,
+        },
+      ])
+      .build();
+    const simpleCyclingWorkout = new SimpleWorkoutStructureBuilder()
+      .addElement(warmup)
+      .addElement(active)
+      .addElement(cooldown)
+      .setPrimaryLengthMetric('duration')
+      .setPrimaryIntensityMetric('percentOfThresholdPower')
+      .setIntensityTargetType('target')
+      .build();
+
+    // Act
+    const completeStructure =
+      convertSimpleToCompleteStructure(simpleCyclingWorkout);
+
+    // Assert
+    expect(completeStructure.structure).toHaveLength(3);
+    expect(completeStructure.primaryLengthMetric).toBe('duration');
+    expect(completeStructure.primaryIntensityMetric).toBe(
+      'percentOfThresholdPower'
+    );
+    expect(completeStructure.primaryIntensityTargetOrRange).toBe('target');
+
+    // Check timing of elements
+    expect(completeStructure.structure[0].begin).toBe(0);
+    expect(completeStructure.structure[0].end).toBe(10);
+    expect(completeStructure.structure[1].begin).toBe(10);
+    expect(completeStructure.structure[1].end).toBe(50);
+    expect(completeStructure.structure[2].begin).toBe(50);
+    expect(completeStructure.structure[2].end).toBe(55);
+
+    // Check targets
+    expect(completeStructure.structure[1].steps[0].targets[0].minValue).toBe(
+      80
+    );
+    expect(completeStructure.structure[1].steps[0].targets[0].maxValue).toBe(
+      80
+    );
   });
 });

@@ -408,6 +408,57 @@ export type RetryConfig = {
   backoff: number;
 };
 
+// Simple Workout Structure Types (without timeRange and polyline)
+export type SimpleWorkoutStructureElement = {
+  type: 'step' | 'repetition';
+  length: WorkoutLength;
+  steps: WorkoutStructureStep[];
+};
+
+export type SimpleWorkoutStructure = {
+  structure: SimpleWorkoutStructureElement[];
+  primaryLengthMetric: 'duration' | 'distance';
+  primaryIntensityMetric:
+    | 'percentOfThresholdPace'
+    | 'percentOfThresholdPower'
+    | 'heartRate'
+    | 'power'
+    | 'pace'
+    | 'speed';
+  intensityTargetType: 'target' | 'range';
+};
+
+export type CreateSimpleStructuredWorkoutRequest = {
+  name: string;
+  description?: string;
+  structure: SimpleWorkoutStructure;
+  tags?: string[];
+  notes?: string;
+  targetDate?: Date;
+  estimatedDuration?: number;
+  estimatedDistance?: number;
+  estimatedCalories?: number;
+  difficulty?: 'easy' | 'moderate' | 'hard' | 'extreme';
+  activityType?: 'run' | 'bike' | 'swim' | 'strength' | 'other';
+  equipment?: string[];
+  location?: string;
+  weatherConditions?: string;
+  personalBest?: boolean;
+  coachNotes?: string;
+  publiclyVisible?: boolean;
+  allowComments?: boolean;
+  category?: string;
+  subcategory?: string;
+  season?: string;
+  trainingPhase?: string;
+  intensityZone?: number;
+  rpeScale?: number;
+  heartRateZones?: number[];
+  powerZones?: number[];
+  paceZones?: number[];
+  customFields?: Record<string, unknown>;
+};
+
 /**
  * Import and re-export configuration types from config module
  */

@@ -6,24 +6,21 @@
  */
 
 import type {
-  WorkoutElementType,
-  WorkoutIntensityClass,
-  WorkoutIntensityMetric,
-  WorkoutIntensityTargetType,
+  SimpleWorkoutStructure,
+  SimpleWorkoutStructureElement,
   WorkoutLength,
-  WorkoutLengthMetric,
-  WorkoutStep,
   WorkoutStructure,
   WorkoutStructureElement,
+  WorkoutStructureStep,
   WorkoutTarget,
-} from '@/domain';
+} from '@/types';
 
 // ============================================================================
 // WORKOUT STEP BUILDER CLASS
 // ============================================================================
 
 export class WorkoutStepBuilder {
-  private step: Partial<WorkoutStep> = {};
+  private step: Partial<WorkoutStructureStep> = {};
 
   name(name: string): WorkoutStepBuilder {
     this.step.name = name;
@@ -45,7 +42,9 @@ export class WorkoutStepBuilder {
     return this;
   }
 
-  intensity(intensityClass: WorkoutIntensityClass): WorkoutStepBuilder {
+  intensity(
+    intensityClass: 'active' | 'rest' | 'warmUp' | 'coolDown'
+  ): WorkoutStepBuilder {
     this.step.intensityClass = intensityClass;
     return this;
   }
@@ -65,7 +64,7 @@ export class WorkoutStepBuilder {
     return this;
   }
 
-  build(): WorkoutStep {
+  build(): WorkoutStructureStep {
     if (
       !this.step.name ||
       !this.step.length ||
@@ -83,7 +82,7 @@ export class WorkoutStepBuilder {
       intensityClass: this.step.intensityClass,
       targets: this.step.targets,
       openDuration: this.step.openDuration ?? false,
-    } as WorkoutStep;
+    } as WorkoutStructureStep;
   }
 }
 
@@ -94,7 +93,7 @@ export class WorkoutStepBuilder {
 export class StructureElementBuilder {
   private element: Partial<WorkoutStructureElement> = {};
 
-  type(elementType: WorkoutElementType): StructureElementBuilder {
+  type(elementType: 'step' | 'repetition'): StructureElementBuilder {
     this.element.type = elementType;
     return this;
   }
@@ -107,13 +106,23 @@ export class StructureElementBuilder {
     return this;
   }
 
-  steps(steps: WorkoutStep[]): StructureElementBuilder {
+  steps(steps: WorkoutStructureStep[]): StructureElementBuilder {
     this.element.steps = steps;
     return this;
   }
 
   timeRange(beginSeconds: number, endSeconds: number): StructureElementBuilder {
     this.element.begin = beginSeconds;
+    this.element.end = endSeconds;
+    return this;
+  }
+
+  begin(beginSeconds: number): StructureElementBuilder {
+    this.element.begin = beginSeconds;
+    return this;
+  }
+
+  end(endSeconds: number): StructureElementBuilder {
     this.element.end = endSeconds;
     return this;
   }
@@ -137,21 +146,27 @@ export class StructureElementBuilder {
       steps: this.element.steps,
       begin: this.element.begin,
       end: this.element.end,
+      polyline: [],
     } as WorkoutStructureElement;
   }
 }
 
 // ============================================================================
-// WORKOUT STRUCTURE BUILDER CLASS
+// WORKOUT STRUCTURE BUILDER
 // ============================================================================
 
 export class WorkoutStructureBuilder {
   private structure: WorkoutStructureElement[] = [];
   private polyline: number[][] = [];
-  private primaryLengthMetric: WorkoutLengthMetric = 'duration';
-  private primaryIntensityMetric: WorkoutIntensityMetric =
-    'percentOfThresholdPace';
-  private primaryIntensityTargetOrRange: WorkoutIntensityTargetType = 'range';
+  private primaryLengthMetric: 'duration' | 'distance' = 'duration';
+  private primaryIntensityMetric:
+    | 'percentOfThresholdPace'
+    | 'percentOfThresholdPower'
+    | 'heartRate'
+    | 'power'
+    | 'pace'
+    | 'speed' = 'percentOfThresholdPace';
+  private primaryIntensityTargetOrRange: 'target' | 'range' = 'range';
 
   addElement(element: WorkoutStructureElement): WorkoutStructureBuilder {
     this.structure.push(element);
@@ -163,33 +178,39 @@ export class WorkoutStructureBuilder {
     return this;
   }
 
-  addPolyline(coordinates: number[][]): WorkoutStructureBuilder {
-    this.polyline = coordinates;
+  setPolyline(polyline: number[][]): WorkoutStructureBuilder {
+    this.polyline = polyline;
     return this;
   }
 
-  setPrimaryLengthMetric(metric: WorkoutLengthMetric): WorkoutStructureBuilder {
+  setPrimaryLengthMetric(
+    metric: 'duration' | 'distance'
+  ): WorkoutStructureBuilder {
     this.primaryLengthMetric = metric;
     return this;
   }
 
   setPrimaryIntensityMetric(
-    metric: WorkoutIntensityMetric
+    metric:
+      | 'percentOfThresholdPace'
+      | 'percentOfThresholdPower'
+      | 'heartRate'
+      | 'power'
+      | 'pace'
+      | 'speed'
   ): WorkoutStructureBuilder {
     this.primaryIntensityMetric = metric;
     return this;
   }
 
-  setIntensityTargetType(
-    type: WorkoutIntensityTargetType
-  ): WorkoutStructureBuilder {
+  setIntensityTargetType(type: 'target' | 'range'): WorkoutStructureBuilder {
     this.primaryIntensityTargetOrRange = type;
     return this;
   }
 
   build(): WorkoutStructure {
     if (this.structure.length === 0) {
-      throw new Error('WorkoutStructure must have at least one element.');
+      throw new Error('WorkoutStructure must have at least one element');
     }
 
     return {
@@ -206,7 +227,7 @@ export class WorkoutStructureBuilder {
 // HELPER FUNCTIONS FOR CREATING COMMON STEPS
 // ============================================================================
 
-export function createWarmupStep(duration: number = 10): WorkoutStep {
+export function createWarmupStep(duration: number = 10): WorkoutStructureStep {
   return new WorkoutStepBuilder()
     .name('Progressive Warmup')
     .duration(duration)
@@ -219,7 +240,7 @@ export function createIntervalStep(
   duration: number,
   intensity: { min: number; max: number },
   name?: string
-): WorkoutStep {
+): WorkoutStructureStep {
   return new WorkoutStepBuilder()
     .name(name || `${duration}min Interval`)
     .duration(duration)
@@ -232,7 +253,7 @@ export function createRecoveryStep(
   duration: number,
   intensity: { min: number; max: number },
   name?: string
-): WorkoutStep {
+): WorkoutStructureStep {
   return new WorkoutStepBuilder()
     .name(name || `${duration}min Recovery`)
     .duration(duration)
@@ -241,7 +262,10 @@ export function createRecoveryStep(
     .build();
 }
 
-export function createRestStep(duration: number, name?: string): WorkoutStep {
+export function createRestStep(
+  duration: number,
+  name?: string
+): WorkoutStructureStep {
   return new WorkoutStepBuilder()
     .name(name || `${duration}min Rest`)
     .duration(duration)
@@ -250,7 +274,7 @@ export function createRestStep(duration: number, name?: string): WorkoutStep {
     .build();
 }
 
-export function createCooldownStep(duration: number = 5): WorkoutStep {
+export function createCooldownStep(duration: number = 5): WorkoutStructureStep {
   return new WorkoutStepBuilder()
     .name('Cooldown')
     .duration(duration)
@@ -259,7 +283,7 @@ export function createCooldownStep(duration: number = 5): WorkoutStep {
     .build();
 }
 
-export function createSweetSpotStep(duration: number): WorkoutStep {
+export function createSweetSpotStep(duration: number): WorkoutStructureStep {
   return new WorkoutStepBuilder()
     .name('Sweet Spot Training')
     .duration(duration)
@@ -268,7 +292,7 @@ export function createSweetSpotStep(duration: number): WorkoutStep {
     .build();
 }
 
-export function createVO2MaxStep(duration: number): WorkoutStep {
+export function createVO2MaxStep(duration: number): WorkoutStructureStep {
   return new WorkoutStepBuilder()
     .name('VO2Max Interval')
     .duration(duration)
@@ -341,7 +365,7 @@ export interface IntervalWorkoutConfig {
   cooldownDuration?: number;
   intervalIntensity: { min: number; max: number };
   recoveryIntensity: { min: number; max: number };
-  primaryIntensityMetric?: WorkoutIntensityMetric;
+  primaryIntensityMetric?: string;
 }
 
 export function createIntervalWorkoutStructure(
@@ -465,4 +489,196 @@ export function createCyclingWorkoutStructure(
     .setPrimaryIntensityMetric('percentOfThresholdPower')
     .setIntensityTargetType('range')
     .build();
+}
+
+/**
+ * Create a simple cycling workout structure
+ */
+export const createSimpleCyclingWorkoutStructure = (params: {
+  warmupDuration: number;
+  intervalDuration: number;
+  recoveryDuration: number;
+  numberOfIntervals: number;
+  cooldownDuration: number;
+  intervalIntensity: { min: number; max: number };
+  recoveryIntensity: { min: number; max: number };
+  primaryIntensityMetric?:
+    | 'percentOfThresholdPace'
+    | 'percentOfThresholdPower'
+    | 'heartRate'
+    | 'power'
+    | 'pace'
+    | 'speed';
+}): WorkoutStructure => {
+  const elements: WorkoutStructureElement[] = [];
+
+  // Warm up
+  elements.push(
+    new StructureElementBuilder()
+      .type('step')
+      .length(params.warmupDuration, 'minute')
+      .steps([createWarmupStep(params.warmupDuration)])
+      .begin(0)
+      .end(params.warmupDuration * 60)
+      .build()
+  );
+
+  // Intervals
+  const intervalSteps = [
+    createIntervalStep(params.intervalDuration, params.intervalIntensity),
+    createRecoveryStep(params.recoveryDuration, params.recoveryIntensity),
+  ];
+
+  elements.push(
+    new StructureElementBuilder()
+      .type('repetition')
+      .length(params.numberOfIntervals, 'repetition')
+      .steps(intervalSteps)
+      .begin(params.warmupDuration * 60)
+      .end((params.warmupDuration + params.numberOfIntervals) * 60)
+      .build()
+  );
+
+  // Cool down
+  elements.push(
+    new StructureElementBuilder()
+      .type('step')
+      .length(params.cooldownDuration, 'minute')
+      .steps([createCooldownStep(params.cooldownDuration)])
+      .begin((params.warmupDuration + params.numberOfIntervals) * 60)
+      .end(
+        (params.warmupDuration +
+          params.numberOfIntervals +
+          params.cooldownDuration) *
+          60
+      )
+      .build()
+  );
+
+  return new WorkoutStructureBuilder()
+    .addElements(elements)
+    .setPrimaryLengthMetric('duration')
+    .setPrimaryIntensityMetric(
+      params.primaryIntensityMetric || 'percentOfThresholdPace'
+    )
+    .setIntensityTargetType('range')
+    .build();
+};
+
+/**
+ * Simple Workout Structure Builder
+ * Builds simplified workout structures without timeRange or polyline
+ */
+export class SimpleWorkoutStructureBuilder {
+  private structure: SimpleWorkoutStructureElement[] = [];
+  private primaryLengthMetric: 'duration' | 'distance' = 'duration';
+  private primaryIntensityMetric:
+    | 'percentOfThresholdPace'
+    | 'percentOfThresholdPower'
+    | 'heartRate'
+    | 'power'
+    | 'pace'
+    | 'speed' = 'percentOfThresholdPace';
+  private intensityTargetType: 'target' | 'range' = 'range';
+
+  addElement(
+    element: SimpleWorkoutStructureElement
+  ): SimpleWorkoutStructureBuilder {
+    this.structure.push(element);
+    return this;
+  }
+
+  addElements(
+    elements: SimpleWorkoutStructureElement[]
+  ): SimpleWorkoutStructureBuilder {
+    this.structure.push(...elements);
+    return this;
+  }
+
+  setPrimaryLengthMetric(
+    metric: 'duration' | 'distance'
+  ): SimpleWorkoutStructureBuilder {
+    this.primaryLengthMetric = metric;
+    return this;
+  }
+
+  setPrimaryIntensityMetric(
+    metric:
+      | 'percentOfThresholdPace'
+      | 'percentOfThresholdPower'
+      | 'heartRate'
+      | 'power'
+      | 'pace'
+      | 'speed'
+  ): SimpleWorkoutStructureBuilder {
+    this.primaryIntensityMetric = metric;
+    return this;
+  }
+
+  setIntensityTargetType(
+    type: 'target' | 'range'
+  ): SimpleWorkoutStructureBuilder {
+    this.intensityTargetType = type;
+    return this;
+  }
+
+  build(): SimpleWorkoutStructure {
+    if (this.structure.length === 0) {
+      throw new Error('SimpleWorkoutStructure must have at least one element');
+    }
+
+    return {
+      structure: this.structure,
+      primaryLengthMetric: this.primaryLengthMetric,
+      primaryIntensityMetric: this.primaryIntensityMetric,
+      intensityTargetType: this.intensityTargetType,
+    };
+  }
+}
+
+/**
+ * Simple Structure Element Builder
+ * Builds simplified workout structure elements without timeRange or polyline
+ */
+export class SimpleStructureElementBuilder {
+  private element: Partial<SimpleWorkoutStructureElement> = {};
+
+  type(type: 'step' | 'repetition'): SimpleStructureElementBuilder {
+    this.element.type = type;
+    return this;
+  }
+
+  length(
+    value: number,
+    unit:
+      | 'minute'
+      | 'second'
+      | 'hour'
+      | 'repetition'
+      | 'meter'
+      | 'kilometer'
+      | 'mile'
+  ): SimpleStructureElementBuilder {
+    this.element.length = { value, unit };
+    return this;
+  }
+
+  steps(steps: WorkoutStructureStep[]): SimpleStructureElementBuilder {
+    this.element.steps = steps;
+    return this;
+  }
+
+  build(): SimpleWorkoutStructureElement {
+    if (!this.element.type || !this.element.length || !this.element.steps) {
+      throw new Error(
+        'Incomplete SimpleWorkoutStructureElement. Missing required properties: type, length, steps'
+      );
+    }
+
+    return {
+      type: this.element.type,
+      length: this.element.length,
+      steps: this.element.steps,
+    } as SimpleWorkoutStructureElement;
+  }
 }

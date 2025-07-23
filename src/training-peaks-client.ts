@@ -168,19 +168,3 @@ export class TrainingPeaksClient {
     return this.sdkConfig;
   }
 }
-
-/**
- * Create TrainingPeaks Client with persistent storage
- * Uses file system to store authentication data between sessions
- *
- * Note: This is a placeholder for future implementation.
- * Currently, the client uses in-memory storage only.
- * To implement persistent storage, the client architecture needs to be updated.
- */
-export const createTrainingPeaksClientWithPersistentStorage = (
-  config: TrainingPeaksClientConfig = {}
-) => {
-  // For now, return the regular client
-  // TODO: Implement persistent storage integration
-  return new TrainingPeaksClient(config);
-};
