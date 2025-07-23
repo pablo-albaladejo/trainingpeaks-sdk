@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## <small>1.8.1 (2025-07-23)</small>
+
+* refactor: centralize type definitions ([6add43a](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/6add43a))
+* refactor: enhance workout structure builders and converters ([709c52a](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/709c52a))
+
 ## 1.8.0 (2025-07-23)
 
 * feat: add workout builder service and unit tests ([50631e3](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/50631e3))
