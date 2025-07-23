@@ -3,11 +3,39 @@
  * Pure business logic and types
  */
 
-// Domain types (inferred from Zod schemas)
-export * from './schemas';
+// Entities
+export * from './entities/user';
+export * from './entities/workout';
+
+// Value Objects
+export * from './value-objects/auth-token';
+export * from './value-objects/credentials';
+export * from './value-objects/workout-file';
+
+// Repositories
+export * from './repositories/auth-repository';
+export * from './repositories/workout-repository';
 
 // Errors
-export * from './errors';
+export * from './errors/domain-errors';
 
-// Events
-export * from './events';
+// Schemas (only unique types, not re-exporting entities/value objects)
+export {
+  WorkoutElementType,
+  WorkoutIntensityClass,
+  WorkoutIntensityMetric,
+  WorkoutIntensityTargetType,
+  WorkoutLength,
+  WorkoutLengthMetric,
+  WorkoutLengthUnit,
+  WorkoutStep,
+  WorkoutStructure,
+  WorkoutStructureElement,
+  WorkoutTarget,
+} from './schemas';
+
+// Builders
+export * from './builders';
+
+// Templates
+export * from './templates';

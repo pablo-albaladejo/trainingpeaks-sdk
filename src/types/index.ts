@@ -1,9 +1,8 @@
 /**
- * TrainingPeaks SDK Types
- * Centralized type definitions for the TrainingPeaks SDK
+ * Public API Types
+ * Type definitions for external API interactions
  */
 
-// Centralized Enums for String Literals
 export enum ElementType {
   STEP = 'step',
   REPETITION = 'repetition',
@@ -111,8 +110,6 @@ export enum SimpleWorkoutElementType {
   STEADY = 'steady',
 }
 
-import type { WorkoutStructure as WorkoutStructureValueObject } from '@/domain';
-
 export type TrainingPeaksConfig = {
   /** Base URL for the TrainingPeaks API */
   baseUrl?: string;
@@ -140,28 +137,6 @@ export type LoginCredentials = {
   username: string;
   /** User password */
   password: string;
-};
-
-export type AuthToken = {
-  /** Access token */
-  accessToken: string;
-  /** Token type (usually 'Bearer') */
-  tokenType: string;
-  /** Token expiration timestamp */
-  expiresAt: number;
-  /** Refresh token */
-  refreshToken?: string;
-};
-
-export type UserProfile = {
-  /** User ID */
-  id: string;
-  /** User full name */
-  name: string;
-  /** User avatar URL */
-  avatar?: string;
-  /** User preferences */
-  preferences?: Record<string, unknown>;
 };
 
 export type WorkoutData = {
@@ -210,7 +185,6 @@ export type UploadResponse = {
   errors?: string[];
 };
 
-// Structured Workout Types
 export type WorkoutStructureStep = {
   /** Step name */
   name: string;
@@ -504,7 +478,6 @@ export type RetryConfig = {
   backoff: number;
 };
 
-// Simple Workout Structure Types (without timeRange and polyline)
 export type SimpleWorkoutStructureElement = {
   type: ElementType;
   length: WorkoutLength;
@@ -549,12 +522,6 @@ export type CreateSimpleStructuredWorkoutRequest = {
   customFields?: Record<string, unknown>;
 };
 
-/**
- * Import and re-export configuration types from config module
- */
-import type { TrainingPeaksSDKConfig } from '@/config';
-export type { TrainingPeaksSDKConfig } from '@/config';
-
 export type TrainingPeaksClientConfig = {
   /** Base URL for TrainingPeaks */
   baseUrl?: string;
@@ -573,5 +540,13 @@ export type TrainingPeaksClientConfig = {
   /** Custom headers */
   headers?: Record<string, string>;
   /** Complete SDK configuration (overrides other options) */
-  sdkConfig?: Partial<TrainingPeaksSDKConfig>;
+  sdkConfig?: Partial<TrainingPeaksConfig>;
+};
+
+export type WorkoutStructureValueObject = {
+  structure: WorkoutStructureElement[];
+  polyline: number[][];
+  primaryLengthMetric: LengthMetric;
+  primaryIntensityMetric: IntensityMetric;
+  primaryIntensityTargetOrRange: IntensityTargetType;
 };

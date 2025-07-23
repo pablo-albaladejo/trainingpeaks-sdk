@@ -4,242 +4,140 @@
  */
 
 import { faker } from '@faker-js/faker';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { authTokenBuilder, userBuilder } from '../../__fixtures__/auth.fixture';
-import { randomNumber, randomString } from '../../__fixtures__/utils.fixture';
-import { AuthRepository } from '../ports/auth';
-import { createLoginUseCase, LoginRequest, LoginResponse } from './login';
+import { describe, expect, it, vi } from 'vitest';
+import { executeLoginUseCase, LoginRequest, LoginResponse } from './login';
 
 describe('Login Use Case', () => {
-  let mockAuthRepository: AuthRepository;
-  let loginUseCase: ReturnType<typeof createLoginUseCase>;
-
-  beforeEach(() => {
-    // Arrange - Setup mocks with all required AuthRepository methods
-    mockAuthRepository = {
-      authenticate: vi.fn(),
-      getCurrentUser: vi.fn(),
-      refreshToken: vi.fn(),
-      isAuthenticated: vi.fn(),
-      getCurrentToken: vi.fn(),
-      storeToken: vi.fn(),
-      storeUser: vi.fn(),
-      clearAuth: vi.fn(),
-      getUserId: vi.fn(),
-    };
-
-    loginUseCase = createLoginUseCase(mockAuthRepository);
-  });
-
   describe('execute', () => {
     it('should login successfully with valid credentials', async () => {
       // Arrange
       const username = faker.internet.userName();
       const password = faker.internet.password();
-      const request: LoginRequest = { username, password };
+      const request: LoginRequest = {
+        credentials: { username, password },
+      };
 
-      const expectedToken = authTokenBuilder.build();
-      const expectedUser = userBuilder.build();
+      const expectedUser = {
+        id: faker.string.uuid(),
+        name: username,
+      };
+
       const expectedResponse: LoginResponse = {
-        token: expectedToken,
+        success: true,
         user: expectedUser,
       };
 
-      mockAuthRepository.authenticate = vi
-        .fn()
-        .mockResolvedValue(expectedToken);
-      mockAuthRepository.getCurrentUser = vi
-        .fn()
-        .mockResolvedValue(expectedUser);
+      const mockLoginService = vi.fn().mockResolvedValue({
+        token: {
+          accessToken: faker.string.alphanumeric(32),
+          tokenType: 'Bearer',
+          expiresAt: new Date(Date.now() + 3600000),
+        },
+        user: expectedUser,
+      });
+
+      const mockGetCurrentUserService = vi.fn().mockResolvedValue(expectedUser);
+
+      const loginUseCase = executeLoginUseCase(
+        mockLoginService,
+        mockGetCurrentUserService
+      );
 
       // Act
-      const result = await loginUseCase.execute(request);
+      const result = await loginUseCase(request);
 
       // Assert
       expect(result).toStrictEqual(expectedResponse);
-      expect(mockAuthRepository.authenticate).toHaveBeenCalledTimes(1);
-      expect(mockAuthRepository.authenticate).toHaveBeenCalledWith(
+      expect(mockLoginService).toHaveBeenCalledWith(
         expect.objectContaining({
           username,
           password,
         })
       );
-      expect(mockAuthRepository.getCurrentUser).toHaveBeenCalledTimes(1);
+      expect(mockGetCurrentUserService).toHaveBeenCalledTimes(1);
     });
 
-    it('should create credentials with username and password', async () => {
-      // Arrange
-      const username = 'testuser';
-      const password = 'testpassword';
-      const request: LoginRequest = { username, password };
-
-      const expectedToken = authTokenBuilder.build();
-      const expectedUser = userBuilder.build();
-      const expectedResponse: LoginResponse = {
-        token: expectedToken,
-        user: expectedUser,
-      };
-
-      mockAuthRepository.authenticate = vi
-        .fn()
-        .mockResolvedValue(expectedToken);
-      mockAuthRepository.getCurrentUser = vi
-        .fn()
-        .mockResolvedValue(expectedUser);
-
-      // Act
-      const result = await loginUseCase.execute(request);
-
-      // Assert
-      expect(result).toStrictEqual(expectedResponse);
-      expect(mockAuthRepository.authenticate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          username,
-          password,
-        })
-      );
-    });
-
-    it('should handle repository errors correctly', async () => {
-      // Arrange
-      const username = faker.internet.userName();
-      const password = faker.internet.password();
-      const request: LoginRequest = { username, password };
-
-      const expectedError = new Error('Authentication failed');
-      mockAuthRepository.authenticate = vi
-        .fn()
-        .mockRejectedValue(expectedError);
-
-      // Act & Assert
-      await expect(loginUseCase.execute(request)).rejects.toThrow(
-        'Authentication failed'
-      );
-      expect(mockAuthRepository.authenticate).toHaveBeenCalledTimes(1);
-    });
-
-    it('should work with empty credentials', async () => {
-      // Arrange
-      const request: LoginRequest = { username: '', password: '' };
-
-      // Act & Assert
-      await expect(loginUseCase.execute(request)).rejects.toThrow(
-        'Username cannot be empty'
-      );
-    });
-
-    it('should work with special characters in credentials', async () => {
+    it('should return error when credentials are invalid', async () => {
       // Arrange
       const request: LoginRequest = {
-        username: 'user@domain.com',
-        password: 'P@ssw0rd!',
+        credentials: { username: '', password: '' },
       };
 
-      const expectedToken = authTokenBuilder.build({
-        accessToken: 'special-token',
-      });
-      const expectedUser = userBuilder.build({
-        name: 'user@domain.com',
-      });
-      const expectedResponse: LoginResponse = {
-        token: expectedToken,
-        user: expectedUser,
-      };
+      const mockLoginService = vi
+        .fn()
+        .mockRejectedValue(new Error('Invalid credentials'));
+      const mockGetCurrentUserService = vi.fn().mockResolvedValue(null);
 
-      mockAuthRepository.authenticate = vi
-        .fn()
-        .mockResolvedValue(expectedToken);
-      mockAuthRepository.getCurrentUser = vi
-        .fn()
-        .mockResolvedValue(expectedUser);
+      const loginUseCase = executeLoginUseCase(
+        mockLoginService,
+        mockGetCurrentUserService
+      );
 
       // Act
-      const result = await loginUseCase.execute(request);
+      const result = await loginUseCase(request);
 
       // Assert
-      expect(result).toStrictEqual(expectedResponse);
-      expect(mockAuthRepository.authenticate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          username: 'user@domain.com',
-          password: 'P@ssw0rd!',
-        })
-      );
+      expect(result).toEqual({
+        success: false,
+        error: 'Invalid credentials',
+      });
     });
 
-    it('should preserve token properties in response', async () => {
+    it('should return error when authentication fails', async () => {
       // Arrange
       const request: LoginRequest = {
-        username: 'testuser',
-        password: 'testpassword',
+        credentials: { username: 'user', password: 'pass' },
       };
 
-      const expectedToken = authTokenBuilder.build({
-        accessToken: 'access-123',
-        refreshToken: 'refresh-456',
-        expiresAt: new Date(Date.now() + 7200 * 1000),
-        tokenType: 'Bearer',
-      });
-      const expectedUser = userBuilder.build({
-        id: '123',
-        name: 'Test User',
-      });
-      const expectedResponse: LoginResponse = {
-        token: expectedToken,
-        user: expectedUser,
-      };
+      const mockLoginService = vi
+        .fn()
+        .mockRejectedValue(new Error('Auth failed'));
+      const mockGetCurrentUserService = vi.fn().mockResolvedValue(null);
 
-      mockAuthRepository.authenticate = vi
-        .fn()
-        .mockResolvedValue(expectedToken);
-      mockAuthRepository.getCurrentUser = vi
-        .fn()
-        .mockResolvedValue(expectedUser);
+      const loginUseCase = executeLoginUseCase(
+        mockLoginService,
+        mockGetCurrentUserService
+      );
 
       // Act
-      const result = await loginUseCase.execute(request);
+      const result = await loginUseCase(request);
 
       // Assert
-      expect(result).toStrictEqual(expectedResponse);
-      expect(result.token.accessToken).toBe('access-123');
-      expect(result.token.refreshToken).toBe('refresh-456');
-      expect(result.token.tokenType).toBe('Bearer');
-      expect(result.user.id).toBe('123');
-      expect(result.user.name).toBe('Test User');
+      expect(result).toEqual({
+        success: false,
+        error: 'Auth failed',
+      });
     });
 
-    it('should handle random data correctly', async () => {
+    it('should return error when user retrieval fails', async () => {
       // Arrange
       const request: LoginRequest = {
-        username: randomString(randomNumber(5, 15)),
-        password: randomString(randomNumber(8, 20)),
+        credentials: { username: 'user', password: 'pass' },
       };
 
-      const expectedToken = authTokenBuilder.build();
-      const expectedUser = userBuilder.build();
-      const expectedResponse: LoginResponse = {
-        token: expectedToken,
-        user: expectedUser,
-      };
+      const mockLoginService = vi.fn().mockResolvedValue({
+        token: {
+          accessToken: faker.string.alphanumeric(32),
+          tokenType: 'Bearer',
+          expiresAt: new Date(Date.now() + 3600000),
+        },
+        user: { id: '1', name: 'User' },
+      });
+      const mockGetCurrentUserService = vi.fn().mockResolvedValue(null);
 
-      mockAuthRepository.authenticate = vi
-        .fn()
-        .mockResolvedValue(expectedToken);
-      mockAuthRepository.getCurrentUser = vi
-        .fn()
-        .mockResolvedValue(expectedUser);
+      const loginUseCase = executeLoginUseCase(
+        mockLoginService,
+        mockGetCurrentUserService
+      );
 
       // Act
-      const result = await loginUseCase.execute(request);
+      const result = await loginUseCase(request);
 
       // Assert
-      expect(result).toStrictEqual(expectedResponse);
-      expect(mockAuthRepository.authenticate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          username: expect.any(String),
-          password: expect.any(String),
-        })
-      );
-      expect(mockAuthRepository.getCurrentUser).toHaveBeenCalledTimes(1);
+      expect(result).toEqual({
+        success: false,
+        error: 'Failed to retrieve user information',
+      });
     });
   });
 });

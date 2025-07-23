@@ -1,62 +1,58 @@
 /**
  * Login Use Case
- * Handles user authentication and session establishment
+ * Handles user authentication workflow
  */
 
-import type { AuthRepository } from '@/application/ports/auth';
-import type { AuthToken, User } from '@/domain';
-import { createCredentials } from '@/infrastructure/services/domain-factories';
+import type {
+  GetCurrentUserService,
+  LoginService,
+} from '@/application/services/auth-service';
+import type { Credentials, User } from '@/domain';
 
 export type LoginRequest = {
-  username: string;
-  password: string;
+  credentials: Credentials;
 };
 
 export type LoginResponse = {
-  token: AuthToken;
-  user: User;
+  success: boolean;
+  user?: User;
+  error?: string;
 };
 
 export type ExecuteLoginUseCase = (
-  request: LoginRequest
-) => Promise<LoginResponse>;
+  loginService: LoginService,
+  getCurrentUserService: GetCurrentUserService
+) => (request: LoginRequest) => Promise<LoginResponse>;
 
 /**
- * Login Use Case Implementation
- * Individual function that receives dependencies as parameters
+ * Login use case implementation
+ * Pure orchestration using contracts only
  */
-export const executeLoginUseCase =
-  (authRepository: AuthRepository): ExecuteLoginUseCase =>
+export const executeLoginUseCase: ExecuteLoginUseCase =
+  (loginService: LoginService, getCurrentUserService: GetCurrentUserService) =>
   async (request: LoginRequest): Promise<LoginResponse> => {
-    // Create credentials from request
-    const credentials = createCredentials(request.username, request.password);
+    try {
+      // Authenticate user using login service
+      const authResult = await loginService(request.credentials);
 
-    // Authenticate user
-    const authToken = await authRepository.authenticate(credentials);
+      // Get current user information
+      const user = await getCurrentUserService();
 
-    if (!authToken) {
-      throw new Error('Authentication failed');
+      if (!user) {
+        return {
+          success: false,
+          error: 'Failed to retrieve user information',
+        };
+      }
+
+      return {
+        success: true,
+        user,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Authentication failed',
+      };
     }
-
-    // Get the authenticated user
-    const user = await authRepository.getCurrentUser();
-
-    if (!user) {
-      throw new Error('Failed to retrieve user information');
-    }
-
-    return {
-      token: authToken,
-      user: user,
-    };
   };
-
-// Keep the existing grouped function for backward compatibility
-export const createLoginUseCase = (authRepository: AuthRepository) => {
-  return {
-    execute: executeLoginUseCase(authRepository),
-  };
-};
-
-// Export the type for dependency injection
-export type LoginUseCase = ReturnType<typeof createLoginUseCase>;

@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import { afterAll, beforeAll, beforeEach, vi } from 'vitest';
-import { configureLogger, LogLevel } from './infrastructure/logging/logger';
+import { createLogger } from './adapters/logging/logger';
 
 // Load environment variables first
 dotenv.config();
@@ -9,14 +9,9 @@ dotenv.config();
 vi.setConfig({ testTimeout: 10000 });
 
 // Configure logger to be silent during tests
-configureLogger({
-  level: LogLevel.SILENT,
-  outputTarget: {
-    debug: () => {},
-    info: () => {},
-    warn: () => {},
-    error: () => {},
-  },
+const testLogger = createLogger({
+  level: 'error',
+  enabled: false,
 });
 
 // Global console mocks to prevent any output during tests
