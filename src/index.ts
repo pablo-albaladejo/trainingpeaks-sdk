@@ -54,5 +54,26 @@ export { createLoginUseCase } from './application/use-cases/login';
 export { createLogoutUseCase } from './application/use-cases/logout';
 export { createUploadWorkoutUseCase } from './application/use-cases/upload-workout';
 
+// Workout Builder (Patrón Builder para crear entrenamientos)
+export {
+  StructureElementBuilder,
+  WorkoutStepBuilder,
+  WorkoutStructureBuilder,
+  createCooldownElement,
+  createCooldownStep,
+  createCyclingWorkoutStructure,
+  createIntervalStep,
+  createIntervalWorkoutStructure,
+  createIntervalsElement,
+  createRecoveryStep,
+  createRestStep,
+  createSweetSpotStep,
+  createVO2MaxStep,
+  createWarmupElement,
+  createWarmupStep,
+  type CyclingWorkoutConfig,
+  type IntervalWorkoutConfig,
+} from './infrastructure/services/workout-builder';
+
 // Types
 export * from './types';
