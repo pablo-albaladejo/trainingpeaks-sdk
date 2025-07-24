@@ -63,7 +63,7 @@ export class TrainingPeaksApiClient {
       headers: config.headers,
     };
 
-    this.httpClient = createHttpClient(httpConfig);
+    this.httpClient = createHttpClient(httpConfig, this.logger);
   }
 
   /**

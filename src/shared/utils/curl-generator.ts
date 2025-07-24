@@ -8,13 +8,14 @@ export interface CurlRequestData {
   url: string;
   headers?: Record<string, string>;
   data?: unknown;
+  cookies?: string[];
 }
 
 /**
  * Generate curl command from request data
  */
 export const generateCurlCommand = (request: CurlRequestData): string => {
-  const { method, url, headers = {}, data } = request;
+  const { method, url, headers = {}, data, cookies = [] } = request;
 
   let curl = `curl -X ${method.toUpperCase()} '${url}'`;
 
@@ -34,10 +35,30 @@ export const generateCurlCommand = (request: CurlRequestData): string => {
     }
   });
 
+  // Add cookies if present
+  if (cookies.length > 0) {
+    const cookieHeader = cookies.join('; ');
+    curl += ` \\\n  -H 'Cookie: ${cookieHeader}'`;
+  }
+
   // Add data if present
   if (data) {
-    const jsonData = JSON.stringify(data, null, 2);
-    curl += ` \\\n  -d '${jsonData}'`;
+    if (data instanceof URLSearchParams) {
+      // Handle form data - show each field separately for better readability
+      const entries = Array.from(data.entries());
+      if (entries.length > 0) {
+        entries.forEach(([key, value]) => {
+          curl += ` \\\n  -d '${key}=${encodeURIComponent(value)}'`;
+        });
+      }
+    } else if (typeof data === 'string') {
+      // Handle string data
+      curl += ` \\\n  -d '${data}'`;
+    } else {
+      // Handle JSON data
+      const jsonData = JSON.stringify(data, null, 2);
+      curl += ` \\\n  -d '${jsonData}'`;
+    }
   }
 
   return curl;

@@ -9,8 +9,8 @@ export * from './http';
 // API Adapters
 export * from './api';
 
-// Browser Adapters
-export * from './browser';
+// Logging Adapters
+export * from './logging';
 
 // Client Adapters
 export * from './client';

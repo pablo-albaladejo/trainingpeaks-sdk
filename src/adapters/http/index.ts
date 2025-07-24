@@ -13,3 +13,5 @@ export type {
 
 // HTTP Client Factory
 export { createHttpClient } from './http-adapter';
+export { createHttpAuthAdapter } from './http-auth-adapter';
+export { createWebHttpClient } from './web-http-client';

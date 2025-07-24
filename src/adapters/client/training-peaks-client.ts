@@ -11,8 +11,11 @@ import { createLogger } from '@/adapters/logging/logger';
 import type { TrainingPeaksClientConfig } from '@/config';
 import { getSDKConfig } from '@/config';
 import { Credentials } from '@/domain';
-import { createWebAuthAdapter } from '../browser/web-auth-adapter';
-import { createHttpClient } from '../http/http-adapter';
+import {
+  createHttpAuthAdapter,
+  createHttpClient,
+  createWebHttpClient,
+} from '../http/';
 import { createAuthService } from '../services';
 import { createMemoryStorageAdapter } from '../storage/memory-storage-adapter';
 
@@ -46,13 +49,20 @@ export const createTrainingPeaksClient = (
     logger
   );
 
-  const authRepository = createWebAuthAdapter({
+  const webHttpClient = createWebHttpClient({
     timeout: sdkConfig.timeouts.webAuth,
-    headless: sdkConfig.browser?.headless ?? true,
-    executablePath: sdkConfig.browser?.executablePath ?? '',
   });
 
   const memoryStorageAdapter = createMemoryStorageAdapter();
+
+  const authRepository = createHttpAuthAdapter(
+    {
+      loginUrl: sdkConfig.urls.loginUrl,
+    },
+    webHttpClient,
+    memoryStorageAdapter, //move to user-case
+    logger
+  );
 
   const authService = createAuthService(authRepository, memoryStorageAdapter);
 
