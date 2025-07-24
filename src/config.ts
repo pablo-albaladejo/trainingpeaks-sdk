@@ -101,7 +101,7 @@ export type TrainingPeaksClientConfig = {
 const HARDCODED_DEFAULTS: TrainingPeaksSDKConfig = {
   urls: {
     baseUrl: 'https://www.trainingpeaks.com',
-    apiBaseUrl: 'https://api.trainingpeaks.com',
+    apiBaseUrl: 'https://tpapi.trainingpeaks.com',
     loginUrl: 'https://home.trainingpeaks.com/login',
     appUrl: 'https://app.trainingpeaks.com',
   },
@@ -187,6 +187,7 @@ type EnvironmentConfig = {
     logBrowser?: boolean;
   };
   requests?: {
+    defaultHeaders?: Record<string, string>;
     retryAttempts?: number;
     retryDelay?: number;
   };
@@ -344,6 +345,9 @@ function getEnvironmentConfig(): EnvironmentConfig {
     },
 
     requests: {
+      defaultHeaders: process.env.TRAININGPEAKS_DEFAULT_HEADERS
+        ? JSON.parse(process.env.TRAININGPEAKS_DEFAULT_HEADERS)
+        : undefined,
       retryAttempts: process.env.TRAININGPEAKS_RETRY_ATTEMPTS
         ? (() => {
             const parsed = parseInt(
@@ -502,6 +506,7 @@ export function validateConfig(config: TrainingPeaksSDKConfig): void {
 
 /**
  * Get configuration from environment variables or defaults
+ * Guarantees a complete configuration with all default values
  */
 export function getSDKConfig(
   userConfig: TrainingPeaksClientConfig = {}

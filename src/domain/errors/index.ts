@@ -18,7 +18,7 @@ export class TrainingPeaksError extends SDKError {
     context?: SDKErrorContext,
     originalError?: Error
   ) {
-    super(code || ERROR_CODES.INTERNAL_ERROR, message, context, originalError);
+    super(message, code || ERROR_CODES.INTERNAL_ERROR, context);
     this.name = 'TrainingPeaksError';
     Object.setPrototypeOf(this, TrainingPeaksError.prototype);
   }
@@ -30,7 +30,7 @@ export class ValidationError extends SDKError {
     context?: SDKErrorContext,
     originalError?: Error
   ) {
-    super(ERROR_CODES.VALIDATION_FAILED, message, context, originalError);
+    super(message, ERROR_CODES.VALIDATION_FAILED, context);
     this.name = 'ValidationError';
     Object.setPrototypeOf(this, ValidationError.prototype);
   }
@@ -42,7 +42,7 @@ export class AuthenticationError extends SDKError {
     context?: SDKErrorContext,
     originalError?: Error
   ) {
-    super(ERROR_CODES.AUTH_FAILED, message, context, originalError);
+    super(message, ERROR_CODES.AUTH_FAILED, context);
     this.name = 'AuthenticationError';
     Object.setPrototypeOf(this, AuthenticationError.prototype);
   }
@@ -54,21 +54,9 @@ export class NetworkError extends SDKError {
     context?: SDKErrorContext,
     originalError?: Error
   ) {
-    super(ERROR_CODES.NETWORK_REQUEST_FAILED, message, context, originalError);
+    super(message, ERROR_CODES.NETWORK_REQUEST_FAILED, context);
     this.name = 'NetworkError';
     Object.setPrototypeOf(this, NetworkError.prototype);
-  }
-}
-
-export class UploadError extends SDKError {
-  constructor(
-    message: string,
-    context?: SDKErrorContext,
-    originalError?: Error
-  ) {
-    super(ERROR_CODES.FILE_UPLOAD_FAILED, message, context, originalError);
-    this.name = 'UploadError';
-    Object.setPrototypeOf(this, UploadError.prototype);
   }
 }
 
@@ -78,7 +66,7 @@ export class AuthorizationError extends SDKError {
     context?: SDKErrorContext,
     originalError?: Error
   ) {
-    super(ERROR_CODES.AUTH_FAILED, message, context, originalError);
+    super(message, ERROR_CODES.AUTH_FAILED, context);
     this.name = 'AuthorizationError';
     Object.setPrototypeOf(this, AuthorizationError.prototype);
   }
@@ -90,7 +78,7 @@ export class RateLimitError extends SDKError {
     context?: SDKErrorContext,
     originalError?: Error
   ) {
-    super(ERROR_CODES.NETWORK_REQUEST_FAILED, message, context, originalError);
+    super(message, ERROR_CODES.NETWORK_REQUEST_FAILED, context);
     this.name = 'RateLimitError';
     Object.setPrototypeOf(this, RateLimitError.prototype);
   }
@@ -102,7 +90,7 @@ export class WorkoutError extends SDKError {
     context?: SDKErrorContext,
     originalError?: Error
   ) {
-    super(ERROR_CODES.WORKOUT_CREATION_FAILED, message, context, originalError);
+    super(message, ERROR_CODES.WORKOUT_CREATION_FAILED, context);
     this.name = 'WorkoutError';
     Object.setPrototypeOf(this, WorkoutError.prototype);
   }

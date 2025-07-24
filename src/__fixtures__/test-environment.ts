@@ -1,7 +1,4 @@
-import {
-  createCategoryLogger,
-  LogCategory,
-} from '@/infrastructure/logging/logger';
+import { createCategoryLogger, LogCategory } from '@/adapters/logging/logger';
 import { TrainingPeaksConfig } from '@/types';
 
 // Create a test logger using the existing logging infrastructure
