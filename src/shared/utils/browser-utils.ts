@@ -106,7 +106,9 @@ export const generateSpecificUserAgent = (
 /**
  * Parse User-Agent string to extract browser and OS information
  */
-export const parseUserAgent = (userAgent: string): {
+export const parseUserAgent = (
+  userAgent: string
+): {
   browser: string;
   version: string;
   os: string;
@@ -122,17 +124,17 @@ export const parseUserAgent = (userAgent: string): {
 
   if (chromeMatch) {
     browser = 'Chrome';
-    version = chromeMatch[1];
+    version = chromeMatch[1] ?? 'Unknown';
   } else if (firefoxMatch) {
     browser = 'Firefox';
-    version = firefoxMatch[1];
+    version = firefoxMatch[1] ?? 'Unknown';
   } else if (safariMatch) {
     browser = 'Safari';
-    version = safariMatch[1];
+    version = safariMatch[1] ?? 'Unknown';
   }
 
   if (osMatch) {
-    os = osMatch[1];
+    os = osMatch[1] ?? 'Unknown';
   }
 
   return { browser, version, os };
@@ -152,7 +154,7 @@ export const isMobileUserAgent = (userAgent: string): boolean => {
     'Windows Phone',
   ];
 
-  return mobileKeywords.some(keyword =>
+  return mobileKeywords.some((keyword) =>
     userAgent.toLowerCase().includes(keyword.toLowerCase())
   );
 };
@@ -185,11 +187,7 @@ export const getCommonViewportSizes = () => ({
  */
 export const generateRandomViewport = (): { width: number; height: number } => {
   const sizes = getCommonViewportSizes();
-  const allSizes = [
-    ...sizes.desktop,
-    ...sizes.tablet,
-    ...sizes.mobile,
-  ];
+  const allSizes = [...sizes.desktop, ...sizes.tablet, ...sizes.mobile];
 
   return allSizes[Math.floor(Math.random() * allSizes.length)]!;
-}; 
+};

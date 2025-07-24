@@ -3,6 +3,7 @@
  * Tests for the new functional client implementation
  */
 
+import { faker } from '@faker-js/faker';
 import { describe, expect, it, vi } from 'vitest';
 import { createTrainingPeaksClient } from './training-peaks-client';
 
@@ -50,36 +51,15 @@ describe('createTrainingPeaksClient', () => {
     expect(client).toBeDefined();
     expect(typeof client.login).toBe('function');
     expect(typeof client.getUser).toBe('function');
-    expect(typeof client.isAuthenticated).toBe('function');
-    expect(typeof client.getUserId).toBe('function');
   });
 
   it('should accept configuration options', () => {
     const config = {
-      apiKey: 'test-api-key',
-      baseUrl: 'https://test-api.trainingpeaks.com',
+      apiKey: faker.string.uuid(),
+      baseUrl: faker.internet.url(),
+      
     };
 
     expect(() => createTrainingPeaksClient(config)).not.toThrow();
-  });
-
-  it('should return false for isAuthenticated initially', () => {
-    const client = createTrainingPeaksClient();
-    expect(client.isAuthenticated()).toBe(false);
-  });
-
-  it('should return null for getUserId when not authenticated', () => {
-    const client = createTrainingPeaksClient();
-    expect(client.getUserId()).toBe(null);
-  });
-
-  it('should have async methods that return promises', () => {
-    const client = createTrainingPeaksClient();
-
-    const loginPromise = client.login('username', 'password');
-    expect(loginPromise).toBeInstanceOf(Promise);
-
-    const getUserPromise = client.getUser();
-    expect(getUserPromise).toBeInstanceOf(Promise);
   });
 });

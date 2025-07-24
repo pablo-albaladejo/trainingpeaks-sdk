@@ -12,10 +12,6 @@ export * from './value-objects/auth-token';
 export * from './value-objects/credentials';
 export * from './value-objects/workout-file';
 
-// Repositories
-export * from './repositories/auth-repository';
-export * from './repositories/workout-repository';
-
 // Errors
 export * from './errors/domain-errors';
 

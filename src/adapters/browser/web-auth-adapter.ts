@@ -1,21 +1,16 @@
 /**
- * Browser Authentication Adapter
+ * Web Browser Authentication Adapter
  * Implements authentication using Playwright browser automation
  */
 
-import { createLogger } from '@/adapters/logging/logger';
-import type {
-  AuthenticateUser,
-  AuthenticationConfig,
-  CanHandleAuthConfig,
-  RefreshAuthToken,
-} from '@/application/services/auth-service';
+import { createLogger, LoggerType } from '@/adapters/logging/logger';
+
 import { getSDKConfig } from '@/config';
-import type { AuthToken, Credentials, User } from '@/domain';
-import { createUser } from '@/domain/entities/user';
+import type { AuthToken, Credentials } from '@/domain';
+import { AuthRepository } from '@/domain/repositories/auth-repository';
 import { createAuthToken } from '@/domain/value-objects/auth-token';
-import { generateRandomUserAgent } from '@/shared';
-import { Browser, chromium, Page, Response } from 'playwright-core';
+import { generateCurlCommand, generateRandomUserAgent } from '@/shared';
+import { Browser, chromium, Page, Request, Response } from 'playwright-core';
 
 type InterceptedData = {
   token?: AuthToken;
@@ -38,120 +33,148 @@ type UserResponse = {
 const sdkConfig = getSDKConfig();
 
 /**
- * Check if this adapter can handle the given configuration
+ * Log intercepted request with curl command
  */
-export const canHandleAuthConfig: CanHandleAuthConfig = (
-  config: AuthenticationConfig
-): boolean => {
-  // This adapter handles web-based authentication
-  return !!config.webAuth;
+const logInterceptedRequest = (
+  logger: LoggerType,
+  request: Request,
+  operation: string
+): void => {
+  const curlCommand = generateCurlCommand({
+    method: request.method(),
+    url: request.url(),
+    headers: request.headers(),
+    data: request.postData() || undefined,
+  });
+
+  logger.info(`🌐 Web Browser Adapter: Intercepted ${operation} request`, {
+    method: request.method(),
+    url: request.url(),
+    headers: request.headers(),
+    postData: request.postData(),
+  });
+
+  logger.info(`🌐 Web Browser Adapter: cURL command for ${operation}`, {
+    curl: curlCommand,
+  });
+};
+
+/**
+ * Log intercepted response
+ */
+const logInterceptedResponse = (
+  logger: ReturnType<typeof createLogger>,
+  response: Response,
+  operation: string
+): void => {
+  logger.info(`🌐 Web Browser Adapter: Intercepted ${operation} response`, {
+    status: response.status(),
+    statusText: response.statusText(),
+    url: response.url(),
+    headers: response.headers(),
+  });
+};
+
+type WebAuthConfig = {
+  timeout?: number;
+  headless?: boolean;
+  executablePath?: string;
+};
+
+export const createWebAuthAdapter = (config: WebAuthConfig): AuthRepository => {
+  return {
+    authenticate: authenticateUser(config),
+  };
 };
 
 /**
  * Authenticate user using web browser automation
  */
-export const authenticateUser: AuthenticateUser = async (
-  credentials: Credentials,
-  config: AuthenticationConfig
-): Promise<{ token: AuthToken; user: User }> => {
-  const sdkConfig = getSDKConfig();
+const authenticateUser = (
+  config: WebAuthConfig
+): ((credentials: Credentials) => Promise<AuthToken>) => {
+  return async (credentials: Credentials): Promise<AuthToken> => {
+    const logger = createLogger({
+      level: sdkConfig.debug.enabled ? 'debug' : 'info',
+      enabled: sdkConfig.debug.enabled && sdkConfig.debug.logBrowser,
+    });
 
-  // Create logger for this adapter
-  const logger = createLogger({
-    level: sdkConfig.debug.enabled ? 'debug' : 'info',
-    enabled: sdkConfig.debug.enabled && sdkConfig.debug.logBrowser,
-  });
+    logger.info('🌐 Web Browser Adapter: Starting web authentication', {
+      username: credentials.username,
+      loginUrl: sdkConfig.urls.loginUrl,
+      timeout: config.timeout || sdkConfig.timeouts.webAuth,
+    });
 
-  logger.info('🌐 Browser Auth Adapter: Starting web authentication', {
-    username: credentials.username,
-    loginUrl: sdkConfig.urls.loginUrl,
-    timeout: config.timeout || sdkConfig.timeouts.webAuth,
-  });
+    let browser: Browser | null = null;
 
-  let browser: Browser | null = null;
+    try {
+      logger.debug('🌐 Web Browser Adapter: Launching browser');
+      browser = await launchBrowser(config);
 
-  try {
-    logger.debug('🌐 Browser Auth Adapter: Launching browser');
-    browser = await launchBrowser(config);
+      logger.debug('🌐 Web Browser Adapter: Setting up page');
+      const page = await setupPage(browser, logger);
 
-    logger.debug('🌐 Browser Auth Adapter: Setting up page');
-    const page = await setupPage(browser, config);
-
-    logger.debug('🌐 Browser Auth Adapter: Performing login flow');
-    const interceptedData = await performLogin(
-      page,
-      credentials,
-      config,
-      logger
-    );
-
-    if (!interceptedData.token || !interceptedData.userId) {
-      logger.error(
-        '🌐 Browser Auth Adapter: Failed to retrieve authentication data'
+      logger.debug('🌐 Web Browser Adapter: Performing login flow');
+      const interceptedData = await performLogin(
+        page,
+        credentials,
+        config,
+        logger
       );
-      throw new Error('Failed to retrieve authentication data from login flow');
-    }
 
-    logger.debug(
-      '🌐 Browser Auth Adapter: Creating user from intercepted data'
-    );
-    // Create user from intercepted data
-    const user = createUser(
+      if (!interceptedData.token || !interceptedData.userId) {
+        logger.error(
+          '🌐 Web Browser Adapter: Failed to retrieve authentication data'
+        );
+        throw new Error(
+          'Failed to retrieve authentication data from login flow'
+        );
+      }
+
+      logger.debug(
+        '🌐 Web Browser Adapter: Creating user from intercepted data'
+      );
+
+      // Create user from intercepted data
+      /*const user = createUser(
       String(interceptedData.userId),
       credentials.username,
       credentials.username, // Use username as name for now
       undefined // No preferences data available in interceptedData
-    );
+    );*/
 
-    logger.info(
-      '🌐 Browser Auth Adapter: Web authentication completed successfully',
-      {
-        userId: user.id,
-        tokenType: interceptedData.token.tokenType,
-        tokenExpiresAt: interceptedData.token.expiresAt,
+      logger.info(
+        '🌐 Web Browser Adapter: Web authentication completed successfully',
+        {
+          // userId: user.id,
+          tokenType: interceptedData.token.tokenType,
+          tokenExpiresAt: interceptedData.token.expiresAt,
+        }
+      );
+
+      return interceptedData.token;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      logger.error('🌐 Web Browser Adapter: Web authentication failed', {
+        error: message,
+      });
+      throw new Error(`Web authentication failed: ${message}`);
+    } finally {
+      if (browser) {
+        logger.debug('🌐 Web Browser Adapter: Closing browser');
+        await browser.close();
       }
-    );
-
-    return {
-      token: interceptedData.token,
-      user,
-    };
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('🌐 Browser Auth Adapter: Web authentication failed', {
-      error: message,
-    });
-    throw new Error(`Web authentication failed: ${message}`);
-  } finally {
-    if (browser) {
-      logger.debug('🌐 Browser Auth Adapter: Closing browser');
-      await browser.close();
     }
-  }
-};
-
-/**
- * Refresh authentication token (not supported for web authentication)
- */
-export const refreshAuthToken: RefreshAuthToken = async (
-  refreshToken: string,
-  config: AuthenticationConfig
-): Promise<AuthToken> => {
-  void refreshToken;
-  void config;
-  // Web-based refresh is not supported with current TrainingPeaks implementation
-  throw new Error('Token refresh not supported for web authentication');
+  };
 };
 
 /**
  * Launch browser instance
  */
-const launchBrowser = async (
-  config: AuthenticationConfig
-): Promise<Browser> => {
+const launchBrowser = async (config: WebAuthConfig): Promise<Browser> => {
   return await chromium.launch({
-    headless: config.webAuth?.headless,
-    executablePath: config.webAuth?.executablePath || undefined,
+    headless: config.headless,
+    executablePath: config.executablePath || undefined,
     timeout: sdkConfig.browser.launchTimeout,
   });
 };
@@ -161,7 +184,7 @@ const launchBrowser = async (
  */
 const setupPage = async (
   browser: Browser,
-  config: AuthenticationConfig
+  logger: LoggerType
 ): Promise<Page> => {
   const context = await browser.newContext({
     userAgent: generateRandomUserAgent(),
@@ -170,7 +193,7 @@ const setupPage = async (
   const page = await context.newPage();
 
   page.on('console', (msg) => {
-    console.debug('Browser console:', msg.text());
+    logger.debug('Browser console:', msg.text());
   });
 
   return page;
@@ -182,41 +205,41 @@ const setupPage = async (
 const performLogin = async (
   page: Page,
   credentials: Credentials,
-  config: AuthenticationConfig,
-  logger: ReturnType<typeof createLogger>
+  config: WebAuthConfig,
+  logger: LoggerType
 ): Promise<InterceptedData> => {
   const interceptedData: InterceptedData = {};
 
   // Set up response listeners
-  setupAuthResponseListeners(page, interceptedData, config, logger);
+  setupAuthResponseListeners(page, interceptedData, logger);
 
   // Navigate to login page
   const loginUrl = sdkConfig.urls.loginUrl;
 
-  logger.info('🌐 Browser Auth Adapter: Navigating to login page', {
+  logger.info('🌐 Web Browser Adapter: Navigating to login page', {
     url: loginUrl,
-    timeout: config.webAuth?.timeout,
+    timeout: config.timeout,
   });
 
   await page.goto(loginUrl, {
     waitUntil: 'networkidle',
-    timeout: config.webAuth?.timeout,
+    timeout: config.timeout,
   });
 
   // Handle cookies
-  logger.debug('🌐 Browser Auth Adapter: Handling cookies');
-  await handleCookies(page, config);
+  logger.debug('🌐 Web Browser Adapter: Handling cookies');
+  await handleCookies(page, logger);
 
   // Fill credentials
-  logger.debug('🌐 Browser Auth Adapter: Filling credentials');
-  await fillCredentials(page, credentials, config);
+  logger.debug('🌐 Web Browser Adapter: Filling credentials');
+  await fillCredentials(page, credentials, config, logger);
 
   // Submit form
-  logger.debug('🌐 Browser Auth Adapter: Submitting login form');
+  logger.debug('🌐 Web Browser Adapter: Submitting login form');
   await submitLoginForm(page, config);
 
   // Wait for authentication
-  logger.debug('🌐 Browser Auth Adapter: Waiting for authentication');
+  logger.debug('🌐 Web Browser Adapter: Waiting for authentication');
   await waitForAuthentication(page, config);
 
   return interceptedData;
@@ -228,9 +251,22 @@ const performLogin = async (
 const setupAuthResponseListeners = (
   page: Page,
   interceptedData: InterceptedData,
-  config: AuthenticationConfig,
-  logger: ReturnType<typeof createLogger>
+  logger: LoggerType
 ): void => {
+  // Listen for requests to API endpoints
+  page.on('request', (request) => {
+    const url = request.url();
+
+    if (url.includes('/users/v3/token')) {
+      logInterceptedRequest(logger, request, 'token request');
+    } else if (url.includes('/users/v3/user')) {
+      logInterceptedRequest(logger, request, 'user request');
+    } else if (url.includes('/api/') || url.includes('/users/')) {
+      logInterceptedRequest(logger, request, 'API request');
+    }
+  });
+
+  // Listen for responses from API endpoints
   page.on('response', async (response) => {
     const url = response.url();
 
@@ -239,9 +275,11 @@ const setupAuthResponseListeners = (
     }
 
     if (url.includes('/users/v3/token')) {
-      await handleTokenResponse(response, interceptedData, config, logger);
+      logInterceptedResponse(logger, response, 'token response');
+      await handleTokenResponse(response, interceptedData, logger);
     } else if (url.includes('/users/v3/user')) {
-      await handleUserResponse(response, interceptedData, config, logger);
+      logInterceptedResponse(logger, response, 'user response');
+      await handleUserResponse(response, interceptedData, logger);
     }
   });
 };
@@ -249,10 +287,7 @@ const setupAuthResponseListeners = (
 /**
  * Handle cookie consent
  */
-const handleCookies = async (
-  page: Page,
-  config: AuthenticationConfig
-): Promise<void> => {
+const handleCookies = async (page: Page, logger: LoggerType): Promise<void> => {
   try {
     await page.waitForSelector('#onetrust-accept-btn-handler', {
       state: 'visible',
@@ -260,9 +295,9 @@ const handleCookies = async (
     });
     await page.click('#onetrust-accept-btn-handler');
 
-    console.debug('Accepted cookies');
+    logger.debug('Accepted cookies');
   } catch {
-    console.debug('No cookies banner found, continuing...');
+    logger.debug('No cookies banner found, continuing...');
   }
 };
 
@@ -272,15 +307,16 @@ const handleCookies = async (
 const fillCredentials = async (
   page: Page,
   credentials: Credentials,
-  config: AuthenticationConfig
+  config: WebAuthConfig,
+  logger: LoggerType
 ): Promise<void> => {
-  console.debug('Entering credentials');
+  logger.debug('Entering credentials');
 
   try {
     // Wait for username field with longer timeout and better error handling
     await page.waitForSelector('[data-cy="username"]', {
       state: 'visible',
-      timeout: config.webAuth?.timeout,
+      timeout: config.timeout,
     });
     await page.fill('[data-cy="username"]', credentials.username);
     console.debug('Username filled successfully');
@@ -334,7 +370,7 @@ const fillCredentials = async (
  */
 const submitLoginForm = async (
   page: Page,
-  config: AuthenticationConfig
+  config: WebAuthConfig
 ): Promise<void> => {
   console.debug('Submitting login form');
 
@@ -375,7 +411,7 @@ const submitLoginForm = async (
     }
 
     await page.waitForLoadState('networkidle', {
-      timeout: config.webAuth?.timeout,
+      timeout: config.timeout,
     });
 
     // Check for error messages
@@ -414,15 +450,15 @@ const checkForLoginErrors = async (page: Page): Promise<void> => {
  */
 const waitForAuthentication = async (
   page: Page,
-  config: AuthenticationConfig
+  config: WebAuthConfig
 ): Promise<void> => {
   const appUrl = sdkConfig.urls.appUrl;
-  const appUrlPattern = appUrl + '/**';
+  const appUrlPattern = `${appUrl}/**`;
 
   console.debug('Waiting for app URL pattern:', appUrlPattern);
 
   await page.waitForURL(appUrlPattern, {
-    timeout: config.webAuth?.timeout,
+    timeout: config.timeout,
   });
 
   // Give time for API calls to complete
@@ -437,26 +473,25 @@ const waitForAuthentication = async (
 const handleTokenResponse = async (
   response: Response,
   interceptedData: InterceptedData,
-  config: AuthenticationConfig,
-  logger: ReturnType<typeof createLogger>
+  logger: LoggerType
 ): Promise<void> => {
   try {
     if (!response.ok()) {
-      logger.warn('🌐 Browser Auth Adapter: Token response failed', {
+      logger.warn('🌐 Web Browser Adapter: Token response failed', {
         status: response.status(),
         url: response.url(),
       });
       return;
     }
 
-    const json = await parseJsonResponse<TokenResponse>(response, config);
+    const json = await parseJsonResponse<TokenResponse>(response, logger);
     if (!json?.token?.access_token) {
-      logger.debug('🌐 Browser Auth Adapter: No access token in response');
+      logger.debug('🌐 Web Browser Adapter: No access token in response');
       return;
     }
 
     logger.debug(
-      '🌐 Browser Auth Adapter: Creating AuthToken from intercepted data'
+      '🌐 Web Browser Adapter: Creating AuthToken from intercepted data'
     );
 
     // Create AuthToken entity
@@ -467,15 +502,12 @@ const handleTokenResponse = async (
       json.token.refresh_token
     );
 
-    logger.info(
-      '🌐 Browser Auth Adapter: Successfully intercepted auth token',
-      {
-        tokenType: interceptedData.token.tokenType,
-        tokenExpiresAt: interceptedData.token.expiresAt,
-      }
-    );
+    logger.info('🌐 Web Browser Adapter: Successfully intercepted auth token', {
+      tokenType: interceptedData.token.tokenType,
+      tokenExpiresAt: interceptedData.token.expiresAt,
+    });
   } catch (error) {
-    logger.error('🌐 Browser Auth Adapter: Error processing token response', {
+    logger.error('🌐 Web Browser Adapter: Error processing token response', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
@@ -487,32 +519,31 @@ const handleTokenResponse = async (
 const handleUserResponse = async (
   response: Response,
   interceptedData: InterceptedData,
-  config: AuthenticationConfig,
   logger: ReturnType<typeof createLogger>
 ): Promise<void> => {
   try {
     if (!response.ok()) {
-      logger.warn('🌐 Browser Auth Adapter: User response failed', {
+      logger.warn('🌐 Web Browser Adapter: User response failed', {
         status: response.status(),
         url: response.url(),
       });
       return;
     }
 
-    const json = await parseJsonResponse<UserResponse>(response, config);
+    const json = await parseJsonResponse<UserResponse>(response, logger);
     if (!json?.user?.userId) {
-      logger.debug('🌐 Browser Auth Adapter: No user ID in response');
+      logger.debug('🌐 Web Browser Adapter: No user ID in response');
       return;
     }
 
     // Store user ID as string
     interceptedData.userId = String(json.user.userId);
 
-    logger.info('🌐 Browser Auth Adapter: Successfully intercepted user ID', {
+    logger.info('🌐 Web Browser Adapter: Successfully intercepted user ID', {
       userId: interceptedData.userId,
     });
   } catch (error) {
-    logger.error('🌐 Browser Auth Adapter: Error processing user response', {
+    logger.error('🌐 Web Browser Adapter: Error processing user response', {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
@@ -523,20 +554,16 @@ const handleUserResponse = async (
  */
 const parseJsonResponse = async <T = unknown>(
   response: Response,
-  config: AuthenticationConfig
+  logger: LoggerType
 ): Promise<T | null> => {
   try {
     return await response.json();
   } catch (error) {
-    if (config.debug) {
-      const text = await response.text().catch(() => '');
-      console.warn('Failed to parse response as JSON', {
-        url: response.url(),
-        status: response.status(),
-        text: text.substring(0, 200),
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
-    return null;
+    logger.warn('Failed to parse response as JSON', {
+      url: response.url(),
+      status: response.status(),
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
   }
+  return null;
 };

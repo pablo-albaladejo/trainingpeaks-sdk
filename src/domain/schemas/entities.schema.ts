@@ -6,6 +6,8 @@
 import { z } from 'zod';
 import { WorkoutStructureSchema } from './workout-structure.schema';
 
+
+
 // User Entity Schema
 export const UserSchema = z.object({
   id: z.string().min(1),

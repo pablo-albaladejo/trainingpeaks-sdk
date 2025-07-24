@@ -1,6 +1,12 @@
 /**
- * Shared Utilities Index
- * Exports all shared utilities and helpers
+ * Shared utilities and types
  */
 
-export * from './utils/browser-utils'; 
+// Browser utilities
+export { generateRandomUserAgent } from './utils/browser-utils';
+
+// cURL utilities
+export {
+  generateCurlCommand,
+  type CurlRequestData,
+} from './utils/curl-generator';

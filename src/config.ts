@@ -187,6 +187,7 @@ type EnvironmentConfig = {
     logBrowser?: boolean;
   };
   requests?: {
+    defaultHeaders?: Record<string, string>;
     retryAttempts?: number;
     retryDelay?: number;
   };
@@ -344,6 +345,9 @@ function getEnvironmentConfig(): EnvironmentConfig {
     },
 
     requests: {
+      defaultHeaders: process.env.TRAININGPEAKS_DEFAULT_HEADERS
+        ? JSON.parse(process.env.TRAININGPEAKS_DEFAULT_HEADERS)
+        : undefined,
       retryAttempts: process.env.TRAININGPEAKS_RETRY_ATTEMPTS
         ? (() => {
             const parsed = parseInt(

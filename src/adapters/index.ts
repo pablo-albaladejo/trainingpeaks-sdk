@@ -1,32 +1,22 @@
 /**
- * Adapters Layer
- * Contains all external integrations and implementations
+ * Adapters
+ * External integrations and implementations
  */
 
-// Client Adapter - Main point of contact with external world
-export * from './client/training-peaks-client';
-
 // HTTP Adapters
-export {
-  authenticateUser as apiAuthenticateUser,
-  canHandleAuthConfig as apiCanHandleAuthConfig,
-  refreshAuthToken as apiRefreshAuthToken,
-} from './http/auth-adapter';
-export {
-  authenticateUser as webAuthenticateUser,
-  canHandleAuthConfig as webCanHandleAuthConfig,
-  refreshAuthToken as webRefreshAuthToken,
-} from './http/browser-auth-adapter';
+export * from './http';
 
-// Storage Adapters
-export * from './storage/memory-storage-adapter';
+// API Adapters
+export * from './api';
+
+// Browser Adapters
+export * from './browser';
+
+// Client Adapters
+export * from './client';
 
 // Service Adapters
-export * from './services/auth-service';
+export * from './services';
 
-// Repository Adapters
-export * from './repositories/auth-repository';
-export * from './repositories/workout-repository';
-
-// Logging Adapters
-export * from './logging/logger';
+// Storage Adapters
+export * from './storage';

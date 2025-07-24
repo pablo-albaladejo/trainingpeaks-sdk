@@ -1,4 +1,5 @@
 import { WorkoutStructureBuilder } from '@/domain/builders/workout-structure-builder';
+import { WorkoutStructureElementBuilder } from '@/domain/builders/workout-structure-element-builder';
 import type { WorkoutStructure } from '@/types';
 import { ElementType } from '@/types';
 import {
@@ -7,8 +8,7 @@ import {
   createRecoveryStep,
   createSteadyStep,
   createWarmupStep,
-} from '.';
-import { WorkoutStructureElementBuilder } from '../builders/workout-structure-element-builder';
+} from './workout-steps';
 
 /**
  * Create an interval workout template

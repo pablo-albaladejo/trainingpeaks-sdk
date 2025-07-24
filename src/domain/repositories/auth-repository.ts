@@ -1,18 +1,5 @@
-/**
- * Auth Repository Interface
- * Contract for authentication operations
- */
-
-import type { AuthToken, Credentials, User } from '@/domain';
+import { AuthToken, Credentials } from '../schemas';
 
 export type AuthRepository = {
-  /**
-   * Authenticate user with credentials
-   */
-  authenticate(credentials: Credentials): Promise<AuthToken>;
-
-  /**
-   * Get current authenticated user
-   */
-  getCurrentUser(): Promise<User | null>;
+  authenticate: (credentials: Credentials) => Promise<AuthToken>;
 };

@@ -3,28 +3,28 @@
  * Handles retrieving current user information
  */
 
-import type { GetCurrentUserService } from '@/application/services/auth-service';
-import type { User } from '@/domain';
+import { User } from '@/domain';
+import { GetCurrentUser } from '../services/get-current-user';
 
-export type GetUserResponse = {
+type ExecuteGetUserUseCaseResult = {
   success: boolean;
   user?: User;
   error?: string;
 };
 
 export type ExecuteGetUserUseCase = (
-  getCurrentUserService: GetCurrentUserService
-) => () => Promise<GetUserResponse>;
+  getCurrentUser: GetCurrentUser
+) => () => Promise<ExecuteGetUserUseCaseResult>;
 
 /**
  * Get user use case implementation
  * Pure orchestration using contracts only
  */
 export const executeGetUserUseCase: ExecuteGetUserUseCase =
-  (getCurrentUserService: GetCurrentUserService) =>
-  async (): Promise<GetUserResponse> => {
+  (getCurrentUser: GetCurrentUser) =>
+  async (): Promise<ExecuteGetUserUseCaseResult> => {
     try {
-      const user = await getCurrentUserService();
+      const user = await getCurrentUser();
 
       if (!user) {
         return {

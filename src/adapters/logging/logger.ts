@@ -105,3 +105,5 @@ export const logger = createLogger({
   enabled: true,
   prefix: 'TrainingPeaks SDK',
 });
+
+export type LoggerType = ReturnType<typeof createLogger>;
