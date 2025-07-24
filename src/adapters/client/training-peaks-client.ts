@@ -38,10 +38,13 @@ export const createTrainingPeaksClient = (
     enabled: sdkConfig.debug.enabled,
   });
 
-  const httpClient = createHttpClient({
-    baseURL: sdkConfig.urls.apiBaseUrl,
-    timeout: sdkConfig.timeouts.apiAuth,
-  });
+  const httpClient = createHttpClient(
+    {
+      baseURL: sdkConfig.urls.apiBaseUrl,
+      timeout: sdkConfig.timeouts.apiAuth,
+    },
+    logger
+  );
 
   const authRepository = createWebAuthAdapter({
     timeout: sdkConfig.timeouts.webAuth,

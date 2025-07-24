@@ -135,14 +135,6 @@ const authenticateUser = (
         '🌐 Web Browser Adapter: Creating user from intercepted data'
       );
 
-      // Create user from intercepted data
-      /*const user = createUser(
-      String(interceptedData.userId),
-      credentials.username,
-      credentials.username, // Use username as name for now
-      undefined // No preferences data available in interceptedData
-    );*/
-
       logger.info(
         '🌐 Web Browser Adapter: Web authentication completed successfully',
         {
@@ -210,8 +202,8 @@ const performLogin = async (
 ): Promise<InterceptedData> => {
   const interceptedData: InterceptedData = {};
 
-  // Set up response listeners
-  setupAuthResponseListeners(page, interceptedData, logger);
+  // Set up response listeners with promise-based completion
+  const authPromise = setupAuthResponseListeners(page, interceptedData, logger);
 
   // Navigate to login page
   const loginUrl = sdkConfig.urls.loginUrl;
@@ -236,11 +228,11 @@ const performLogin = async (
 
   // Submit form
   logger.debug('🌐 Web Browser Adapter: Submitting login form');
-  await submitLoginForm(page, config);
+  await submitLoginForm(page, config, logger);
 
-  // Wait for authentication
-  logger.debug('🌐 Web Browser Adapter: Waiting for authentication');
-  await waitForAuthentication(page, config);
+  // Wait for authentication data to be intercepted
+  logger.debug('🌐 Web Browser Adapter: Waiting for authentication data');
+  await authPromise;
 
   return interceptedData;
 };
@@ -252,35 +244,207 @@ const setupAuthResponseListeners = (
   page: Page,
   interceptedData: InterceptedData,
   logger: LoggerType
-): void => {
-  // Listen for requests to API endpoints
-  page.on('request', (request) => {
-    const url = request.url();
+): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    let tokenReceived = false;
+    let userReceived = false;
+    let authErrorDetected = false;
 
-    if (url.includes('/users/v3/token')) {
-      logInterceptedRequest(logger, request, 'token request');
-    } else if (url.includes('/users/v3/user')) {
-      logInterceptedRequest(logger, request, 'user request');
-    } else if (url.includes('/api/') || url.includes('/users/')) {
-      logInterceptedRequest(logger, request, 'API request');
-    }
-  });
+    let formSubmitted = false;
 
-  // Listen for responses from API endpoints
-  page.on('response', async (response) => {
-    const url = response.url();
+    // Check for error messages in the DOM periodically
+    const checkForErrorMessages = async () => {
+      // Only check for errors after form has been submitted
+      if (!formSubmitted) {
+        return;
+      }
 
-    if (url.includes('/api/') || url.includes('/users/')) {
-      console.debug('API Response:', { status: response.status(), url });
-    }
+      try {
+        const errorSelectors = [
+          '[data-cy="invalid_credentials_message"]',
+          '.error-message',
+          '.alert-danger',
+          '.alert-error',
+          '.login-error',
+          '[role="alert"]',
+          '.error',
+        ];
 
-    if (url.includes('/users/v3/token')) {
-      logInterceptedResponse(logger, response, 'token response');
-      await handleTokenResponse(response, interceptedData, logger);
-    } else if (url.includes('/users/v3/user')) {
-      logInterceptedResponse(logger, response, 'user response');
-      await handleUserResponse(response, interceptedData, logger);
-    }
+        for (const selector of errorSelectors) {
+          try {
+            const errorElement = await page.$(selector);
+            if (errorElement) {
+              const errorText = await errorElement.textContent();
+              if (errorText && errorText.trim()) {
+                // Only handle specific login errors, ignore validation errors
+                if (
+                  errorText.includes('username or password') ||
+                  errorText.includes('incorrect') ||
+                  errorText.includes('invalid')
+                ) {
+                  logger.warn(
+                    '🌐 Web Browser Adapter: Login error detected in DOM',
+                    {
+                      selector,
+                      errorText: errorText.trim(),
+                    }
+                  );
+                  handleAuthError(
+                    new Error(`Login failed: ${errorText.trim()}`)
+                  );
+                  return;
+                }
+              }
+            }
+          } catch (error) {
+            // Continue checking other selectors
+            continue;
+          }
+        }
+      } catch (error) {
+        // Ignore errors in error checking
+      }
+    };
+
+    // Check for errors more frequently (every 1 second) and also after form submission
+    const errorCheckInterval = setInterval(checkForErrorMessages, 1000);
+
+    const timeoutId = setTimeout(() => {
+      clearInterval(errorCheckInterval);
+      reject(
+        new Error(
+          'Authentication timeout: Failed to receive required data within expected time'
+        )
+      );
+    }, sdkConfig.timeouts.webAuth);
+
+    const checkCompletion = () => {
+      if (tokenReceived && userReceived) {
+        clearTimeout(timeoutId);
+        clearInterval(errorCheckInterval);
+        logger.info(
+          '🌐 Web Browser Adapter: All required authentication data received'
+        );
+        resolve();
+      }
+    };
+
+    const handleAuthError = (error: Error) => {
+      if (!authErrorDetected) {
+        authErrorDetected = true;
+        clearTimeout(timeoutId);
+        clearInterval(errorCheckInterval);
+        logger.warn('🌐 Web Browser Adapter: Authentication error detected', {
+          error: error.message,
+        });
+        reject(error);
+      }
+    };
+
+    // Listen for requests to API endpoints
+    page.on('request', (request) => {
+      const url = request.url();
+
+      if (url.includes('/users/v3/token')) {
+        logInterceptedRequest(logger, request, 'token request');
+      } else if (url.includes('/users/v3/user')) {
+        logInterceptedRequest(logger, request, 'user request');
+      } else if (url.includes('/api/') || url.includes('/users/')) {
+        logInterceptedRequest(logger, request, 'API request');
+      }
+    });
+
+    // Listen for responses from API endpoints
+    page.on('response', async (response) => {
+      const url = response.url();
+      const status = response.status();
+
+      if (url.includes('/api/') || url.includes('/users/')) {
+        logger.debug('API Response:', { status, url });
+      }
+
+      // Detect authentication errors (401 Unauthorized) only from TrainingPeaks APIs
+      if (
+        status === 401 &&
+        (url.includes('trainingpeaks.com') || url.includes('/users/'))
+      ) {
+        logger.warn(
+          '🌐 Web Browser Adapter: 401 Unauthorized detected from TrainingPeaks API',
+          { url }
+        );
+        handleAuthError(new Error('Invalid credentials: 401 Unauthorized'));
+        return;
+      }
+
+      // Detect other authentication-related errors from TrainingPeaks APIs
+      if (
+        status >= 400 &&
+        status < 500 &&
+        (url.includes('trainingpeaks.com') || url.includes('/users/'))
+      ) {
+        logger.warn(
+          '🌐 Web Browser Adapter: Client error detected from TrainingPeaks API',
+          { status, url }
+        );
+        handleAuthError(
+          new Error(`Authentication failed: ${status} ${response.statusText()}`)
+        );
+        return;
+      }
+
+      if (url.includes('/users/v3/token')) {
+        logInterceptedResponse(logger, response, 'token response');
+        try {
+          await handleTokenResponse(response, interceptedData, logger);
+          if (interceptedData.token) {
+            tokenReceived = true;
+            checkCompletion();
+          }
+        } catch (error) {
+          handleAuthError(
+            error instanceof Error ? error : new Error('Unknown token error')
+          );
+        }
+      } else if (url.includes('/users/v3/user')) {
+        logInterceptedResponse(logger, response, 'user response');
+        try {
+          await handleUserResponse(response, interceptedData, logger);
+          if (interceptedData.userId) {
+            userReceived = true;
+            checkCompletion();
+          }
+        } catch (error) {
+          handleAuthError(
+            error instanceof Error ? error : new Error('Unknown user error')
+          );
+        }
+      }
+    });
+
+    // Listen for page errors and authentication failures
+    page.on('pageerror', (error) => {
+      logger.warn('🌐 Web Browser Adapter: Page error detected', {
+        error: error.message,
+      });
+      if (
+        error.message.includes('authentication') ||
+        error.message.includes('unauthorized')
+      ) {
+        handleAuthError(new Error(`Page error: ${error.message}`));
+      }
+    });
+
+    // Also check for errors after form submission
+    page.on('load', () => {
+      setTimeout(checkForErrorMessages, 1000);
+    });
+
+    // Mark form as submitted when submit button is clicked
+    page.on('request', (request) => {
+      if (request.method() === 'POST' && request.url().includes('login')) {
+        formSubmitted = true;
+      }
+    });
   });
 };
 
@@ -319,7 +483,7 @@ const fillCredentials = async (
       timeout: config.timeout,
     });
     await page.fill('[data-cy="username"]', credentials.username);
-    console.debug('Username filled successfully');
+    logger.debug('Username filled successfully');
 
     // Wait for password field - try multiple selectors
     const passwordSelectors = [
@@ -338,15 +502,13 @@ const fillCredentials = async (
         });
         if (passwordField) {
           await page.fill(selector, credentials.password);
-          console.debug(
+          logger.debug(
             `Password filled successfully using selector: ${selector}`
           );
           break;
         }
       } catch (error) {
-        console.debug(
-          `Password selector ${selector} not found, trying next...`
-        );
+        logger.debug(`Password selector ${selector} not found, trying next...`);
         continue;
       }
     }
@@ -358,7 +520,7 @@ const fillCredentials = async (
       );
     }
   } catch (error) {
-    console.error('Failed to fill credentials', {
+    logger.error('Failed to fill credentials', {
       error: (error as Error).message,
     });
     throw new Error(`Failed to fill login form: ${(error as Error).message}`);
@@ -370,9 +532,10 @@ const fillCredentials = async (
  */
 const submitLoginForm = async (
   page: Page,
-  config: WebAuthConfig
+  config: WebAuthConfig,
+  logger: LoggerType
 ): Promise<void> => {
-  console.debug('Submitting login form');
+  logger.debug('Submitting login form');
 
   try {
     // Try multiple submit button selectors
@@ -394,11 +557,11 @@ const submitLoginForm = async (
         });
         if (submitButton) {
           await page.click(selector);
-          console.debug(`Submit button clicked using selector: ${selector}`);
+          logger.debug(`Submit button clicked using selector: ${selector}`);
           break;
         }
       } catch (error) {
-        console.debug(`Submit selector ${selector} not found, trying next...`);
+        logger.debug(`Submit selector ${selector} not found, trying next...`);
         continue;
       }
     }
@@ -410,14 +573,18 @@ const submitLoginForm = async (
       );
     }
 
-    await page.waitForLoadState('networkidle', {
+    // Wait for the page to load after form submission
+    await page.waitForLoadState('domcontentloaded', {
       timeout: config.timeout,
     });
 
-    // Check for error messages
-    await checkForLoginErrors(page);
+    // Give a moment for any error messages to appear
+    await page.waitForTimeout(2000);
+
+    // Check for error messages immediately after form submission
+    await checkForLoginErrors(page, logger);
   } catch (error) {
-    console.error('Failed to submit login form', {
+    logger.error('Failed to submit login form', {
       error: (error as Error).message,
     });
     throw new Error(`Failed to submit login form: ${(error as Error).message}`);
@@ -427,44 +594,48 @@ const submitLoginForm = async (
 /**
  * Check for login error messages
  */
-const checkForLoginErrors = async (page: Page): Promise<void> => {
+const checkForLoginErrors = async (
+  page: Page,
+  logger: LoggerType
+): Promise<void> => {
   try {
-    const errorSelector =
-      '[data-cy="invalid_credentials_message"], .error-message, .alert-danger';
-    const errorElement = await page.waitForSelector(errorSelector, {
-      state: 'visible',
-      timeout: sdkConfig.timeouts.elementWait,
-    });
+    const errorSelectors = [
+      '[data-cy="invalid_credentials_message"]',
+      '.error-message',
+      '.alert-danger',
+      '.error',
+      '.login-error',
+      '[role="alert"]',
+    ];
 
-    if (errorElement) {
-      const errorText = await errorElement.textContent();
-      throw new Error(`Login failed: ${errorText || 'Invalid credentials'}`);
+    for (const selector of errorSelectors) {
+      try {
+        const errorElement = await page.$(selector);
+        if (errorElement) {
+          const errorText = await errorElement.textContent();
+          if (errorText && errorText.trim()) {
+            logger.warn(
+              '🌐 Web Browser Adapter: Login error detected in form submission',
+              {
+                selector,
+                errorText: errorText.trim(),
+              }
+            );
+            throw new Error(`Login failed: ${errorText.trim()}`);
+          }
+        }
+      } catch (error) {
+        // Continue checking other selectors
+        continue;
+      }
     }
-  } catch {
+  } catch (error) {
+    // Re-throw the error if it's a login error
+    if (error instanceof Error && error.message.includes('Login failed:')) {
+      throw error;
+    }
     // No error message found, continue
   }
-};
-
-/**
- * Wait for authentication to complete
- */
-const waitForAuthentication = async (
-  page: Page,
-  config: WebAuthConfig
-): Promise<void> => {
-  const appUrl = sdkConfig.urls.appUrl;
-  const appUrlPattern = `${appUrl}/**`;
-
-  console.debug('Waiting for app URL pattern:', appUrlPattern);
-
-  await page.waitForURL(appUrlPattern, {
-    timeout: config.timeout,
-  });
-
-  // Give time for API calls to complete
-  await page.waitForTimeout(sdkConfig.browser.pageWaitTimeout);
-
-  console.info('Successfully authenticated with TrainingPeaks');
 };
 
 /**
@@ -477,10 +648,18 @@ const handleTokenResponse = async (
 ): Promise<void> => {
   try {
     if (!response.ok()) {
+      const status = response.status();
       logger.warn('🌐 Web Browser Adapter: Token response failed', {
-        status: response.status(),
+        status,
         url: response.url(),
       });
+
+      // If it's an authentication error, throw it to be handled by the listener
+      if (status === 401) {
+        throw new Error(
+          'Invalid credentials: Token request returned 401 Unauthorized'
+        );
+      }
       return;
     }
 

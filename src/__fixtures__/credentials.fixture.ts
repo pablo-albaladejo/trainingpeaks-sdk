@@ -3,6 +3,7 @@
  * Provides test data for authentication scenarios
  */
 
+import { Credentials } from '@/domain';
 import { faker } from '@faker-js/faker';
 import { Factory } from 'rosie';
 
@@ -46,7 +47,7 @@ export const CredentialsFactory = new Factory()
   .attr('lastName', () => faker.person.lastName());
 
 // Environment-based credentials for real testing
-export const getRealCredentials = () => {
+export const getRealCredentials = (): Credentials => {
   const username = process.env.TRAININGPEAKS_TEST_USERNAME;
   const password = process.env.TRAININGPEAKS_TEST_PASSWORD;
 
