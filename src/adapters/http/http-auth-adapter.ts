@@ -1,7 +1,6 @@
 import { getSDKConfig } from '@/config';
 import type { AuthToken, Credentials } from '@/domain';
 import { AuthRepository } from '@/domain/repositories/auth-repository';
-import { StorageRepository } from '@/domain/repositories/storage-repository';
 import { createAuthToken } from '@/domain/value-objects/auth-token';
 import type { LoggerType } from '../logging/logger';
 import type { WebHttpClient } from './web-http-client';
@@ -26,7 +25,6 @@ type TokenResponse = {
 export const createHttpAuthAdapter = (
   httpAuthConfig: { loginUrl: string },
   webHttpClient: WebHttpClient,
-  storageRepository: StorageRepository,
   logger: LoggerType
 ): AuthRepository => {
   return {
@@ -79,10 +77,6 @@ export const createHttpAuthAdapter = (
       const sessionToken = authCookie.split('=')[1];
       if (!sessionToken) throw new Error('Session cookie value empty');
 
-      if (storageRepository) {
-        await storageRepository.set('Production_tpAuth', sessionToken);
-      }
-
       // Step 4: Exchange session cookie for auth token
       const tokenResponse = await webHttpClient.get<TokenResponse>(
         'https://tpapi.trainingpeaks.com/users/v3/token'
@@ -122,20 +116,12 @@ export const createHttpAuthAdapter = (
       });
 
       // Create auth token
-      const authToken = createAuthToken(
+      return createAuthToken(
         tokenData.access_token,
         tokenData.token_type || 'Bearer',
         expiresAt,
         tokenData.refresh_token
       );
-
-      // Store token in storage repository if available
-      if (storageRepository) {
-        await storageRepository.set('auth_token', JSON.stringify(authToken));
-        logger.info('🔐 Auth token stored in storage repository');
-      }
-
-      return authToken;
     },
   };
 };

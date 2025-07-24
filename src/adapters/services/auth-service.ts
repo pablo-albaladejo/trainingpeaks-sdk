@@ -20,7 +20,9 @@ export const createAuthService = (
   const loginUser = async (
     credentials: Credentials
   ): Promise<AuthToken | null> => {
-    return await authRepository.authenticate(credentials);
+    const authToken = await authRepository.authenticate(credentials);
+    await storageRepository.set('auth_token', JSON.stringify(authToken));
+    return authToken;
   };
 
   /**

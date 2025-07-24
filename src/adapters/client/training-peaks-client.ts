@@ -49,21 +49,22 @@ export const createTrainingPeaksClient = (
     logger
   );
 
-  const webHttpClient = createWebHttpClient({
-    timeout: sdkConfig.timeouts.webAuth,
-  });
-
-  const memoryStorageAdapter = createMemoryStorageAdapter();
+  const webHttpClient = createWebHttpClient(
+    {
+      timeout: sdkConfig.timeouts.webAuth,
+    },
+    logger
+  );
 
   const authRepository = createHttpAuthAdapter(
     {
       loginUrl: sdkConfig.urls.loginUrl,
     },
     webHttpClient,
-    memoryStorageAdapter, //move to user-case
     logger
   );
 
+  const memoryStorageAdapter = createMemoryStorageAdapter();
   const authService = createAuthService(authRepository, memoryStorageAdapter);
 
   logger.info('🔧 TrainingPeaks Client initialized', {

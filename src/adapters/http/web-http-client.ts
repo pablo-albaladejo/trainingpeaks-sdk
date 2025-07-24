@@ -1,3 +1,5 @@
+import type { LoggerType } from '@/adapters/logging/logger';
+import { generateCurlCommand } from '@/shared/utils/curl-generator';
 import axios, {
   AxiosInstance,
   AxiosResponse,
@@ -9,6 +11,7 @@ import { CookieJar } from 'tough-cookie';
 export type WebHttpClientConfig = {
   timeout?: number;
   baseURL?: string;
+  logger?: LoggerType;
 };
 
 export type WebHttpResponse<T = unknown> = {
@@ -34,7 +37,8 @@ export type WebHttpClient = {
 };
 
 export const createWebHttpClient = (
-  config: WebHttpClientConfig
+  config: WebHttpClientConfig,
+  logger: LoggerType
 ): WebHttpClient => {
   let storedCookies: string[] = [];
   const jar = new CookieJar();
@@ -54,6 +58,62 @@ export const createWebHttpClient = (
       maxRedirects: 5,
       validateStatus: (status) => status < 500,
     })
+  );
+
+  // Add request interceptor for cURL logging
+  client.interceptors.request.use(
+    (requestConfig) => {
+      const curlCommand = generateCurlCommand({
+        method: requestConfig.method || 'GET',
+        url: requestConfig.url || '',
+        headers: requestConfig.headers as Record<string, string>,
+        data: requestConfig.data,
+        cookies: storedCookies,
+      });
+
+      logger.debug('🌐 Web HTTP Client: cURL command', {
+        method: requestConfig.method,
+        url: requestConfig.url,
+        curl: curlCommand,
+      });
+
+      return requestConfig;
+    },
+    (error) => {
+      if (config.logger) {
+        config.logger.error('🌐 Web HTTP Client: Request interceptor error', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+      return Promise.reject(error);
+    }
+  );
+
+  // Add response interceptor for logging
+  client.interceptors.response.use(
+    (response) => {
+      if (config.logger) {
+        config.logger.debug('🌐 Web HTTP Client: Response received', {
+          method: response.config.method,
+          url: response.config.url,
+          status: response.status,
+          statusText: response.statusText,
+          cookieCount: extractCookies(response).length,
+          totalStoredCookies: storedCookies.length,
+        });
+      }
+      return response;
+    },
+    (error) => {
+      logger.error('🌐 Web HTTP Client: Response error', {
+        method: error.config?.method,
+        url: error.config?.url,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      return Promise.reject(error);
+    }
   );
 
   const extractCookies = (response: AxiosResponse): string[] => {
