@@ -1,3 +1,4 @@
+import { ValidationError } from '@/domain/errors/domain-errors';
 import type { WorkoutStructureStep } from '@/types';
 import { IntensityClass, LengthUnit } from '@/types';
 
@@ -32,6 +33,29 @@ export class WorkoutStepBuilder {
   }
 
   addTarget(minValue: number, maxValue: number): this {
+    // Validate that both values are non-negative
+    if (minValue < 0) {
+      throw new ValidationError(
+        'Minimum target value must be non-negative',
+        'minValue'
+      );
+    }
+
+    if (maxValue < 0) {
+      throw new ValidationError(
+        'Maximum target value must be non-negative',
+        'maxValue'
+      );
+    }
+
+    // Validate that minValue is less than maxValue
+    if (minValue >= maxValue) {
+      throw new ValidationError(
+        'Minimum target value must be less than maximum target value',
+        'target'
+      );
+    }
+
     this.step = {
       ...this.step,
       targets: [...this.step.targets, { minValue, maxValue }],
