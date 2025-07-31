@@ -70,5 +70,13 @@ export const validateWorkoutFile = (file: WorkoutFile): boolean => {
  * Get file size in bytes
  */
 export const getFileSize = (file: WorkoutFile): number => {
+  // Validate that file.content is a valid string
+  if (typeof file.content !== 'string') {
+    throw new ValidationError(
+      'File content must be a valid string to calculate size',
+      'content'
+    );
+  }
+
   return Buffer.byteLength(file.content, 'utf8');
 };
