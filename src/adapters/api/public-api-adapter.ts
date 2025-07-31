@@ -21,6 +21,7 @@ export interface TokenResponse {
   token: {
     access_token: string;
     refresh_token?: string;
+    token_type: string;
   };
 }
 
@@ -96,7 +97,7 @@ export class TrainingPeaksApiClient {
     // Create AuthToken entity
     const authToken = createAuthToken(
       token.access_token,
-      'Bearer',
+      token.token_type,
       new Date(Date.now() + sdkConfig.tokens.defaultExpiration),
       token.refresh_token
     );
@@ -143,7 +144,7 @@ export class TrainingPeaksApiClient {
 
     const newToken = createAuthToken(
       token.access_token,
-      'Bearer',
+      token.token_type,
       new Date(Date.now() + sdkConfig.tokens.defaultExpiration),
       token.refresh_token
     );
