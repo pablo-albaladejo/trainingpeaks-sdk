@@ -39,6 +39,15 @@ jobs:
         run: npm run test:junit
         continue-on-error: true
 
+      - name: Check for JUnit test results
+        run: |
+          if [ -f "test-report.junit.xml" ]; then
+            echo "✅ JUnit test results found"
+            ls -la test-report.junit.xml
+          else
+            echo "⚠️ No JUnit test results found"
+          fi
+
       - name: Upload coverage reports
         if: matrix.node-version == '20.x'
         uses: codecov/codecov-action@v5
@@ -50,11 +59,12 @@ jobs:
           fail_ci_if_error: false
 
       - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && hashFiles('test-report.junit.xml') != '' }}
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unittests
+          file: test-report.junit.xml
 
       - name: Build project
         run: npm run build
