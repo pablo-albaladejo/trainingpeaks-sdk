@@ -40,8 +40,24 @@ export const createWebHttpClient = (
   config: WebHttpClientConfig,
   logger: LoggerType
 ): WebHttpClient => {
-  let storedCookies: string[] = [];
   const jar = new CookieJar();
+  const MAX_COOKIES = 50; // Limit to prevent memory leaks
+  let storedCookies: string[] = [];
+
+  // Helper function to limit cookie count and prevent memory leaks
+  const limitCookieCount = (): void => {
+    if (storedCookies.length > MAX_COOKIES) {
+      // Keep only the most recent cookies
+      storedCookies = storedCookies.slice(-MAX_COOKIES);
+      logger.debug(
+        '🌐 Web HTTP Client: Cookie limit reached, removed oldest cookies',
+        {
+          remainingCookies: storedCookies.length,
+        }
+      );
+    }
+  };
+
   const client: AxiosInstance = wrapper(
     axios.create({
       baseURL: config.baseURL,
@@ -131,6 +147,7 @@ export const createWebHttpClient = (
     const response = await client.get<T>(url);
     const cookies = extractCookies(response);
     storedCookies = Array.from(new Set([...storedCookies, ...cookies]));
+    limitCookieCount(); // Prevent memory leak
     return {
       status: response.status,
       statusText: response.statusText,
@@ -163,6 +180,7 @@ export const createWebHttpClient = (
     });
     const cookies = extractCookies(response);
     storedCookies = Array.from(new Set([...storedCookies, ...cookies]));
+    limitCookieCount(); // Prevent memory leak
     return {
       status: response.status,
       statusText: response.statusText,
@@ -176,6 +194,7 @@ export const createWebHttpClient = (
     const cookie = `${name}=${value}`;
     storedCookies = storedCookies.filter((c) => !c.startsWith(`${name}=`));
     storedCookies.push(cookie);
+    limitCookieCount(); // Prevent memory leak
   };
 
   return { get, post, setCookie };
