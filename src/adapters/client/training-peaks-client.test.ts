@@ -33,7 +33,7 @@ vi.mock('@/adapters/repositories/workout-repository', () => ({
 
 vi.mock('@/config', () => ({
   getSDKConfig: vi.fn(() => ({
-    urls: { 
+    urls: {
       apiBaseUrl: 'https://api.trainingpeaks.com',
       loginUrl: 'https://home.trainingpeaks.com/login',
     },
@@ -61,7 +61,6 @@ describe('createTrainingPeaksClient', () => {
     const config = {
       apiKey: faker.string.uuid(),
       baseUrl: faker.internet.url(),
-      
     };
 
     expect(() => createTrainingPeaksClient(config)).not.toThrow();
