@@ -14,8 +14,8 @@ export const createValidCredentials = () => ({
 });
 
 export const createInvalidCredentials = () => ({
-  username: faker.internet.userName(),
-  password: faker.internet.password({ length: 12 }),
+  username: `invalid_user_${faker.string.alphanumeric(8)}`,
+  password: `wrong_password_${faker.string.alphanumeric(8)}`,
 });
 
 export const createEmptyCredentials = () => ({
