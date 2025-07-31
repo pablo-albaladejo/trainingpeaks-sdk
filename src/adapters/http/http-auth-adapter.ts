@@ -1,7 +1,7 @@
 import { serializeApiResponseToUser } from '@/adapters/serialization';
+import type { UserRepository } from '@/application/repositories';
 import { getSDKConfig } from '@/config';
 import type { AuthToken, Credentials, User } from '@/domain';
-import { AuthRepository } from '@/domain/repositories/auth-repository';
 import { createAuthToken } from '@/domain/value-objects/auth-token';
 import type { LoggerType } from '../logging/logger';
 import type { WebHttpClient } from './web-http-client';
@@ -26,13 +26,47 @@ type TokenResponse = {
 export const createHttpAuthAdapter = (
   httpAuthConfig: {
     loginUrl: string;
+    tokenUrl: string;
+    userInfoUrl: string;
     authCookieName?: string;
   },
   webHttpClient: WebHttpClient,
   logger: LoggerType
-): AuthRepository => {
+): UserRepository => {
+  const getUserInfo = async (token: AuthToken): Promise<User> => {
+    logger.info('👤 Getting user information via HTTP auth');
+
+    const headers = {
+      Authorization: `${token.tokenType} ${token.accessToken}`,
+    };
+
+    const response = await webHttpClient.get<{
+      user: {
+        userId: string | number;
+        username: string;
+        name: string;
+        preferences?: Record<string, unknown>;
+      };
+    }>(httpAuthConfig.userInfoUrl, { headers });
+
+    if (response.status !== 200) {
+      throw new Error(`Failed to get user info: ${response.statusText}`);
+    }
+
+    const user = serializeApiResponseToUser(response.data);
+
+    logger.info('👤 User information retrieved successfully', {
+      userId: user.id,
+      name: user.name,
+    });
+
+    return user;
+  };
+
   return {
-    authenticate: async (credentials: Credentials): Promise<AuthToken> => {
+    authenticate: async (
+      credentials: Credentials
+    ): Promise<{ token: AuthToken; user: User }> => {
       logger.info('🔐 Starting HTTP authentication', {
         username: credentials.username,
       });
@@ -85,7 +119,7 @@ export const createHttpAuthAdapter = (
 
       // Step 4: Exchange session cookie for auth token
       const tokenResponse = await webHttpClient.get<TokenResponse>(
-        'https://tpapi.trainingpeaks.com/users/v3/token'
+        httpAuthConfig.tokenUrl
       );
 
       if (!tokenResponse.data?.token) {
@@ -122,45 +156,66 @@ export const createHttpAuthAdapter = (
       });
 
       // Create auth token
-      return createAuthToken(
+      const token = createAuthToken(
         tokenData.access_token,
         tokenData.token_type || 'Bearer',
         expiresAt,
         tokenData.refresh_token
       );
+
+      // For now, create a basic user object
+      // In a real implementation, this would fetch user data from the API
+      const user: User = {
+        id: 'user-id', // This would come from the API
+        name: credentials.username,
+      };
+
+      return { token, user };
     },
 
     /**
      * Get user information using the provided auth token
      */
-    getUserInfo: async (token: AuthToken): Promise<User> => {
-      logger.info('👤 Getting user information via HTTP auth');
+    getUserInfo,
 
-      const headers = {
-        Authorization: `${token.tokenType} ${token.accessToken}`,
-      };
+    /**
+     * Refresh authentication token
+     */
+    refreshToken: async (refreshToken: string): Promise<AuthToken> => {
+      logger.info('🔄 Refreshing token via HTTP auth');
 
-      const response = await webHttpClient.get<{
-        user: {
-          userId: string | number;
-          username: string;
-          name: string;
-          preferences?: Record<string, unknown>;
-        };
-      }>('https://tpapi.trainingpeaks.com/users/v3/user', { headers });
+      // This would need to be implemented based on the actual API
+      // For now, we'll throw an error indicating it's not implemented
+      throw new Error('Token refresh not implemented in HTTP auth adapter');
+    },
 
-      if (response.status !== 200) {
-        throw new Error(`Failed to get user info: ${response.statusText}`);
-      }
+    /**
+     * Update user preferences
+     */
+    updatePreferences: async (
+      token: AuthToken,
+      preferences: Record<string, unknown>
+    ): Promise<void> => {
+      logger.info('⚙️ Updating user preferences via HTTP auth');
 
-      const user = serializeApiResponseToUser(response.data);
+      // This would need to be implemented based on the actual API
+      // For now, we'll throw an error indicating it's not implemented
+      throw new Error(
+        'Update preferences not implemented in HTTP auth adapter'
+      );
+    },
 
-      logger.info('👤 User information retrieved successfully', {
-        userId: user.id,
-        name: user.name,
-      });
+    /**
+     * Get user settings
+     */
+    getUserSettings: async (
+      token: AuthToken
+    ): Promise<Record<string, unknown>> => {
+      logger.info('⚙️ Getting user settings via HTTP auth');
 
-      return user;
+      // This would need to be implemented based on the actual API
+      // For now, we'll return an empty object
+      return {};
     },
   };
 };

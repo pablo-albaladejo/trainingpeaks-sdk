@@ -1,12 +1,20 @@
 /**
  * API Adapters
- * Handles external API integrations and endpoints
+ * Modular API client architecture for TrainingPeaks SDK
  */
 
-// Public API Adapter - TrainingPeaks public API logic
+// Base API client
+export * from './base-api-client';
+
+// Entity-specific API clients
+export * from './modules/users-api-client';
+export * from './modules/workouts-api-client';
+
+// Main API client
 export {
   TrainingPeaksApiClient,
-  type ApiConfig,
-  type TokenResponse,
-  type UserResponse,
-} from './public-api-adapter';
+  createTrainingPeaksApiClient,
+} from './training-peaks-api-client';
+
+// Legacy adapter (for backward compatibility)
+export { TrainingPeaksApiClient as LegacyTrainingPeaksApiClient } from './public-api-adapter';

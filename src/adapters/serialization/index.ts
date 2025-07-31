@@ -4,4 +4,11 @@
  */
 
 export * from './auth-token-serializer';
-export * from './user-serializer';
+export {
+  UserApiResponse,
+  UserStorageData,
+  deserializeStorageToUser,
+  deserializeUserFromJson,
+  serializeApiResponseToUser,
+  serializeUserToStorage,
+} from './user-serializer';

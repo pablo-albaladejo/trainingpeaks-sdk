@@ -59,6 +59,8 @@ export const createTrainingPeaksClient = (
   const authRepository = createHttpAuthAdapter(
     {
       loginUrl: sdkConfig.urls.loginUrl,
+      tokenUrl: sdkConfig.urls.tokenUrl,
+      userInfoUrl: sdkConfig.urls.userInfoUrl,
       authCookieName: sdkConfig.auth.cookieName,
     },
     webHttpClient,
@@ -75,7 +77,7 @@ export const createTrainingPeaksClient = (
   });
 
   // Create use case instances with injected dependencies
-  const loginUseCase = executeLoginUserUseCase(authService.loginUser);
+  const loginUseCase = executeLoginUserUseCase(authService.authenticateUser);
   const getUserUseCase = executeGetUserUseCase(authService.getCurrentUser);
 
   // Return the client interface with all public methods
@@ -83,7 +85,9 @@ export const createTrainingPeaksClient = (
     /**
      * Login with username and password
      */
-    login: async (credentials: Credentials) => {
+    login: async (username: string, password: string) => {
+      const credentials: Credentials = { username, password };
+
       logger.info('🔐 Login attempt started', {
         username: credentials.username,
         passwordLength: credentials.password.length,
@@ -150,6 +154,22 @@ export const createTrainingPeaksClient = (
             error instanceof Error ? error.message : 'Unknown error occurred',
         };
       }
+    },
+
+    /**
+     * Check if user is authenticated
+     */
+    isAuthenticated: () => {
+      logger.info('🔍 Checking authentication status');
+      return memoryStorageAdapter.isAuthenticatedSync();
+    },
+
+    /**
+     * Get current user ID
+     */
+    getUserId: () => {
+      logger.info('🆔 Getting user ID');
+      return memoryStorageAdapter.getUserIdSync();
     },
   };
 };

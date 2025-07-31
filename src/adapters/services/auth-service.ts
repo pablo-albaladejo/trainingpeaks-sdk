@@ -3,26 +3,32 @@
  * Combines authentication and storage operations
  */
 
+import type {
+  StorageRepository,
+  UserRepository,
+} from '@/application/repositories';
 import { AuthToken, Credentials, User } from '@/domain';
-import { AuthRepository } from '@/domain/repositories/auth-repository';
-import { StorageRepository } from '@/domain/repositories/storage-repository';
 
 /**
  * Create authentication service
  */
 export const createAuthService = (
-  authRepository: AuthRepository,
+  userRepository: UserRepository,
   storageRepository: StorageRepository
 ) => {
   /**
-   * Login user and store both token and user data
+   * Authenticate user and return both token and user
    */
-  const loginUser = async (
+  const authenticateUser = async (
     credentials: Credentials
-  ): Promise<AuthToken | null> => {
-    const authToken = await authRepository.authenticate(credentials);
+  ): Promise<{ token: AuthToken; user: User }> => {
+    const result = await userRepository.authenticate(credentials);
+    const { token: authToken, user } = result;
+
     await storageRepository.set('auth_token', authToken);
-    return authToken;
+    await storageRepository.set('user', user);
+
+    return { token: authToken, user };
   };
 
   /**
@@ -39,9 +45,28 @@ export const createAuthService = (
     return await storageRepository.get<AuthToken>('auth_token');
   };
 
+  /**
+   * Check if user is authenticated
+   */
+  const isAuthenticated = async (): Promise<boolean> => {
+    const token = await storageRepository.get<AuthToken>('auth_token');
+    const user = await storageRepository.get<User>('user');
+    return !!(token && user);
+  };
+
+  /**
+   * Get current user ID
+   */
+  const getUserId = async (): Promise<string | null> => {
+    const user = await storageRepository.get<User>('user');
+    return user?.id || null;
+  };
+
   return {
-    loginUser,
+    authenticateUser,
     getCurrentUser,
     getCurrentToken,
+    isAuthenticated,
+    getUserId,
   };
 };

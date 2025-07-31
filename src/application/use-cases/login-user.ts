@@ -4,10 +4,10 @@
  */
 
 import { AuthToken, Credentials } from '@/domain';
-import { LoginUser } from '../services/login-user';
+import { AuthenticateUser } from '../services/authenticate-user';
 
 export type ExecuteLoginUserUseCase = (
-  loginUser: LoginUser
+  authenticateUser: AuthenticateUser
 ) => (credentials: Credentials) => Promise<ExecuteLoginUserUseCaseResult>;
 
 export type ExecuteLoginUserUseCaseResult = {
@@ -21,22 +21,15 @@ export type ExecuteLoginUserUseCaseResult = {
  * Pure orchestration using contracts only
  */
 export const executeLoginUserUseCase: ExecuteLoginUserUseCase =
-  (loginUser: LoginUser) =>
+  (authenticateUser: AuthenticateUser) =>
   async (credentials: Credentials): Promise<ExecuteLoginUserUseCaseResult> => {
     try {
-      // Authenticate user using login service
-      const authResult = await loginUser(credentials);
-
-      if (!authResult) {
-        return {
-          success: false,
-          error: 'Failed to login user',
-        };
-      }
+      // Authenticate user using authenticate service
+      const authResult = await authenticateUser(credentials);
 
       return {
         success: true,
-        authToken: authResult,
+        authToken: authResult.token,
       };
     } catch (error) {
       return {

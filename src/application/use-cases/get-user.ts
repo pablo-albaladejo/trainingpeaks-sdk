@@ -4,7 +4,8 @@
  */
 
 import { User } from '@/domain';
-import { GetCurrentUser } from '../services/get-current-user';
+
+type GetCurrentUser = () => Promise<User | null>;
 
 type ExecuteGetUserUseCaseResult = {
   success: boolean;

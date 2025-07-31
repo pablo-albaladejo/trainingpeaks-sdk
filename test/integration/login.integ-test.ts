@@ -25,7 +25,10 @@ describe('TrainingPeaks Client Login Integration', () => {
   describe('login() - Success Cases', () => {
     it('should return proper response structure for login attempt', async () => {
       const credentials = createCredentialsForScenario('success');
-      const result = await client.login(credentials);
+      const result = await client.login(
+        credentials.username,
+        credentials.password
+      );
 
       expect(result).toMatchObject({
         success: expect.any(Boolean),
@@ -39,7 +42,10 @@ describe('TrainingPeaks Client Login Integration', () => {
   describe('login() - Failure Cases', () => {
     it('should return error for invalid credentials', async () => {
       const credentials = createCredentialsForScenario('failure');
-      const result = await client.login(credentials);
+      const result = await client.login(
+        credentials.username,
+        credentials.password
+      );
 
       expect(result).toMatchObject({
         success: expect.any(Boolean),

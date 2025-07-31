@@ -18,6 +18,10 @@ export type TrainingPeaksSDKConfig = {
     loginUrl: string;
     /** Application URL after login */
     appUrl: string;
+    /** Token endpoint URL */
+    tokenUrl: string;
+    /** User info endpoint URL */
+    userInfoUrl: string;
   };
 
   /** Authentication configurations */
@@ -111,6 +115,8 @@ const HARDCODED_DEFAULTS: TrainingPeaksSDKConfig = {
     apiBaseUrl: 'https://tpapi.trainingpeaks.com',
     loginUrl: 'https://home.trainingpeaks.com/login',
     appUrl: 'https://app.trainingpeaks.com',
+    tokenUrl: 'https://tpapi.trainingpeaks.com/users/v3/token',
+    userInfoUrl: 'https://tpapi.trainingpeaks.com/users/v3/user',
   },
 
   auth: {
@@ -170,6 +176,8 @@ type EnvironmentConfig = {
     apiBaseUrl?: string;
     loginUrl?: string;
     appUrl?: string;
+    tokenUrl?: string;
+    userInfoUrl?: string;
   };
   auth?: {
     cookieName?: string;
@@ -217,6 +225,8 @@ function getEnvironmentConfig(): EnvironmentConfig {
       apiBaseUrl: process.env.TRAININGPEAKS_API_BASE_URL || undefined,
       loginUrl: process.env.TRAININGPEAKS_LOGIN_URL || undefined,
       appUrl: process.env.TRAININGPEAKS_APP_URL || undefined,
+      tokenUrl: process.env.TRAININGPEAKS_TOKEN_URL || undefined,
+      userInfoUrl: process.env.TRAININGPEAKS_USER_INFO_URL || undefined,
     },
     auth: {
       cookieName: process.env.TRAININGPEAKS_AUTH_COOKIE_NAME || undefined,

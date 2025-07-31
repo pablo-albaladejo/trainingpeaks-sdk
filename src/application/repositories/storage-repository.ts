@@ -1,5 +1,5 @@
 /**
- * Storage Repository
+ * Storage Repository types
  * Handles storage operations for the application
  * Automatically handles serialization/deserialization of complex objects
  */

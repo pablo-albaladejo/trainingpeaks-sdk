@@ -1,5 +1,5 @@
-import type { User } from '@/domain';
+import type { AuthToken, User } from '@/domain';
 
-export type GetCurrentUserResult = User | null;
+export type GetCurrentUserResult = User;
 
-export type GetCurrentUser = () => Promise<GetCurrentUserResult>;
+export type GetCurrentUser = (token: AuthToken) => Promise<GetCurrentUserResult>;
