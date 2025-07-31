@@ -915,7 +915,3 @@ Brief description of changes
 
 If this PR contains breaking changes, please describe them and provide migration instructions.
 ```
-
-description: globs: alwaysApply: false
-
----
