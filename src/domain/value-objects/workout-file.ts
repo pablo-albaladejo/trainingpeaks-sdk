@@ -59,6 +59,21 @@ export const createWorkoutFile = (
  * Validate workout file
  */
 export const validateWorkoutFile = (file: WorkoutFile): boolean => {
+  // Check if file object exists
+  if (!file) {
+    return false;
+  }
+
+  // Check if required properties exist and are strings
+  if (
+    typeof file.fileName !== 'string' ||
+    typeof file.content !== 'string' ||
+    typeof file.mimeType !== 'string'
+  ) {
+    return false;
+  }
+
+  // Check if properties have non-zero length
   return (
     file.fileName.length > 0 &&
     file.content.length > 0 &&
