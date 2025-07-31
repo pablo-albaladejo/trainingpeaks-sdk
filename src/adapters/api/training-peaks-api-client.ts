@@ -143,35 +143,35 @@ export class TrainingPeaksApiClient {
   /**
    * Get workout by ID
    */
-  async getWorkoutById(id: string, token: AuthToken): Promise<WorkoutResponse> {
-    return this.getWorkoutByIdService(id, token);
+  async getWorkoutById(token: AuthToken, id: string): Promise<WorkoutResponse> {
+    return this.getWorkoutByIdService(token, id);
   }
 
   /**
    * Create new workout
    */
   async createWorkout(
-    workout: CreateWorkoutRequest,
-    token: AuthToken
+    token: AuthToken,
+    workout: CreateWorkoutRequest
   ): Promise<WorkoutResponse> {
-    return this.createWorkoutService(workout, token);
+    return this.createWorkoutService(token, workout);
   }
 
   /**
    * Update existing workout
    */
   async updateWorkout(
-    workout: UpdateWorkoutRequest,
-    token: AuthToken
+    token: AuthToken,
+    workout: UpdateWorkoutRequest
   ): Promise<WorkoutResponse> {
-    return this.updateWorkoutService(workout, token);
+    return this.updateWorkoutService(token, workout);
   }
 
   /**
    * Delete workout
    */
-  async deleteWorkout(id: string, token: AuthToken): Promise<void> {
-    return this.deleteWorkoutService(id, token);
+  async deleteWorkout(token: AuthToken, id: string): Promise<void> {
+    return this.deleteWorkoutService(token, id);
   }
 
   /**

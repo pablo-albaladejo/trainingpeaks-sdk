@@ -9,8 +9,8 @@ import type { AuthToken } from '@/domain';
 export const createWorkout =
   (workoutRepository: WorkoutRepository): CreateWorkout =>
   async (
-    workout: CreateWorkoutRequest,
-    token: AuthToken
+    token: AuthToken,
+    workout: CreateWorkoutRequest
   ): Promise<WorkoutResponse> => {
-    return await workoutRepository.createWorkout(workout, token);
+    return await workoutRepository.createWorkout(token, workout);
   };

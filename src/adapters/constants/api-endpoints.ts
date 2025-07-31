@@ -23,5 +23,5 @@ export const API_ENDPOINTS = {
   },
 } as const;
 
-export type ApiEndpoint =
+export type ApiEndpointPath =
   (typeof API_ENDPOINTS)[keyof typeof API_ENDPOINTS][keyof (typeof API_ENDPOINTS)[keyof typeof API_ENDPOINTS]];

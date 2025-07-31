@@ -4,6 +4,6 @@ import type { AuthToken } from '@/domain';
 
 export const deleteWorkout =
   (workoutRepository: WorkoutRepository): DeleteWorkout =>
-  async (id: string, token: AuthToken): Promise<void> => {
-    await workoutRepository.deleteWorkout(id, token);
+  async (token: AuthToken, id: string): Promise<void> => {
+    await workoutRepository.deleteWorkout(token, id);
   };

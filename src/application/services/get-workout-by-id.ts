@@ -4,6 +4,6 @@ import type { AuthToken } from '@/domain';
 export type GetWorkoutByIdResult = WorkoutResponse;
 
 export type GetWorkoutById = (
-  id: string,
-  token: AuthToken
+  token: AuthToken,
+  id: string
 ) => Promise<GetWorkoutByIdResult>;

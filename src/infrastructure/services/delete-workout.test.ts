@@ -27,11 +27,11 @@ describe('deleteWorkout', () => {
     vi.mocked(mockWorkoutRepository.deleteWorkout).mockResolvedValue();
 
     const service = deleteWorkout(mockWorkoutRepository);
-    await service('1', mockToken);
+    await service(mockToken, '1');
 
     expect(mockWorkoutRepository.deleteWorkout).toHaveBeenCalledWith(
-      '1',
-      mockToken
+      mockToken,
+      '1'
     );
   });
 
@@ -43,7 +43,7 @@ describe('deleteWorkout', () => {
 
     const service = deleteWorkout(mockWorkoutRepository);
 
-    await expect(service('1', mockToken)).rejects.toThrow(
+    await expect(service(mockToken, '1')).rejects.toThrow(
       'Failed to delete workout'
     );
   });

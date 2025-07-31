@@ -23,28 +23,28 @@ export type WorkoutRepository = {
   /**
    * Get workout by ID
    */
-  getWorkoutById(id: string, token: AuthToken): Promise<WorkoutResponse>;
+  getWorkoutById(token: AuthToken, id: string): Promise<WorkoutResponse>;
 
   /**
    * Create new workout
    */
   createWorkout(
-    workout: CreateWorkoutRequest,
-    token: AuthToken
+    token: AuthToken,
+    workout: CreateWorkoutRequest
   ): Promise<WorkoutResponse>;
 
   /**
    * Update existing workout
    */
   updateWorkout(
-    workout: UpdateWorkoutRequest,
-    token: AuthToken
+    token: AuthToken,
+    workout: UpdateWorkoutRequest
   ): Promise<WorkoutResponse>;
 
   /**
    * Delete workout
    */
-  deleteWorkout(id: string, token: AuthToken): Promise<void>;
+  deleteWorkout(token: AuthToken, id: string): Promise<void>;
 
   /**
    * Get workout statistics

@@ -35,11 +35,11 @@ describe('updateWorkout', () => {
     );
 
     const service = updateWorkout(mockWorkoutRepository);
-    const result = await service(workoutData, mockToken);
+    const result = await service(mockToken, workoutData);
 
     expect(mockWorkoutRepository.updateWorkout).toHaveBeenCalledWith(
-      workoutData,
-      mockToken
+      mockToken,
+      workoutData
     );
     expect(result).toEqual(mockUpdatedWorkout);
   });
@@ -53,7 +53,7 @@ describe('updateWorkout', () => {
 
     const service = updateWorkout(mockWorkoutRepository);
 
-    await expect(service(workoutData, mockToken)).rejects.toThrow(
+    await expect(service(mockToken, workoutData)).rejects.toThrow(
       'Failed to update workout'
     );
   });

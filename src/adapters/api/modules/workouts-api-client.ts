@@ -81,7 +81,7 @@ export class WorkoutsApiClient
    * Get workout by ID
    * Returns raw API response data
    */
-  async getWorkoutById(id: string, token: AuthToken): Promise<WorkoutResponse> {
+  async getWorkoutById(token: AuthToken, id: string): Promise<WorkoutResponse> {
     this.logger.debug('🏃 Workouts API: Getting workout by ID', {
       workoutId: id,
     });
@@ -120,8 +120,8 @@ export class WorkoutsApiClient
    * Returns raw API response data
    */
   async createWorkout(
-    workoutData: CreateWorkoutRequest,
-    token: AuthToken
+    token: AuthToken,
+    workoutData: CreateWorkoutRequest
   ): Promise<WorkoutResponse> {
     this.logger.debug('🏃 Workouts API: Creating new workout', {
       name: workoutData.name,
@@ -159,8 +159,8 @@ export class WorkoutsApiClient
    * Returns raw API response data
    */
   async updateWorkout(
-    workoutData: UpdateWorkoutRequest,
-    token: AuthToken
+    token: AuthToken,
+    workoutData: UpdateWorkoutRequest
   ): Promise<WorkoutResponse> {
     this.logger.debug('🏃 Workouts API: Updating workout', {
       workoutId: workoutData.id,
@@ -202,7 +202,7 @@ export class WorkoutsApiClient
   /**
    * Delete workout
    */
-  async deleteWorkout(workoutId: string, token: AuthToken): Promise<void> {
+  async deleteWorkout(token: AuthToken, workoutId: string): Promise<void> {
     this.logger.debug('🏃 Workouts API: Deleting workout', { workoutId });
 
     const endpoint = this.buildEndpointWithId(

@@ -7,6 +7,6 @@ import type { AuthToken } from '@/domain';
 export type CreateWorkoutResult = WorkoutResponse;
 
 export type CreateWorkout = (
-  workout: CreateWorkoutRequest,
-  token: AuthToken
+  token: AuthToken,
+  workout: CreateWorkoutRequest
 ) => Promise<CreateWorkoutResult>;

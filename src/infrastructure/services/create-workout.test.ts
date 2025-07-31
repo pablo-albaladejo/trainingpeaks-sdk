@@ -35,11 +35,11 @@ describe('createWorkout', () => {
     );
 
     const service = createWorkout(mockWorkoutRepository);
-    const result = await service(workoutData, mockToken);
+    const result = await service(mockToken, workoutData);
 
     expect(mockWorkoutRepository.createWorkout).toHaveBeenCalledWith(
-      workoutData,
-      mockToken
+      mockToken,
+      workoutData
     );
     expect(result).toEqual(mockCreatedWorkout);
   });
@@ -53,7 +53,7 @@ describe('createWorkout', () => {
 
     const service = createWorkout(mockWorkoutRepository);
 
-    await expect(service(workoutData, mockToken)).rejects.toThrow(
+    await expect(service(mockToken, workoutData)).rejects.toThrow(
       'Failed to create workout'
     );
   });

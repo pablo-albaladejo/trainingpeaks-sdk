@@ -31,11 +31,11 @@ describe('getWorkoutById', () => {
     );
 
     const service = getWorkoutById(mockWorkoutRepository);
-    const result = await service('1', mockToken);
+    const result = await service(mockToken, '1');
 
     expect(mockWorkoutRepository.getWorkoutById).toHaveBeenCalledWith(
-      '1',
-      mockToken
+      mockToken,
+      '1'
     );
     expect(result).toEqual(mockWorkout);
   });
@@ -48,6 +48,6 @@ describe('getWorkoutById', () => {
 
     const service = getWorkoutById(mockWorkoutRepository);
 
-    await expect(service('1', mockToken)).rejects.toThrow('Workout not found');
+    await expect(service(mockToken, '1')).rejects.toThrow('Workout not found');
   });
 });
