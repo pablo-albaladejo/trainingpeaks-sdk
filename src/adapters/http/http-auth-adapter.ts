@@ -1,3 +1,4 @@
+import { AUTH_CONSTANTS, HTTP_STATUS } from '@/adapters/constants';
 import { serializeApiResponseToUser } from '@/adapters/serialization';
 import type { UserRepository } from '@/application/repositories';
 import { getSDKConfig } from '@/config';
@@ -49,7 +50,7 @@ export const createHttpAuthAdapter = (
       };
     }>(httpAuthConfig.userInfoUrl, { headers });
 
-    if (response.status !== 200) {
+    if (response.status !== HTTP_STATUS.OK) {
       throw new Error(`Failed to get user info: ${response.statusText}`);
     }
 
@@ -107,7 +108,8 @@ export const createHttpAuthAdapter = (
       }
 
       // Step 3: Extract session cookie
-      const cookieName = httpAuthConfig.authCookieName || 'Production_tpAuth';
+      const cookieName =
+        httpAuthConfig.authCookieName || AUTH_CONSTANTS.DEFAULT_AUTH_COOKIE;
       const authCookie = loginResponse.cookies.find((c) =>
         c.startsWith(`${cookieName}=`)
       );

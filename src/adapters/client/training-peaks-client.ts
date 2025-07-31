@@ -8,6 +8,7 @@ import { executeLoginUserUseCase } from '@/application/use-cases/login-user';
 
 import { createLogger } from '@/adapters/logging/logger';
 
+import { STORAGE_KEYS } from '@/adapters/constants';
 import type { TrainingPeaksClientConfig } from '@/config';
 import { getSDKConfig } from '@/config';
 import { Credentials } from '@/domain';
@@ -161,8 +162,8 @@ export const createTrainingPeaksClient = (
      */
     isAuthenticated: async () => {
       logger.info('🔍 Checking authentication status');
-      const token = await memoryStorageAdapter.get('auth_token');
-      const user = await memoryStorageAdapter.get('user');
+      const token = await memoryStorageAdapter.get(STORAGE_KEYS.AUTH_TOKEN);
+      const user = await memoryStorageAdapter.get(STORAGE_KEYS.USER);
       return !!(token && user);
     },
 
@@ -171,7 +172,9 @@ export const createTrainingPeaksClient = (
      */
     getUserId: async () => {
       logger.info('🆔 Getting user ID');
-      const user = await memoryStorageAdapter.get<{ id?: string }>('user');
+      const user = await memoryStorageAdapter.get<{ id?: string }>(
+        STORAGE_KEYS.USER
+      );
       return user?.id || null;
     },
   };

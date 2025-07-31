@@ -4,7 +4,7 @@
  * Example of how to extend the base API client for new entities
  */
 
-import type { AuthToken } from '@/domain';
+import { API_ENDPOINTS, HTTP_STATUS } from '@/adapters/constants';
 import type {
   CreateWorkoutRequest,
   UpdateWorkoutRequest,
@@ -14,6 +14,7 @@ import type {
   WorkoutsListResponse,
   WorkoutStats,
 } from '@/application/repositories';
+import type { AuthToken } from '@/domain';
 import { BaseApiClient, type EntityApiConfig } from '../base-api-client';
 
 /**
@@ -27,7 +28,7 @@ export class WorkoutsApiClient
   constructor(config: Omit<EntityApiConfig, 'entity'>) {
     super({
       ...config,
-      entity: 'workouts',
+      entity: API_ENDPOINTS.ENTITIES.WORKOUTS,
       version: config.version || 'v1',
     });
   }
@@ -43,7 +44,7 @@ export class WorkoutsApiClient
     this.logger.debug('🏃 Workouts API: Getting workouts list', { filters });
 
     const endpoint = this.buildEndpoint(
-      'workouts',
+      API_ENDPOINTS.WORKOUTS.WORKOUTS,
       filters as Record<string, string>
     );
     const headers = this.getAuthHeaders(token);
@@ -57,7 +58,7 @@ export class WorkoutsApiClient
       );
       this.logResponse('GET', endpoint, response.status);
 
-      if (response.status !== 200) {
+      if (response.status !== HTTP_STATUS.OK) {
         throw new Error(`Failed to get workouts: ${response.statusText}`);
       }
 
@@ -85,7 +86,10 @@ export class WorkoutsApiClient
       workoutId: id,
     });
 
-    const endpoint = this.buildEndpointWithId('workouts', id);
+    const endpoint = this.buildEndpointWithId(
+      API_ENDPOINTS.WORKOUTS.WORKOUTS,
+      id
+    );
     const headers = this.getAuthHeaders(token);
 
     this.logRequest('GET', endpoint);
@@ -97,7 +101,7 @@ export class WorkoutsApiClient
       );
       this.logResponse('GET', endpoint, response.status);
 
-      if (response.status !== 200) {
+      if (response.status !== HTTP_STATUS.OK) {
         throw new Error(`Failed to get workout: ${response.statusText}`);
       }
 
@@ -123,7 +127,7 @@ export class WorkoutsApiClient
       name: workoutData.name,
     });
 
-    const endpoint = this.buildEndpoint('workouts');
+    const endpoint = this.buildEndpoint(API_ENDPOINTS.WORKOUTS.WORKOUTS);
     const headers = this.getAuthHeaders(token);
 
     this.logRequest('POST', endpoint);
@@ -136,7 +140,7 @@ export class WorkoutsApiClient
       );
       this.logResponse('POST', endpoint, response.status);
 
-      if (response.status !== 201) {
+      if (response.status !== HTTP_STATUS.CREATED) {
         throw new Error(`Failed to create workout: ${response.statusText}`);
       }
 
@@ -162,7 +166,10 @@ export class WorkoutsApiClient
       workoutId: workoutData.id,
     });
 
-    const endpoint = this.buildEndpointWithId('workouts', workoutData.id);
+    const endpoint = this.buildEndpointWithId(
+      API_ENDPOINTS.WORKOUTS.WORKOUTS,
+      workoutData.id
+    );
     const headers = this.getAuthHeaders(token);
 
     // Remove id from update data as it's in the URL
@@ -178,7 +185,7 @@ export class WorkoutsApiClient
       );
       this.logResponse('PUT', endpoint, response.status);
 
-      if (response.status !== 200) {
+      if (response.status !== HTTP_STATUS.OK) {
         throw new Error(`Failed to update workout: ${response.statusText}`);
       }
 
@@ -198,7 +205,10 @@ export class WorkoutsApiClient
   async deleteWorkout(workoutId: string, token: AuthToken): Promise<void> {
     this.logger.debug('🏃 Workouts API: Deleting workout', { workoutId });
 
-    const endpoint = this.buildEndpointWithId('workouts', workoutId);
+    const endpoint = this.buildEndpointWithId(
+      API_ENDPOINTS.WORKOUTS.WORKOUTS,
+      workoutId
+    );
     const headers = this.getAuthHeaders(token);
 
     this.logRequest('DELETE', endpoint);
@@ -207,7 +217,7 @@ export class WorkoutsApiClient
       const response = await this.httpClient.delete(endpoint, headers);
       this.logResponse('DELETE', endpoint, response.status);
 
-      if (response.status !== 204) {
+      if (response.status !== HTTP_STATUS.NO_CONTENT) {
         throw new Error(`Failed to delete workout: ${response.statusText}`);
       }
 

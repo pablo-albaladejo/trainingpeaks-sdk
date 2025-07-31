@@ -6,6 +6,7 @@
 import type { UserRepository } from '@/application/repositories';
 import type { AuthToken, Credentials, User } from '@/domain';
 import { BaseApiClient, type EntityApiConfig } from '../base-api-client';
+import { API_ENDPOINTS, HTTP_STATUS } from '@/adapters/constants';
 
 // API Response types (raw data from API)
 interface TokenResponse {
@@ -32,7 +33,7 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
   constructor(config: Omit<EntityApiConfig, 'entity'>) {
     super({
       ...config,
-      entity: 'users',
+      entity: API_ENDPOINTS.ENTITIES.USERS,
       version: config.version || 'v3',
     });
   }
@@ -48,7 +49,7 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
       username: credentials.username,
     });
 
-    const endpoint = this.buildEndpoint('token');
+    const endpoint = this.buildEndpoint(API_ENDPOINTS.USERS.TOKEN);
     const loginData = {
       username: credentials.username,
       password: credentials.password,
@@ -63,7 +64,7 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
       );
       this.logResponse('POST', endpoint, response.status);
 
-      if (response.status !== 200) {
+      if (response.status !== HTTP_STATUS.OK) {
         throw new Error(`Authentication failed: ${response.statusText}`);
       }
 
@@ -85,7 +86,7 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
   async refreshToken(refreshToken: string): Promise<AuthToken> {
     this.logger.debug('👤 Users API: Refreshing token');
 
-    const endpoint = this.buildEndpoint('token/refresh');
+    const endpoint = this.buildEndpoint(API_ENDPOINTS.USERS.TOKEN_REFRESH);
     const refreshData = { refresh_token: refreshToken };
 
     this.logRequest('POST', endpoint);
@@ -97,7 +98,7 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
       );
       this.logResponse('POST', endpoint, response.status);
 
-      if (response.status !== 200) {
+      if (response.status !== HTTP_STATUS.OK) {
         throw new Error(`Token refresh failed: ${response.statusText}`);
       }
 
@@ -116,7 +117,7 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
   async getUserInfo(token: AuthToken): Promise<User> {
     this.logger.debug('👤 Users API: Getting user information');
 
-    const endpoint = this.buildEndpoint('user');
+    const endpoint = this.buildEndpoint(API_ENDPOINTS.USERS.USER);
     const headers = this.getAuthHeaders(token);
 
     this.logRequest('GET', endpoint);
@@ -128,7 +129,7 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
       );
       this.logResponse('GET', endpoint, response.status);
 
-      if (response.status !== 200) {
+      if (response.status !== HTTP_STATUS.OK) {
         throw new Error(`Failed to get user info: ${response.statusText}`);
       }
 
@@ -151,7 +152,7 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
   async getUserById(userId: string, token: AuthToken): Promise<UserResponse> {
     this.logger.debug('👤 Users API: Getting user by ID', { userId });
 
-    const endpoint = this.buildEndpointWithId('user', userId);
+    const endpoint = this.buildEndpointWithId(API_ENDPOINTS.USERS.USER, userId);
     const headers = this.getAuthHeaders(token);
 
     this.logRequest('GET', endpoint);
@@ -186,7 +187,7 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
   ): Promise<void> {
     this.logger.debug('👤 Users API: Updating user preferences');
 
-    const endpoint = this.buildEndpoint('preferences');
+    const endpoint = this.buildEndpoint(API_ENDPOINTS.USERS.PREFERENCES);
     const headers = this.getAuthHeaders(token);
 
     this.logRequest('PUT', endpoint);
@@ -219,7 +220,7 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
   async getUserSettings(token: AuthToken): Promise<Record<string, unknown>> {
     this.logger.debug('👤 Users API: Getting user settings');
 
-    const endpoint = this.buildEndpoint('settings');
+    const endpoint = this.buildEndpoint(API_ENDPOINTS.USERS.SETTINGS);
     const headers = this.getAuthHeaders(token);
 
     this.logRequest('GET', endpoint);
