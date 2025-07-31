@@ -65,9 +65,9 @@ export type validateListUsersFilters = (filters: Filters) => void;
 ```typescript
 // ❌ INCORRECT: Grouped Interface Pattern
 export type UserValidationService = {
-    validateUserId: (userId: string) => void;
-    validateEmail: (email: string) => void;
-    validateListUsersFilters: (filters: Filters) => void;
+  validateUserId: (userId: string) => void;
+  validateEmail: (email: string) => void;
+  validateListUsersFilters: (filters: Filters) => void;
 };
 ```
 
@@ -78,26 +78,29 @@ and return the exact implementation of the individual function type.
 
 ```typescript
 // ✅ CORRECT: src/infrastructure/services/user-validation.ts
-import type { validateUserId, validateEmail } from '@/application/services/user-validation';
+import type {
+  validateUserId,
+  validateEmail,
+} from '@/application/services/user-validation';
 
 export const validateUserId: validateUserId = (userId: string): void => {
-    // implementation
+  // implementation
 };
 
 export const validateEmail: validateEmail = (email: string): void => {
-    // implementation
+  // implementation
 };
 ```
 
 ```typescript
 // ❌ ABSOLUTELY FORBIDDEN: Grouped Factory Functions
-export const createUserValidationService = dependencies => ({
-    validateUserId: (userId: string): void => {
-        /* */
-    },
-    validateEmail: (email: string): void => {
-        /* */
-    },
+export const createUserValidationService = (dependencies) => ({
+  validateUserId: (userId: string): void => {
+    /* */
+  },
+  validateEmail: (email: string): void => {
+    /* */
+  },
 });
 ```
 
@@ -106,10 +109,10 @@ export const createUserValidationService = dependencies => ({
 ```typescript
 // ✅ CORRECT: src/infrastructure/services/user-validation.ts
 export const validateUserId =
-    (logger: Logger): validateUserId =>
-    (userId: string): void => {
-        // implementation
-    };
+  (logger: Logger): validateUserId =>
+  (userId: string): void => {
+    // implementation
+  };
 ```
 
 ### 2. Separation of Concerns
@@ -131,16 +134,16 @@ export const validateUserId =
 ```typescript
 // Domain entities should be immutable and contain business logic
 export class User {
-    constructor(
-        private readonly id: UserId,
-        private readonly email: Email,
-        private readonly name: string,
-    ) {}
+  constructor(
+    private readonly id: UserId,
+    private readonly email: Email,
+    private readonly name: string
+  ) {}
 
-    // Business methods
-    updateName(newName: string): User {
-        return new User(this.id, this.email, newName);
-    }
+  // Business methods
+  updateName(newName: string): User {
+    return new User(this.id, this.email, newName);
+  }
 }
 ```
 
@@ -149,8 +152,8 @@ export class User {
 ```typescript
 // Define in domain layer
 export interface UserRepository {
-    findById(id: UserId): Promise<User | null>;
-    save(user: User): Promise<void>;
+  findById(id: UserId): Promise<User | null>;
+  save(user: User): Promise<void>;
 }
 ```
 
@@ -163,17 +166,17 @@ Use cases orchestrate contracts - never direct implementations:
 ```typescript
 // ✅ CORRECT: src/application/use-cases/create-user.ts
 export const createUserUseCase =
-    (
-        userRepository: UserRepository, // ← PORT (contract)
-        validationService: UserValidationService, // ← PORT (contract)
-        utilityService: UserUtilityService, // ← PORT (contract)
-    ) =>
-    async (input: CreateUserInput): Promise<CreateUserResponse> => {
-        // 🎯 ORCHESTRATE USING CONTRACTS ONLY
-        validationService.validateUserCreationRules(input);
-        const userId = utilityService.generateUserId();
-        return await userRepository.createUser({ ...input, id: userId });
-    };
+  (
+    userRepository: UserRepository, // ← PORT (contract)
+    validationService: UserValidationService, // ← PORT (contract)
+    utilityService: UserUtilityService // ← PORT (contract)
+  ) =>
+  async (input: CreateUserInput): Promise<CreateUserResponse> => {
+    // 🎯 ORCHESTRATE USING CONTRACTS ONLY
+    validationService.validateUserCreationRules(input);
+    const userId = utilityService.generateUserId();
+    return await userRepository.createUser({ ...input, id: userId });
+  };
 ```
 
 #### **🧪 Testing with This Pattern**
@@ -181,19 +184,23 @@ export const createUserUseCase =
 ```typescript
 // ✅ PERFECT TESTABILITY - Mock contracts easily
 describe('createUserUseCase', () => {
-    const mockValidationService: UserValidationService = {
-        validateUserId: vi.fn(),
-        validateEmail: vi.fn(),
-        validateListUsersFilters: vi.fn(),
-        validateUserCreationRules: vi.fn(),
-        validateUserCanBeDeleted: vi.fn(),
-    };
+  const mockValidationService: UserValidationService = {
+    validateUserId: vi.fn(),
+    validateEmail: vi.fn(),
+    validateListUsersFilters: vi.fn(),
+    validateUserCreationRules: vi.fn(),
+    validateUserCanBeDeleted: vi.fn(),
+  };
 
-    it('should create user successfully', async () => {
-        const useCase = createUserUseCase(mockRepository, mockValidationService, mockUtilityService);
-        const result = await useCase(validInput);
-        expect(mockValidationService.validateUserCreationRules).toHaveBeenCalled();
-    });
+  it('should create user successfully', async () => {
+    const useCase = createUserUseCase(
+      mockRepository,
+      mockValidationService,
+      mockUtilityService
+    );
+    const result = await useCase(validInput);
+    expect(mockValidationService.validateUserCreationRules).toHaveBeenCalled();
+  });
 });
 ```
 
@@ -202,13 +209,13 @@ describe('createUserUseCase', () => {
 ```typescript
 // ❌ WRONG: Application layer - orchestrates business logic
 export class CreateUserUseCase {
-    constructor(private userRepository: UserRepository) {}
+  constructor(private userRepository: UserRepository) {}
 
-    async execute(input: CreateUserInput): Promise<User> {
-        const user = new User(input.id, input.email, input.name);
-        await this.userRepository.save(user);
-        return user;
-    }
+  async execute(input: CreateUserInput): Promise<User> {
+    const user = new User(input.id, input.email, input.name);
+    await this.userRepository.save(user);
+    return user;
+  }
 }
 ```
 
@@ -217,12 +224,12 @@ export class CreateUserUseCase {
 ```typescript
 // Adapters layer - implements domain interfaces
 export class HttpUserRepository implements UserRepository {
-    constructor(private httpClient: HttpClient) {}
+  constructor(private httpClient: HttpClient) {}
 
-    async findById(id: UserId): Promise<User | null> {
-        const response = await this.httpClient.get(`/users/${id.value}`);
-        return response ? User.fromResponse(response) : null;
-    }
+  async findById(id: UserId): Promise<User | null> {
+    const response = await this.httpClient.get(`/users/${id.value}`);
+    return response ? User.fromResponse(response) : null;
+  }
 }
 ```
 
@@ -310,6 +317,4 @@ export { CreateUserInput } from './application/useCases/CreateUser';
 
 - Avoid memory leaks in long-running processes
 - Use weak references where appropriate
-- Implement proper cleanup methods description: globs: alwaysApply: false
-
----
+- Implement proper cleanup methods
