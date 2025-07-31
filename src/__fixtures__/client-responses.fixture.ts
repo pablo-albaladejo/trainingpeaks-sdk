@@ -48,14 +48,16 @@ export const UserResponseFactory = new Factory()
 
 export const ErrorResponseFactory = new Factory()
   .attr('success', false)
-  .attr('error', () => faker.helpers.arrayElement([
-    'Invalid credentials',
-    'User not found',
-    'Authentication failed',
-    'Network error',
-    'Server error',
-    'Rate limit exceeded',
-  ]));
+  .attr('error', () =>
+    faker.helpers.arrayElement([
+      'Invalid credentials',
+      'User not found',
+      'Authentication failed',
+      'Network error',
+      'Server error',
+      'Rate limit exceeded',
+    ])
+  );
 
 // Test data collections
 export const getTestResponses = () => ({
@@ -67,7 +69,9 @@ export const getTestResponses = () => ({
 });
 
 // Helper functions for specific test scenarios
-export const createResponseForScenario = (scenario: 'success' | 'failure' | 'network' | 'server') => {
+export const createResponseForScenario = (
+  scenario: 'success' | 'failure' | 'network' | 'server'
+) => {
   switch (scenario) {
     case 'success':
       return UserResponseFactory.build();
@@ -101,4 +105,4 @@ export const createMockGetUserResponse = (success: boolean) => {
     return UserResponseFactory.build();
   }
   return ErrorResponseFactory.build();
-}; 
+};
