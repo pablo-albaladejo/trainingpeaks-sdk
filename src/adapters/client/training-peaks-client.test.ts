@@ -33,7 +33,11 @@ vi.mock('@/adapters/repositories/workout-repository', () => ({
 
 vi.mock('@/config', () => ({
   getSDKConfig: vi.fn(() => ({
-    urls: { apiBaseUrl: 'https://api.trainingpeaks.com' },
+    urls: { 
+      apiBaseUrl: 'https://api.trainingpeaks.com',
+      loginUrl: 'https://home.trainingpeaks.com/login',
+    },
+    auth: { cookieName: 'Production_tpAuth' },
     timeouts: { apiAuth: 5000 },
     debug: {
       enabled: false,

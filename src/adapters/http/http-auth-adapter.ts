@@ -23,7 +23,10 @@ type TokenResponse = {
 };
 
 export const createHttpAuthAdapter = (
-  httpAuthConfig: { loginUrl: string },
+  httpAuthConfig: {
+    loginUrl: string;
+    authCookieName?: string;
+  },
   webHttpClient: WebHttpClient,
   logger: LoggerType
 ): AuthRepository => {
@@ -69,10 +72,12 @@ export const createHttpAuthAdapter = (
       }
 
       // Step 3: Extract session cookie
+      const cookieName = httpAuthConfig.authCookieName || 'Production_tpAuth';
       const authCookie = loginResponse.cookies.find((c) =>
-        c.startsWith('Production_tpAuth=')
+        c.startsWith(`${cookieName}=`)
       );
-      if (!authCookie) throw new Error('Session cookie not found');
+      if (!authCookie)
+        throw new Error(`Session cookie '${cookieName}' not found`);
 
       const sessionToken = authCookie.split('=')[1];
       if (!sessionToken) throw new Error('Session cookie value empty');

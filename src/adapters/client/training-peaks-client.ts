@@ -59,6 +59,7 @@ export const createTrainingPeaksClient = (
   const authRepository = createHttpAuthAdapter(
     {
       loginUrl: sdkConfig.urls.loginUrl,
+      authCookieName: sdkConfig.auth.cookieName,
     },
     webHttpClient,
     logger

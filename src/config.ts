@@ -20,6 +20,12 @@ export type TrainingPeaksSDKConfig = {
     appUrl: string;
   };
 
+  /** Authentication configurations */
+  auth: {
+    /** Authentication cookie name for session management */
+    cookieName: string;
+  };
+
   /** Timeout configurations (in milliseconds) */
   timeouts: {
     /** General request timeout */
@@ -88,6 +94,7 @@ export type TrainingPeaksSDKConfig = {
  */
 export type TrainingPeaksClientConfig = {
   urls?: Partial<TrainingPeaksSDKConfig['urls']>;
+  auth?: Partial<TrainingPeaksSDKConfig['auth']>;
   timeouts?: Partial<TrainingPeaksSDKConfig['timeouts']>;
   tokens?: Partial<TrainingPeaksSDKConfig['tokens']>;
   browser?: Partial<TrainingPeaksSDKConfig['browser']>;
@@ -104,6 +111,10 @@ const HARDCODED_DEFAULTS: TrainingPeaksSDKConfig = {
     apiBaseUrl: 'https://tpapi.trainingpeaks.com',
     loginUrl: 'https://home.trainingpeaks.com/login',
     appUrl: 'https://app.trainingpeaks.com',
+  },
+
+  auth: {
+    cookieName: 'Production_tpAuth',
   },
 
   timeouts: {
@@ -160,6 +171,9 @@ type EnvironmentConfig = {
     loginUrl?: string;
     appUrl?: string;
   };
+  auth?: {
+    cookieName?: string;
+  };
   timeouts?: {
     default?: number;
     webAuth?: number;
@@ -203,6 +217,9 @@ function getEnvironmentConfig(): EnvironmentConfig {
       apiBaseUrl: process.env.TRAININGPEAKS_API_BASE_URL || undefined,
       loginUrl: process.env.TRAININGPEAKS_LOGIN_URL || undefined,
       appUrl: process.env.TRAININGPEAKS_APP_URL || undefined,
+    },
+    auth: {
+      cookieName: process.env.TRAININGPEAKS_AUTH_COOKIE_NAME || undefined,
     },
 
     timeouts: {
@@ -420,6 +437,13 @@ export function mergeWithDefaultConfig(
       Object.entries(envConfig.urls).filter(([, value]) => value !== undefined)
     );
     config.urls = { ...config.urls, ...filteredUrls };
+  }
+  if (envConfig.auth) {
+    // Filter out undefined values
+    const filteredAuth = Object.fromEntries(
+      Object.entries(envConfig.auth).filter(([, value]) => value !== undefined)
+    );
+    config.auth = { ...config.auth, ...filteredAuth };
   }
   if (envConfig.timeouts) {
     // Filter out undefined values
