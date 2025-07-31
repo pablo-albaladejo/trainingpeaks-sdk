@@ -28,35 +28,35 @@ npm install zod axios
 
 ```json
 {
-    "name": "my-library",
-    "version": "1.0.0",
-    "description": "A TypeScript library for...",
-    "main": "dist/index.js",
-    "module": "dist/index.mjs",
-    "types": "dist/index.d.ts",
-    "exports": {
-        ".": {
-            "import": "./dist/index.mjs",
-            "require": "./dist/index.js",
-            "types": "./dist/index.d.ts"
-        }
-    },
-    "files": ["dist", "README.md"],
-    "scripts": {
-        "build": "tsup",
-        "dev": "tsup --watch",
-        "test": "vitest",
-        "test:ui": "vitest --ui",
-        "test:coverage": "vitest --coverage",
-        "lint": "eslint src --ext .ts",
-        "lint:fix": "eslint src --ext .ts --fix",
-        "format": "prettier --write src",
-        "type-check": "tsc --noEmit",
-        "prepublishOnly": "npm run build && npm run test && npm run lint"
-    },
-    "keywords": ["typescript", "library"],
-    "author": "Your Name",
-    "license": "MIT"
+  "name": "my-library",
+  "version": "1.0.0",
+  "description": "A TypeScript library for...",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write src",
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm run test && npm run lint"
+  },
+  "keywords": ["typescript", "library"],
+  "author": "Your Name",
+  "license": "MIT"
 }
 ```
 
@@ -67,26 +67,26 @@ npm install zod axios
 ```json
 // tsconfig.json
 {
-    "compilerOptions": {
-        "target": "ES2020",
-        "module": "ESNext",
-        "lib": ["ES2020"],
-        "declaration": true,
-        "declarationMap": true,
-        "outDir": "./dist",
-        "rootDir": "./src",
-        "strict": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true,
-        "moduleResolution": "node",
-        "allowSyntheticDefaultImports": true,
-        "resolveJsonModule": true,
-        "isolatedModules": true,
-        "noEmit": true
-    },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020"],
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }
 ```
 
@@ -97,16 +97,16 @@ npm install zod axios
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-    entry: ['src/index.ts'],
-    format: ['cjs', 'esm'],
-    dts: true,
-    splitting: false,
-    sourcemap: true,
-    clean: true,
-    treeshake: true,
-    minify: true,
-    external: ['axios', 'zod'],
-    onSuccess: 'npm run type-check',
+  entry: ['src/index.ts'],
+  format: ['cjs', 'esm'],
+  dts: true,
+  splitting: false,
+  sourcemap: true,
+  clean: true,
+  treeshake: true,
+  minify: true,
+  external: ['axios', 'zod'],
+  onSuccess: 'npm run type-check',
 });
 ```
 
@@ -164,26 +164,26 @@ import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
 
 export default [
-    js.configs.recommended,
-    {
-        files: ['**/*.ts'],
-        languageOptions: {
-            parser: tsparser,
-            parserOptions: {
-                ecmaVersion: 'latest',
-                sourceType: 'module',
-            },
-        },
-        plugins: {
-            '@typescript-eslint': tseslint,
-        },
-        rules: {
-            ...tseslint.configs.recommended.rules,
-            '@typescript-eslint/no-unused-vars': 'error',
-            '@typescript-eslint/explicit-function-return-type': 'warn',
-            '@typescript-eslint/no-explicit-any': 'warn',
-        },
+  js.configs.recommended,
+  {
+    files: ['**/*.ts'],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
     },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+    rules: {
+      ...tseslint.configs.recommended.rules,
+      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/explicit-function-return-type': 'warn',
+      '@typescript-eslint/no-explicit-any': 'warn',
+    },
+  },
 ];
 ```
 
@@ -192,12 +192,12 @@ export default [
 ```json
 // .prettierrc
 {
-    "semi": true,
-    "trailingComma": "es5",
-    "singleQuote": true,
-    "printWidth": 80,
-    "tabWidth": 2,
-    "useTabs": false
+  "semi": true,
+  "trailingComma": "es5",
+  "singleQuote": true,
+  "printWidth": 80,
+  "tabWidth": 2,
+  "useTabs": false
 }
 ```
 
@@ -210,15 +210,21 @@ export default [
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-    test: {
-        environment: 'node',
-        globals: true,
-        coverage: {
-            provider: 'v8',
-            reporter: ['text', 'json', 'html'],
-            exclude: ['node_modules/', 'dist/', '**/*.d.ts', '**/*.test.ts', '**/__fixtures__/**'],
-        },
+  test: {
+    environment: 'node',
+    globals: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: [
+        'node_modules/',
+        'dist/',
+        '**/*.d.ts',
+        '**/*.test.ts',
+        '**/__fixtures__/**',
+      ],
     },
+  },
 });
 ```
 
@@ -263,36 +269,39 @@ involving multiple components.
 
 ```typescript
 describe('UserService Integration Tests', () => {
-    it('should perform expected behavior', async () => {
-        // Arrange: Prepare necessary data
-        const testUser = userBuilder.build();
-        const testCompany = companyBuilder.build();
-        await db.insert(users).values(testUser);
-        await db.insert(companies).values(testCompany);
+  it('should perform expected behavior', async () => {
+    // Arrange: Prepare necessary data
+    const testUser = userBuilder.build();
+    const testCompany = companyBuilder.build();
+    await db.insert(users).values(testUser);
+    await db.insert(companies).values(testCompany);
 
-        // Act: Call relevant service method
-        const result = await userService.createUser({
-            userId: testUser.id,
-            companyId: testCompany.id,
-        });
-
-        // Assert: Check response and validate resulting state
-        expect(result).toStrictEqual({
-            id: expect.any(String),
-            userId: testUser.id,
-            companyId: testCompany.id,
-            status: 'ACTIVE',
-        });
-
-        // Verify side effects in database
-        const dbRecord = await db.select().from(users).where(eq(users.id, result.id));
-        expect(dbRecord[0]).toStrictEqual(
-            expect.objectContaining({
-                userId: testUser.id,
-                companyId: testCompany.id,
-            }),
-        );
+    // Act: Call relevant service method
+    const result = await userService.createUser({
+      userId: testUser.id,
+      companyId: testCompany.id,
     });
+
+    // Assert: Check response and validate resulting state
+    expect(result).toStrictEqual({
+      id: expect.any(String),
+      userId: testUser.id,
+      companyId: testCompany.id,
+      status: 'ACTIVE',
+    });
+
+    // Verify side effects in database
+    const dbRecord = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, result.id));
+    expect(dbRecord[0]).toStrictEqual(
+      expect.objectContaining({
+        userId: testUser.id,
+        companyId: testCompany.id,
+      })
+    );
+  });
 });
 ```
 
@@ -300,15 +309,15 @@ describe('UserService Integration Tests', () => {
 
 ```typescript
 it('should handle invalid input gracefully', async () => {
-    // Arrange
-    const invalidInput = { userId: 'invalid-id', companyId: -1 };
+  // Arrange
+  const invalidInput = { userId: 'invalid-id', companyId: -1 };
 
-    // Act
-    const result = await userService.createUser(invalidInput);
+  // Act
+  const result = await userService.createUser(invalidInput);
 
-    // Assert
-    expect(result.errors).toBeDefined();
-    expect(result.errors[0].message).toContain('Invalid user ID');
+  // Assert
+  expect(result.errors).toBeDefined();
+  expect(result.errors[0].message).toContain('Invalid user ID');
 });
 ```
 
@@ -316,8 +325,8 @@ it('should handle invalid input gracefully', async () => {
 
 ```typescript
 afterEach(async () => {
-    await db.delete(users).where(eq(users.companyId, testCompany.id));
-    await db.delete(companies).where(eq(companies.id, testCompany.id));
+  await db.delete(users).where(eq(users.companyId, testCompany.id));
+  await db.delete(companies).where(eq(companies.id, testCompany.id));
 });
 ```
 
@@ -343,7 +352,10 @@ npm install my-library
 import { createClient } from 'my-library';
 
 const client = createClient({ apiKey: 'your-api-key' });
-const user = await client.createUser({ name: 'John', email: 'john@example.com' });
+const user = await client.createUser({
+  name: 'John',
+  email: 'john@example.com',
+});
 ```
 
 ## API Reference
@@ -357,8 +369,8 @@ Creates a new client instance.
 **Parameters:**
 
 - `options` (object): Configuration options
-    - `apiKey` (string): Your API key
-    - `baseUrl` (string, optional): Base URL for API requests
+  - `apiKey` (string): Your API key
+  - `baseUrl` (string, optional): Base URL for API requests
 
 **Returns:** Client instance
 
@@ -371,8 +383,8 @@ Creates a new user.
 **Parameters:**
 
 - `input` (object): User creation data
-    - `name` (string): User's name
-    - `email` (string): User's email
+  - `name` (string): User's name
+  - `email` (string): User's email
 
 **Returns:** Promise<User>
 
@@ -387,8 +399,8 @@ const client = createClient({ apiKey: process.env.API_KEY });
 
 // Create a user
 const user = await client.createUser({
-    name: 'John Doe',
-    email: 'john@example.com',
+  name: 'John Doe',
+  email: 'john@example.com',
 });
 
 console.log(user.id); // 'user-123'
@@ -398,11 +410,11 @@ console.log(user.id); // 'user-123'
 
 ```typescript
 try {
-    const user = await client.createUser({ name: '', email: 'invalid' });
+  const user = await client.createUser({ name: '', email: 'invalid' });
 } catch (error) {
-    if (error instanceof ValidationError) {
-        console.log('Validation failed:', error.message);
-    }
+  if (error instanceof ValidationError) {
+    console.log('Validation failed:', error.message);
+  }
 }
 ```
 
@@ -523,93 +535,19 @@ npm publish
 
 ```json
 {
-    "scripts": {
-        "prepublishOnly": "npm run build && npm run test && npm run lint",
-        "build:analyze": "tsup --analyze",
-        "publish:patch": "npm version patch && npm publish",
-        "publish:minor": "npm version minor && npm publish",
-        "publish:major": "npm version major && npm publish"
-    }
+  "scripts": {
+    "prepublishOnly": "npm run build && npm run test && npm run lint",
+    "build:analyze": "tsup --analyze",
+    "publish:patch": "npm version patch && npm publish",
+    "publish:minor": "npm version minor && npm publish",
+    "publish:major": "npm version major && npm publish"
+  }
 }
 ```
 
 ## CI/CD Pipeline
 
 ### GitHub Actions Workflow
-
-```yaml
-# .github/workflows/ci.yml
-name: CI
-
-on:
-    push:
-        branches: [main, develop]
-    pull_request:
-        branches: [main]
-
-jobs:
-    test:
-        runs-on: ubuntu-latest
-
-        strategy:
-            matrix:
-                node-version: [18.x, 20.x]
-
-        steps:
-            - uses: actions/checkout@v4
-
-            - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v4
-              with:
-                  node-version: ${{ matrix.node-version }}
-                  cache: 'npm'
-
-            - name: Install dependencies
-              run: npm ci
-
-            - name: Type check
-              run: npm run type-check
-
-            - name: Lint
-              run: npm run lint
-
-            - name: Test
-              run: npm run test:coverage
-
-            - name: Build
-              run: npm run build
-
-            - name: Upload coverage
-              uses: codecov/codecov-action@v3
-              with:
-                  file: ./coverage/lcov.info
-
-    publish:
-        needs: test
-        runs-on: ubuntu-latest
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-        steps:
-            - uses: actions/checkout@v4
-
-            - name: Use Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: '20.x'
-                  registry-url: 'https://registry.npmjs.org'
-                  cache: 'npm'
-
-            - name: Install dependencies
-              run: npm ci
-
-            - name: Build
-              run: npm run build
-
-            - name: Publish to npm
-              run: npm publish
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-```
 
 ## Development Best Practices
 
@@ -689,77 +627,144 @@ npm run test:memory
 npm run test:load
 ```
 
-## GitHub Actions CI/CD
+```yaml
+# .github/workflows/ci.yml
+name: CI
 
-### Workflow Configuration
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, 'chore(release):')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+### Release Workflow
 
 ```yaml
 # .github/workflows/ci.yml
 name: CI
 
 on:
-    push:
-        branches: [main, develop]
-    pull_request:
-        branches: [main, develop]
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
 
 jobs:
-    test:
-        runs-on: ubuntu-latest
-        strategy:
-            matrix:
-                node-version: [18.x, 20.x]
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
 
-        steps:
-            - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v4
-              with:
-                  node-version: ${{ matrix.node-version }}
-                  cache: 'npm'
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
 
-            - name: Install dependencies
-              run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-            - name: Run linter
-              run: npm run lint
+      - name: Run linter
+        run: npm run lint
 
-            - name: Run tests
-              run: npm test
+      - name: Run tests
+        run: npm test
 
-            - name: Build
-              run: npm run build
+      - name: Build
+        run: npm run build
 
-            - name: Upload coverage
-              uses: codecov/codecov-action@v3
-              with:
-                  file: ./coverage/lcov.info
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
 
-    publish:
-        needs: test
-        runs-on: ubuntu-latest
-        if: github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, 'chore(release):')
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, 'chore(release):')
 
-        steps:
-            - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Use Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: '20.x'
-                  registry-url: 'https://registry.npmjs.org'
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
 
-            - name: Install dependencies
-              run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-            - name: Build
-              run: npm run build
+      - name: Build
+        run: npm run build
 
-            - name: Publish to NPM
-              run: npm publish
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 ```
 
 ### Release Workflow
@@ -769,28 +774,28 @@ jobs:
 name: Release
 
 on:
-    push:
-        tags:
-            - 'v*'
+  push:
+    tags:
+      - 'v*'
 
 jobs:
-    release:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Create Release
-              uses: actions/create-release@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tag_name: ${{ github.ref }}
-                  release_name: Release ${{ github.ref }}
-                  body: |
-                      Changes in this Release:
-                      ${{ github.event.head_commit.message }}
-                  draft: false
-                  prerelease: false
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Changes in this Release:
+            ${{ github.event.head_commit.message }}
+          draft: false
+          prerelease: false
 ```
 
 ## Security Practices
