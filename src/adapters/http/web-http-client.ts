@@ -43,13 +43,16 @@ export const createWebHttpClient = (
   const jar = new CookieJar();
   const MAX_COOKIES = 50; // Limit to prevent memory leaks
   let storedCookies: string[] = [];
+  
+  // Use config.logger if available, otherwise fallback to the passed logger
+  const clientLogger = config.logger || logger;
 
   // Helper function to limit cookie count and prevent memory leaks
   const limitCookieCount = (): void => {
     if (storedCookies.length > MAX_COOKIES) {
       // Keep only the most recent cookies
       storedCookies = storedCookies.slice(-MAX_COOKIES);
-      logger.debug(
+      clientLogger.debug(
         '🌐 Web HTTP Client: Cookie limit reached, removed oldest cookies',
         {
           remainingCookies: storedCookies.length,
@@ -87,7 +90,7 @@ export const createWebHttpClient = (
         cookies: storedCookies,
       });
 
-      logger.debug('🌐 Web HTTP Client: cURL command', {
+      clientLogger.debug('🌐 Web HTTP Client: cURL command', {
         method: requestConfig.method,
         url: requestConfig.url,
         curl: curlCommand,
@@ -96,11 +99,9 @@ export const createWebHttpClient = (
       return requestConfig;
     },
     (error) => {
-      if (config.logger) {
-        config.logger.error('🌐 Web HTTP Client: Request interceptor error', {
-          error: error instanceof Error ? error.message : 'Unknown error',
-        });
-      }
+      clientLogger.error('🌐 Web HTTP Client: Request interceptor error', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       return Promise.reject(error);
     }
   );
@@ -108,20 +109,18 @@ export const createWebHttpClient = (
   // Add response interceptor for logging
   client.interceptors.response.use(
     (response) => {
-      if (config.logger) {
-        config.logger.debug('🌐 Web HTTP Client: Response received', {
-          method: response.config.method,
-          url: response.config.url,
-          status: response.status,
-          statusText: response.statusText,
-          cookieCount: extractCookies(response).length,
-          totalStoredCookies: storedCookies.length,
-        });
-      }
+      clientLogger.debug('🌐 Web HTTP Client: Response received', {
+        method: response.config.method,
+        url: response.config.url,
+        status: response.status,
+        statusText: response.statusText,
+        cookieCount: extractCookies(response).length,
+        totalStoredCookies: storedCookies.length,
+      });
       return response;
     },
     (error) => {
-      logger.error('🌐 Web HTTP Client: Response error', {
+      clientLogger.error('🌐 Web HTTP Client: Response error', {
         method: error.config?.method,
         url: error.config?.url,
         status: error.response?.status,
