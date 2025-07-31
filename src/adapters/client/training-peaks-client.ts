@@ -159,17 +159,20 @@ export const createTrainingPeaksClient = (
     /**
      * Check if user is authenticated
      */
-    isAuthenticated: () => {
+    isAuthenticated: async () => {
       logger.info('🔍 Checking authentication status');
-      return memoryStorageAdapter.isAuthenticatedSync();
+      const token = await memoryStorageAdapter.get('auth_token');
+      const user = await memoryStorageAdapter.get('user');
+      return !!(token && user);
     },
 
     /**
      * Get current user ID
      */
-    getUserId: () => {
+    getUserId: async () => {
       logger.info('🆔 Getting user ID');
-      return memoryStorageAdapter.getUserIdSync();
+      const user = await memoryStorageAdapter.get<{ id?: string }>('user');
+      return user?.id || null;
     },
   };
 };

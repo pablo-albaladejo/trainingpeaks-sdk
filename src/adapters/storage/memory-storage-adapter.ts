@@ -6,11 +6,7 @@
 
 import type { StorageRepository } from '@/application/repositories';
 
-export const createMemoryStorageAdapter = (): StorageRepository & {
-  getSync: <T = unknown>(key: string) => T | null;
-  isAuthenticatedSync: () => boolean;
-  getUserIdSync: () => string | null;
-} => {
+export const createMemoryStorageAdapter = (): StorageRepository => {
   const storage = new Map<string, string>();
 
   // Helper function to revive Date objects during deserialization
@@ -43,6 +39,30 @@ export const createMemoryStorageAdapter = (): StorageRepository & {
     return obj;
   };
 
+  // Helper function to deserialize stored values
+  const deserializeValue = <T = unknown>(value: string): T => {
+    // Try to parse as JSON first
+    try {
+      const parsed = JSON.parse(value);
+      return reviveDates(parsed) as T;
+    } catch (error) {
+      // If parsing fails, it's a primitive value
+      // Try to convert to the expected type
+      if (typeof value === 'string') {
+        // Check if it's a number
+        if (!isNaN(Number(value)) && value.trim() !== '') {
+          return Number(value) as T;
+        }
+        // Check if it's a boolean
+        if (value === 'true') return true as T;
+        if (value === 'false') return false as T;
+        // Return as string
+        return value as T;
+      }
+      return value as T;
+    }
+  };
+
   return {
     set: async <T = unknown>(key: string, value: T) => {
       // Store primitive values as-is, serialize complex objects to JSON
@@ -62,79 +82,13 @@ export const createMemoryStorageAdapter = (): StorageRepository & {
         return null;
       }
 
-      // Try to parse as JSON first
-      try {
-        const parsed = JSON.parse(value);
-        return reviveDates(parsed) as T;
-      } catch (error) {
-        // If parsing fails, it's a primitive value
-        // Try to convert to the expected type
-        if (typeof value === 'string') {
-          // Check if it's a number
-          if (!isNaN(Number(value)) && value.trim() !== '') {
-            return Number(value) as T;
-          }
-          // Check if it's a boolean
-          if (value === 'true') return true as T;
-          if (value === 'false') return false as T;
-          // Return as string
-          return value as T;
-        }
-        return value as T;
-      }
+      return deserializeValue<T>(value);
     },
     remove: async (key: string) => {
       storage.delete(key);
     },
     clear: async () => {
       storage.clear();
-    },
-
-    // Synchronous methods for client state checking
-    getSync: <T = unknown>(key: string) => {
-      const value = storage.get(key);
-      if (value === undefined) {
-        return null;
-      }
-
-      // Try to parse as JSON first
-      try {
-        const parsed = JSON.parse(value);
-        return reviveDates(parsed) as T;
-      } catch (error) {
-        // If parsing fails, it's a primitive value
-        // Try to convert to the expected type
-        if (typeof value === 'string') {
-          // Check if it's a number
-          if (!isNaN(Number(value)) && value.trim() !== '') {
-            return Number(value) as T;
-          }
-          // Check if it's a boolean
-          if (value === 'true') return true as T;
-          if (value === 'false') return false as T;
-          // Return as string
-          return value as T;
-        }
-        return value as T;
-      }
-    },
-
-    isAuthenticatedSync: () => {
-      const token = storage.get('auth_token');
-      const user = storage.get('user');
-      return !!(token && user);
-    },
-
-    getUserIdSync: () => {
-      const userValue = storage.get('user');
-      if (!userValue) return null;
-
-      try {
-        const user = JSON.parse(userValue);
-        return user?.id || null;
-      } catch (error) {
-        return null;
-      }
     },
   };
 };

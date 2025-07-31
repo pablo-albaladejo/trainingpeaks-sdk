@@ -28,19 +28,19 @@ describe('TrainingPeaks Client State Management Integration', () => {
   describe('State Management', () => {
     it('should maintain consistent state across all methods', async () => {
       // Initial state
-      expect(client.isAuthenticated()).toBe(false);
-      expect(client.getUserId()).toBe(null);
+      expect(await client.isAuthenticated()).toBe(false);
+      expect(await client.getUserId()).toBe(null);
 
       // After failed login
       const credentials = createCredentialsForScenario('failure');
       await client.login(credentials.username, credentials.password);
-      expect(client.isAuthenticated()).toBe(false);
-      expect(client.getUserId()).toBe(null);
+      expect(await client.isAuthenticated()).toBe(false);
+      expect(await client.getUserId()).toBe(null);
 
       // After failed getUser
       await client.getUser();
-      expect(client.isAuthenticated()).toBe(false);
-      expect(client.getUserId()).toBe(null);
+      expect(await client.isAuthenticated()).toBe(false);
+      expect(await client.getUserId()).toBe(null);
     });
 
     it('should handle multiple failed operations consistently', async () => {
@@ -64,15 +64,15 @@ describe('TrainingPeaks Client State Management Integration', () => {
         testCredentials[2]!.password
       );
 
-      expect(client.isAuthenticated()).toBe(false);
-      expect(client.getUserId()).toBe(null);
+      expect(await client.isAuthenticated()).toBe(false);
+      expect(await client.getUserId()).toBe(null);
 
       // Multiple getUser attempts
       await client.getUser();
       await client.getUser();
 
-      expect(client.isAuthenticated()).toBe(false);
-      expect(client.getUserId()).toBe(null);
+      expect(await client.isAuthenticated()).toBe(false);
+      expect(await client.getUserId()).toBe(null);
     });
 
     it('should maintain state consistency between different operation sequences', async () => {
@@ -80,15 +80,15 @@ describe('TrainingPeaks Client State Management Integration', () => {
       const credentials1 = createCredentialsForScenario('failure');
       await client.login(credentials1.username, credentials1.password);
       await client.getUser();
-      expect(client.isAuthenticated()).toBe(false);
-      expect(client.getUserId()).toBe(null);
+      expect(await client.isAuthenticated()).toBe(false);
+      expect(await client.getUserId()).toBe(null);
 
       // Sequence 2: getUser -> login
       await client.getUser();
       const credentials2 = createCredentialsForScenario('edge');
       await client.login(credentials2.username, credentials2.password);
-      expect(client.isAuthenticated()).toBe(false);
-      expect(client.getUserId()).toBe(null);
+      expect(await client.isAuthenticated()).toBe(false);
+      expect(await client.getUserId()).toBe(null);
 
       // Sequence 3: multiple rapid operations
       const testCredentials = [
@@ -108,8 +108,8 @@ describe('TrainingPeaks Client State Management Integration', () => {
         ),
       ]);
 
-      expect(client.isAuthenticated()).toBe(false);
-      expect(client.getUserId()).toBe(null);
+      expect(await client.isAuthenticated()).toBe(false);
+      expect(await client.getUserId()).toBe(null);
     });
 
     it('should handle concurrent operations correctly', async () => {
@@ -140,8 +140,8 @@ describe('TrainingPeaks Client State Management Integration', () => {
         expect(result.error).toBeDefined();
       });
 
-      expect(client.isAuthenticated()).toBe(false);
-      expect(client.getUserId()).toBe(null);
+      expect(await client.isAuthenticated()).toBe(false);
+      expect(await client.getUserId()).toBe(null);
 
       // Concurrent getUser attempts
       const getUserResults = await Promise.all([
@@ -155,8 +155,8 @@ describe('TrainingPeaks Client State Management Integration', () => {
         expect(result.error).toBeDefined();
       });
 
-      expect(client.isAuthenticated()).toBe(false);
-      expect(client.getUserId()).toBe(null);
+      expect(await client.isAuthenticated()).toBe(false);
+      expect(await client.getUserId()).toBe(null);
     });
 
     it('should maintain independent state between client instances', async () => {
@@ -164,30 +164,30 @@ describe('TrainingPeaks Client State Management Integration', () => {
       const client2 = createTrainingPeaksClient();
 
       // Initial state for both clients
-      expect(client1.isAuthenticated()).toBe(false);
-      expect(client1.getUserId()).toBe(null);
-      expect(client2.isAuthenticated()).toBe(false);
-      expect(client2.getUserId()).toBe(null);
+      expect(await client1.isAuthenticated()).toBe(false);
+      expect(await client1.getUserId()).toBe(null);
+      expect(await client2.isAuthenticated()).toBe(false);
+      expect(await client2.getUserId()).toBe(null);
 
       // Operations on client1 shouldn't affect client2
       const credentials = createCredentialsForScenario('failure');
       await client1.login(credentials.username, credentials.password);
       await client1.getUser();
 
-      expect(client1.isAuthenticated()).toBe(false);
-      expect(client1.getUserId()).toBe(null);
-      expect(client2.isAuthenticated()).toBe(false);
-      expect(client2.getUserId()).toBe(null);
+      expect(await client1.isAuthenticated()).toBe(false);
+      expect(await client1.getUserId()).toBe(null);
+      expect(await client2.isAuthenticated()).toBe(false);
+      expect(await client2.getUserId()).toBe(null);
 
       // Operations on client2 shouldn't affect client1
       const credentials2 = createCredentialsForScenario('edge');
       await client2.login(credentials2.username, credentials2.password);
       await client2.getUser();
 
-      expect(client1.isAuthenticated()).toBe(false);
-      expect(client1.getUserId()).toBe(null);
-      expect(client2.isAuthenticated()).toBe(false);
-      expect(client2.getUserId()).toBe(null);
+      expect(await client1.isAuthenticated()).toBe(false);
+      expect(await client1.getUserId()).toBe(null);
+      expect(await client2.isAuthenticated()).toBe(false);
+      expect(await client2.getUserId()).toBe(null);
     });
 
     it('should handle state persistence across multiple test runs', async () => {
@@ -196,24 +196,24 @@ describe('TrainingPeaks Client State Management Integration', () => {
       await client.login(credentials1.username, credentials1.password);
       await client.getUser();
 
-      expect(client.isAuthenticated()).toBe(false);
-      expect(client.getUserId()).toBe(null);
+      expect(await client.isAuthenticated()).toBe(false);
+      expect(await client.getUserId()).toBe(null);
 
       // Second set of operations
       const credentials2 = createCredentialsForScenario('edge');
       await client.login(credentials2.username, credentials2.password);
       await client.getUser();
 
-      expect(client.isAuthenticated()).toBe(false);
-      expect(client.getUserId()).toBe(null);
+      expect(await client.isAuthenticated()).toBe(false);
+      expect(await client.getUserId()).toBe(null);
 
       // Third set of operations
       const credentials3 = createCredentialsForScenario('failure');
       await client.login(credentials3.username, credentials3.password);
       await client.getUser();
 
-      expect(client.isAuthenticated()).toBe(false);
-      expect(client.getUserId()).toBe(null);
+      expect(await client.isAuthenticated()).toBe(false);
+      expect(await client.getUserId()).toBe(null);
     });
 
     it('should handle rapid state checks during operations', async () => {
@@ -226,15 +226,15 @@ describe('TrainingPeaks Client State Management Integration', () => {
       const getUserPromise = client.getUser();
 
       // Check state during operations
-      expect(client.isAuthenticated()).toBe(false);
-      expect(client.getUserId()).toBe(null);
+      expect(await client.isAuthenticated()).toBe(false);
+      expect(await client.getUserId()).toBe(null);
 
       // Wait for operations to complete
       await Promise.all([loginPromise, getUserPromise]);
 
       // Check state after operations
-      expect(client.isAuthenticated()).toBe(false);
-      expect(client.getUserId()).toBe(null);
+      expect(await client.isAuthenticated()).toBe(false);
+      expect(await client.getUserId()).toBe(null);
     });
 
     it('should maintain consistent error handling across all operations', async () => {
@@ -255,8 +255,8 @@ describe('TrainingPeaks Client State Management Integration', () => {
         const result = await operation();
         expect(result.success).toBe(false);
         expect(result.error).toBeDefined();
-        expect(client.isAuthenticated()).toBe(false);
-        expect(client.getUserId()).toBe(null);
+        expect(await client.isAuthenticated()).toBe(false);
+        expect(await client.getUserId()).toBe(null);
       }
     });
 
@@ -269,7 +269,7 @@ describe('TrainingPeaks Client State Management Integration', () => {
       );
 
       if (loginResult.success) {
-        expect(client.isAuthenticated()).toBe(true);
+        expect(await client.isAuthenticated()).toBe(true);
         // Note: getUserId might still return null depending on implementation
 
         // Test getUser after successful login
@@ -277,8 +277,8 @@ describe('TrainingPeaks Client State Management Integration', () => {
         expect(userResult.success).toBe(true);
         expect(userResult.user).toBeDefined();
       } else {
-        expect(client.isAuthenticated()).toBe(false);
-        expect(client.getUserId()).toBe(null);
+        expect(await client.isAuthenticated()).toBe(false);
+        expect(await client.getUserId()).toBe(null);
       }
     });
   });
