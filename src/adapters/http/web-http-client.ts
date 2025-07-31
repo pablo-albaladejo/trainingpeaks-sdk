@@ -43,7 +43,7 @@ export const createWebHttpClient = (
   const jar = new CookieJar();
   const MAX_COOKIES = 50; // Limit to prevent memory leaks
   let storedCookies: string[] = [];
-  
+
   // Use config.logger if available, otherwise fallback to the passed logger
   const clientLogger = config.logger || logger;
 
