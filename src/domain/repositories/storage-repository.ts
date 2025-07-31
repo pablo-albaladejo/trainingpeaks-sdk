@@ -1,6 +1,7 @@
 /**
  * Storage Repository
  * Handles storage operations for the application
+ * Automatically handles serialization/deserialization of complex objects
  */
 
 export type StorageRepository = {

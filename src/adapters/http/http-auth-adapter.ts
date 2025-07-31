@@ -1,5 +1,6 @@
+import { serializeApiResponseToUser } from '@/adapters/serialization';
 import { getSDKConfig } from '@/config';
-import type { AuthToken, Credentials } from '@/domain';
+import type { AuthToken, Credentials, User } from '@/domain';
 import { AuthRepository } from '@/domain/repositories/auth-repository';
 import { createAuthToken } from '@/domain/value-objects/auth-token';
 import type { LoggerType } from '../logging/logger';
@@ -127,6 +128,39 @@ export const createHttpAuthAdapter = (
         expiresAt,
         tokenData.refresh_token
       );
+    },
+
+    /**
+     * Get user information using the provided auth token
+     */
+    getUserInfo: async (token: AuthToken): Promise<User> => {
+      logger.info('👤 Getting user information via HTTP auth');
+
+      const headers = {
+        Authorization: `${token.tokenType} ${token.accessToken}`,
+      };
+
+      const response = await webHttpClient.get<{
+        user: {
+          userId: string | number;
+          username: string;
+          name: string;
+          preferences?: Record<string, unknown>;
+        };
+      }>('https://tpapi.trainingpeaks.com/users/v3/user', { headers });
+
+      if (response.status !== 200) {
+        throw new Error(`Failed to get user info: ${response.statusText}`);
+      }
+
+      const user = serializeApiResponseToUser(response.data);
+
+      logger.info('👤 User information retrieved successfully', {
+        userId: user.id,
+        name: user.name,
+      });
+
+      return user;
     },
   };
 };

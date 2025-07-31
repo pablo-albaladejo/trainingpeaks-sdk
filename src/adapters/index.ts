@@ -20,3 +20,9 @@ export * from './services';
 
 // Storage Adapters
 export * from './storage';
+
+// Serialization Adapters
+export * from './serialization';
+
+// Adapter Errors
+export * from './errors';

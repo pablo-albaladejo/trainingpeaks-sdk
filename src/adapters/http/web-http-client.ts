@@ -23,7 +23,12 @@ export type WebHttpResponse<T = unknown> = {
 };
 
 export type WebHttpClient = {
-  get<T = unknown>(url: string): Promise<WebHttpResponse<T>>;
+  get<T = unknown>(
+    url: string,
+    options?: {
+      headers?: Record<string, string>;
+    }
+  ): Promise<WebHttpResponse<T>>;
   post<T = unknown>(
     url: string,
     data?: unknown,
@@ -142,8 +147,12 @@ export const createWebHttpClient = (
       .filter(Boolean);
   };
 
-  const get = async <T = unknown>(url: string): Promise<WebHttpResponse<T>> => {
-    const response = await client.get<T>(url);
+  const get = async <T = unknown>(
+    url: string,
+    options: { headers?: Record<string, string> } = {}
+  ): Promise<WebHttpResponse<T>> => {
+    const { headers = {} } = options;
+    const response = await client.get<T>(url, { headers });
     const cookies = extractCookies(response);
     storedCookies = Array.from(new Set([...storedCookies, ...cookies]));
     limitCookieCount(); // Prevent memory leak
