@@ -3,7 +3,16 @@
  * Tests for configurable URLs and authentication flow
  */
 
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  authTokenBuilder,
+  credentialsBuilder,
+  loginPageResponseBuilder,
+  loginResponseBuilder,
+  tokenResponseBuilder,
+  userBuilder,
+  userInfoResponseBuilder,
+} from '../../__fixtures__/auth.fixture';
 import type { LoggerType } from '../logging/logger';
 import { createHttpAuthAdapter } from './http-auth-adapter';
 import type { WebHttpClient } from './web-http-client';
@@ -64,10 +73,22 @@ describe('HTTP Auth Adapter', () => {
         },
       });
 
-      await adapter.authenticate({
-        username: 'testuser',
-        password: 'testpass',
+      const user = userBuilder.build();
+
+      const userInfoResponse = userInfoResponseBuilder.build({
+        userId: user.id,
+        username: user.username,
+        name: user.name,
       });
+
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(userInfoResponse);
+
+      const credentials = credentialsBuilder.build({
+        username: user.username,
+        password: user.password,
+      });
+
+      await adapter.authenticate(credentials);
 
       expect(mockWebHttpClient.get).toHaveBeenCalledWith(
         'https://test.trainingpeaks.com/login'
@@ -81,33 +102,25 @@ describe('HTTP Auth Adapter', () => {
         mockLogger
       );
 
+      const credentials = credentialsBuilder.build();
+      const loginPageResponse = loginPageResponseBuilder.build();
+      const loginResponse = loginResponseBuilder.build();
+      const tokenResponse = tokenResponseBuilder.build();
+      const userInfoResponse = userInfoResponseBuilder.build();
+
       // Mock the login page response
-      (mockWebHttpClient.get as any).mockResolvedValueOnce({
-        data: '<input name="__RequestVerificationToken" value="test-token" />',
-      });
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(loginPageResponse);
 
       // Mock the login response
-      (mockWebHttpClient.post as any).mockResolvedValueOnce({
-        status: 200,
-        cookies: ['TestAuth=session-token'],
-      });
+      (mockWebHttpClient.post as any).mockResolvedValueOnce(loginResponse);
 
       // Mock the token response
-      (mockWebHttpClient.get as any).mockResolvedValueOnce({
-        data: {
-          token: {
-            access_token: 'access-token',
-            token_type: 'Bearer',
-            expires_in: 3600,
-            expires: '2024-12-31T23:59:59Z',
-          },
-        },
-      });
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(tokenResponse);
 
-      await adapter.authenticate({
-        username: 'testuser',
-        password: 'testpass',
-      });
+      // Mock the user info response (needed since authenticate now calls getUserInfo)
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(userInfoResponse);
+
+      await adapter.authenticate(credentials);
 
       expect(mockWebHttpClient.get).toHaveBeenCalledWith(
         'https://test.trainingpeaks.com/api/token'
@@ -121,23 +134,13 @@ describe('HTTP Auth Adapter', () => {
         mockLogger
       );
 
-      // Mock the user info response
-      (mockWebHttpClient.get as any).mockResolvedValue({
-        status: 200,
-        data: {
-          user: {
-            userId: '123',
-            username: 'testuser',
-            name: 'Test User',
-          },
-        },
-      });
+      const authToken = authTokenBuilder.build();
+      const userInfoResponse = userInfoResponseBuilder.build();
 
-      await adapter.getUserInfo({
-        accessToken: 'test-token',
-        tokenType: 'Bearer',
-        expiresAt: new Date('2024-12-31T23:59:59Z'),
-      });
+      // Mock the user info response
+      (mockWebHttpClient.get as any).mockResolvedValue(userInfoResponse);
+
+      await adapter.getUserInfo(authToken);
 
       expect(mockWebHttpClient.get).toHaveBeenCalledWith(
         'https://test.trainingpeaks.com/api/user',
@@ -159,33 +162,31 @@ describe('HTTP Auth Adapter', () => {
         mockLogger
       );
 
+      const credentials = credentialsBuilder.build();
+      const loginPageResponse = loginPageResponseBuilder.build();
+      const loginResponse = {
+        status: 200,
+        statusText: 'OK',
+        data: '',
+        headers: {},
+        cookies: ['StagingAuth=staging-session-token'],
+      };
+      const tokenResponse = tokenResponseBuilder.build();
+      const userInfoResponse = userInfoResponseBuilder.build();
+
       // Mock the login page response
-      (mockWebHttpClient.get as any).mockResolvedValueOnce({
-        data: '<input name="__RequestVerificationToken" value="test-token" />',
-      });
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(loginPageResponse);
 
       // Mock the login response
-      (mockWebHttpClient.post as any).mockResolvedValueOnce({
-        status: 200,
-        cookies: ['StagingAuth=session-token'],
-      });
+      (mockWebHttpClient.post as any).mockResolvedValueOnce(loginResponse);
 
       // Mock the token response
-      (mockWebHttpClient.get as any).mockResolvedValueOnce({
-        data: {
-          token: {
-            access_token: 'access-token',
-            token_type: 'Bearer',
-            expires_in: 3600,
-            expires: '2024-12-31T23:59:59Z',
-          },
-        },
-      });
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(tokenResponse);
 
-      await adapter.authenticate({
-        username: 'testuser',
-        password: 'testpass',
-      });
+      // Mock the user info response (needed since authenticate now calls getUserInfo)
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(userInfoResponse);
+
+      await adapter.authenticate(credentials);
 
       expect(mockWebHttpClient.get).toHaveBeenCalledWith(
         'https://staging.trainingpeaks.com/login'
@@ -210,33 +211,31 @@ describe('HTTP Auth Adapter', () => {
         mockLogger
       );
 
+      const credentials = credentialsBuilder.build();
+      const loginPageResponse = loginPageResponseBuilder.build();
+      const loginResponse = {
+        status: 200,
+        statusText: 'OK',
+        data: '',
+        headers: {},
+        cookies: ['Production_tpAuth=production-session-token'],
+      };
+      const tokenResponse = tokenResponseBuilder.build();
+      const userInfoResponse = userInfoResponseBuilder.build();
+
       // Mock the login page response
-      (mockWebHttpClient.get as any).mockResolvedValueOnce({
-        data: '<input name="__RequestVerificationToken" value="test-token" />',
-      });
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(loginPageResponse);
 
       // Mock the login response with default cookie name
-      (mockWebHttpClient.post as any).mockResolvedValueOnce({
-        status: 200,
-        cookies: ['Production_tpAuth=session-token'],
-      });
+      (mockWebHttpClient.post as any).mockResolvedValueOnce(loginResponse);
 
       // Mock the token response
-      (mockWebHttpClient.get as any).mockResolvedValueOnce({
-        data: {
-          token: {
-            access_token: 'access-token',
-            token_type: 'Bearer',
-            expires_in: 3600,
-            expires: '2024-12-31T23:59:59Z',
-          },
-        },
-      });
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(tokenResponse);
 
-      await adapter.authenticate({
-        username: 'testuser',
-        password: 'testpass',
-      });
+      // Mock the user info response (needed since authenticate now calls getUserInfo)
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(userInfoResponse);
+
+      await adapter.authenticate(credentials);
 
       // Should work with default cookie name
       expect(mockWebHttpClient.get).toHaveBeenCalledWith(

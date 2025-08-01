@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { createUser } from '../../domain/entities/user';
+import { userBuilder } from '../../__fixtures__/auth.fixture';
 import { ValidationError } from '../../domain/errors/domain-errors';
 import {
   DeserializationError,
@@ -24,37 +24,41 @@ import {
 describe('User Serializer', () => {
   describe('serializeApiResponseToUser', () => {
     it('should serialize valid API response to User entity', () => {
+      const user = userBuilder.build();
+
       const apiResponse: UserApiResponse = {
         user: {
-          userId: '123',
-          username: 'testuser',
-          name: 'Test User',
-          preferences: { theme: 'dark' },
+          userId: user.id,
+          username: user.username,
+          name: user.name,
+          preferences: user.preferences,
         },
       };
 
-      const user = serializeApiResponseToUser(apiResponse);
+      const result = serializeApiResponseToUser(apiResponse);
 
-      expect(user).toEqual({
-        id: '123',
-        name: 'Test User',
+      expect(result).toEqual({
+        id: user.id,
+        name: user.name,
         avatar: undefined,
-        preferences: { theme: 'dark' },
+        preferences: user.preferences,
       });
     });
 
     it('should handle numeric userId', () => {
+      const user = userBuilder.build();
+
       const apiResponse: UserApiResponse = {
         user: {
           userId: 456,
-          username: 'testuser',
-          name: 'Test User',
+          username: user.username,
+          name: user.name,
         },
       };
 
-      const user = serializeApiResponseToUser(apiResponse);
+      const result = serializeApiResponseToUser(apiResponse);
 
-      expect(user.id).toBe('456');
+      expect(result.id).toBe('456');
     });
 
     it('should throw ValidationError for missing userId', () => {
@@ -87,40 +91,38 @@ describe('User Serializer', () => {
 
   describe('serializeUserToStorage', () => {
     it('should serialize User entity to storage format', () => {
-      const user = createUser('123', 'Test User', 'avatar.jpg', {
-        theme: 'light',
+      const user = userBuilder.build({
+        avatar: 'avatar.jpg',
       });
 
       const storageData = serializeUserToStorage(user);
 
       expect(storageData).toEqual({
-        id: '123',
-        name: 'Test User',
+        id: user.id,
+        name: user.name,
         avatar: 'avatar.jpg',
-        preferences: { theme: 'light' },
+        preferences: user.preferences,
       });
     });
   });
 
   describe('deserializeStorageToUser', () => {
     it('should deserialize valid storage data to User entity', () => {
-      const storageData: UserStorageData = {
-        id: '123',
-        name: 'Test User',
+      const user = userBuilder.build({
         avatar: 'avatar.jpg',
-        preferences: { theme: 'dark' },
+      });
+      const storageData: UserStorageData = {
+        id: user.id,
+        name: user.name,
+        avatar: user.avatar,
+        preferences: user.preferences,
       };
 
       const result = deserializeStorageToUser(storageData);
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data).toEqual({
-          id: '123',
-          name: 'Test User',
-          avatar: 'avatar.jpg',
-          preferences: { theme: 'dark' },
-        });
+        expect(result.data).toEqual(user);
       }
     });
 
@@ -145,8 +147,9 @@ describe('User Serializer', () => {
     });
 
     it('should return error for missing required fields', () => {
+      const user = userBuilder.build();
       const invalidData = {
-        name: 'Test User',
+        name: user.name,
         // missing id
       };
 
@@ -158,9 +161,10 @@ describe('User Serializer', () => {
     });
 
     it('should return error for invalid field types', () => {
+      const user = userBuilder.build();
       const invalidData = {
         id: 123, // should be string
-        name: 'Test User',
+        name: user.name,
       };
 
       const result = deserializeStorageToUser(invalidData);
@@ -173,23 +177,22 @@ describe('User Serializer', () => {
 
   describe('deserializeUserFromJson', () => {
     it('should deserialize valid JSON string', () => {
-      const jsonString = JSON.stringify({
-        id: '123',
-        name: 'Test User',
+      const user = userBuilder.build({
         avatar: 'avatar.jpg',
-        preferences: { theme: 'light' },
+      });
+
+      const jsonString = JSON.stringify({
+        id: user.id,
+        name: user.name,
+        avatar: user.avatar,
+        preferences: user.preferences,
       });
 
       const result = deserializeUserFromJson(jsonString);
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data).toEqual({
-          id: '123',
-          name: 'Test User',
-          avatar: 'avatar.jpg',
-          preferences: { theme: 'light' },
-        });
+        expect(result.data).toEqual(user);
       }
     });
 
@@ -202,8 +205,9 @@ describe('User Serializer', () => {
     });
 
     it('should return error for JSON with invalid data', () => {
+      const user = userBuilder.build();
       const invalidJson = JSON.stringify({
-        name: 'Test User',
+        name: user.name,
         // missing id
       });
 

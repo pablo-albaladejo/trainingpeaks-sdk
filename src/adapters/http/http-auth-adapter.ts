@@ -160,17 +160,13 @@ export const createHttpAuthAdapter = (
       // Create auth token
       const token = createAuthToken(
         tokenData.access_token,
-        tokenData.token_type || 'Bearer',
+        tokenData.token_type || AUTH_CONSTANTS.DEFAULT_TOKEN_TYPE,
         expiresAt,
         tokenData.refresh_token
       );
 
-      // For now, create a basic user object
-      // In a real implementation, this would fetch user data from the API
-      const user: User = {
-        id: 'user-id', // This would come from the API
-        name: credentials.username,
-      };
+      // Fetch real user information using the auth token
+      const user = await getUserInfo(token);
 
       return { token, user };
     },

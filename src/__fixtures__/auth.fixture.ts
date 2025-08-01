@@ -56,7 +56,7 @@ export const authTokenBuilder = new Factory<AuthToken>()
     return {
       accessToken: token.accessToken,
       tokenType: token.tokenType,
-      expiresAt: token.expiresAt.getTime(),
+      expiresAt: token.expiresAt,
       refreshToken: token.refreshToken,
     };
   });
@@ -191,3 +191,162 @@ export const invalidCredentialsBuilder = new Factory()
   .option('username', '')
   .option('password', '')
   .option('passwordLength', 0);
+
+/**
+ * HTTP Auth Response Fixtures
+ * Fixtures for HTTP authentication responses
+ */
+
+/**
+ * TokenResponse Builder
+ * Creates token response objects for HTTP auth testing
+ */
+export const tokenResponseBuilder = new Factory()
+  .attr('status', 200)
+  .attr('statusText', 'OK')
+  .attr('data', () => ({
+    token: {
+      access_token: faker.string.alphanumeric(32),
+      token_type: faker.helpers.arrayElement(['Bearer', 'JWT', 'OAuth']),
+      expires_in: faker.number.int({ min: 3600, max: 86400 }),
+      refresh_token: faker.string.alphanumeric(32),
+      scope: 'read write',
+      expires: faker.date.future().toISOString(),
+    },
+  }))
+  .attr('headers', () => ({}))
+  .attr('cookies', () => [])
+  .option('tokenType', 'Bearer')
+  .option('expiresIn', 3600)
+  .option('includeRefreshToken', true)
+  .after((response, options) => {
+    const expiresAt = new Date(Date.now() + (options.expiresIn || 3600) * 1000);
+
+    return {
+      status: response.status,
+      statusText: response.statusText,
+      data: {
+        token: {
+          access_token: response.data.token.access_token,
+          token_type: options.tokenType || response.data.token.token_type,
+          expires_in: options.expiresIn || response.data.token.expires_in,
+          refresh_token: options.includeRefreshToken
+            ? response.data.token.refresh_token
+            : undefined,
+          scope: response.data.token.scope,
+          expires: expiresAt.toISOString(),
+        },
+      },
+      headers: response.headers,
+      cookies: response.cookies,
+    };
+  });
+
+/**
+ * UserInfoResponse Builder
+ * Creates user info response objects for HTTP auth testing
+ */
+export const userInfoResponseBuilder = new Factory()
+  .attr('status', 200)
+  .attr('statusText', 'OK')
+  .attr('data', () => ({
+    user: {
+      userId: faker.string.uuid(),
+      username: faker.internet.userName(),
+      name: faker.person.fullName(),
+      preferences: {
+        timezone: faker.location.timeZone(),
+        units: faker.helpers.arrayElement(['metric', 'imperial']),
+        language: faker.helpers.arrayElement(['en', 'es', 'fr', 'de']),
+        theme: faker.helpers.arrayElement(['light', 'dark', 'auto']),
+        notifications: faker.datatype.boolean(),
+      },
+    },
+  }))
+  .attr('headers', () => ({}))
+  .attr('cookies', () => [])
+  .option('userId', undefined)
+  .option('username', undefined)
+  .option('name', undefined)
+  .after((response, options) => {
+    return {
+      status: response.status,
+      statusText: response.statusText,
+      data: {
+        user: {
+          userId: options.userId || response.data.user.userId,
+          username: options.username || response.data.user.username,
+          name: options.name || response.data.user.name,
+          preferences: response.data.user.preferences,
+        },
+      },
+      headers: response.headers,
+      cookies: response.cookies,
+    };
+  });
+
+/**
+ * LoginPageResponse Builder
+ * Creates login page HTML responses for HTTP auth testing
+ */
+export const loginPageResponseBuilder = new Factory()
+  .attr('status', 200)
+  .attr('statusText', 'OK')
+  .attr('data', () => {
+    const csrfToken = faker.string.alphanumeric(32);
+    return `<html>
+      <body>
+        <form>
+          <input name="__RequestVerificationToken" value="${csrfToken}" />
+          <input name="username" />
+          <input name="password" type="password" />
+        </form>
+      </body>
+    </html>`;
+  })
+  .attr('headers', () => ({}))
+  .attr('cookies', () => [])
+  .option('csrfToken', undefined)
+  .after((response, options) => {
+    const csrfToken = options.csrfToken || faker.string.alphanumeric(32);
+    return {
+      status: response.status,
+      statusText: response.statusText,
+      data: `<html>
+        <body>
+          <form>
+            <input name="__RequestVerificationToken" value="${csrfToken}" />
+            <input name="username" />
+            <input name="password" type="password" />
+          </form>
+        </body>
+      </html>`,
+      headers: response.headers,
+      cookies: response.cookies,
+    };
+  });
+
+/**
+ * LoginResponse Builder
+ * Creates login response objects for HTTP auth testing
+ */
+export const loginResponseBuilder = new Factory()
+  .attr('status', 200)
+  .attr('statusText', 'OK')
+  .attr('data', () => '')
+  .attr('headers', () => ({}))
+  .attr('cookies', () => [])
+  .option('status', 200)
+  .option('cookieName', 'TestAuth')
+  .option('sessionToken', undefined)
+  .after((response, options) => {
+    const sessionToken = options.sessionToken || faker.string.alphanumeric(32);
+    const cookieName = options.cookieName || 'TestAuth';
+    return {
+      status: options.status || response.status,
+      statusText: response.statusText,
+      data: response.data,
+      headers: response.headers,
+      cookies: [`${cookieName}=${sessionToken}`],
+    };
+  });

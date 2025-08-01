@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { createAuthToken } from '../../domain/value-objects/auth-token';
+import { authTokenBuilder } from '../../__fixtures__/auth.fixture';
 import {
   DeserializationError,
   InvalidDateError,
@@ -22,34 +22,29 @@ import {
 describe('AuthToken Serializer', () => {
   describe('serializeAuthTokenToStorage', () => {
     it('should serialize AuthToken entity to storage format', () => {
-      const expiresAt = new Date('2024-12-31T23:59:59Z');
-      const token = createAuthToken(
-        'access-token-123',
-        'Bearer',
-        expiresAt,
-        'refresh-token-456'
-      );
+      const token = authTokenBuilder.build();
 
       const storageData = serializeAuthTokenToStorage(token);
 
       expect(storageData).toEqual({
-        accessToken: 'access-token-123',
-        tokenType: 'Bearer',
-        expiresAt: expiresAt.toISOString(),
-        refreshToken: 'refresh-token-456',
+        accessToken: token.accessToken,
+        tokenType: token.tokenType,
+        expiresAt: token.expiresAt.toISOString(),
+        refreshToken: token.refreshToken,
       });
     });
 
     it('should handle token without refresh token', () => {
-      const expiresAt = new Date('2024-12-31T23:59:59Z');
-      const token = createAuthToken('access-token-123', 'Bearer', expiresAt);
+      const token = authTokenBuilder.build({
+        refreshToken: undefined,
+      });
 
       const storageData = serializeAuthTokenToStorage(token);
 
       expect(storageData).toEqual({
-        accessToken: 'access-token-123',
-        tokenType: 'Bearer',
-        expiresAt: expiresAt.toISOString(),
+        accessToken: token.accessToken,
+        tokenType: token.tokenType,
+        expiresAt: token.expiresAt.toISOString(),
         refreshToken: undefined,
       });
     });
@@ -57,23 +52,20 @@ describe('AuthToken Serializer', () => {
 
   describe('deserializeStorageToAuthToken', () => {
     it('should deserialize valid storage data to AuthToken entity', () => {
+      const token = authTokenBuilder.build();
+
       const storageData: AuthTokenStorageData = {
-        accessToken: 'access-token-123',
-        tokenType: 'Bearer',
-        expiresAt: '2024-12-31T23:59:59.000Z',
-        refreshToken: 'refresh-token-456',
+        accessToken: token.accessToken,
+        tokenType: token.tokenType,
+        expiresAt: token.expiresAt.toISOString(),
+        refreshToken: token.refreshToken,
       };
 
       const result = deserializeStorageToAuthToken(storageData);
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data).toEqual({
-          accessToken: 'access-token-123',
-          tokenType: 'Bearer',
-          expiresAt: new Date('2024-12-31T23:59:59.000Z'),
-          refreshToken: 'refresh-token-456',
-        });
+        expect(result.data).toEqual(token);
       }
     });
 
@@ -140,10 +132,14 @@ describe('AuthToken Serializer', () => {
     });
 
     it('should handle storage data without refresh token', () => {
+      const token = authTokenBuilder.build({
+        refreshToken: undefined,
+      });
+
       const storageData: AuthTokenStorageData = {
-        accessToken: 'access-token-123',
-        tokenType: 'Bearer',
-        expiresAt: '2024-12-31T23:59:59.000Z',
+        accessToken: token.accessToken,
+        tokenType: token.tokenType,
+        expiresAt: token.expiresAt.toISOString(),
         // no refreshToken
       };
 
@@ -151,35 +147,27 @@ describe('AuthToken Serializer', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data).toEqual({
-          accessToken: 'access-token-123',
-          tokenType: 'Bearer',
-          expiresAt: new Date('2024-12-31T23:59:59.000Z'),
-          refreshToken: undefined,
-        });
+        expect(result.data).toEqual(token);
       }
     });
   });
 
   describe('deserializeAuthTokenFromJson', () => {
     it('should deserialize valid JSON string', () => {
+      const token = authTokenBuilder.build();
+
       const jsonString = JSON.stringify({
-        accessToken: 'access-token-123',
-        tokenType: 'Bearer',
-        expiresAt: '2024-12-31T23:59:59.000Z',
-        refreshToken: 'refresh-token-456',
+        accessToken: token.accessToken,
+        tokenType: token.tokenType,
+        expiresAt: token.expiresAt.toISOString(),
+        refreshToken: token.refreshToken,
       });
 
       const result = deserializeAuthTokenFromJson(jsonString);
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data).toEqual({
-          accessToken: 'access-token-123',
-          tokenType: 'Bearer',
-          expiresAt: new Date('2024-12-31T23:59:59.000Z'),
-          refreshToken: 'refresh-token-456',
-        });
+        expect(result.data).toEqual(token);
       }
     });
 

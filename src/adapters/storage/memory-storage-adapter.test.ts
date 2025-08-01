@@ -3,9 +3,8 @@
  * Tests for automatic serialization/deserialization handling
  */
 
-import { createUser } from '@/domain/entities/user';
-import { createAuthToken } from '@/domain/value-objects/auth-token';
 import { describe, expect, it } from 'vitest';
+import { authTokenBuilder, userBuilder } from '../../__fixtures__/auth.fixture';
 import { createMemoryStorageAdapter } from './memory-storage-adapter';
 
 describe('Memory Storage Adapter', () => {
@@ -24,16 +23,8 @@ describe('Memory Storage Adapter', () => {
   it('should automatically serialize and deserialize complex objects', async () => {
     const storage = createMemoryStorageAdapter();
 
-    const authToken = createAuthToken(
-      'access-token-123',
-      'Bearer',
-      new Date('2024-12-31T23:59:59Z'),
-      'refresh-token-456'
-    );
-
-    const user = createUser('user-123', 'John Doe', 'avatar.jpg', {
-      theme: 'dark',
-    });
+    const authToken = authTokenBuilder.build();
+    const user = userBuilder.build();
 
     // Store complex objects directly
     await storage.set('auth-token', authToken);

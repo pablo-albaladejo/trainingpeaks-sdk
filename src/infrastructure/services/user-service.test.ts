@@ -2,9 +2,12 @@
  * @vitest-environment node
  */
 
-import { authTokenBuilder, userBuilder } from '@/__fixtures__/auth.fixture';
+import {
+  authTokenBuilder,
+  credentialsBuilder,
+  userBuilder,
+} from '@/__fixtures__/auth.fixture';
 import type { UserRepository } from '@/application/repositories';
-import type { Credentials } from '@/domain';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { authenticateUser } from './authenticate-user';
 import { getCurrentUser } from './get-current-user';
@@ -36,24 +39,13 @@ describe('User Service Implementations', () => {
 
   describe('authenticateUser', () => {
     it('should authenticate user and return domain objects', async () => {
-      const credentials: Credentials = {
-        username: 'testuser',
-        password: 'testpass',
-      };
+      const credentials = credentialsBuilder.build();
+      const mockToken = authTokenBuilder.build();
+      const mockUser = userBuilder.build();
 
       const mockRawData = {
-        token: {
-          accessToken: 'access123',
-          tokenType: 'Bearer',
-          expiresIn: 3600,
-          refreshToken: 'refresh123',
-        },
-        user: {
-          id: '123',
-          name: 'Test User',
-          avatar: 'https://example.com/avatar.jpg',
-          preferences: { theme: 'dark' },
-        },
+        token: mockToken,
+        user: mockUser,
       };
 
       vi.mocked(mockUserRepository.authenticate).mockResolvedValue(mockRawData);
@@ -64,17 +56,14 @@ describe('User Service Implementations', () => {
       expect(mockUserRepository.authenticate).toHaveBeenCalledWith(credentials);
       expect(result.token).toBeDefined();
       expect(result.user).toBeDefined();
-      expect(result.token.accessToken).toBe('access123');
-      expect(result.token.tokenType).toBe('Bearer');
-      expect(result.user.id).toBe('123');
-      expect(result.user.name).toBe('Test User');
+      expect(result.token.accessToken).toBe(mockToken.accessToken);
+      expect(result.token.tokenType).toBe(mockToken.tokenType);
+      expect(result.user.id).toBe(mockUser.id);
+      expect(result.user.name).toBe(mockUser.name);
     });
 
     it('should handle repository errors', async () => {
-      const credentials: Credentials = {
-        username: 'testuser',
-        password: 'testpass',
-      };
+      const credentials = credentialsBuilder.build();
 
       const error = new Error('Authentication failed');
       vi.mocked(mockUserRepository.authenticate).mockRejectedValue(error);
