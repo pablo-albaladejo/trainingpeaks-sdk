@@ -16,3 +16,4 @@ export type { GetWorkoutById } from './get-workout-by-id';
 export type { GetWorkoutStats } from './get-workout-stats';
 export type { GetWorkouts } from './get-workouts';
 export type { UpdateWorkout } from './update-workout';
+export type { DeleteWorkout } from './delete-workout';

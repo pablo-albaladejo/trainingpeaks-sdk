@@ -8,6 +8,8 @@ import type {
   WorkoutStructure,
   WorkoutStructureElement,
 } from '@/domain/schemas/workout-structure.schema';
+import { ValidationError } from '@/domain/errors/domain-errors';
+import { WorkoutValidationError } from '@/domain/errors/workout-errors';
 
 export type Workout = WorkoutType;
 export type WorkoutElement = WorkoutStructureElement;
@@ -43,39 +45,39 @@ export const createWorkout = (
 ): Workout => {
   // Validate invariants
   if (!id || id.trim().length === 0) {
-    throw new Error('Workout ID cannot be empty');
+    throw new ValidationError('Workout ID cannot be empty', 'id');
   }
   
   if (!name || name.trim().length === 0) {
-    throw new Error('Workout name cannot be empty');
+    throw new ValidationError('Workout name cannot be empty', 'name');
   }
   
   if (name.trim().length > 200) {
-    throw new Error('Workout name cannot exceed 200 characters');
+    throw new ValidationError('Workout name cannot exceed 200 characters', 'name');
   }
   
   if (duration < 0) {
-    throw new Error('Workout duration cannot be negative');
+    throw new ValidationError('Workout duration cannot be negative', 'duration');
   }
   
   if (!isFinite(duration)) {
-    throw new Error('Workout duration must be a finite number');
+    throw new ValidationError('Workout duration must be a finite number', 'duration');
   }
   
   if (distance !== undefined && (distance < 0 || !isFinite(distance))) {
-    throw new Error('Workout distance must be a non-negative finite number');
+    throw new ValidationError('Workout distance must be a non-negative finite number', 'distance');
   }
   
   if (description && description.length > 1000) {
-    throw new Error('Workout description cannot exceed 1000 characters');
+    throw new ValidationError('Workout description cannot exceed 1000 characters', 'description');
   }
   
   if (activityType && activityType.trim().length > 50) {
-    throw new Error('Activity type cannot exceed 50 characters');
+    throw new ValidationError('Activity type cannot exceed 50 characters', 'activityType');
   }
   
   if (fileName && fileName.trim().length > 255) {
-    throw new Error('File name cannot exceed 255 characters');
+    throw new ValidationError('File name cannot exceed 255 characters', 'fileName');
   }
   
   const now = new Date();
@@ -108,11 +110,11 @@ export const createStructuredWorkout = (
   activityType?: string
 ): Workout => {
   if (!structure) {
-    throw new Error('Workout structure is required for structured workout');
+    throw new WorkoutValidationError('Workout structure is required for structured workout');
   }
   
   if (!structure.structure || structure.structure.length === 0) {
-    throw new Error('Workout structure must contain at least one element');
+    throw new WorkoutValidationError('Workout structure must contain at least one element');
   }
   
   const totalDuration = calculateWorkoutDuration(structure);
@@ -138,23 +140,23 @@ export const updateWorkout = (
 ): Workout => {
   // Validate updates
   if (updates.name !== undefined && (!updates.name || updates.name.trim().length === 0)) {
-    throw new Error('Workout name cannot be empty');
+    throw new ValidationError('Workout name cannot be empty', 'name');
   }
   
   if (updates.name && updates.name.trim().length > 200) {
-    throw new Error('Workout name cannot exceed 200 characters');
+    throw new ValidationError('Workout name cannot exceed 200 characters', 'name');
   }
   
   if (updates.description && updates.description.length > 1000) {
-    throw new Error('Workout description cannot exceed 1000 characters');
+    throw new ValidationError('Workout description cannot exceed 1000 characters', 'description');
   }
   
   if (updates.distance !== undefined && (updates.distance < 0 || !isFinite(updates.distance))) {
-    throw new Error('Workout distance must be a non-negative finite number');
+    throw new ValidationError('Workout distance must be a non-negative finite number', 'distance');
   }
   
   if (updates.activityType && updates.activityType.trim().length > 50) {
-    throw new Error('Activity type cannot exceed 50 characters');
+    throw new ValidationError('Activity type cannot exceed 50 characters', 'activityType');
   }
   
   return {

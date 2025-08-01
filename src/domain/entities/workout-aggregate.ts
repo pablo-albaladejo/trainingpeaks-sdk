@@ -6,6 +6,8 @@
 
 import type { Workout } from '@/domain/schemas/entities.schema';
 import type { WorkoutStructure } from '@/domain/schemas/workout-structure.schema';
+import { ValidationError } from '@/domain/errors/domain-errors';
+import { WorkoutValidationError, WorkoutStructureError } from '@/domain/errors/workout-errors';
 import {
   calculateWorkoutDuration,
   createStructuredWorkout,
@@ -42,7 +44,7 @@ export const createWorkoutAggregate = (
 
     // If duration is provided, it should match calculated duration
     if (Math.abs(duration - calculatedDuration) > 1) {
-      throw new Error(
+      throw new WorkoutValidationError(
         `Provided duration (${duration}s) does not match calculated duration (${calculatedDuration}s)`
       );
     }
@@ -124,7 +126,7 @@ export const removeWorkoutStructure = (
   newDuration: number
 ): WorkoutAggregate => {
   if (newDuration < 0 || !isFinite(newDuration)) {
-    throw new Error('Duration must be a non-negative finite number');
+    throw new ValidationError('Duration must be a non-negative finite number', 'duration');
   }
 
   const updatedWorkout = {
@@ -149,11 +151,11 @@ export const addWorkoutFile = (
   fileName: string
 ): WorkoutAggregate => {
   if (!fileContent || !fileName) {
-    throw new Error('File content and name are required');
+    throw new ValidationError('File content and name are required');
   }
 
   if (fileName.trim().length > 255) {
-    throw new Error('File name cannot exceed 255 characters');
+    throw new ValidationError('File name cannot exceed 255 characters', 'fileName');
   }
 
   const updatedWorkout = {
@@ -259,7 +261,7 @@ export const getAggregateSummary = (aggregate: WorkoutAggregate) => {
  */
 const validateWorkoutStructure = (structure: WorkoutStructure): void => {
   if (!structure.structure || structure.structure.length === 0) {
-    throw new Error('Workout structure must contain at least one element');
+    throw new WorkoutStructureError('Workout structure must contain at least one element');
   }
 
   // Validate temporal consistency
@@ -268,8 +270,9 @@ const validateWorkoutStructure = (structure: WorkoutStructure): void => {
     const next = structure.structure[i + 1];
 
     if (current && next && current.end > next.begin) {
-      throw new Error(
-        `Structure elements overlap: element ${i} ends after element ${i + 1} begins`
+      throw new WorkoutStructureError(
+        `Structure elements overlap: element ${i} ends after element ${i + 1} begins`,
+        { elementIndex: i, nextElementIndex: i + 1 }
       );
     }
   }
@@ -277,12 +280,16 @@ const validateWorkoutStructure = (structure: WorkoutStructure): void => {
   // Validate each element has valid steps
   structure.structure.forEach((element, index) => {
     if (!element.steps || element.steps.length === 0) {
-      throw new Error(`Structure element ${index} must have at least one step`);
+      throw new WorkoutStructureError(
+        `Structure element ${index} must have at least one step`,
+        { elementIndex: index }
+      );
     }
 
     if (element.end <= element.begin) {
-      throw new Error(
-        `Structure element ${index} end time must be greater than begin time`
+      throw new WorkoutStructureError(
+        `Structure element ${index} end time must be greater than begin time`,
+        { elementIndex: index, begin: element.begin, end: element.end }
       );
     }
   });

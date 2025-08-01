@@ -4,6 +4,7 @@
  */
 
 import type { Credentials as CredentialsType } from '@/domain/schemas/value-objects.schema';
+import { ValidationError } from '@/domain/errors/domain-errors';
 
 export type Credentials = CredentialsType;
 
@@ -18,15 +19,15 @@ export const createCredentials = (
   
   // Validate invariants
   if (!trimmedUsername) {
-    throw new Error('Username cannot be empty');
+    throw new ValidationError('Username cannot be empty', 'username');
   }
   
   if (!password) {
-    throw new Error('Password cannot be empty');
+    throw new ValidationError('Password cannot be empty', 'password');
   }
   
   if (trimmedUsername.length > 100) {
-    throw new Error('Username cannot exceed 100 characters');
+    throw new ValidationError('Username cannot exceed 100 characters', 'username');
   }
   
   // Create immutable object

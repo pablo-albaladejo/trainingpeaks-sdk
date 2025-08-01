@@ -4,6 +4,7 @@
  */
 
 import type { User as UserType } from '@/domain/schemas/entities.schema';
+import { ValidationError } from '@/domain/errors/domain-errors';
 
 export type User = UserType;
 
@@ -18,19 +19,19 @@ export const createUser = (
 ): User => {
   // Validate invariants
   if (!id || id.trim().length === 0) {
-    throw new Error('User ID cannot be empty');
+    throw new ValidationError('User ID cannot be empty', 'id');
   }
   
   if (!name || name.trim().length === 0) {
-    throw new Error('User name cannot be empty');
+    throw new ValidationError('User name cannot be empty', 'name');
   }
   
   if (name.trim().length > 100) {
-    throw new Error('User name cannot exceed 100 characters');
+    throw new ValidationError('User name cannot exceed 100 characters', 'name');
   }
   
   if (avatar && !isValidUrl(avatar)) {
-    throw new Error('Avatar must be a valid URL');
+    throw new ValidationError('Avatar must be a valid URL', 'avatar');
   }
   
   return {
@@ -46,11 +47,11 @@ export const createUser = (
  */
 export const updateUserName = (user: User, newName: string): User => {
   if (!newName || newName.trim().length === 0) {
-    throw new Error('User name cannot be empty');
+    throw new ValidationError('User name cannot be empty', 'name');
   }
   
   if (newName.trim().length > 100) {
-    throw new Error('User name cannot exceed 100 characters');
+    throw new ValidationError('User name cannot exceed 100 characters', 'name');
   }
   
   return {
@@ -75,7 +76,7 @@ export const updateUserPreferences = (
  */
 export const updateUserAvatar = (user: User, avatar?: string): User => {
   if (avatar && !isValidUrl(avatar)) {
-    throw new Error('Avatar must be a valid URL');
+    throw new ValidationError('Avatar must be a valid URL', 'avatar');
   }
   
   return {
