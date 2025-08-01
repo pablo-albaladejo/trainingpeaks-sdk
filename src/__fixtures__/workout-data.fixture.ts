@@ -9,7 +9,12 @@
  * - Consistent workout structure patterns
  */
 
-import { WorkoutData, WorkoutFileData, WorkoutType } from '@/types';
+import type {
+  WorkoutData,
+  WorkoutFileData,
+  WorkoutMetadata,
+} from '@/domain/schemas';
+import { WorkoutType } from '@/types';
 import { faker } from '@faker-js/faker';
 import { Factory } from 'rosie';
 import { randomDate, randomNumber, randomString } from './utils.fixture';
@@ -18,7 +23,7 @@ import { randomDate, randomNumber, randomString } from './utils.fixture';
  * WorkoutMetadata Builder
  * Creates workout metadata objects with realistic defaults
  */
-export const workoutMetadataBuilder = new Factory()
+export const workoutMetadataBuilder = new Factory<WorkoutMetadata>()
   .attr('tags', () =>
     Array.from({ length: randomNumber(1, 5) }, () => faker.lorem.word())
   )
@@ -138,7 +143,7 @@ export const workoutFileDataBuilder = new Factory<WorkoutFileData>()
  * Running Workout Builder
  * Creates running workouts with appropriate duration and distance
  */
-export const runningWorkoutBuilder = new Factory()
+export const runningWorkoutBuilder = new Factory<WorkoutData>()
   .extend(workoutDataBuilder)
   .option('workoutType', WorkoutType.RUN)
   .option('durationMinutes', 45)
@@ -149,7 +154,7 @@ export const runningWorkoutBuilder = new Factory()
  * Cycling Workout Builder
  * Creates cycling workouts with appropriate duration and distance
  */
-export const cyclingWorkoutBuilder = new Factory()
+export const cyclingWorkoutBuilder = new Factory<WorkoutData>()
   .extend(workoutDataBuilder)
   .option('workoutType', WorkoutType.BIKE)
   .option('durationMinutes', 90)
@@ -160,7 +165,7 @@ export const cyclingWorkoutBuilder = new Factory()
  * Swimming Workout Builder
  * Creates swimming workouts with appropriate duration and distance
  */
-export const swimmingWorkoutBuilder = new Factory()
+export const swimmingWorkoutBuilder = new Factory<WorkoutData>()
   .extend(workoutDataBuilder)
   .option('workoutType', WorkoutType.SWIM)
   .option('durationMinutes', 30)
@@ -171,7 +176,7 @@ export const swimmingWorkoutBuilder = new Factory()
  * Other Workout Builder
  * Creates other type workouts (strength, yoga, etc.)
  */
-export const otherWorkoutBuilder = new Factory()
+export const otherWorkoutBuilder = new Factory<WorkoutData>()
   .extend(workoutDataBuilder)
   .option('workoutType', WorkoutType.OTHER)
   .option('durationMinutes', 45)
@@ -182,7 +187,7 @@ export const otherWorkoutBuilder = new Factory()
  * Short Workout Builder
  * Creates short workouts for quick tests
  */
-export const shortWorkoutBuilder = new Factory()
+export const shortWorkoutBuilder = new Factory<WorkoutData>()
   .extend(workoutDataBuilder)
   .option('durationMinutes', 15)
   .option('distanceKm', 2)
@@ -193,7 +198,7 @@ export const shortWorkoutBuilder = new Factory()
  * Long Workout Builder
  * Creates long workouts for endurance tests
  */
-export const longWorkoutBuilder = new Factory()
+export const longWorkoutBuilder = new Factory<WorkoutData>()
   .extend(workoutDataBuilder)
   .option('durationMinutes', 180)
   .option('distanceKm', 50)
@@ -204,7 +209,7 @@ export const longWorkoutBuilder = new Factory()
  * Workout with File Builder
  * Creates workouts that include file data
  */
-export const workoutWithFileBuilder = new Factory()
+export const workoutWithFileBuilder = new Factory<WorkoutData>()
   .extend(workoutDataBuilder)
   .option('includeFileData', true)
   .option('fileFormat', 'tcx')

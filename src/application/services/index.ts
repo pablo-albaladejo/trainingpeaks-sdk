@@ -1,39 +1,18 @@
 /**
  * Application Services Index
- * Exports all service types and port types
+ * Exports all service types
  */
 
-export type {
-  AuthenticateUser,
-  AuthenticateUserResult,
-} from './authenticate-user';
-export type { GetCurrentUser, GetCurrentUserResult } from './get-current-user';
-export type {
-  GetUserSettings,
-  GetUserSettingsResult,
-} from './get-user-settings';
-export type {
-  RefreshUserToken,
-  RefreshUserTokenResult,
-} from './refresh-user-token';
-export type {
-  UpdateUserPreferences,
-  UpdateUserPreferencesResult,
-} from './update-user-preferences';
+// User services
+export type { AuthenticateUser } from './authenticate-user';
+export type { GetCurrentUser } from './get-current-user';
+export type { GetUserSettings } from './get-user-settings';
+export type { RefreshUserToken } from './refresh-user-token';
+export type { UpdateUserPreferences } from './update-user-preferences';
 
-export type { ClearStorage } from './clear-storage';
-export type { CreateWorkout, CreateWorkoutResult } from './create-workout';
-export type { DeleteWorkout } from './delete-workout';
-export type { GetToken } from './get-token';
-export type { GetUser } from './get-user';
-export type { GetUserId } from './get-user-id';
-export type { GetWorkoutById, GetWorkoutByIdResult } from './get-workout-by-id';
-export type {
-  GetWorkoutStats,
-  GetWorkoutStatsResult,
-} from './get-workout-stats';
-export type { GetWorkouts, GetWorkoutsResult } from './get-workouts';
-export type { HasValidAuth } from './has-valid-auth';
-export type { StoreToken } from './store-token';
-export type { StoreUser } from './store-user';
-export type { UpdateWorkout, UpdateWorkoutResult } from './update-workout';
+// Workout services
+export type { CreateWorkout } from './create-workout';
+export type { GetWorkoutById } from './get-workout-by-id';
+export type { GetWorkoutStats } from './get-workout-stats';
+export type { GetWorkouts } from './get-workouts';
+export type { UpdateWorkout } from './update-workout';

@@ -1,12 +1,10 @@
 import type {
+  AuthToken,
   WorkoutFilters,
   WorkoutsListResponse,
-} from '@/application/repositories';
-import type { AuthToken } from '@/domain';
-
-export type GetWorkoutsResult = WorkoutsListResponse;
+} from '@/domain/schemas';
 
 export type GetWorkouts = (
   token: AuthToken,
   filters?: WorkoutFilters
-) => Promise<GetWorkoutsResult>;
+) => Promise<WorkoutsListResponse>;

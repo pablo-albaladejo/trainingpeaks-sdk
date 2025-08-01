@@ -1,12 +1,12 @@
-import type { AuthToken } from '@/domain';
 import type {
+  AuthToken,
   CreateWorkoutRequest,
   UpdateWorkoutRequest,
   WorkoutFilters,
   WorkoutResponse,
   WorkoutStats,
   WorkoutsListResponse,
-} from './';
+} from '@/domain/schemas';
 
 /**
  * Repository types for workout-related operations

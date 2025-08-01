@@ -1,4 +1,9 @@
-import type { AuthToken, Credentials, User } from '@/domain';
+import type {
+  AuthToken,
+  Credentials,
+  User,
+  UserPreferences,
+} from '@/domain/schemas';
 
 /**
  * Repository types for user-related operations
@@ -26,11 +31,11 @@ export type UserRepository = {
    */
   updatePreferences(
     token: AuthToken,
-    preferences: Record<string, unknown>
+    preferences: UserPreferences
   ): Promise<void>;
 
   /**
    * Get user settings
    */
-  getUserSettings(token: AuthToken): Promise<Record<string, unknown>>;
+  getUserSettings(token: AuthToken): Promise<UserPreferences>;
 };

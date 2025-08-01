@@ -3,16 +3,19 @@
  * Main API client that composes all entity-specific API clients
  */
 
+import { getSDKConfig } from '@/config';
 import type {
+  AuthToken,
   CreateWorkoutRequest,
+  Credentials,
   UpdateWorkoutRequest,
+  User,
+  UserPreferences,
   WorkoutFilters,
   WorkoutResponse,
   WorkoutsListResponse,
   WorkoutStats,
-} from '@/application/repositories';
-import { getSDKConfig } from '@/config';
-import type { AuthToken, Credentials, User } from '@/domain';
+} from '@/domain/schemas';
 import { authenticateUser } from '@/infrastructure/services/authenticate-user';
 import { createWorkout } from '@/infrastructure/services/create-workout';
 import { deleteWorkout } from '@/infrastructure/services/delete-workout';
@@ -116,7 +119,7 @@ export class TrainingPeaksApiClient {
    */
   async updateUserPreferences(
     token: AuthToken,
-    preferences: Record<string, unknown>
+    preferences: UserPreferences
   ): Promise<void> {
     return this.updateUserPreferencesService(token, preferences);
   }
@@ -124,14 +127,14 @@ export class TrainingPeaksApiClient {
   /**
    * Get user settings
    */
-  async getUserSettings(token: AuthToken): Promise<Record<string, unknown>> {
+  async getUserSettings(token: AuthToken): Promise<UserPreferences> {
     return this.getUserSettingsService(token);
   }
 
   // Workout Operations (High-level service methods)
 
   /**
-   * Get workouts with optional filters
+   * Get list of workouts with optional filters
    */
   async getWorkouts(
     token: AuthToken,
@@ -186,7 +189,7 @@ export class TrainingPeaksApiClient {
 }
 
 /**
- * Factory function to create TrainingPeaksApiClient
+ * Factory function to create TrainingPeaks API client
  */
 export const createTrainingPeaksApiClient = (
   config: TrainingPeaksApiClientConfig

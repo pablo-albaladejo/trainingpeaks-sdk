@@ -9,7 +9,20 @@
  * - Consistent token and user structure patterns
  */
 
-import type { AuthToken, Credentials, User } from '@/domain';
+import type {
+  AuthToken,
+  Credentials,
+  LoginPageResponse,
+  LoginResponse,
+  TokenResponse,
+  TokenResponseWithoutExpiration,
+  TokenResponseWithZeroExpiration,
+  User,
+  UserApiResponse,
+  UserInfoResponse,
+  UserPreferences,
+  UserStorageData,
+} from '@/domain/schemas';
 import { faker } from '@faker-js/faker';
 import { Factory } from 'rosie';
 
@@ -17,7 +30,7 @@ import { Factory } from 'rosie';
  * UserPreferences Builder
  * Creates user preference objects with realistic defaults
  */
-export const userPreferencesBuilder = new Factory()
+export const userPreferencesBuilder = new Factory<UserPreferences>()
   .attr('timezone', () => faker.location.timeZone())
   .attr('units', () => faker.helpers.arrayElement(['metric', 'imperial']))
   .attr('language', () => faker.helpers.arrayElement(['en', 'es', 'fr', 'de']))
@@ -130,7 +143,7 @@ export const credentialsBuilder = new Factory<Credentials>()
  * Valid AuthToken Builder
  * Creates valid, non-expired auth tokens
  */
-export const validAuthTokenBuilder = new Factory()
+export const validAuthTokenBuilder = new Factory<AuthToken>()
   .extend(authTokenBuilder)
   .option('expiresInMinutes', 60)
   .option('includeRefreshToken', true)
@@ -140,7 +153,7 @@ export const validAuthTokenBuilder = new Factory()
  * Expired AuthToken Builder
  * Creates expired auth tokens for testing expiration scenarios
  */
-export const expiredAuthTokenBuilder = new Factory()
+export const expiredAuthTokenBuilder = new Factory<AuthToken>()
   .extend(authTokenBuilder)
   .option('expiresInMinutes', -60) // Expired 1 hour ago
   .option('includeRefreshToken', true)
@@ -150,7 +163,7 @@ export const expiredAuthTokenBuilder = new Factory()
  * Admin User Builder
  * Creates admin users with specific preferences
  */
-export const adminUserBuilder = new Factory()
+export const adminUserBuilder = new Factory<User>()
   .extend(userBuilder)
   .option('name', 'Admin User')
   .option('timezone', 'UTC')
@@ -163,7 +176,7 @@ export const adminUserBuilder = new Factory()
  * Guest User Builder
  * Creates guest users with minimal preferences
  */
-export const guestUserBuilder = new Factory()
+export const guestUserBuilder = new Factory<User>()
   .extend(userBuilder)
   .option('name', 'Guest User')
   .option('timezone', 'America/New_York')
@@ -176,7 +189,7 @@ export const guestUserBuilder = new Factory()
  * Valid Credentials Builder
  * Creates valid credentials for testing
  */
-export const validCredentialsBuilder = new Factory()
+export const validCredentialsBuilder = new Factory<Credentials>()
   .extend(credentialsBuilder)
   .option('username', 'validuser')
   .option('password', 'validpass123')
@@ -186,7 +199,7 @@ export const validCredentialsBuilder = new Factory()
  * Invalid Credentials Builder
  * Creates invalid credentials for testing error scenarios
  */
-export const invalidCredentialsBuilder = new Factory()
+export const invalidCredentialsBuilder = new Factory<Credentials>()
   .extend(credentialsBuilder)
   .option('username', '')
   .option('password', '')
@@ -201,7 +214,7 @@ export const invalidCredentialsBuilder = new Factory()
  * TokenResponse Builder
  * Creates token response objects for HTTP auth testing
  */
-export const tokenResponseBuilder = new Factory()
+export const tokenResponseBuilder = new Factory<TokenResponse>()
   .attr('status', 200)
   .attr('statusText', 'OK')
   .attr('data', () => ({
@@ -250,85 +263,87 @@ export const tokenResponseBuilder = new Factory()
  * TokenResponseWithoutExpiration Builder
  * Creates token response objects without expiration for testing edge cases
  */
-export const tokenResponseWithoutExpirationBuilder = new Factory()
-  .attr('status', 200)
-  .attr('statusText', 'OK')
-  .attr('data', () => ({
-    token: {
-      access_token: faker.string.alphanumeric(32),
-      token_type: faker.helpers.arrayElement(['Bearer', 'JWT', 'OAuth']),
-      refresh_token: faker.string.alphanumeric(32),
-      scope: 'read write',
-    },
-  }))
-  .attr('headers', () => ({}))
-  .attr('cookies', () => [])
-  .option('tokenType', 'Bearer')
-  .option('includeRefreshToken', true)
-  .after((response, options) => {
-    return {
-      status: response.status,
-      statusText: response.statusText,
-      data: {
-        token: {
-          access_token: response.data.token.access_token,
-          token_type: options.tokenType || response.data.token.token_type,
-          refresh_token: options.includeRefreshToken
-            ? response.data.token.refresh_token
-            : undefined,
-          scope: response.data.token.scope,
-        },
+export const tokenResponseWithoutExpirationBuilder =
+  new Factory<TokenResponseWithoutExpiration>()
+    .attr('status', 200)
+    .attr('statusText', 'OK')
+    .attr('data', () => ({
+      token: {
+        access_token: faker.string.alphanumeric(32),
+        token_type: faker.helpers.arrayElement(['Bearer', 'JWT', 'OAuth']),
+        refresh_token: faker.string.alphanumeric(32),
+        scope: 'read write',
       },
-      headers: response.headers,
-      cookies: response.cookies,
-    };
-  });
+    }))
+    .attr('headers', () => ({}))
+    .attr('cookies', () => [])
+    .option('tokenType', 'Bearer')
+    .option('includeRefreshToken', true)
+    .after((response, options) => {
+      return {
+        status: response.status,
+        statusText: response.statusText,
+        data: {
+          token: {
+            access_token: response.data.token.access_token,
+            token_type: options.tokenType || response.data.token.token_type,
+            refresh_token: options.includeRefreshToken
+              ? response.data.token.refresh_token
+              : undefined,
+            scope: response.data.token.scope,
+          },
+        },
+        headers: response.headers,
+        cookies: response.cookies,
+      };
+    });
 
 /**
  * TokenResponseWithZeroExpiration Builder
  * Creates token response objects with expires_in: 0 for testing "never expires" scenario
  */
-export const tokenResponseWithZeroExpirationBuilder = new Factory()
-  .attr('status', 200)
-  .attr('statusText', 'OK')
-  .attr('data', () => ({
-    token: {
-      access_token: faker.string.alphanumeric(32),
-      token_type: faker.helpers.arrayElement(['Bearer', 'JWT', 'OAuth']),
-      expires_in: 0,
-      refresh_token: faker.string.alphanumeric(32),
-      scope: 'read write',
-    },
-  }))
-  .attr('headers', () => ({}))
-  .attr('cookies', () => [])
-  .option('tokenType', 'Bearer')
-  .option('includeRefreshToken', true)
-  .after((response, options) => {
-    return {
-      status: response.status,
-      statusText: response.statusText,
-      data: {
-        token: {
-          access_token: response.data.token.access_token,
-          token_type: options.tokenType || response.data.token.token_type,
-          expires_in: 0,
-          refresh_token: options.includeRefreshToken
-            ? response.data.token.refresh_token
-            : undefined,
-          scope: response.data.token.scope,
-        },
+export const tokenResponseWithZeroExpirationBuilder =
+  new Factory<TokenResponseWithZeroExpiration>()
+    .attr('status', 200)
+    .attr('statusText', 'OK')
+    .attr('data', () => ({
+      token: {
+        access_token: faker.string.alphanumeric(32),
+        token_type: faker.helpers.arrayElement(['Bearer', 'JWT', 'OAuth']),
+        expires_in: 0,
+        refresh_token: faker.string.alphanumeric(32),
+        scope: 'read write',
       },
-      headers: response.headers,
-      cookies: response.cookies,
-    };
-  });
+    }))
+    .attr('headers', () => ({}))
+    .attr('cookies', () => [])
+    .option('tokenType', 'Bearer')
+    .option('includeRefreshToken', true)
+    .after((response, options) => {
+      return {
+        status: response.status,
+        statusText: response.statusText,
+        data: {
+          token: {
+            access_token: response.data.token.access_token,
+            token_type: options.tokenType || response.data.token.token_type,
+            expires_in: 0,
+            refresh_token: options.includeRefreshToken
+              ? response.data.token.refresh_token
+              : undefined,
+            scope: response.data.token.scope,
+          },
+        },
+        headers: response.headers,
+        cookies: response.cookies,
+      };
+    });
 
 /**
  * UserInfoResponse Builder
  * Creates user info response objects for HTTP auth testing
  */
-export const userInfoResponseBuilder = new Factory()
+export const userInfoResponseBuilder = new Factory<UserInfoResponse>()
   .attr('status', 200)
   .attr('statusText', 'OK')
   .attr('data', () => ({
@@ -336,13 +351,7 @@ export const userInfoResponseBuilder = new Factory()
       userId: faker.string.uuid(),
       username: faker.internet.userName(),
       name: faker.person.fullName(),
-      preferences: {
-        timezone: faker.location.timeZone(),
-        units: faker.helpers.arrayElement(['metric', 'imperial']),
-        language: faker.helpers.arrayElement(['en', 'es', 'fr', 'de']),
-        theme: faker.helpers.arrayElement(['light', 'dark', 'auto']),
-        notifications: faker.datatype.boolean(),
-      },
+      preferences: userPreferencesBuilder.build(),
     },
   }))
   .attr('headers', () => ({}))
@@ -371,7 +380,7 @@ export const userInfoResponseBuilder = new Factory()
  * LoginPageResponse Builder
  * Creates login page HTML responses for HTTP auth testing
  */
-export const loginPageResponseBuilder = new Factory()
+export const loginPageResponseBuilder = new Factory<LoginPageResponse>()
   .attr('status', 200)
   .attr('statusText', 'OK')
   .attr('data', () => {
@@ -412,7 +421,7 @@ export const loginPageResponseBuilder = new Factory()
  * LoginResponse Builder
  * Creates login response objects for HTTP auth testing
  */
-export const loginResponseBuilder = new Factory()
+export const loginResponseBuilder = new Factory<LoginResponse>()
   .attr('status', 200)
   .attr('statusText', 'OK')
   .attr('data', () => '')
@@ -437,7 +446,7 @@ export const loginResponseBuilder = new Factory()
  * UserApiResponse Builder
  * Creates UserApiResponse objects for serialization testing
  */
-export const userApiResponseBuilder = new Factory()
+export const userApiResponseBuilder = new Factory<UserApiResponse>()
   .attr('user', () => ({
     userId: faker.string.uuid(),
     username: faker.internet.userName(),
@@ -470,7 +479,7 @@ export const userApiResponseBuilder = new Factory()
  * UserStorageData Builder
  * Creates UserStorageData objects for serialization testing
  */
-export const userStorageDataBuilder = new Factory()
+export const userStorageDataBuilder = new Factory<UserStorageData>()
   .attr('id', () => faker.string.uuid())
   .attr('name', () => faker.person.fullName())
   .attr('avatar', () => faker.image.avatar())

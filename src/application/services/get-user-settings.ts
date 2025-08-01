@@ -1,5 +1,3 @@
-import type { AuthToken } from '@/domain';
+import type { AuthToken, UserPreferences } from '@/domain/schemas';
 
-export type GetUserSettingsResult = Record<string, unknown>;
-
-export type GetUserSettings = (token: AuthToken) => Promise<GetUserSettingsResult>; 
+export type GetUserSettings = (token: AuthToken) => Promise<UserPreferences>;

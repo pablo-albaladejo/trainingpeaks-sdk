@@ -3,10 +3,15 @@
  * Handles all user-related API endpoints
  */
 
-import type { UserRepository } from '@/application/repositories';
-import type { AuthToken, Credentials, User } from '@/domain';
-import { BaseApiClient, type EntityApiConfig } from '../base-api-client';
 import { API_ENDPOINTS, HTTP_STATUS } from '@/adapters/constants';
+import type { UserRepository } from '@/application/repositories';
+import type {
+  AuthToken,
+  Credentials,
+  User,
+  UserPreferences,
+} from '@/domain/schemas';
+import { BaseApiClient, type EntityApiConfig } from '../base-api-client';
 
 // API Response types (raw data from API)
 interface TokenResponse {
@@ -102,7 +107,7 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
         throw new Error(`Token refresh failed: ${response.statusText}`);
       }
 
-      // Return raw data - business logic handled in application layer
+      this.logger.debug('👤 Users API: Token refreshed successfully');
       return response.data as unknown as AuthToken;
     } catch (error) {
       this.logError('POST', endpoint, error as Error);
@@ -115,7 +120,7 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
    * Returns raw API response data
    */
   async getUserInfo(token: AuthToken): Promise<User> {
-    this.logger.debug('👤 Users API: Getting user information');
+    this.logger.debug('👤 Users API: Getting user info');
 
     const endpoint = this.buildEndpoint(API_ENDPOINTS.USERS.USER);
     const headers = this.getAuthHeaders(token);
@@ -129,15 +134,11 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
       );
       this.logResponse('GET', endpoint, response.status);
 
-      if (response.status !== HTTP_STATUS.OK) {
+      if (response.status !== 200) {
         throw new Error(`Failed to get user info: ${response.statusText}`);
       }
 
-      this.logger.debug(
-        '👤 Users API: User information retrieved successfully'
-      );
-
-      // Return raw data - business logic handled in application layer
+      this.logger.debug('👤 Users API: User info retrieved successfully');
       return response.data as unknown as User;
     } catch (error) {
       this.logError('GET', endpoint, error as Error);
@@ -183,7 +184,7 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
    */
   async updatePreferences(
     token: AuthToken,
-    preferences: Record<string, unknown>
+    preferences: UserPreferences
   ): Promise<void> {
     this.logger.debug('👤 Users API: Updating user preferences');
 
@@ -217,7 +218,7 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
    * Get user settings
    * Returns raw API response data
    */
-  async getUserSettings(token: AuthToken): Promise<Record<string, unknown>> {
+  async getUserSettings(token: AuthToken): Promise<UserPreferences> {
     this.logger.debug('👤 Users API: Getting user settings');
 
     const endpoint = this.buildEndpoint(API_ENDPOINTS.USERS.SETTINGS);
@@ -226,7 +227,7 @@ export class UsersApiClient extends BaseApiClient implements UserRepository {
     this.logRequest('GET', endpoint);
 
     try {
-      const response = await this.httpClient.get<Record<string, unknown>>(
+      const response = await this.httpClient.get<UserPreferences>(
         endpoint,
         headers
       );

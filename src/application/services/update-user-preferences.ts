@@ -1,8 +1,6 @@
-import type { AuthToken } from '@/domain';
-
-export type UpdateUserPreferencesResult = void;
+import type { AuthToken, UserPreferences } from '@/domain/schemas';
 
 export type UpdateUserPreferences = (
   token: AuthToken,
-  preferences: Record<string, unknown>
-) => Promise<UpdateUserPreferencesResult>; 
+  preferences: UserPreferences
+) => Promise<void>;

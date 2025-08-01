@@ -1,8 +1,8 @@
 import type { UserRepository } from '@/application/repositories';
 import type { AuthenticateUser } from '@/application/services';
 import { getSDKConfig } from '@/config';
-import type { AuthToken, Credentials, User } from '@/domain';
 import { createUser } from '@/domain/entities/user';
+import type { AuthToken, Credentials, User } from '@/domain/schemas';
 import { createAuthToken } from '@/domain/value-objects/auth-token';
 
 /**

@@ -3,7 +3,7 @@
  * Provides test data for authentication scenarios
  */
 
-import { Credentials } from '@/domain';
+import type { Credentials } from '@/domain/schemas';
 import { faker } from '@faker-js/faker';
 import { Factory } from 'rosie';
 
@@ -39,12 +39,9 @@ export const createSpecialCharacterCredentials = () => ({
 });
 
 // Complex credentials using Rosie Factory
-export const CredentialsFactory = new Factory()
+export const CredentialsFactory = new Factory<Credentials>()
   .attr('username', () => faker.internet.userName())
-  .attr('password', () => faker.internet.password({ length: 12 }))
-  .attr('email', () => faker.internet.email())
-  .attr('firstName', () => faker.person.firstName())
-  .attr('lastName', () => faker.person.lastName());
+  .attr('password', () => faker.internet.password({ length: 12 }));
 
 // Environment-based credentials for real testing
 export const getRealCredentials = (): Credentials => {

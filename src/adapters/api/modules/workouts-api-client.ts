@@ -5,16 +5,16 @@
  */
 
 import { API_ENDPOINTS, HTTP_STATUS } from '@/adapters/constants';
+import type { WorkoutRepository } from '@/application/repositories';
 import type {
+  AuthToken,
   CreateWorkoutRequest,
   UpdateWorkoutRequest,
   WorkoutFilters,
-  WorkoutRepository,
   WorkoutResponse,
   WorkoutsListResponse,
   WorkoutStats,
-} from '@/application/repositories';
-import type { AuthToken } from '@/domain';
+} from '@/domain/schemas';
 import { BaseApiClient, type EntityApiConfig } from '../base-api-client';
 
 /**
@@ -108,6 +108,7 @@ export class WorkoutsApiClient
       this.logger.debug('🏃 Workouts API: Workout retrieved successfully', {
         workoutId: id,
       });
+
       return response.data;
     } catch (error) {
       this.logError('GET', endpoint, error as Error);
@@ -123,8 +124,8 @@ export class WorkoutsApiClient
     token: AuthToken,
     workoutData: CreateWorkoutRequest
   ): Promise<WorkoutResponse> {
-    this.logger.debug('🏃 Workouts API: Creating new workout', {
-      name: workoutData.name,
+    this.logger.debug('🏃 Workouts API: Creating workout', {
+      workoutName: workoutData.name,
     });
 
     const endpoint = this.buildEndpoint(API_ENDPOINTS.WORKOUTS.WORKOUTS);
@@ -145,8 +146,9 @@ export class WorkoutsApiClient
       }
 
       this.logger.debug('🏃 Workouts API: Workout created successfully', {
-        workoutId: response.data.workout.id,
+        workoutName: workoutData.name,
       });
+
       return response.data;
     } catch (error) {
       this.logError('POST', endpoint, error as Error);
@@ -172,15 +174,12 @@ export class WorkoutsApiClient
     );
     const headers = this.getAuthHeaders(token);
 
-    // Remove id from update data as it's in the URL
-    const { id, ...updateData } = workoutData;
-
     this.logRequest('PUT', endpoint);
 
     try {
       const response = await this.httpClient.put<WorkoutResponse>(
         endpoint,
-        updateData,
+        workoutData,
         headers
       );
       this.logResponse('PUT', endpoint, response.status);
@@ -190,8 +189,9 @@ export class WorkoutsApiClient
       }
 
       this.logger.debug('🏃 Workouts API: Workout updated successfully', {
-        workoutId: id,
+        workoutId: workoutData.id,
       });
+
       return response.data;
     } catch (error) {
       this.logError('PUT', endpoint, error as Error);
@@ -203,7 +203,9 @@ export class WorkoutsApiClient
    * Delete workout
    */
   async deleteWorkout(token: AuthToken, workoutId: string): Promise<void> {
-    this.logger.debug('🏃 Workouts API: Deleting workout', { workoutId });
+    this.logger.debug('🏃 Workouts API: Deleting workout', {
+      workoutId,
+    });
 
     const endpoint = this.buildEndpointWithId(
       API_ENDPOINTS.WORKOUTS.WORKOUTS,
@@ -238,12 +240,10 @@ export class WorkoutsApiClient
     token: AuthToken,
     filters?: WorkoutFilters
   ): Promise<WorkoutStats> {
-    this.logger.debug('🏃 Workouts API: Getting workout statistics', {
-      filters,
-    });
+    this.logger.debug('🏃 Workouts API: Getting workout stats', { filters });
 
     const endpoint = this.buildEndpoint(
-      'workouts/stats',
+      `${API_ENDPOINTS.WORKOUTS.WORKOUTS}/stats`,
       filters as Record<string, string>
     );
     const headers = this.getAuthHeaders(token);
@@ -257,13 +257,14 @@ export class WorkoutsApiClient
       );
       this.logResponse('GET', endpoint, response.status);
 
-      if (response.status !== 200) {
+      if (response.status !== HTTP_STATUS.OK) {
         throw new Error(`Failed to get workout stats: ${response.statusText}`);
       }
 
       this.logger.debug(
-        '🏃 Workouts API: Workout statistics retrieved successfully'
+        '🏃 Workouts API: Workout stats retrieved successfully'
       );
+
       return response.data;
     } catch (error) {
       this.logError('GET', endpoint, error as Error);

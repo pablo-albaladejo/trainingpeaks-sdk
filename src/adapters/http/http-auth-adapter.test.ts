@@ -53,18 +53,31 @@ describe('HTTP Auth Adapter', () => {
       );
 
       // Mock the login page response
-      (mockWebHttpClient.get as any).mockResolvedValueOnce({
+      (
+        mockWebHttpClient.get as jest.MockedFunction<
+          typeof mockWebHttpClient.get
+        >
+      ).mockResolvedValueOnce({
+        status: 200,
+        statusText: 'OK',
         data: '<input name="__RequestVerificationToken" value="test-token" />',
+        headers: {},
+        cookies: [],
       });
 
       // Mock the login response
       (mockWebHttpClient.post as any).mockResolvedValueOnce({
         status: 200,
+        statusText: 'OK',
+        data: '',
+        headers: {},
         cookies: ['TestAuth=session-token'],
       });
 
       // Mock the token response
       (mockWebHttpClient.get as any).mockResolvedValueOnce({
+        status: 200,
+        statusText: 'OK',
         data: {
           token: {
             access_token: 'access-token',
@@ -73,6 +86,8 @@ describe('HTTP Auth Adapter', () => {
             expires: '2024-12-31T23:59:59Z',
           },
         },
+        headers: {},
+        cookies: [],
       });
 
       const user = userBuilder.build();

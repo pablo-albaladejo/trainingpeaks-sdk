@@ -1,11 +1,22 @@
-import { AUTH_CONSTANTS, HTTP_STATUS } from '@/adapters/constants';
-import { serializeApiResponseToUser } from '@/adapters/serialization';
+/**
+ * HTTP Auth Adapter
+ * Implements UserRepository interface using HTTP requests
+ * This adapter handles web-based authentication for TrainingPeaks
+ */
+
+import { AUTH_CONSTANTS } from '@/adapters/constants';
+import type { WebHttpClient } from '@/adapters/http/web-http-client';
+import type { LoggerType } from '@/adapters/logging/logger';
 import type { UserRepository } from '@/application/repositories';
 import { getSDKConfig } from '@/config';
-import type { AuthToken, Credentials, User } from '@/domain';
+import { createUser } from '@/domain/entities/user';
+import type {
+  AuthToken,
+  Credentials,
+  User,
+  UserPreferences,
+} from '@/domain/schemas';
 import { createAuthToken } from '@/domain/value-objects/auth-token';
-import type { LoggerType } from '../logging/logger';
-import type { WebHttpClient } from './web-http-client';
 
 type LoginFormData = {
   username: string;
@@ -35,143 +46,136 @@ export const createHttpAuthAdapter = (
   logger: LoggerType
 ): UserRepository => {
   const getUserInfo = async (token: AuthToken): Promise<User> => {
-    logger.info('👤 Getting user information via HTTP auth');
+    logger.info('👤 Getting user info via HTTP auth');
 
-    const headers = {
-      Authorization: `${token.tokenType} ${token.accessToken}`,
-    };
+    try {
+      const response = await webHttpClient.get(httpAuthConfig.userInfoUrl, {
+        headers: {
+          Authorization: `${token.tokenType} ${token.accessToken}`,
+        },
+      });
 
-    const response = await webHttpClient.get<{
-      user: {
-        userId: string | number;
-        username: string;
-        name: string;
-        preferences?: Record<string, unknown>;
-      };
-    }>(httpAuthConfig.userInfoUrl, { headers });
+      if (response.status !== 200) {
+        throw new Error(`Failed to get user info: ${response.statusText}`);
+      }
 
-    if (response.status !== HTTP_STATUS.OK) {
-      throw new Error(`Failed to get user info: ${response.statusText}`);
+      // Parse user data from response
+      const userData = response.data as Record<string, unknown>;
+      const user = createUser(
+        String(userData.userId || userData.id || ''),
+        String(userData.name || userData.username || ''),
+        userData.avatar as string | undefined,
+        userData.preferences as Record<string, unknown> | undefined
+      );
+
+      logger.info('👤 User info retrieved successfully');
+      return user;
+    } catch (error) {
+      logger.error('❌ Failed to get user info', { error });
+      throw error;
     }
-
-    const user = serializeApiResponseToUser(response.data);
-
-    logger.info('👤 User information retrieved successfully', {
-      userId: user.id,
-      name: user.name,
-    });
-
-    return user;
   };
 
   return {
+    /**
+     * Authenticate user with credentials
+     */
     authenticate: async (
       credentials: Credentials
     ): Promise<{ token: AuthToken; user: User }> => {
-      logger.info('🔐 Starting HTTP authentication', {
+      logger.info('🔐 Authenticating user via HTTP auth', {
         username: credentials.username,
       });
 
-      // Step 1: Fetch login page to extract CSRF token
-      const loginPage = await webHttpClient.get<string>(
-        httpAuthConfig.loginUrl
-      );
-      const csrfToken = extractCsrfToken(loginPage.data);
-      if (!csrfToken) throw new Error('No CSRF token found in login page');
-
-      // Step 2: Send login form
-      webHttpClient.setCookie('__RequestVerificationToken', csrfToken);
-      const loginForm: LoginFormData = {
-        username: credentials.username,
-        password: credentials.password,
-        __RequestVerificationToken: csrfToken,
-      };
-
-      const loginResponse = await webHttpClient.post<string>(
-        httpAuthConfig.loginUrl,
-        new URLSearchParams(loginForm),
-        {
-          followRedirects: false,
-          headers: {
-            Accept:
-              'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            Connection: 'keep-alive',
-          },
-        }
-      );
-
-      if (loginResponse.status >= 400) {
-        const error = extractErrorMessage(loginResponse.data);
-        throw new Error(
-          `Login failed: ${error || 'Status ' + loginResponse.status}`
+      try {
+        // Step 1: Get login page to extract CSRF token
+        const loginPageResponse = await webHttpClient.get(
+          httpAuthConfig.loginUrl
         );
+        const csrfToken = extractCsrfToken(String(loginPageResponse.data));
+
+        if (!csrfToken) {
+          throw new Error('Failed to extract CSRF token from login page');
+        }
+
+        // Step 2: Submit login form
+        const loginData: LoginFormData = {
+          username: credentials.username,
+          password: credentials.password,
+          __RequestVerificationToken: csrfToken || '',
+        };
+
+        const loginResponse = await webHttpClient.post(
+          httpAuthConfig.loginUrl,
+          loginData,
+          {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+          }
+        );
+
+        // Check for login errors
+        if (loginResponse.status !== 200) {
+          const errorMessage = extractErrorMessage(String(loginResponse.data));
+          throw new Error(
+            errorMessage || `Login failed with status: ${loginResponse.status}`
+          );
+        }
+
+        // Step 3: Get token from token endpoint
+        const tokenResponse = await webHttpClient.get<TokenResponse>(
+          httpAuthConfig.tokenUrl
+        );
+
+        if (tokenResponse.status !== 200) {
+          throw new Error(`Failed to get token: ${tokenResponse.statusText}`);
+        }
+
+        const tokenData = tokenResponse.data.token;
+        if (!tokenData) {
+          throw new Error('No token data received from server');
+        }
+
+        // Validate required token fields
+        if (!tokenData.access_token) {
+          throw new Error('No access token received');
+        }
+
+        if (!tokenData.token_type) {
+          throw new Error('No token type received');
+        }
+
+        if (
+          (tokenData.expires_in === undefined ||
+            tokenData.expires_in === null) &&
+          !tokenData.expires
+        ) {
+          throw new Error('No expiration information received');
+        }
+
+        // Parse token expiration
+        const expiresAt = parseTokenExpiration(
+          tokenData.expires,
+          tokenData.expires_in
+        );
+
+        // Create auth token
+        const token = createAuthToken(
+          tokenData.access_token,
+          tokenData.token_type || AUTH_CONSTANTS.DEFAULT_TOKEN_TYPE,
+          expiresAt,
+          tokenData.refresh_token
+        );
+
+        // Fetch real user information using the auth token
+        const user = await getUserInfo(token);
+
+        return { token, user };
+      } catch (error) {
+        logger.error('❌ Authentication failed', { error });
+        throw error;
       }
-
-      // Step 3: Extract session cookie
-      const cookieName =
-        httpAuthConfig.authCookieName || AUTH_CONSTANTS.DEFAULT_AUTH_COOKIE;
-      const authCookie = loginResponse.cookies.find((c) =>
-        c.startsWith(`${cookieName}=`)
-      );
-      if (!authCookie)
-        throw new Error(`Session cookie '${cookieName}' not found`);
-
-      const sessionToken = authCookie.split('=')[1];
-      if (!sessionToken) throw new Error('Session cookie value empty');
-
-      // Step 4: Exchange session cookie for auth token
-      const tokenResponse = await webHttpClient.get<TokenResponse>(
-        httpAuthConfig.tokenUrl
-      );
-
-      if (!tokenResponse.data?.token) {
-        throw new Error('No token received from API');
-      }
-
-      const tokenData = tokenResponse.data.token;
-
-      // Validate required token fields
-      if (!tokenData.access_token) {
-        throw new Error('No access token received');
-      }
-
-      if (!tokenData.token_type) {
-        throw new Error('No token type received');
-      }
-
-      if (
-        (tokenData.expires_in === undefined || tokenData.expires_in === null) &&
-        !tokenData.expires
-      ) {
-        throw new Error('No expiration information received');
-      }
-
-      // Use the actual expiration time from the API response
-      const expiresAt = parseTokenExpiration(
-        tokenData.expires,
-        tokenData.expires_in
-      );
-
-      logger.info('🔐 Token received successfully', {
-        tokenType: tokenData.token_type,
-        expiresIn: tokenData.expires_in,
-        expiresAt: expiresAt.toISOString(),
-        hasRefreshToken: !!tokenData.refresh_token,
-        scope: tokenData.scope,
-      });
-
-      // Create auth token
-      const token = createAuthToken(
-        tokenData.access_token,
-        tokenData.token_type || AUTH_CONSTANTS.DEFAULT_TOKEN_TYPE,
-        expiresAt,
-        tokenData.refresh_token
-      );
-
-      // Fetch real user information using the auth token
-      const user = await getUserInfo(token);
-
-      return { token, user };
     },
 
     /**
@@ -195,7 +199,7 @@ export const createHttpAuthAdapter = (
      */
     updatePreferences: async (
       token: AuthToken,
-      preferences: Record<string, unknown>
+      preferences: UserPreferences
     ): Promise<void> => {
       logger.info('⚙️ Updating user preferences via HTTP auth');
 
@@ -209,14 +213,18 @@ export const createHttpAuthAdapter = (
     /**
      * Get user settings
      */
-    getUserSettings: async (
-      token: AuthToken
-    ): Promise<Record<string, unknown>> => {
+    getUserSettings: async (token: AuthToken): Promise<UserPreferences> => {
       logger.info('⚙️ Getting user settings via HTTP auth');
 
       // This would need to be implemented based on the actual API
-      // For now, we'll return an empty object
-      return {};
+      // For now, we'll return default preferences
+      return {
+        timezone: 'UTC',
+        units: 'metric',
+        language: 'en',
+        theme: 'light',
+        notifications: true,
+      };
     },
   };
 };

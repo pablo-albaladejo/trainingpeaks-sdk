@@ -1,10 +1,10 @@
-import type {
-  UpdateWorkoutRequest,
-  WorkoutRepository,
-  WorkoutResponse,
-} from '@/application/repositories';
+import type { WorkoutRepository } from '@/application/repositories';
 import type { UpdateWorkout } from '@/application/services/update-workout';
-import type { AuthToken } from '@/domain';
+import type {
+  AuthToken,
+  UpdateWorkoutRequest,
+  WorkoutResponse,
+} from '@/domain/schemas';
 
 export const updateWorkout =
   (workoutRepository: WorkoutRepository): UpdateWorkout =>

@@ -3,6 +3,7 @@
  * Provides test data for client response scenarios
  */
 
+import type { ErrorResponse, UserResponse } from '@/domain/schemas';
 import { faker } from '@faker-js/faker';
 import { Factory } from 'rosie';
 
@@ -29,7 +30,7 @@ export const createEmptyResponse = () => ({
 });
 
 // Complex response data using Rosie Factory
-export const UserResponseFactory = new Factory()
+export const UserResponseFactory = new Factory<UserResponse>()
   .attr('success', true)
   .attr('user', () => ({
     id: faker.string.uuid(),
@@ -46,7 +47,7 @@ export const UserResponseFactory = new Factory()
     },
   }));
 
-export const ErrorResponseFactory = new Factory()
+export const ErrorResponseFactory = new Factory<ErrorResponse>()
   .attr('success', false)
   .attr('error', () =>
     faker.helpers.arrayElement([

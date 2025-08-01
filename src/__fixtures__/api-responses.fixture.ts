@@ -16,7 +16,7 @@ import type {
   WorkoutResponse,
   WorkoutStats,
   WorkoutsListResponse,
-} from '@/application/repositories';
+} from '@/domain/schemas';
 import { faker } from '@faker-js/faker';
 import { Factory } from 'rosie';
 import { randomNumber } from './utils.fixture';
@@ -25,19 +25,22 @@ import { randomNumber } from './utils.fixture';
  * WorkoutResponse Builder
  * Creates WorkoutResponse objects with realistic workout data
  */
-export const workoutResponseBuilder = new Factory<WorkoutResponse>()
-  .attr('id', () => faker.string.uuid())
-  .attr('name', () => faker.lorem.words(3))
-  .attr('date', () => faker.date.recent().toISOString().split('T')[0])
-  .attr('duration', () => randomNumber(300, 10800)) // 5 minutes to 3 hours
-  .attr('type', () =>
-    faker.helpers.arrayElement(['running', 'cycling', 'swimming', 'strength'])
-  )
-  .attr('description', () => faker.lorem.sentence())
-  .attr('distance', () => randomNumber(1000, 100000)) // 1km to 100km
-  .attr('calories', () => randomNumber(100, 2000))
-  .attr('createdAt', () => faker.date.recent().toISOString())
-  .attr('updatedAt', () => faker.date.recent().toISOString());
+export const workoutResponseBuilder = new Factory<WorkoutResponse>().attr(
+  'workout',
+  () => ({
+    id: faker.string.uuid(),
+    name: faker.lorem.words(3),
+    date: faker.date.recent().toISOString().split('T')[0] || '2024-01-01',
+    duration: randomNumber(300, 10800), // 5 minutes to 3 hours
+    type: faker.helpers.arrayElement([
+      'running',
+      'cycling',
+      'swimming',
+      'strength',
+    ]),
+    description: faker.lorem.sentence(),
+  })
+);
 
 /**
  * WorkoutsListResponse Builder
@@ -85,7 +88,10 @@ export const workoutStatsBuilder = new Factory<WorkoutStats>()
  */
 export const createWorkoutRequestBuilder = new Factory<CreateWorkoutRequest>()
   .attr('name', () => faker.lorem.words(3))
-  .attr('date', () => faker.date.recent().toISOString().split('T')[0])
+  .attr(
+    'date',
+    () => faker.date.recent().toISOString().split('T')[0] || '2024-01-01'
+  )
   .attr('duration', () => randomNumber(300, 10800))
   .attr('type', () =>
     faker.helpers.arrayElement(['running', 'cycling', 'swimming', 'strength'])
@@ -143,7 +149,7 @@ export const workoutFiltersBuilder = new Factory<WorkoutFilters>()
  * Empty Workouts List Builder
  * Creates empty workout list responses
  */
-export const emptyWorkoutsListBuilder = new Factory()
+export const emptyWorkoutsListBuilder = new Factory<WorkoutsListResponse>()
   .extend(workoutsListResponseBuilder)
   .option('totalCount', 0)
   .option('workoutCount', 0);
@@ -152,7 +158,7 @@ export const emptyWorkoutsListBuilder = new Factory()
  * Single Workout List Builder
  * Creates list responses with a single workout
  */
-export const singleWorkoutListBuilder = new Factory()
+export const singleWorkoutListBuilder = new Factory<WorkoutsListResponse>()
   .extend(workoutsListResponseBuilder)
   .option('totalCount', 1)
   .option('workoutCount', 1);
@@ -161,7 +167,7 @@ export const singleWorkoutListBuilder = new Factory()
  * Running Workout Response Builder
  * Creates workout responses specifically for running workouts
  */
-export const runningWorkoutResponseBuilder = new Factory()
+export const runningWorkoutResponseBuilder = new Factory<WorkoutResponse>()
   .extend(workoutResponseBuilder)
   .option('type', 'running')
   .option('duration', 3600) // 1 hour
@@ -171,7 +177,7 @@ export const runningWorkoutResponseBuilder = new Factory()
  * Cycling Workout Response Builder
  * Creates workout responses specifically for cycling workouts
  */
-export const cyclingWorkoutResponseBuilder = new Factory()
+export const cyclingWorkoutResponseBuilder = new Factory<WorkoutResponse>()
   .extend(workoutResponseBuilder)
   .option('type', 'cycling')
   .option('duration', 7200) // 2 hours
@@ -181,7 +187,7 @@ export const cyclingWorkoutResponseBuilder = new Factory()
  * Swimming Workout Response Builder
  * Creates workout responses specifically for swimming workouts
  */
-export const swimmingWorkoutResponseBuilder = new Factory()
+export const swimmingWorkoutResponseBuilder = new Factory<WorkoutResponse>()
   .extend(workoutResponseBuilder)
   .option('type', 'swimming')
   .option('duration', 1800) // 30 minutes
@@ -191,7 +197,7 @@ export const swimmingWorkoutResponseBuilder = new Factory()
  * Short Workout Response Builder
  * Creates short workout responses for quick tests
  */
-export const shortWorkoutResponseBuilder = new Factory()
+export const shortWorkoutResponseBuilder = new Factory<WorkoutResponse>()
   .extend(workoutResponseBuilder)
   .option('duration', 900) // 15 minutes
   .option('distance', 2000); // 2km
@@ -200,7 +206,7 @@ export const shortWorkoutResponseBuilder = new Factory()
  * Long Workout Response Builder
  * Creates long workout responses for endurance tests
  */
-export const longWorkoutResponseBuilder = new Factory()
+export const longWorkoutResponseBuilder = new Factory<WorkoutResponse>()
   .extend(workoutResponseBuilder)
   .option('duration', 10800) // 3 hours
   .option('distance', 50000); // 50km
