@@ -4,21 +4,18 @@
  */
 
 import { executeGetUserUseCase } from '@/application/use-cases/get-user';
+import { executeGetUserIdUseCase } from '@/application/use-cases/get-user-id';
+import { executeIsAuthenticatedUseCase } from '@/application/use-cases/is-authenticated';
 import { executeLoginUserUseCase } from '@/application/use-cases/login-user';
 
 import { createLogger } from '@/adapters/logging/logger';
-
-import { STORAGE_KEYS } from '@/adapters/constants';
 import type { TrainingPeaksClientConfig } from '@/config';
 import { getSDKConfig } from '@/config';
 import { Credentials } from '@/domain';
-import {
-  createHttpAuthAdapter,
-  createHttpClient,
-  createWebHttpClient,
-} from '../http/';
+import { createHttpAuthAdapter, createWebHttpClient } from '../http/';
 import { createAuthService } from '../services';
 import { createMemoryStorageAdapter } from '../storage/memory-storage-adapter';
+import { withClientErrorHandling } from './client-error-handler';
 
 /**
  * TrainingPeaks Client Interface
@@ -41,14 +38,6 @@ export const createTrainingPeaksClient = (
     level: sdkConfig.debug.enabled ? 'debug' : 'info',
     enabled: sdkConfig.debug.enabled,
   });
-
-  const httpClient = createHttpClient(
-    {
-      baseURL: sdkConfig.urls.apiBaseUrl,
-      timeout: sdkConfig.timeouts.apiAuth,
-    },
-    logger
-  );
 
   const webHttpClient = createWebHttpClient(
     {
@@ -80,102 +69,76 @@ export const createTrainingPeaksClient = (
   // Create use case instances with injected dependencies
   const loginUseCase = executeLoginUserUseCase(authService.authenticateUser);
   const getUserUseCase = executeGetUserUseCase(authService.getCurrentUser);
+  const isAuthenticatedUseCase = executeIsAuthenticatedUseCase(
+    authService.isAuthenticated
+  );
+  const getUserIdUseCase = executeGetUserIdUseCase(authService.getUserId);
+
+  // Wrap use cases with client error handling middleware
+  const loginWithErrorHandling = async (username: string, password: string) => {
+    const result = await withClientErrorHandling(
+      async () => {
+        const credentials: Credentials = { username, password };
+        return await loginUseCase(credentials);
+      },
+      'login',
+      { username }
+    );
+
+    if (!result.success) {
+      throw new Error(result.error || 'Login failed');
+    }
+
+    return result.data;
+  };
+
+  const getUserIdWithErrorHandling = async () => {
+    return withClientErrorHandling(async () => {
+      const result = await getUserIdUseCase();
+      return result.data;
+    }, 'getUserId');
+  };
+
+  const getUserWithErrorHandling = async () => {
+    const result = await withClientErrorHandling(async () => {
+      return await getUserUseCase();
+    }, 'getUser');
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to get user');
+    }
+
+    return result.data;
+  };
+
+  const isAuthenticatedWithErrorHandling = async () => {
+    return withClientErrorHandling(async () => {
+      const result = await isAuthenticatedUseCase();
+      return result.data;
+    }, 'isAuthenticated');
+  };
 
   // Return the client interface with all public methods
   return {
     /**
      * Login with username and password
      */
-    login: async (username: string, password: string) => {
-      const credentials: Credentials = { username, password };
-
-      logger.info('🔐 Login attempt started', {
-        username: credentials.username,
-        passwordLength: credentials.password.length,
-        debugAuth: sdkConfig.debug.logAuth,
-      });
-
-      try {
-        const result = await loginUseCase(credentials);
-
-        logger.info('📊 Login result received', {
-          success: result.success,
-          authToken: !!result.authToken,
-          hasError: !!result.error,
-        });
-
-        if (result.success) {
-          logger.info(
-            '✅ Authentication successful - user is now authenticated'
-          );
-        } else {
-          logger.warn('❌ Authentication failed', {
-            error: result.error,
-          });
-        }
-
-        return result;
-      } catch (error) {
-        logger.error('💥 Login error occurred', {
-          error: error instanceof Error ? error.message : 'Unknown error',
-        });
-
-        return {
-          success: false,
-          error:
-            error instanceof Error ? error.message : 'Unknown error occurred',
-        };
-      }
-    },
+    login: async (username: string, password: string) =>
+      await loginWithErrorHandling(username, password),
 
     /**
      * Get current user information
      */
-    getUser: async () => {
-      logger.info('👤 GetUser attempt started');
-
-      try {
-        const result = await getUserUseCase();
-
-        logger.info('📊 GetUser result received', {
-          success: result.success,
-          hasUser: !!result.user,
-          hasError: !!result.error,
-        });
-
-        return result;
-      } catch (error) {
-        logger.error('💥 GetUser error occurred', {
-          error: error instanceof Error ? error.message : 'Unknown error',
-        });
-
-        return {
-          success: false,
-          error:
-            error instanceof Error ? error.message : 'Unknown error occurred',
-        };
-      }
-    },
+    getUser: async () => await getUserWithErrorHandling(),
 
     /**
      * Check if user is authenticated
      */
-    isAuthenticated: async () => {
-      logger.info('🔍 Checking authentication status');
-      const token = await memoryStorageAdapter.get(STORAGE_KEYS.AUTH_TOKEN);
-      const user = await memoryStorageAdapter.get(STORAGE_KEYS.USER);
-      return !!(token && user);
-    },
+    isAuthenticated: async () => await isAuthenticatedWithErrorHandling(),
 
     /**
      * Get current user ID
      */
-    getUserId: async () => {
-      logger.info('🆔 Getting user ID');
-      const user = await memoryStorageAdapter.get<{ id?: string }>(
-        STORAGE_KEYS.USER
-      );
-      return user?.id || null;
-    },
+    getUserId: async () => await getUserIdWithErrorHandling(),
   };
 };

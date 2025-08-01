@@ -4,6 +4,7 @@
  */
 
 import { LoggerType } from '@/adapters/logging/logger';
+import { createHttpError } from '@/adapters/errors/http-errors';
 import { generateCurlCommand } from '@/shared';
 import axios, { type AxiosInstance, type AxiosResponse } from 'axios';
 
@@ -161,12 +162,29 @@ export const createHttpClient = (
             headers: error.response.headers,
             data: error.response.data,
           });
+
+          // Transform axios error to our rich HTTP error
+          const httpError = createHttpError(
+            {
+              status: error.response.status,
+              statusText: error.response.statusText,
+              data: error.response.data,
+              headers: error.response.headers as Record<string, string>,
+            },
+            {
+              url: error.config?.url || url,
+              method: method.toUpperCase(),
+              requestData: data,
+            }
+          );
+
+          throw httpError;
         }
 
-        logger.error('🌐 HTTP Adapter: Request failed', {
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          message: error.response?.data?.message || error.message,
+        // Log error without response (network error, timeout, etc.)
+        logger.error('🌐 HTTP Adapter: Request failed without response', {
+          message: error.message,
+          code: error.code,
         });
       }
 

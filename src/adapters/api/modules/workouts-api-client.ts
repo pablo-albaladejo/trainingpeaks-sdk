@@ -58,10 +58,6 @@ export class WorkoutsApiClient
       );
       this.logResponse('GET', endpoint, response.status);
 
-      if (response.status !== HTTP_STATUS.OK) {
-        throw new Error(`Failed to get workouts: ${response.statusText}`);
-      }
-
       this.logger.debug(
         '🏃 Workouts API: Workouts list retrieved successfully',
         {
@@ -101,10 +97,6 @@ export class WorkoutsApiClient
       );
       this.logResponse('GET', endpoint, response.status);
 
-      if (response.status !== HTTP_STATUS.OK) {
-        throw new Error(`Failed to get workout: ${response.statusText}`);
-      }
-
       this.logger.debug('🏃 Workouts API: Workout retrieved successfully', {
         workoutId: id,
       });
@@ -140,10 +132,6 @@ export class WorkoutsApiClient
         headers
       );
       this.logResponse('POST', endpoint, response.status);
-
-      if (response.status !== HTTP_STATUS.CREATED) {
-        throw new Error(`Failed to create workout: ${response.statusText}`);
-      }
 
       this.logger.debug('🏃 Workouts API: Workout created successfully', {
         workoutName: workoutData.name,
@@ -184,10 +172,6 @@ export class WorkoutsApiClient
       );
       this.logResponse('PUT', endpoint, response.status);
 
-      if (response.status !== HTTP_STATUS.OK) {
-        throw new Error(`Failed to update workout: ${response.statusText}`);
-      }
-
       this.logger.debug('🏃 Workouts API: Workout updated successfully', {
         workoutId: workoutData.id,
       });
@@ -218,10 +202,6 @@ export class WorkoutsApiClient
     try {
       const response = await this.httpClient.delete(endpoint, headers);
       this.logResponse('DELETE', endpoint, response.status);
-
-      if (response.status !== HTTP_STATUS.NO_CONTENT) {
-        throw new Error(`Failed to delete workout: ${response.statusText}`);
-      }
 
       this.logger.debug('🏃 Workouts API: Workout deleted successfully', {
         workoutId,
@@ -256,10 +236,6 @@ export class WorkoutsApiClient
         headers
       );
       this.logResponse('GET', endpoint, response.status);
-
-      if (response.status !== HTTP_STATUS.OK) {
-        throw new Error(`Failed to get workout stats: ${response.statusText}`);
-      }
 
       this.logger.debug(
         '🏃 Workouts API: Workout stats retrieved successfully'

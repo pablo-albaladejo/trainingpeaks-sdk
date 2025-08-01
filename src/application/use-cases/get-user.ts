@@ -4,14 +4,11 @@
  */
 
 import { User } from '@/domain';
+import { UseCaseResult } from './base-result';
 
 type GetCurrentUser = () => Promise<User | null>;
 
-type ExecuteGetUserUseCaseResult = {
-  success: boolean;
-  user?: User;
-  error?: string;
-};
+export type ExecuteGetUserUseCaseResult = UseCaseResult<User>;
 
 export type ExecuteGetUserUseCase = (
   getCurrentUser: GetCurrentUser
@@ -36,7 +33,7 @@ export const executeGetUserUseCase: ExecuteGetUserUseCase =
 
       return {
         success: true,
-        user,
+        data: user,
       };
     } catch (error) {
       return {

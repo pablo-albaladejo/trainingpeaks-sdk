@@ -4,3 +4,4 @@
  */
 
 export * from './serialization-errors';
+export * from './http-errors';

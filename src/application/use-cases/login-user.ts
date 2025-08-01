@@ -5,16 +5,13 @@
 
 import { AuthToken, Credentials } from '@/domain';
 import { AuthenticateUser } from '../services/authenticate-user';
+import { UseCaseResult } from './base-result';
+
+export type ExecuteLoginUserUseCaseResult = UseCaseResult<AuthToken>;
 
 export type ExecuteLoginUserUseCase = (
   authenticateUser: AuthenticateUser
 ) => (credentials: Credentials) => Promise<ExecuteLoginUserUseCaseResult>;
-
-export type ExecuteLoginUserUseCaseResult = {
-  success: boolean;
-  authToken?: AuthToken;
-  error?: string;
-};
 
 /**
  * Login use case implementation
@@ -29,7 +26,7 @@ export const executeLoginUserUseCase: ExecuteLoginUserUseCase =
 
       return {
         success: true,
-        authToken: authResult.token,
+        data: authResult.token,
       };
     } catch (error) {
       return {

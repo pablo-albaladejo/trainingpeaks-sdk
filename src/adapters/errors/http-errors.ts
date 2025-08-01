@@ -121,16 +121,28 @@ export const createHttpError = (
     case 429:
       return new HttpError(
         `Rate limit exceeded: ${getErrorMessage(data) || statusText}`,
-        ERROR_CODES.NETWORK_REQUEST_FAILED, // or add RATE_LIMIT_EXCEEDED
+        ERROR_CODES.NETWORK_RATE_LIMITED,
         errorContext
       );
 
     case 500:
-    case 502:
-    case 503:
       return new HttpError(
         `Server error: ${getErrorMessage(data) || statusText}`,
-        ERROR_CODES.NETWORK_REQUEST_FAILED,
+        ERROR_CODES.NETWORK_SERVER_ERROR,
+        errorContext
+      );
+    
+    case 502:
+      return new HttpError(
+        `Bad gateway: ${getErrorMessage(data) || statusText}`,
+        ERROR_CODES.NETWORK_RESPONSE_INVALID,
+        errorContext
+      );
+    
+    case 503:
+      return new HttpError(
+        `Service unavailable: ${getErrorMessage(data) || statusText}`,
+        ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE,
         errorContext
       );
 
