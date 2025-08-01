@@ -219,6 +219,7 @@ export const tokenResponseBuilder = new Factory()
   .option('tokenType', 'Bearer')
   .option('expiresIn', 3600)
   .option('includeRefreshToken', true)
+  .option('includeExpires', true)
   .after((response, options) => {
     const expiresAt = new Date(Date.now() + (options.expiresIn || 3600) * 1000);
 
@@ -229,12 +230,93 @@ export const tokenResponseBuilder = new Factory()
         token: {
           access_token: response.data.token.access_token,
           token_type: options.tokenType || response.data.token.token_type,
-          expires_in: options.expiresIn || response.data.token.expires_in,
+          expires_in:
+            options.expiresIn !== undefined
+              ? options.expiresIn
+              : response.data.token.expires_in,
           refresh_token: options.includeRefreshToken
             ? response.data.token.refresh_token
             : undefined,
           scope: response.data.token.scope,
-          expires: expiresAt.toISOString(),
+          expires: options.includeExpires ? expiresAt.toISOString() : undefined,
+        },
+      },
+      headers: response.headers,
+      cookies: response.cookies,
+    };
+  });
+
+/**
+ * TokenResponseWithoutExpiration Builder
+ * Creates token response objects without expiration for testing edge cases
+ */
+export const tokenResponseWithoutExpirationBuilder = new Factory()
+  .attr('status', 200)
+  .attr('statusText', 'OK')
+  .attr('data', () => ({
+    token: {
+      access_token: faker.string.alphanumeric(32),
+      token_type: faker.helpers.arrayElement(['Bearer', 'JWT', 'OAuth']),
+      refresh_token: faker.string.alphanumeric(32),
+      scope: 'read write',
+    },
+  }))
+  .attr('headers', () => ({}))
+  .attr('cookies', () => [])
+  .option('tokenType', 'Bearer')
+  .option('includeRefreshToken', true)
+  .after((response, options) => {
+    return {
+      status: response.status,
+      statusText: response.statusText,
+      data: {
+        token: {
+          access_token: response.data.token.access_token,
+          token_type: options.tokenType || response.data.token.token_type,
+          refresh_token: options.includeRefreshToken
+            ? response.data.token.refresh_token
+            : undefined,
+          scope: response.data.token.scope,
+        },
+      },
+      headers: response.headers,
+      cookies: response.cookies,
+    };
+  });
+
+/**
+ * TokenResponseWithZeroExpiration Builder
+ * Creates token response objects with expires_in: 0 for testing "never expires" scenario
+ */
+export const tokenResponseWithZeroExpirationBuilder = new Factory()
+  .attr('status', 200)
+  .attr('statusText', 'OK')
+  .attr('data', () => ({
+    token: {
+      access_token: faker.string.alphanumeric(32),
+      token_type: faker.helpers.arrayElement(['Bearer', 'JWT', 'OAuth']),
+      expires_in: 0,
+      refresh_token: faker.string.alphanumeric(32),
+      scope: 'read write',
+    },
+  }))
+  .attr('headers', () => ({}))
+  .attr('cookies', () => [])
+  .option('tokenType', 'Bearer')
+  .option('includeRefreshToken', true)
+  .after((response, options) => {
+    return {
+      status: response.status,
+      statusText: response.statusText,
+      data: {
+        token: {
+          access_token: response.data.token.access_token,
+          token_type: options.tokenType || response.data.token.token_type,
+          expires_in: 0,
+          refresh_token: options.includeRefreshToken
+            ? response.data.token.refresh_token
+            : undefined,
+          scope: response.data.token.scope,
         },
       },
       headers: response.headers,

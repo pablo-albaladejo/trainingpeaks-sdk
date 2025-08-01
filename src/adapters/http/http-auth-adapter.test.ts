@@ -10,6 +10,8 @@ import {
   loginPageResponseBuilder,
   loginResponseBuilder,
   tokenResponseBuilder,
+  tokenResponseWithoutExpirationBuilder,
+  tokenResponseWithZeroExpirationBuilder,
   userBuilder,
   userInfoResponseBuilder,
 } from '../../__fixtures__/auth.fixture';
@@ -240,6 +242,118 @@ describe('HTTP Auth Adapter', () => {
       // Should work with default cookie name
       expect(mockWebHttpClient.get).toHaveBeenCalledWith(
         'https://test.trainingpeaks.com/api/token'
+      );
+    });
+  });
+
+  describe('Token expiration validation', () => {
+    it('should accept expires_in value of 0 (never expires)', async () => {
+      const adapter = createHttpAuthAdapter(
+        defaultConfig,
+        mockWebHttpClient,
+        mockLogger
+      );
+
+      const credentials = credentialsBuilder.build();
+      const loginPageResponse = loginPageResponseBuilder.build();
+      const loginResponse = loginResponseBuilder.build({
+        cookieName: 'TestAuth',
+      });
+
+      // Use fixture with expires_in: 0 (never expires)
+      const tokenResponse = tokenResponseBuilder.build({
+        expiresIn: 0,
+      });
+
+      const userInfoResponse = userInfoResponseBuilder.build();
+
+      // Mock the login page response
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(loginPageResponse);
+
+      // Mock the login response
+      (mockWebHttpClient.post as any).mockResolvedValueOnce(loginResponse);
+
+      // Mock the token response
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(tokenResponse);
+
+      // Mock the user info response
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(userInfoResponse);
+
+      // This should not throw an error
+      const result = await adapter.authenticate(credentials);
+
+      expect(result).toBeDefined();
+      expect(result.token).toBeDefined();
+      expect(result.user).toBeDefined();
+    });
+
+    it('should throw error when both expires_in and expires are missing', async () => {
+      const adapter = createHttpAuthAdapter(
+        defaultConfig,
+        mockWebHttpClient,
+        mockLogger
+      );
+
+      const credentials = credentialsBuilder.build();
+      const loginPageResponse = loginPageResponseBuilder.build();
+      const loginResponse = loginResponseBuilder.build({
+        cookieName: 'TestAuth',
+      });
+
+      // Token response with missing expiration info
+      const tokenResponse = tokenResponseWithoutExpirationBuilder.build();
+
+      // Mock the login page response
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(loginPageResponse);
+
+      // Mock the login response
+      (mockWebHttpClient.post as any).mockResolvedValueOnce(loginResponse);
+
+      // Mock the token response
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(tokenResponse);
+
+      // This should throw an error
+      await expect(adapter.authenticate(credentials)).rejects.toThrow(
+        'No expiration information received'
+      );
+    });
+
+    it('should set far future expiration when expires_in is 0', async () => {
+      const adapter = createHttpAuthAdapter(
+        defaultConfig,
+        mockWebHttpClient,
+        mockLogger
+      );
+
+      const credentials = credentialsBuilder.build();
+      const loginPageResponse = loginPageResponseBuilder.build();
+      const loginResponse = loginResponseBuilder.build({
+        cookieName: 'TestAuth',
+      });
+
+      // Use fixture with expires_in: 0 (never expires) and no expires field
+      const tokenResponse = tokenResponseWithZeroExpirationBuilder.build();
+
+      const userInfoResponse = userInfoResponseBuilder.build();
+
+      // Mock the login page response
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(loginPageResponse);
+
+      // Mock the login response
+      (mockWebHttpClient.post as any).mockResolvedValueOnce(loginResponse);
+
+      // Mock the token response
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(tokenResponse);
+
+      // Mock the user info response
+      (mockWebHttpClient.get as any).mockResolvedValueOnce(userInfoResponse);
+
+      const result = await adapter.authenticate(credentials);
+
+      // The token should have a far future expiration date
+      expect(result.token.expiresAt.getFullYear()).toBeGreaterThan(2090);
+      expect(result.token.expiresAt.getTime()).toBeGreaterThan(
+        new Date('2099-01-01').getTime()
       );
     });
   });

@@ -139,7 +139,10 @@ export const createHttpAuthAdapter = (
         throw new Error('No token type received');
       }
 
-      if (!tokenData.expires_in && !tokenData.expires) {
+      if (
+        (tokenData.expires_in === undefined || tokenData.expires_in === null) &&
+        !tokenData.expires
+      ) {
         throw new Error('No expiration information received');
       }
 
@@ -248,7 +251,11 @@ const parseTokenExpiration = (expires?: string, expiresIn?: number): Date => {
     }
   }
 
-  if (expiresIn) {
+  if (expiresIn !== undefined && expiresIn !== null) {
+    // If expiresIn is 0, the token never expires - set to a far future date
+    if (expiresIn === 0) {
+      return new Date('2099-12-31T23:59:59Z');
+    }
     return new Date(Date.now() + expiresIn * 1000);
   }
 
