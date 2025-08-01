@@ -6,6 +6,7 @@ import {
   authTokenBuilder,
   credentialsBuilder,
   userBuilder,
+  userPreferencesBuilder,
 } from '@/__fixtures__/auth.fixture';
 import type { UserRepository } from '@/application/repositories';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -141,7 +142,7 @@ describe('User Service Implementations', () => {
   describe('updateUserPreferences', () => {
     it('should update user preferences successfully', async () => {
       const mockToken = authTokenBuilder.build();
-      const preferences = { theme: 'light', language: 'en' };
+      const preferences = userPreferencesBuilder.build();
 
       vi.mocked(mockUserRepository.updatePreferences).mockResolvedValue();
 
@@ -156,7 +157,7 @@ describe('User Service Implementations', () => {
 
     it('should handle repository errors', async () => {
       const mockToken = authTokenBuilder.build();
-      const preferences = { theme: 'light' };
+      const preferences = userPreferencesBuilder.build();
 
       const error = new Error('Update failed');
       vi.mocked(mockUserRepository.updatePreferences).mockRejectedValue(error);
@@ -173,11 +174,7 @@ describe('User Service Implementations', () => {
     it('should get user settings successfully', async () => {
       const mockToken = authTokenBuilder.build();
 
-      const mockSettings = {
-        theme: 'dark',
-        language: 'en',
-        notifications: true,
-      };
+      const mockSettings = userPreferencesBuilder.build();
 
       vi.mocked(mockUserRepository.getUserSettings).mockResolvedValue(
         mockSettings

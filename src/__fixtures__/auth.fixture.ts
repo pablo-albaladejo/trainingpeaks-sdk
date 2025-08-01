@@ -432,3 +432,58 @@ export const loginResponseBuilder = new Factory()
       cookies: [`${cookieName}=${sessionToken}`],
     };
   });
+
+/**
+ * UserApiResponse Builder
+ * Creates UserApiResponse objects for serialization testing
+ */
+export const userApiResponseBuilder = new Factory()
+  .attr('user', () => ({
+    userId: faker.string.uuid(),
+    username: faker.internet.userName(),
+    name: faker.person.fullName(),
+    preferences: userPreferencesBuilder.build(),
+  }))
+  .option('userId', undefined)
+  .option('username', undefined)
+  .option('name', undefined)
+  .option('preferences', undefined)
+  .after((response, options) => {
+    return {
+      user: {
+        userId:
+          options.userId !== undefined ? options.userId : response.user.userId,
+        username:
+          options.username !== undefined
+            ? options.username
+            : response.user.username,
+        name: options.name !== undefined ? options.name : response.user.name,
+        preferences:
+          options.preferences !== undefined
+            ? options.preferences
+            : response.user.preferences,
+      },
+    };
+  });
+
+/**
+ * UserStorageData Builder
+ * Creates UserStorageData objects for serialization testing
+ */
+export const userStorageDataBuilder = new Factory()
+  .attr('id', () => faker.string.uuid())
+  .attr('name', () => faker.person.fullName())
+  .attr('avatar', () => faker.image.avatar())
+  .attr('preferences', () => userPreferencesBuilder.build())
+  .option('id', undefined)
+  .option('name', undefined)
+  .option('avatar', undefined)
+  .option('preferences', undefined)
+  .after((data, options) => {
+    return {
+      id: options.id || data.id,
+      name: options.name || data.name,
+      avatar: options.avatar || data.avatar,
+      preferences: options.preferences || data.preferences,
+    };
+  });

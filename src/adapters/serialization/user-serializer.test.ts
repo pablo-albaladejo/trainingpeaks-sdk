@@ -4,7 +4,10 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { userBuilder } from '../../__fixtures__/auth.fixture';
+import {
+  userBuilder,
+  userStorageDataBuilder,
+} from '../../__fixtures__/auth.fixture';
 import { ValidationError } from '../../domain/errors/domain-errors';
 import {
   DeserializationError,
@@ -18,7 +21,6 @@ import {
   serializeApiResponseToUser,
   serializeUserToStorage,
   type UserApiResponse,
-  type UserStorageData,
 } from './user-serializer';
 
 describe('User Serializer', () => {
@@ -91,16 +93,14 @@ describe('User Serializer', () => {
 
   describe('serializeUserToStorage', () => {
     it('should serialize User entity to storage format', () => {
-      const user = userBuilder.build({
-        avatar: 'avatar.jpg',
-      });
+      const user = userBuilder.build();
 
       const storageData = serializeUserToStorage(user);
 
       expect(storageData).toEqual({
         id: user.id,
         name: user.name,
-        avatar: 'avatar.jpg',
+        avatar: user.avatar,
         preferences: user.preferences,
       });
     });
@@ -108,15 +108,13 @@ describe('User Serializer', () => {
 
   describe('deserializeStorageToUser', () => {
     it('should deserialize valid storage data to User entity', () => {
-      const user = userBuilder.build({
-        avatar: 'avatar.jpg',
-      });
-      const storageData: UserStorageData = {
+      const user = userBuilder.build();
+      const storageData = userStorageDataBuilder.build({
         id: user.id,
         name: user.name,
         avatar: user.avatar,
         preferences: user.preferences,
-      };
+      });
 
       const result = deserializeStorageToUser(storageData);
 
