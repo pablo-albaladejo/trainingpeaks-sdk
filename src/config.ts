@@ -18,6 +18,16 @@ export type TrainingPeaksSDKConfig = {
     loginUrl: string;
     /** Application URL after login */
     appUrl: string;
+    /** Token endpoint URL */
+    tokenUrl: string;
+    /** User info endpoint URL */
+    userInfoUrl: string;
+  };
+
+  /** Authentication configurations */
+  auth: {
+    /** Authentication cookie name for session management */
+    cookieName: string;
   };
 
   /** Timeout configurations (in milliseconds) */
@@ -88,6 +98,7 @@ export type TrainingPeaksSDKConfig = {
  */
 export type TrainingPeaksClientConfig = {
   urls?: Partial<TrainingPeaksSDKConfig['urls']>;
+  auth?: Partial<TrainingPeaksSDKConfig['auth']>;
   timeouts?: Partial<TrainingPeaksSDKConfig['timeouts']>;
   tokens?: Partial<TrainingPeaksSDKConfig['tokens']>;
   browser?: Partial<TrainingPeaksSDKConfig['browser']>;
@@ -101,9 +112,15 @@ export type TrainingPeaksClientConfig = {
 const HARDCODED_DEFAULTS: TrainingPeaksSDKConfig = {
   urls: {
     baseUrl: 'https://www.trainingpeaks.com',
-    apiBaseUrl: 'https://api.trainingpeaks.com',
+    apiBaseUrl: 'https://tpapi.trainingpeaks.com',
     loginUrl: 'https://home.trainingpeaks.com/login',
     appUrl: 'https://app.trainingpeaks.com',
+    tokenUrl: 'https://tpapi.trainingpeaks.com/users/v3/token',
+    userInfoUrl: 'https://tpapi.trainingpeaks.com/users/v3/user',
+  },
+
+  auth: {
+    cookieName: 'Production_tpAuth',
   },
 
   timeouts: {
@@ -159,6 +176,11 @@ type EnvironmentConfig = {
     apiBaseUrl?: string;
     loginUrl?: string;
     appUrl?: string;
+    tokenUrl?: string;
+    userInfoUrl?: string;
+  };
+  auth?: {
+    cookieName?: string;
   };
   timeouts?: {
     default?: number;
@@ -187,6 +209,7 @@ type EnvironmentConfig = {
     logBrowser?: boolean;
   };
   requests?: {
+    defaultHeaders?: Record<string, string>;
     retryAttempts?: number;
     retryDelay?: number;
   };
@@ -202,6 +225,11 @@ function getEnvironmentConfig(): EnvironmentConfig {
       apiBaseUrl: process.env.TRAININGPEAKS_API_BASE_URL || undefined,
       loginUrl: process.env.TRAININGPEAKS_LOGIN_URL || undefined,
       appUrl: process.env.TRAININGPEAKS_APP_URL || undefined,
+      tokenUrl: process.env.TRAININGPEAKS_TOKEN_URL || undefined,
+      userInfoUrl: process.env.TRAININGPEAKS_USER_INFO_URL || undefined,
+    },
+    auth: {
+      cookieName: process.env.TRAININGPEAKS_AUTH_COOKIE_NAME || undefined,
     },
 
     timeouts: {
@@ -344,6 +372,9 @@ function getEnvironmentConfig(): EnvironmentConfig {
     },
 
     requests: {
+      defaultHeaders: process.env.TRAININGPEAKS_DEFAULT_HEADERS
+        ? JSON.parse(process.env.TRAININGPEAKS_DEFAULT_HEADERS)
+        : undefined,
       retryAttempts: process.env.TRAININGPEAKS_RETRY_ATTEMPTS
         ? (() => {
             const parsed = parseInt(
@@ -416,6 +447,13 @@ export function mergeWithDefaultConfig(
       Object.entries(envConfig.urls).filter(([, value]) => value !== undefined)
     );
     config.urls = { ...config.urls, ...filteredUrls };
+  }
+  if (envConfig.auth) {
+    // Filter out undefined values
+    const filteredAuth = Object.fromEntries(
+      Object.entries(envConfig.auth).filter(([, value]) => value !== undefined)
+    );
+    config.auth = { ...config.auth, ...filteredAuth };
   }
   if (envConfig.timeouts) {
     // Filter out undefined values
@@ -502,6 +540,7 @@ export function validateConfig(config: TrainingPeaksSDKConfig): void {
 
 /**
  * Get configuration from environment variables or defaults
+ * Guarantees a complete configuration with all default values
  */
 export function getSDKConfig(
   userConfig: TrainingPeaksClientConfig = {}

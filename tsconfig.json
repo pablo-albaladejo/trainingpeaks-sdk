@@ -34,7 +34,7 @@
       "@types/*": ["types/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "test/integration", "examples"],
   "exclude": [
     "node_modules",
     "dist",

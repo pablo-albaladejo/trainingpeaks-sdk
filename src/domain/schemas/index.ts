@@ -16,10 +16,70 @@ export {
 // Value object schemas and types
 export {
   CredentialsSchema,
+  UserPreferencesSchema,
+  WorkoutDataSchema,
+  WorkoutFileDataSchema,
   WorkoutFileSchema,
+  WorkoutMetadataSchema,
   type Credentials,
+  type UserPreferences,
+  type WorkoutData,
   type WorkoutFile,
+  type WorkoutFileData,
+  type WorkoutMetadata,
 } from './value-objects.schema';
+
+// Repository schemas and types
+export {
+  CreateWorkoutRequestSchema,
+  UpdateWorkoutRequestSchema,
+  WorkoutFiltersSchema,
+  WorkoutResponseSchema,
+  WorkoutStatsSchema,
+  WorkoutsListResponseSchema,
+  type CreateWorkoutRequest,
+  type UpdateWorkoutRequest,
+  type WorkoutFilters,
+  type WorkoutResponse,
+  type WorkoutStats,
+  type WorkoutsListResponse,
+} from './repository.schema';
+
+// API response schemas and types
+export {
+  AuthTokenStorageDataSchema,
+  ErrorResponseSchema,
+  LoginPageResponseSchema,
+  LoginResponseSchema,
+  TokenResponseSchema,
+  TokenResponseWithZeroExpirationSchema,
+  TokenResponseWithoutExpirationSchema,
+  UserApiResponseSchema,
+  UserInfoResponseSchema,
+  UserResponseSchema,
+  UserStorageDataSchema,
+  type AuthTokenStorageData,
+  type ErrorResponse,
+  type LoginPageResponse,
+  type LoginResponse,
+  type TokenResponse,
+  type TokenResponseWithZeroExpiration,
+  type TokenResponseWithoutExpiration,
+  type UserApiResponse,
+  type UserInfoResponse,
+  type UserResponse,
+  type UserStorageData,
+} from './api-responses.schema';
+
+// API request schemas and types
+export {
+  ApiConfigSchema,
+  LoginRequestSchema,
+  RefreshTokenRequestSchema,
+  type ApiConfig,
+  type LoginRequest,
+  type RefreshTokenRequest,
+} from './api-requests.schema';
 
 // Workout structure schemas and types
 export {

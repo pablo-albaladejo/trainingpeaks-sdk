@@ -1,0 +1,917 @@
+---
+description: Development workflow, build process, and publishing guidelines for npm libraries
+globs: **/*.ts,**/*.js,**/*.mjs,**/*.json
+alwaysApply: false
+---
+
+# Development Workflow for NPM Libraries
+
+## Project Setup
+
+### Initial Setup
+
+```bash
+# Initialize project
+npm init -y
+
+# Install development dependencies
+npm install --save-dev typescript @types/node vitest @vitest/ui
+npm install --save-dev eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
+npm install --save-dev prettier husky lint-staged
+npm install --save-dev tsup @types/node
+
+# Install runtime dependencies
+npm install zod axios
+```
+
+### Package.json Configuration
+
+```json
+{
+  "name": "my-library",
+  "version": "1.0.0",
+  "description": "A TypeScript library for...",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write src",
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm run test && npm run lint"
+  },
+  "keywords": ["typescript", "library"],
+  "author": "Your Name",
+  "license": "MIT"
+}
+```
+
+## Build Configuration
+
+### TypeScript Configuration
+
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020"],
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+}
+```
+
+### Build Tool Configuration (tsup)
+
+```typescript
+// tsup.config.ts
+import { defineConfig } from 'tsup';
+
+export default defineConfig({
+  entry: ['src/index.ts'],
+  format: ['cjs', 'esm'],
+  dts: true,
+  splitting: false,
+  sourcemap: true,
+  clean: true,
+  treeshake: true,
+  minify: true,
+  external: ['axios', 'zod'],
+  onSuccess: 'npm run type-check',
+});
+```
+
+## Development Commands
+
+### Daily Development
+
+```bash
+# Start development mode with watch
+npm run dev
+
+# Run tests in watch mode
+npm run test
+
+# Run tests with UI
+npm run test:ui
+
+# Check types
+npm run type-check
+
+# Lint code
+npm run lint
+
+# Format code
+npm run format
+```
+
+### Pre-commit Workflow
+
+```bash
+# Install husky and lint-staged
+npx husky install
+npx husky add .husky/pre-commit "npx lint-staged"
+
+# Configure lint-staged in package.json
+{
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ]
+  }
+}
+```
+
+## Code Quality Tools
+
+### ESLint Configuration
+
+```javascript
+// eslint.config.mjs
+import js from '@eslint/js';
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsparser from '@typescript-eslint/parser';
+
+export default [
+  js.configs.recommended,
+  {
+    files: ['**/*.ts'],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+    rules: {
+      ...tseslint.configs.recommended.rules,
+      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/explicit-function-return-type': 'warn',
+      '@typescript-eslint/no-explicit-any': 'warn',
+    },
+  },
+];
+```
+
+### Prettier Configuration
+
+```json
+// .prettierrc
+{
+  "semi": true,
+  "trailingComma": "es5",
+  "singleQuote": true,
+  "printWidth": 80,
+  "tabWidth": 2,
+  "useTabs": false
+}
+```
+
+## Testing Workflow
+
+### Test Configuration
+
+```typescript
+// vitest.config.ts
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    environment: 'node',
+    globals: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: [
+        'node_modules/',
+        'dist/',
+        '**/*.d.ts',
+        '**/*.test.ts',
+        '**/__fixtures__/**',
+      ],
+    },
+  },
+});
+```
+
+### Test Scripts
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run specific test file
+npm test -- UserService.test.ts
+
+# Run tests matching pattern
+npm test -- --grep "createUser"
+
+# Run E2E tests for built package
+npm run test:e2e
+
+# Run advanced workflow tests
+npm run test:e2e:advanced
+```
+
+## Integration Testing
+
+### Integration Test Structure
+
+Integration tests verify the correct behavior of features and modules in a real or simulated environment, often
+involving multiple components.
+
+#### **Test File Naming and Location**
+
+- Integration test files use the `.integ-test.ts` suffix (e.g., `userService.integ-test.ts`)
+- Located alongside the feature they test, often in the same directory as the corresponding implementation
+
+#### **Test Structure**
+
+```typescript
+describe('UserService Integration Tests', () => {
+  it('should perform expected behavior', async () => {
+    // Arrange: Prepare necessary data
+    const testUser = userBuilder.build();
+    const testCompany = companyBuilder.build();
+    await db.insert(users).values(testUser);
+    await db.insert(companies).values(testCompany);
+
+    // Act: Call relevant service method
+    const result = await userService.createUser({
+      userId: testUser.id,
+      companyId: testCompany.id,
+    });
+
+    // Assert: Check response and validate resulting state
+    expect(result).toStrictEqual({
+      id: expect.any(String),
+      userId: testUser.id,
+      companyId: testCompany.id,
+      status: 'ACTIVE',
+    });
+
+    // Verify side effects in database
+    const dbRecord = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, result.id));
+    expect(dbRecord[0]).toStrictEqual(
+      expect.objectContaining({
+        userId: testUser.id,
+        companyId: testCompany.id,
+      })
+    );
+  });
+});
+```
+
+#### **Error Handling Tests**
+
+```typescript
+it('should handle invalid input gracefully', async () => {
+  // Arrange
+  const invalidInput = { userId: 'invalid-id', companyId: -1 };
+
+  // Act
+  const result = await userService.createUser(invalidInput);
+
+  // Assert
+  expect(result.errors).toBeDefined();
+  expect(result.errors[0].message).toContain('Invalid user ID');
+});
+```
+
+#### **Test Cleanup**
+
+```typescript
+afterEach(async () => {
+  await db.delete(users).where(eq(users.companyId, testCompany.id));
+  await db.delete(companies).where(eq(companies.id, testCompany.id));
+});
+```
+
+## Documentation Workflow
+
+### README Structure
+
+````markdown
+# My Library
+
+Brief description of what the library does.
+
+## Installation
+
+```bash
+npm install my-library
+```
+````
+
+## Quick Start
+
+```typescript
+import { createClient } from 'my-library';
+
+const client = createClient({ apiKey: 'your-api-key' });
+const user = await client.createUser({
+  name: 'John',
+  email: 'john@example.com',
+});
+```
+
+## API Reference
+
+### Client
+
+#### `createClient(options)`
+
+Creates a new client instance.
+
+**Parameters:**
+
+- `options` (object): Configuration options
+  - `apiKey` (string): Your API key
+  - `baseUrl` (string, optional): Base URL for API requests
+
+**Returns:** Client instance
+
+### User
+
+#### `client.createUser(input)`
+
+Creates a new user.
+
+**Parameters:**
+
+- `input` (object): User creation data
+  - `name` (string): User's name
+  - `email` (string): User's email
+
+**Returns:** Promise<User>
+
+## Examples
+
+### Basic Usage
+
+```typescript
+import { createClient } from 'my-library';
+
+const client = createClient({ apiKey: process.env.API_KEY });
+
+// Create a user
+const user = await client.createUser({
+  name: 'John Doe',
+  email: 'john@example.com',
+});
+
+console.log(user.id); // 'user-123'
+```
+
+### Error Handling
+
+```typescript
+try {
+  const user = await client.createUser({ name: '', email: 'invalid' });
+} catch (error) {
+  if (error instanceof ValidationError) {
+    console.log('Validation failed:', error.message);
+  }
+}
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Run the test suite
+6. Submit a pull request
+
+## License
+
+MIT
+
+````
+
+### API Documentation
+```typescript
+// Use JSDoc for comprehensive documentation
+/**
+ * Creates a new user with the provided information.
+ *
+ * @param input - The user creation input
+ * @param input.name - The user's display name (required)
+ * @param input.email - The user's email address (required)
+ * @param input.validateEmail - Whether to validate email format (default: true)
+ *
+ * @returns A promise that resolves to the created user
+ *
+ * @throws {ValidationError} When input validation fails
+ * @throws {UserExistsError} When a user with the email already exists
+ *
+ * @example
+ * ```typescript
+ * const user = await client.createUser({
+ *   name: 'John Doe',
+ *   email: 'john@example.com'
+ * });
+ * ```
+ */
+export async function createUser(input: CreateUserInput): Promise<User> {
+  // implementation
+}
+````
+
+## Version Management
+
+### Semantic Versioning
+
+```bash
+# Patch version (bug fixes)
+npm version patch
+
+# Minor version (new features, backward compatible)
+npm version minor
+
+# Major version (breaking changes)
+npm version major
+```
+
+### Changelog Management
+
+```markdown
+# CHANGELOG.md
+
+## [1.1.0] - 2024-01-15
+
+### Added
+
+- New `updateUser` method
+- Support for user preferences
+
+### Changed
+
+- Improved error messages
+- Better TypeScript types
+
+### Fixed
+
+- Memory leak in long-running operations
+- Incorrect validation for email addresses
+
+## [1.0.0] - 2024-01-01
+
+### Added
+
+- Initial release
+- User creation and management
+- Basic validation
+```
+
+## Publishing Workflow
+
+### Pre-publish Checklist
+
+```bash
+# 1. Update version
+npm version patch
+
+# 2. Update changelog
+# Edit CHANGELOG.md
+
+# 3. Build and test
+npm run build
+npm run test
+npm run lint
+
+# 4. Check bundle size
+npm run build:analyze
+
+# 5. Publish
+npm publish
+```
+
+### Publishing Scripts
+
+```json
+{
+  "scripts": {
+    "prepublishOnly": "npm run build && npm run test && npm run lint",
+    "build:analyze": "tsup --analyze",
+    "publish:patch": "npm version patch && npm publish",
+    "publish:minor": "npm version minor && npm publish",
+    "publish:major": "npm version major && npm publish"
+  }
+}
+```
+
+## CI/CD Pipeline
+
+### GitHub Actions Workflow
+
+## Development Best Practices
+
+### Git Workflow
+
+```bash
+# Feature development
+git checkout -b feature/new-feature
+# Make changes
+git add .
+git commit -m "feat: add new feature"
+git push origin feature/new-feature
+
+# Create pull request on GitHub
+# Use GitHub's "Create Pull Request" button or:
+gh pr create --title "feat: add new feature" --body "Description of changes"
+
+# Merge to develop first, then to main
+# Use GitHub's "Squash and merge" or "Rebase and merge" options
+
+# Release
+git checkout main
+git merge develop
+git tag v1.0.0
+git push origin main --tags
+
+# Create GitHub release
+gh release create v1.0.0 --title "Release v1.0.0" --notes "Release notes"
+```
+
+### Commit Message Convention
+
+```bash
+# Format: type(scope): description
+feat(user): add user creation functionality
+fix(validation): correct email validation regex
+docs(readme): update installation instructions
+test(user): add tests for user creation
+refactor(client): simplify client configuration
+```
+
+### Branch Naming
+
+```bash
+feature/user-management
+bugfix/email-validation
+hotfix/security-patch
+docs/api-reference
+refactor/client-interface
+```
+
+## Performance Monitoring
+
+### Bundle Analysis
+
+```bash
+# Analyze bundle size
+npm run build:analyze
+
+# Check for unused dependencies
+npx depcheck
+
+# Monitor bundle size over time
+npx bundlewatch
+```
+
+### Performance Testing
+
+```bash
+# Run performance benchmarks
+npm run benchmark
+
+# Memory usage testing
+npm run test:memory
+
+# Load testing
+npm run test:load
+```
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, 'chore(release):')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+### Release Workflow
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, 'chore(release):')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+### Release Workflow
+
+```yaml
+# .github/workflows/release.yml
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Changes in this Release:
+            ${{ github.event.head_commit.message }}
+          draft: false
+          prerelease: false
+```
+
+## Security Practices
+
+### Dependency Management
+
+```bash
+# Regular security audits
+npm audit
+
+# Update dependencies
+npm update
+
+# Check for vulnerabilities
+npm audit fix
+
+# Use npm-check-updates for major updates
+npx ncu -u
+```
+
+### Code Security
+
+```bash
+# Run security linter
+npm run lint:security
+
+# Check for secrets in code
+npx detect-secrets scan
+
+# Validate package.json
+npm run validate:package
+```
+
+## GitHub Project Management
+
+### Issue Templates
+
+```markdown
+# .github/ISSUE_TEMPLATE/bug_report.md
+
+---
+
+name: Bug report about: Create a report to help us improve title: '[BUG] ' labels: ['bug'] assignees: ''
+
+---
+
+**Describe the bug** A clear and concise description of what the bug is.
+
+**To Reproduce** Steps to reproduce the behavior:
+
+1. Install version '...'
+2. Run code '....'
+3. See error
+
+**Expected behavior** A clear and concise description of what you expected to happen.
+
+**Environment:**
+
+- OS: [e.g. macOS, Windows, Linux]
+- Node.js version: [e.g. 18.0.0]
+- Library version: [e.g. 1.0.0]
+
+**Additional context** Add any other context about the problem here.
+```
+
+```markdown
+# .github/ISSUE_TEMPLATE/feature_request.md
+
+---
+
+name: Feature request about: Suggest an idea for this project title: '[FEATURE] ' labels: ['enhancement'] assignees: ''
+
+---
+
+**Is your feature request related to a problem? Please describe.** A clear and concise description of what the problem
+is.
+
+**Describe the solution you'd like** A clear and concise description of what you want to happen.
+
+**Describe alternatives you've considered** A clear and concise description of any alternative solutions.
+
+**Additional context** Add any other context or screenshots about the feature request here.
+```
+
+### Pull Request Template
+
+```markdown
+# .github/pull_request_template.md
+
+## Description
+
+Brief description of changes
+
+## Type of Change
+
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [ ] New feature (non-breaking change which adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Documentation update
+
+## Testing
+
+- [ ] Unit tests pass
+- [ ] Integration tests pass
+- [ ] Manual testing completed
+
+## Checklist
+
+- [ ] Code follows the style guidelines
+- [ ] Self-review of code completed
+- [ ] Code is commented, particularly in hard-to-understand areas
+- [ ] Corresponding changes to documentation made
+- [ ] No new warnings generated
+- [ ] Breaking changes documented
+
+## Breaking Changes
+
+If this PR contains breaking changes, please describe them and provide migration instructions.
+```

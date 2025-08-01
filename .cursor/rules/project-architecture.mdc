@@ -1,0 +1,320 @@
+---
+description: Clean architecture principles and project structure for npm libraries
+globs: **/*.ts,**/*.js,**/*.mjs
+alwaysApply: false
+---
+
+# NPM Library Project Architecture
+
+## Overview
+
+This project follows Clean Architecture principles adapted for npm libraries, with clear separation of concerns and
+dependency inversion.
+
+## Project Structure
+
+```
+src/
+├── adapters/           # External integrations and implementations
+│   ├── http/          # HTTP clients and API integrations
+│   ├── storage/       # Database, file system, or external storage
+│   ├── validation/    # Input/output validation schemas
+│   └── serialization/ # Data transformation and serialization
+├── application/       # Application business logic
+│   ├── services/      # Use case implementations
+│   ├── repositories/  # Repository interfaces
+│   └── useCases/      # Business use cases
+├── domain/           # Core business logic and entities
+│   ├── entities/     # Domain entities
+│   ├── valueObjects/ # Value objects
+│   ├── events/       # Domain events
+│   └── repositories/ # Repository interfaces
+└── shared/           # Shared utilities and types
+    ├── types/        # Common TypeScript types
+    ├── utils/        # Utility functions
+    └── errors/       # Error handling
+```
+
+## Architecture Principles
+
+### 1. Dependency Inversion
+
+- Domain layer has no dependencies on external frameworks
+- Application layer depends only on domain interfaces
+- Adapters implement domain interfaces
+
+### 2. Hexagonal Architecture (Ports & Adapters)
+
+#### **🚨 CRITICAL: Strict Ports & Adapters Separation**
+
+The application layer MUST ONLY contain **contracts, types, and interfaces**. The infrastructure layer MUST contain
+**all implementations**.
+
+#### **📋 Application Layer: ONLY Definitions & Contracts**
+
+All services in `src/application/services/` MUST use **individual function types** instead of grouped interface
+patterns.
+
+```typescript
+// ✅ CORRECT: src/application/services/user-validation.ts
+export type validateUserId = (userId: string) => void;
+export type validateEmail = (email: string) => void;
+export type validateListUsersFilters = (filters: Filters) => void;
+```
+
+```typescript
+// ❌ INCORRECT: Grouped Interface Pattern
+export type UserValidationService = {
+  validateUserId: (userId: string) => void;
+  validateEmail: (email: string) => void;
+  validateListUsersFilters: (filters: Filters) => void;
+};
+```
+
+#### **⚙️ Infrastructure Layer: ONLY Implementations**
+
+All implementations in `src/infrastructure/services/` MUST be factory functions that receive dependencies as parameters
+and return the exact implementation of the individual function type.
+
+```typescript
+// ✅ CORRECT: src/infrastructure/services/user-validation.ts
+import type {
+  validateUserId,
+  validateEmail,
+} from '@/application/services/user-validation';
+
+export const validateUserId: validateUserId = (userId: string): void => {
+  // implementation
+};
+
+export const validateEmail: validateEmail = (email: string): void => {
+  // implementation
+};
+```
+
+```typescript
+// ❌ ABSOLUTELY FORBIDDEN: Grouped Factory Functions
+export const createUserValidationService = (dependencies) => ({
+  validateUserId: (userId: string): void => {
+    /* */
+  },
+  validateEmail: (email: string): void => {
+    /* */
+  },
+});
+```
+
+#### **🔧 For Functions That Need Dependencies**
+
+```typescript
+// ✅ CORRECT: src/infrastructure/services/user-validation.ts
+export const validateUserId =
+  (logger: Logger): validateUserId =>
+  (userId: string): void => {
+    // implementation
+  };
+```
+
+### 2. Separation of Concerns
+
+- **Domain**: Pure business logic, no external dependencies
+- **Application**: Orchestrates use cases, depends on domain
+- **Adapters**: External integrations, implements domain interfaces
+
+### 3. Repository Pattern
+
+- Define interfaces in domain layer
+- Implement concrete repositories in adapters layer
+- Use dependency injection to pass repositories to services
+
+## Key Patterns
+
+### Entity Design
+
+```typescript
+// Domain entities should be immutable and contain business logic
+export class User {
+  constructor(
+    private readonly id: UserId,
+    private readonly email: Email,
+    private readonly name: string
+  ) {}
+
+  // Business methods
+  updateName(newName: string): User {
+    return new User(this.id, this.email, newName);
+  }
+}
+```
+
+### Repository Interface
+
+```typescript
+// Define in domain layer
+export interface UserRepository {
+  findById(id: UserId): Promise<User | null>;
+  save(user: User): Promise<void>;
+}
+```
+
+### Use Case Implementation
+
+#### **🎯 Use Cases: Pure Orchestration**
+
+Use cases orchestrate contracts - never direct implementations:
+
+```typescript
+// ✅ CORRECT: src/application/use-cases/create-user.ts
+export const createUserUseCase =
+  (
+    userRepository: UserRepository, // ← PORT (contract)
+    validationService: UserValidationService, // ← PORT (contract)
+    utilityService: UserUtilityService // ← PORT (contract)
+  ) =>
+  async (input: CreateUserInput): Promise<CreateUserResponse> => {
+    // 🎯 ORCHESTRATE USING CONTRACTS ONLY
+    validationService.validateUserCreationRules(input);
+    const userId = utilityService.generateUserId();
+    return await userRepository.createUser({ ...input, id: userId });
+  };
+```
+
+#### **🧪 Testing with This Pattern**
+
+```typescript
+// ✅ PERFECT TESTABILITY - Mock contracts easily
+describe('createUserUseCase', () => {
+  const mockValidationService: UserValidationService = {
+    validateUserId: vi.fn(),
+    validateEmail: vi.fn(),
+    validateListUsersFilters: vi.fn(),
+    validateUserCreationRules: vi.fn(),
+    validateUserCanBeDeleted: vi.fn(),
+  };
+
+  it('should create user successfully', async () => {
+    const useCase = createUserUseCase(
+      mockRepository,
+      mockValidationService,
+      mockUtilityService
+    );
+    const result = await useCase(validInput);
+    expect(mockValidationService.validateUserCreationRules).toHaveBeenCalled();
+  });
+});
+```
+
+#### **❌ INCORRECT: Traditional Class Pattern**
+
+```typescript
+// ❌ WRONG: Application layer - orchestrates business logic
+export class CreateUserUseCase {
+  constructor(private userRepository: UserRepository) {}
+
+  async execute(input: CreateUserInput): Promise<User> {
+    const user = new User(input.id, input.email, input.name);
+    await this.userRepository.save(user);
+    return user;
+  }
+}
+```
+
+### Adapter Implementation
+
+```typescript
+// Adapters layer - implements domain interfaces
+export class HttpUserRepository implements UserRepository {
+  constructor(private httpClient: HttpClient) {}
+
+  async findById(id: UserId): Promise<User | null> {
+    const response = await this.httpClient.get(`/users/${id.value}`);
+    return response ? User.fromResponse(response) : null;
+  }
+}
+```
+
+## Library Export Structure
+
+### Main Entry Points
+
+- `index.ts` - Main library exports
+- `types.ts` - Public TypeScript types
+- `errors.ts` - Public error classes
+
+### Module Organization
+
+```typescript
+// index.ts
+export { UserService } from './application/services/UserService';
+export { User } from './domain/entities/User';
+export { UserRepository } from './domain/repositories/UserRepository';
+export { CreateUserInput } from './application/useCases/CreateUser';
+```
+
+## Configuration Management
+
+### Environment Configuration
+
+- Use environment variables for configuration
+- Provide sensible defaults
+- Validate configuration on startup
+
+### Feature Flags
+
+- Implement feature flags for experimental features
+- Use configuration-based feature toggles
+- Support runtime feature flag changes
+
+## Error Handling
+
+### Domain Errors
+
+- Define specific error types in domain layer
+- Use meaningful error messages
+- Include error codes for programmatic handling
+
+### Application Errors
+
+- Wrap domain errors with context
+- Provide user-friendly error messages
+- Log errors with appropriate levels
+
+## Testing Strategy
+
+### Unit Tests
+
+- Test domain entities and value objects
+- Mock repositories in use case tests
+- Test business logic in isolation
+
+### Integration Tests
+
+- Test repository implementations
+- Test use case integration
+- Test external service integrations
+
+### Contract Tests
+
+- Test public API contracts
+- Ensure backward compatibility
+- Validate type exports
+
+## Performance Considerations
+
+### Lazy Loading
+
+- Implement lazy loading for heavy dependencies
+- Use dynamic imports for optional features
+- Minimize bundle size
+
+### Caching
+
+- Implement appropriate caching strategies
+- Use memoization for expensive operations
+- Consider cache invalidation strategies
+
+### Memory Management
+
+- Avoid memory leaks in long-running processes
+- Use weak references where appropriate
+- Implement proper cleanup methods

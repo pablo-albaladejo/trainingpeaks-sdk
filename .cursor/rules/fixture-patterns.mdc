@@ -1,0 +1,245 @@
+---
+description: Fixture patterns and best practices for test data generation using Rosie Factory
+globs: **/*.test.ts
+alwaysApply: false
+---
+
+# Fixture Patterns and Best Practices
+
+## Core Principles
+
+### 1. Use Default Values from Fixtures
+
+**❌ Incorrect**: Hardcode properties when not necessary for test purpose
+
+```typescript
+const user = userBuilder.build({
+  id: '123',
+  name: 'Test User',
+});
+```
+
+**✅ Correct**: Use default values from fixtures
+
+```typescript
+const user = userBuilder.build();
+```
+
+### 2. Relate Fixtures Using Attribute References
+
+**❌ Incorrect**: Hardcode values that should come from related fixtures
+
+```typescript
+const user = userBuilder.build();
+const userInfoResponse = userInfoResponseBuilder.build({
+  userId: user.id,
+  username: 'testuser', // Hardcoded instead of using user.username
+  name: user.name,
+});
+```
+
+**✅ Correct**: Pass references from related fixtures
+
+```typescript
+const user = userBuilder.build();
+const userInfoResponse = userInfoResponseBuilder.build({
+  userId: user.id,
+  username: user.username, // Use reference from related fixture
+  name: user.name,
+});
+```
+
+### 3. Only Hardcode When Necessary for Test Purpose
+
+**✅ Acceptable**: Hardcode only when test specifically needs exact values
+
+```typescript
+// Only when test specifically validates behavior with exact values
+const user = userBuilder.build({
+  id: 'invalid-id', // Necessary for validation test
+});
+```
+
+## Examples of Good Patterns
+
+### Basic Fixture Usage
+
+```typescript
+// ✅ Good: Use defaults
+const authToken = authTokenBuilder.build();
+const user = userBuilder.build();
+const credentials = credentialsBuilder.build();
+```
+
+### Related Fixtures
+
+```typescript
+// ✅ Good: Relate fixtures properly
+const user = userBuilder.build();
+const userInfoResponse = userInfoResponseBuilder.build({
+  userId: user.id,
+  username: user.username,
+  name: user.name,
+  preferences: user.preferences,
+});
+```
+
+### Conditional Properties
+
+```typescript
+// ✅ Good: Only override when necessary
+const token = authTokenBuilder.build({
+  refreshToken: undefined, // Only override what's needed for test
+});
+```
+
+## Examples of Bad Patterns
+
+### Unnecessary Hardcoding
+
+```typescript
+// ❌ Bad: Hardcoding when not needed
+const authToken = authTokenBuilder.build({
+  accessToken: 'access-token-123',
+  tokenType: 'Bearer',
+  refreshToken: 'refresh-token-456',
+});
+
+const user = userBuilder.build({
+  id: 'user-123',
+  name: 'John Doe',
+  avatar: 'avatar.jpg',
+});
+```
+
+### Inconsistent Relationships
+
+```typescript
+// ❌ Bad: Mixing fixture data with hardcoded values
+const user = userBuilder.build();
+const userInfoResponse = userInfoResponseBuilder.build({
+  userId: user.id,
+  username: 'hardcoded-username', // Should use user.username
+  name: user.name,
+});
+```
+
+## When to Hardcode Values
+
+### ✅ Acceptable Cases
+
+1. **Validation Tests**: When testing specific validation rules
+
+   ```typescript
+   const user = userBuilder.build({
+     id: 'invalid-id', // Testing validation
+   });
+   ```
+
+2. **Error Scenarios**: When testing error conditions
+
+   ```typescript
+   const invalidData = {
+     id: 123, // Testing type validation
+     name: user.name,
+   };
+   ```
+
+3. **Specific Test Requirements**: When test needs exact values
+   ```typescript
+   const loginResponse = {
+     status: 200,
+     cookies: ['StagingAuth=staging-session-token'], // Specific test case
+   };
+   ```
+
+### ❌ Avoid Hardcoding
+
+1. **General Test Data**: Use fixture defaults
+2. **Related Data**: Use references from other fixtures
+3. **Random Values**: Let fixtures generate appropriate values
+
+## Fixture Structure Guidelines
+
+### Complex Objects
+
+```typescript
+// ✅ Good: Separate builders for complex structures
+export const userPreferencesBuilder = new Factory()
+  .attr('timezone', () => faker.location.timeZone())
+  .attr('units', () => faker.helpers.arrayElement(['metric', 'imperial']));
+
+export const userBuilder = new Factory<User>().attr('preferences', () =>
+  userPreferencesBuilder.build()
+);
+```
+
+### Options and Relationships
+
+```typescript
+// ✅ Good: Use options for relationships
+export const userInfoResponseBuilder = new Factory()
+  .option('userId', undefined)
+  .option('username', undefined)
+  .option('name', undefined)
+  .after((response, options) => {
+    return {
+      data: {
+        user: {
+          userId: options.userId || response.data.user.userId,
+          username: options.username || response.data.user.username,
+          name: options.name || response.data.user.name,
+        },
+      },
+    };
+  });
+```
+
+## Testing the Pattern
+
+### Before Refactoring
+
+```typescript
+// ❌ Before: Hardcoded values
+const user = userBuilder.build({
+  id: '123',
+  name: 'Test User',
+});
+const userInfoResponse = userInfoResponseBuilder.build({
+  userId: user.id,
+  username: 'testuser',
+  name: user.name,
+});
+```
+
+### After Refactoring
+
+```typescript
+// ✅ After: Using fixture defaults and references
+const user = userBuilder.build();
+const userInfoResponse = userInfoResponseBuilder.build({
+  userId: user.id,
+  username: user.username,
+  name: user.name,
+});
+```
+
+## Benefits of Following This Pattern
+
+1. **Maintainability**: Changes to fixtures automatically propagate
+2. **Consistency**: Related data stays consistent across tests
+3. **Realism**: Tests use more realistic, varied data
+4. **Reduced Coupling**: Tests don't depend on specific hardcoded values
+5. **Better Coverage**: Tests cover more edge cases with random data
+
+## Common Pitfalls to Avoid
+
+1. **Over-hardcoding**: Don't hardcode values that fixtures can generate
+2. **Inconsistent relationships**: Don't mix fixture data with hardcoded values
+3. **Missing references**: Always use references from related fixtures
+4. **Unnecessary options**: Don't pass options unless the test specifically needs them
+   description:
+   globs:
+   alwaysApply: false
+
+---
