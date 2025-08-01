@@ -5,8 +5,6 @@
 
 export * from './auth-token-serializer';
 export {
-  UserApiResponse,
-  UserStorageData,
   deserializeStorageToUser,
   deserializeUserFromJson,
   serializeApiResponseToUser,

@@ -48,11 +48,14 @@ export const createWorkoutFile = (
     throw new ValidationError('File content cannot be empty', 'content');
   }
 
-  return {
+  // Create immutable object
+  const workoutFile = {
     fileName: trimmedFileName,
     content,
     mimeType: trimmedMimeType,
   };
+  
+  return Object.freeze(workoutFile);
 };
 
 /**
@@ -94,4 +97,28 @@ export const getFileSize = (file: WorkoutFile): number => {
   }
 
   return Buffer.byteLength(file.content, 'utf8');
+};
+
+/**
+ * Create a new WorkoutFile with updated content (immutable update)
+ */
+export const updateWorkoutFileContent = (
+  file: WorkoutFile,
+  newContent: string
+): WorkoutFile => {
+  if (!newContent) {
+    throw new ValidationError('File content cannot be empty', 'content');
+  }
+  
+  return createWorkoutFile(file.fileName, newContent, file.mimeType);
+};
+
+/**
+ * Create a new WorkoutFile with updated filename (immutable update)
+ */
+export const updateWorkoutFileName = (
+  file: WorkoutFile,
+  newFileName: string
+): WorkoutFile => {
+  return createWorkoutFile(newFileName, file.content, file.mimeType);
 };

@@ -59,7 +59,7 @@
     "test:e2e:esm": "cd e2e-test && npm run test:esm",
     "test:e2e:cjs": "cd e2e-test && npm run test:cjs",
     "test:junit": "vitest run --reporter=junit --outputFile=test-report.junit.xml --coverage",
-    "lint": "eslint src/**/*.ts",
+    "lint": "eslint src/**/*.ts --max-warnings=0",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts",
     "format:check": "prettier --check src/**/*.ts",

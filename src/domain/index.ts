@@ -4,11 +4,12 @@
  */
 
 // Entities
+export * from './entities/auth-token';
 export * from './entities/user';
 export * from './entities/workout';
+export * from './entities/workout-aggregate';
 
 // Value Objects
-export * from './value-objects/auth-token';
 export * from './value-objects/credentials';
 export * from './value-objects/workout-file';
 
@@ -28,6 +29,9 @@ export {
   WorkoutStructure,
   WorkoutStructureElement,
   WorkoutTarget,
+  type ApiConfig,
+  type LoginRequest,
+  type RefreshTokenRequest,
 } from './schemas';
 
 // Builders

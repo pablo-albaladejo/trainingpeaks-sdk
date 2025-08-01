@@ -7,6 +7,7 @@
 import type { User } from '@/domain/entities/user';
 import { createUser } from '@/domain/entities/user';
 import { ValidationError } from '@/domain/errors/domain-errors';
+import type { UserApiResponse, UserStorageData } from '@/domain/schemas';
 import {
   DeserializationError,
   InvalidTypeError,
@@ -19,21 +20,6 @@ export type Result<T, E = Error> =
   | { success: true; data: T }
   | { success: false; error: E };
 
-export interface UserApiResponse {
-  user: {
-    userId: string | number;
-    username: string;
-    name: string;
-    preferences?: Record<string, unknown>;
-  };
-}
-
-export interface UserStorageData {
-  id: string;
-  name: string;
-  avatar?: string;
-  preferences?: Record<string, unknown>;
-}
 
 /**
  * Serialize API response to User entity

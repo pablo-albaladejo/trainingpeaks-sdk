@@ -7,15 +7,10 @@ import type { HttpClient, HttpClientConfig } from '@/adapters/http';
 import { createHttpClient } from '@/adapters/http';
 import { createLogger } from '@/adapters/logging/logger';
 import { getSDKConfig } from '@/config';
-import type { AuthToken, Credentials, User } from '@/domain';
+import type { AuthToken, Credentials, User, ApiConfig, LoginRequest, RefreshTokenRequest } from '@/domain';
 import { createUser } from '@/domain/entities/user';
-import { createAuthToken } from '@/domain/value-objects/auth-token';
+import { createAuthToken } from '@/domain/entities/auth-token';
 
-export interface ApiConfig {
-  baseURL: string;
-  timeout?: number;
-  headers?: Record<string, string>;
-}
 
 export interface TokenResponse {
   token: {
@@ -34,14 +29,6 @@ export interface UserResponse {
   };
 }
 
-export interface LoginRequest {
-  username: string;
-  password: string;
-}
-
-export interface RefreshTokenRequest {
-  refreshToken: string;
-}
 
 /**
  * TrainingPeaks API Client

@@ -9,14 +9,15 @@ import type { WebHttpClient } from '@/adapters/http/web-http-client';
 import type { LoggerType } from '@/adapters/logging/logger';
 import type { UserRepository } from '@/application/repositories';
 import { getSDKConfig } from '@/config';
+import { createAuthToken } from '@/domain/entities/auth-token';
 import { createUser } from '@/domain/entities/user';
 import type {
   AuthToken,
   Credentials,
   User,
+  UserInfoResponse,
   UserPreferences,
 } from '@/domain/schemas';
-import { createAuthToken } from '@/domain/value-objects/auth-token';
 
 type LoginFormData = {
   username: string;
@@ -46,23 +47,37 @@ export const createHttpAuthAdapter = (
   logger: LoggerType
 ): UserRepository => {
   const getUserInfo = async (token: AuthToken): Promise<User> => {
-    logger.info('👤 Getting user info via HTTP auth');
+    logger.info('👤 Getting user info');
 
     try {
-      const response = await webHttpClient.get(httpAuthConfig.userInfoUrl, {
-        headers: {
-          Authorization: `${token.tokenType} ${token.accessToken}`,
-        },
-      });
+      const response = await webHttpClient.get<UserInfoResponse>(
+        httpAuthConfig.userInfoUrl,
+        {
+          headers: {
+            Authorization: `${token.tokenType} ${token.accessToken}`,
+          },
+        }
+      );
 
       if (response.status !== 200) {
         throw new Error(`Failed to get user info: ${response.statusText}`);
       }
 
       // Parse user data from response
-      const userData = response.data as Record<string, unknown>;
+      const responseData = response.data as Record<string, unknown>;
+      const userData = responseData.user as Record<string, unknown>;
+
+      if (!userData) {
+        throw new Error('No user data in response');
+      }
+
+      const userId = String(userData.userId || userData.id || '');
+      if (!userId || userId.trim().length === 0) {
+        throw new Error('User ID is missing or empty in response');
+      }
+
       const user = createUser(
-        String(userData.userId || userData.id || ''),
+        userId,
         String(userData.name || userData.username || ''),
         userData.avatar as string | undefined,
         userData.preferences as Record<string, unknown> | undefined

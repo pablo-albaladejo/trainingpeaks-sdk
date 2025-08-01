@@ -4,8 +4,9 @@
  * This is an adapter implementation, not domain logic
  */
 
-import type { AuthToken } from '@/domain/value-objects/auth-token';
-import { createAuthToken } from '@/domain/value-objects/auth-token';
+import type { AuthToken } from '@/domain/entities/auth-token';
+import { createAuthToken } from '@/domain/entities/auth-token';
+import type { AuthTokenStorageData } from '@/domain/schemas';
 import {
   DeserializationError,
   InvalidDateError,
@@ -19,12 +20,6 @@ export type Result<T, E = Error> =
   | { success: true; data: T }
   | { success: false; error: E };
 
-export interface AuthTokenStorageData {
-  accessToken: string;
-  tokenType: string;
-  expiresAt: string; // ISO date string
-  refreshToken?: string;
-}
 
 /**
  * Serialize AuthToken entity to storage format

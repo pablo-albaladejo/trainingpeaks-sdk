@@ -2,7 +2,7 @@ import type { UserRepository } from '@/application/repositories';
 import type { RefreshUserToken } from '@/application/services';
 import { getSDKConfig } from '@/config';
 import type { AuthToken } from '@/domain';
-import { createAuthToken } from '@/domain/value-objects/auth-token';
+import { createAuthToken } from '@/domain/entities/auth-token';
 
 /**
  * Refresh authentication token

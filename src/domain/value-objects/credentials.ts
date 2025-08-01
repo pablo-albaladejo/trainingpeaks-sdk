@@ -8,19 +8,56 @@ import type { Credentials as CredentialsType } from '@/domain/schemas/value-obje
 export type Credentials = CredentialsType;
 
 /**
- * Create credentials value object
+ * Create immutable credentials value object
  */
 export const createCredentials = (
   username: string,
   password: string
-): Credentials => ({
-  username: username.trim(),
-  password,
-});
+): Credentials => {
+  const trimmedUsername = username.trim();
+  
+  // Validate invariants
+  if (!trimmedUsername) {
+    throw new Error('Username cannot be empty');
+  }
+  
+  if (!password) {
+    throw new Error('Password cannot be empty');
+  }
+  
+  if (trimmedUsername.length > 100) {
+    throw new Error('Username cannot exceed 100 characters');
+  }
+  
+  // Create immutable object
+  const credentials = {
+    username: trimmedUsername,
+    password,
+  };
+  
+  return Object.freeze(credentials);
+};
 
 /**
  * Validate credentials
  */
 export const validateCredentials = (credentials: Credentials): boolean => {
   return credentials.username.length > 0 && credentials.password.length > 0;
+};
+
+/**
+ * Create credentials with masked password for logging
+ */
+export const createMaskedCredentials = (credentials: Credentials): Credentials => {
+  return createCredentials(credentials.username, '***');
+};
+
+/**
+ * Check if credentials are equal (without exposing password)
+ */
+export const areCredentialsEqual = (
+  cred1: Credentials,
+  cred2: Credentials
+): boolean => {
+  return cred1.username === cred2.username && cred1.password === cred2.password;
 };

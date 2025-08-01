@@ -14,7 +14,7 @@ export default tseslint.config(
       // Disable base rule as it can conflict with TypeScript-specific rule
       'no-unused-vars': 'off',
       // Use TypeScript-specific rule instead
-      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-vars': 'error',
       'import/no-unresolved': 'error',
       // Naming convention: types must start with uppercase
       '@typescript-eslint/naming-convention': [

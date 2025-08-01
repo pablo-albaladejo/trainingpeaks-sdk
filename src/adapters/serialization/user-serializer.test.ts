@@ -175,22 +175,20 @@ describe('User Serializer', () => {
 
   describe('deserializeUserFromJson', () => {
     it('should deserialize valid JSON string', () => {
-      const user = userBuilder.build({
-        avatar: 'avatar.jpg',
+      const storageData = userStorageDataBuilder.build({
+        avatar: 'https://example.com/avatar.jpg',
       });
 
-      const jsonString = JSON.stringify({
-        id: user.id,
-        name: user.name,
-        avatar: user.avatar,
-        preferences: user.preferences,
-      });
+      const jsonString = JSON.stringify(storageData);
 
       const result = deserializeUserFromJson(jsonString);
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data).toEqual(user);
+        expect(result.data.id).toBe(storageData.id);
+        expect(result.data.name).toBe(storageData.name);
+        expect(result.data.avatar).toBe(storageData.avatar);
+        expect(result.data.preferences).toEqual(storageData.preferences);
       }
     });
 

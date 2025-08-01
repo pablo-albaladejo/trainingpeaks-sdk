@@ -3,7 +3,7 @@ import type { AuthenticateUser } from '@/application/services';
 import { getSDKConfig } from '@/config';
 import { createUser } from '@/domain/entities/user';
 import type { AuthToken, Credentials, User } from '@/domain/schemas';
-import { createAuthToken } from '@/domain/value-objects/auth-token';
+import { createAuthToken } from '@/domain/entities/auth-token';
 
 /**
  * Authenticate user with credentials and return token and user data

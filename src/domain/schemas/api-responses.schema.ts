@@ -135,7 +135,15 @@ export const UserStorageDataSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1),
   avatar: z.string().url().optional(),
-  preferences: UserPreferencesSchema,
+  preferences: z.record(z.string(), z.unknown()).optional(),
+});
+
+// AuthTokenStorageData Schema (for serialization with ISO date strings)
+export const AuthTokenStorageDataSchema = z.object({
+  accessToken: z.string().min(1),
+  tokenType: z.string().min(1),
+  expiresAt: z.string().datetime(), // ISO date string for storage
+  refreshToken: z.string().min(1).optional(),
 });
 
 // Type exports
@@ -153,3 +161,4 @@ export type LoginPageResponse = z.infer<typeof LoginPageResponseSchema>;
 export type LoginResponse = z.infer<typeof LoginResponseSchema>;
 export type UserApiResponse = z.infer<typeof UserApiResponseSchema>;
 export type UserStorageData = z.infer<typeof UserStorageDataSchema>;
+export type AuthTokenStorageData = z.infer<typeof AuthTokenStorageDataSchema>;

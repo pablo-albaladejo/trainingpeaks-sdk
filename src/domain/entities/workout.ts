@@ -27,7 +27,7 @@ export const calculateWorkoutDuration = (
 };
 
 /**
- * Create a new Workout instance
+ * Create a new Workout entity with domain invariants
  */
 export const createWorkout = (
   id: string,
@@ -40,23 +40,64 @@ export const createWorkout = (
   structure?: WorkoutStructure,
   fileContent?: string,
   fileName?: string
-): Workout => ({
-  id,
-  name,
-  description: description || '',
-  date,
-  duration,
-  distance,
-  activityType,
-  structure,
-  fileContent,
-  fileName,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-});
+): Workout => {
+  // Validate invariants
+  if (!id || id.trim().length === 0) {
+    throw new Error('Workout ID cannot be empty');
+  }
+  
+  if (!name || name.trim().length === 0) {
+    throw new Error('Workout name cannot be empty');
+  }
+  
+  if (name.trim().length > 200) {
+    throw new Error('Workout name cannot exceed 200 characters');
+  }
+  
+  if (duration < 0) {
+    throw new Error('Workout duration cannot be negative');
+  }
+  
+  if (!isFinite(duration)) {
+    throw new Error('Workout duration must be a finite number');
+  }
+  
+  if (distance !== undefined && (distance < 0 || !isFinite(distance))) {
+    throw new Error('Workout distance must be a non-negative finite number');
+  }
+  
+  if (description && description.length > 1000) {
+    throw new Error('Workout description cannot exceed 1000 characters');
+  }
+  
+  if (activityType && activityType.trim().length > 50) {
+    throw new Error('Activity type cannot exceed 50 characters');
+  }
+  
+  if (fileName && fileName.trim().length > 255) {
+    throw new Error('File name cannot exceed 255 characters');
+  }
+  
+  const now = new Date();
+  
+  return {
+    id: id.trim(),
+    name: name.trim(),
+    description: description?.trim() || '',
+    date,
+    duration,
+    distance,
+    activityType: activityType?.trim(),
+    structure,
+    fileContent,
+    fileName: fileName?.trim(),
+    createdAt: now,
+    updatedAt: now,
+  };
+};
 
 /**
- * Create a structured workout
+ * Create a structured workout with calculated duration
  */
 export const createStructuredWorkout = (
   id: string,
@@ -66,6 +107,14 @@ export const createStructuredWorkout = (
   description?: string,
   activityType?: string
 ): Workout => {
+  if (!structure) {
+    throw new Error('Workout structure is required for structured workout');
+  }
+  
+  if (!structure.structure || structure.structure.length === 0) {
+    throw new Error('Workout structure must contain at least one element');
+  }
+  
   const totalDuration = calculateWorkoutDuration(structure);
 
   return createWorkout(
@@ -78,4 +127,61 @@ export const createStructuredWorkout = (
     activityType,
     structure
   );
+};
+
+/**
+ * Update workout with new data
+ */
+export const updateWorkout = (
+  workout: Workout,
+  updates: Partial<Pick<Workout, 'name' | 'description' | 'distance' | 'activityType'>>
+): Workout => {
+  // Validate updates
+  if (updates.name !== undefined && (!updates.name || updates.name.trim().length === 0)) {
+    throw new Error('Workout name cannot be empty');
+  }
+  
+  if (updates.name && updates.name.trim().length > 200) {
+    throw new Error('Workout name cannot exceed 200 characters');
+  }
+  
+  if (updates.description && updates.description.length > 1000) {
+    throw new Error('Workout description cannot exceed 1000 characters');
+  }
+  
+  if (updates.distance !== undefined && (updates.distance < 0 || !isFinite(updates.distance))) {
+    throw new Error('Workout distance must be a non-negative finite number');
+  }
+  
+  if (updates.activityType && updates.activityType.trim().length > 50) {
+    throw new Error('Activity type cannot exceed 50 characters');
+  }
+  
+  return {
+    ...workout,
+    ...updates,
+    name: updates.name?.trim() || workout.name,
+    description: updates.description?.trim() ?? workout.description,
+    activityType: updates.activityType?.trim() ?? workout.activityType,
+    updatedAt: new Date(),
+  };
+};
+
+/**
+ * Check if workout is structured (has structure data)
+ */
+export const isStructuredWorkout = (workout: Workout): boolean => {
+  return Boolean(workout.structure && workout.structure.structure.length > 0);
+};
+
+/**
+ * Get workout total distance (prioritize structure calculation if available)
+ */
+export const getWorkoutDistance = (workout: Workout): number | undefined => {
+  if (workout.distance !== undefined) {
+    return workout.distance;
+  }
+  
+  // Could implement structure-based distance calculation here
+  return undefined;
 };
