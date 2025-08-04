@@ -23,12 +23,13 @@ import {
 import { createHttpError, type HttpErrorResponse } from '../errors/http-errors';
 
 /**
- * Creates a configured Axios instance with interceptors and error handling
+ * Normalizes HTTP client configuration with default values
  */
-const createAxiosInstance = (
+const normalizeHttpClientConfig = (
   config: HttpClientConfig
-): { client: AxiosInstance; jar: CookieJar | undefined } => {
-  const normalizedConfig = {
+): Required<Omit<HttpClientConfig, 'enableCookies'>> &
+  Pick<HttpClientConfig, 'enableCookies'> => {
+  return {
     timeout: config.timeout ?? 30000,
     headers: {
       'Content-Type': 'application/json',
@@ -38,6 +39,15 @@ const createAxiosInstance = (
     maxRedirects: config.maxRedirects ?? 5,
     enableCookies: config.enableCookies,
   };
+};
+
+/**
+ * Creates a configured Axios instance with interceptors and error handling
+ */
+const createAxiosInstance = (
+  config: HttpClientConfig
+): { client: AxiosInstance; jar: CookieJar | undefined } => {
+  const normalizedConfig = normalizeHttpClientConfig(config);
 
   // Create axios instance
   const client = axios.create({
@@ -197,16 +207,7 @@ const handleError = (
  */
 export const createHttpClient = (config: HttpClientConfig = {}): HttpClient => {
   const { client, jar } = createAxiosInstance(config);
-  const normalizedConfig = {
-    timeout: config.timeout ?? 30000,
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...config.headers,
-    },
-    maxRedirects: config.maxRedirects ?? 5,
-    enableCookies: config.enableCookies,
-  };
+  const normalizedConfig = normalizeHttpClientConfig(config);
 
   return {
     get: <T>(url: string, options?: RequestOptions): Promise<HttpResponse<T>> =>

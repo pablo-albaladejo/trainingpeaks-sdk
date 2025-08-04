@@ -5,8 +5,10 @@
 
 import { createInMemorySessionStorage, createLogger } from '@/adapters';
 import { createHttpClient } from '@/adapters/http';
-import { createAuthRepository } from '@/adapters/public-api/auth-respository';
-import { createTrainingPeaksRepository } from '@/adapters/public-api/trainingpeaks-repository';
+import {
+  createAuthRepository,
+  createTrainingPeaksRepository,
+} from '@/adapters/public-api';
 import { getSDKConfig, type TrainingPeaksClientConfig } from '@/config';
 import { loginEntrypoint, logoutEntrypoint } from '@/entrypoints';
 
