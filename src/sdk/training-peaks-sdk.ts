@@ -54,7 +54,7 @@ export const createTrainingPeaksSdk = (
     /**
      * Clear authentication (logout)
      */
-    logout: logoutEntrypoint,
+    logout: logoutEntrypoint({ tpRepository, logger }),
 
     /**
      * Logger
