@@ -20,6 +20,7 @@ export default defineConfig({
     globals: true,
     include: ['src/**/*.test.ts'],
     setupFiles: ['dotenv/config', './src/test.setup.ts'],
+    reporters: ['verbose'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],

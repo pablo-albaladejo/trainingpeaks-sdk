@@ -4,10 +4,11 @@
  * Implements Domain-Driven Design aggregate pattern for workout management
  */
 
+import { ValidationError } from '@/domain/errors/domain-errors';
+import { WorkoutStructureError,WorkoutValidationError } from '@/domain/errors/workout-errors';
 import type { Workout } from '@/domain/schemas/entities.schema';
 import type { WorkoutStructure } from '@/domain/schemas/workout-structure.schema';
-import { ValidationError } from '@/domain/errors/domain-errors';
-import { WorkoutValidationError, WorkoutStructureError } from '@/domain/errors/workout-errors';
+
 import {
   calculateWorkoutDuration,
   createStructuredWorkout,

@@ -3,15 +3,17 @@
  * Handles user authentication workflow
  */
 
-import { AuthToken, Credentials } from '@/domain';
-import { AuthenticateUser } from '../services/authenticate-user';
-import { UseCaseResult } from './base-result';
+import { AuthToken, Credentials, User } from '@/domain';
 
-export type ExecuteLoginUserUseCaseResult = UseCaseResult<AuthToken>;
+import { AuthenticateUser } from '../services';
 
 export type ExecuteLoginUserUseCase = (
   authenticateUser: AuthenticateUser
-) => (credentials: Credentials) => Promise<ExecuteLoginUserUseCaseResult>;
+) => ExecuteLoginUserUseCaseResult;
+
+export type ExecuteLoginUserUseCaseResult = (
+  credentials: Credentials
+) => Promise<{ token: AuthToken; user: User }>;
 
 /**
  * Login use case implementation
@@ -19,19 +21,8 @@ export type ExecuteLoginUserUseCase = (
  */
 export const executeLoginUserUseCase: ExecuteLoginUserUseCase =
   (authenticateUser: AuthenticateUser) =>
-  async (credentials: Credentials): Promise<ExecuteLoginUserUseCaseResult> => {
-    try {
-      // Authenticate user using authenticate service
-      const authResult = await authenticateUser(credentials);
-
-      return {
-        success: true,
-        data: authResult.token,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Authentication failed',
-      };
-    }
+  async (
+    credentials: Credentials
+  ): Promise<{ token: AuthToken; user: User }> => {
+    return await authenticateUser(credentials);
   };

@@ -3,8 +3,8 @@
  * Represents user authentication credentials
  */
 
-import type { Credentials as CredentialsType } from '@/domain/schemas/value-objects.schema';
 import { ValidationError } from '@/domain/errors/domain-errors';
+import type { Credentials as CredentialsType } from '@/domain/schemas/value-objects.schema';
 
 export type Credentials = CredentialsType;
 

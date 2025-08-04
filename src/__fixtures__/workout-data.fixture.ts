@@ -9,14 +9,16 @@
  * - Consistent workout structure patterns
  */
 
+import { faker } from '@faker-js/faker';
+import { Factory } from 'rosie';
+
 import type {
   WorkoutData,
   WorkoutFileData,
   WorkoutMetadata,
 } from '@/domain/schemas';
 import { WorkoutType } from '@/types';
-import { faker } from '@faker-js/faker';
-import { Factory } from 'rosie';
+
 import { randomDate, randomNumber, randomString } from './utils.fixture';
 
 /**

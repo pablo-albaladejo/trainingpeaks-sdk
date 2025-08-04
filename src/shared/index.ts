@@ -7,6 +7,6 @@ export { generateRandomUserAgent } from './utils/browser-utils';
 
 // cURL utilities
 export {
-  generateCurlCommand,
   type CurlRequestData,
+  generateCurlCommand,
 } from './utils/curl-generator';

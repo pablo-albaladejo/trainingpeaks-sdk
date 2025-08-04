@@ -9,16 +9,18 @@
  * - Realistic workout data structures
  */
 
+import { faker } from '@faker-js/faker';
+import { Factory } from 'rosie';
+
 import type {
   CreateWorkoutRequest,
   UpdateWorkoutRequest,
   WorkoutFilters,
   WorkoutResponse,
-  WorkoutStats,
   WorkoutsListResponse,
+  WorkoutStats,
 } from '@/domain/schemas';
-import { faker } from '@faker-js/faker';
-import { Factory } from 'rosie';
+
 import { randomNumber } from './utils.fixture';
 
 /**
@@ -210,43 +212,3 @@ export const longWorkoutResponseBuilder = new Factory<WorkoutResponse>()
   .extend(workoutResponseBuilder)
   .option('duration', 10800) // 3 hours
   .option('distance', 50000); // 50km
-
-/**
- * Helper functions for backward compatibility
- */
-
-export function createMockWorkoutResponse(
-  overrides: Partial<WorkoutResponse> = {}
-): WorkoutResponse {
-  return workoutResponseBuilder.build(overrides);
-}
-
-export function createMockWorkoutsListResponse(
-  overrides: Partial<WorkoutsListResponse> = {}
-): WorkoutsListResponse {
-  return workoutsListResponseBuilder.build(overrides);
-}
-
-export function createMockWorkoutStats(
-  overrides: Partial<WorkoutStats> = {}
-): WorkoutStats {
-  return workoutStatsBuilder.build(overrides);
-}
-
-export function createMockCreateWorkoutRequest(
-  overrides: Partial<CreateWorkoutRequest> = {}
-): CreateWorkoutRequest {
-  return createWorkoutRequestBuilder.build(overrides);
-}
-
-export function createMockUpdateWorkoutRequest(
-  overrides: Partial<UpdateWorkoutRequest> = {}
-): UpdateWorkoutRequest {
-  return updateWorkoutRequestBuilder.build(overrides);
-}
-
-export function createMockWorkoutFilters(
-  overrides: Partial<WorkoutFilters> = {}
-): WorkoutFilters {
-  return workoutFiltersBuilder.build(overrides);
-}

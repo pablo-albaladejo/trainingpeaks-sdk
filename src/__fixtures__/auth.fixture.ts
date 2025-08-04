@@ -9,6 +9,9 @@
  * - Consistent token and user structure patterns
  */
 
+import { faker } from '@faker-js/faker';
+import { Factory } from 'rosie';
+
 import type {
   AuthToken,
   Credentials,
@@ -23,8 +26,6 @@ import type {
   UserPreferences,
   UserStorageData,
 } from '@/domain/schemas';
-import { faker } from '@faker-js/faker';
-import { Factory } from 'rosie';
 
 /**
  * UserPreferences Builder

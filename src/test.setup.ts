@@ -1,18 +1,11 @@
 import dotenv from 'dotenv';
 import { afterAll, beforeAll, beforeEach, vi } from 'vitest';
-import { createLogger } from './adapters/logging/logger';
 
 // Load environment variables first
 dotenv.config();
 
 // Global test configuration
 vi.setConfig({ testTimeout: 10000 });
-
-// Configure logger to be silent during tests
-const testLogger = createLogger({
-  level: 'error',
-  enabled: false,
-});
 
 // Global console mocks to prevent any output during tests
 export const globalConsoleMocks = {
@@ -86,3 +79,26 @@ export const getConsoleCalls = () => ({
   error: globalConsoleMocks.error.mock.calls,
   debug: globalConsoleMocks.debug.mock.calls,
 });
+
+// Helper for integration tests that require credentials
+export const withIntegrationCredentials = (
+  testFn: (credentials: {
+    username: string;
+    password: string;
+  }) => void | Promise<void>
+) => {
+  const username = process.env.TRAININGPEAKS_TEST_USERNAME;
+  const password = process.env.TRAININGPEAKS_TEST_PASSWORD;
+  const hasIntegrationCredentials = !!(username && password);
+
+  if (!hasIntegrationCredentials) {
+    throw new Error(
+      'Integration credentials not available. Set TRAININGPEAKS_TEST_USERNAME and TRAININGPEAKS_TEST_PASSWORD environment variables.'
+    );
+  }
+
+  return testFn({
+    username,
+    password,
+  });
+};

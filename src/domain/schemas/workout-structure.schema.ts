@@ -3,6 +3,8 @@
  * Zod schemas for workout structure validation and serialization
  */
 
+import { z } from 'zod';
+
 import {
   ElementType,
   IntensityClass,
@@ -11,7 +13,6 @@ import {
   LengthMetric,
   LengthUnit,
 } from '@/types';
-import { z } from 'zod';
 
 // Base schemas using centralized enums
 export const WorkoutLengthUnitSchema = z.nativeEnum(LengthUnit);

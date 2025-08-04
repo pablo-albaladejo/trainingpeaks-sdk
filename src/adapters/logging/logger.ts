@@ -3,8 +3,6 @@
  * Provides logging functionality for the SDK
  */
 
-import { withRealConsole } from '@/test.setup';
-
 /**
  * Log levels
  */
@@ -41,7 +39,6 @@ export const createLogger = (config: LoggerConfig): Logger => {
   };
 
   const currentLevel = logLevels[config.level];
-
   const shouldLog = (level: LogLevel): boolean => {
     return config.enabled && logLevels[level] >= currentLevel;
   };
@@ -52,58 +49,31 @@ export const createLogger = (config: LoggerConfig): Logger => {
     return `${timestamp} ${prefix} [${level.toUpperCase()}] ${message}`;
   };
 
-  const logWithRealConsole = (
-    level: LogLevel,
-    message: string,
-    ...args: unknown[]
-  ) => {
-    if (shouldLog(level)) {
-      withRealConsole(() => {
-        const formattedMessage = formatMessage(level, message);
-        switch (level) {
-          case 'debug':
-            console.debug(formattedMessage, ...args);
-            break;
-          case 'info':
-            console.info(formattedMessage, ...args);
-            break;
-          case 'warn':
-            console.warn(formattedMessage, ...args);
-            break;
-          case 'error':
-            console.error(formattedMessage, ...args);
-            break;
-        }
-      });
-    }
-  };
-
   return {
     debug: (message: string, ...args: unknown[]) => {
-      logWithRealConsole('debug', message, ...args);
+      if (shouldLog('debug')) {
+        console.debug(formatMessage('debug', message), ...args);
+      }
     },
 
     info: (message: string, ...args: unknown[]) => {
-      logWithRealConsole('info', message, ...args);
+      if (shouldLog('info')) {
+        console.info(formatMessage('info', message), ...args);
+      }
     },
 
     warn: (message: string, ...args: unknown[]) => {
-      logWithRealConsole('warn', message, ...args);
+      if (shouldLog('warn')) {
+        console.warn(formatMessage('warn', message), ...args);
+      }
     },
 
     error: (message: string, ...args: unknown[]) => {
-      logWithRealConsole('error', message, ...args);
+      if (shouldLog('error')) {
+        console.error(formatMessage('error', message), ...args);
+      }
     },
   };
 };
-
-/**
- * Default logger instance
- */
-export const logger = createLogger({
-  level: 'info',
-  enabled: true,
-  prefix: 'TrainingPeaks SDK',
-});
 
 export type LoggerType = ReturnType<typeof createLogger>;

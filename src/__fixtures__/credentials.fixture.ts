@@ -3,9 +3,10 @@
  * Provides test data for authentication scenarios
  */
 
-import type { Credentials } from '@/domain/schemas';
 import { faker } from '@faker-js/faker';
 import { Factory } from 'rosie';
+
+import type { Credentials } from '@/domain/schemas';
 
 // Simple credentials using Faker
 export const createValidCredentials = () => ({

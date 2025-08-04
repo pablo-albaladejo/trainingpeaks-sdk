@@ -1,17 +1,12 @@
 /**
- * HTTP Adapters
- * HTTP client implementations and utilities
+ * HTTP Adapters Module
+ * Provides HTTP client functionality and types for making HTTP requests
  */
 
-// HTTP Client Interface and Types
+export { createHttpClient } from './axios-http-client';
+
 export type {
   HttpClient,
   HttpClientConfig,
-  HttpRequest,
-  HttpResponse,
-} from './http-adapter';
-
-// HTTP Client Factory
-export { createHttpClient } from './http-adapter';
-export { createHttpAuthAdapter } from './http-auth-adapter';
-export { createWebHttpClient } from './web-http-client';
+  RequestOptions,
+} from '@/application';

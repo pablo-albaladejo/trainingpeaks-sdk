@@ -74,6 +74,8 @@ export type TrainingPeaksSDKConfig = {
   debug: {
     /** Enable debug logging */
     enabled: boolean;
+    /** Log level */
+    level: 'debug' | 'info' | 'warn' | 'error';
     /** Log authentication events */
     logAuth: boolean;
     /** Log network requests */
@@ -151,6 +153,7 @@ const HARDCODED_DEFAULTS: TrainingPeaksSDKConfig = {
 
   debug: {
     enabled: false,
+    level: 'info',
     logAuth: false,
     logNetwork: false,
     logBrowser: false,
@@ -235,14 +238,14 @@ function getEnvironmentConfig(): EnvironmentConfig {
     timeouts: {
       default: process.env.TRAININGPEAKS_TIMEOUT
         ? (() => {
-            const parsed = parseInt(process.env.TRAININGPEAKS_TIMEOUT!, 10);
+            const parsed = parseInt(process.env.TRAININGPEAKS_TIMEOUT, 10);
             return isNaN(parsed) ? undefined : parsed;
           })()
         : undefined,
       webAuth: process.env.TRAININGPEAKS_WEB_AUTH_TIMEOUT
         ? (() => {
             const parsed = parseInt(
-              process.env.TRAININGPEAKS_WEB_AUTH_TIMEOUT!,
+              process.env.TRAININGPEAKS_WEB_AUTH_TIMEOUT,
               10
             );
             return isNaN(parsed) ? undefined : parsed;
@@ -251,7 +254,7 @@ function getEnvironmentConfig(): EnvironmentConfig {
       apiAuth: process.env.TRAININGPEAKS_API_AUTH_TIMEOUT
         ? (() => {
             const parsed = parseInt(
-              process.env.TRAININGPEAKS_API_AUTH_TIMEOUT!,
+              process.env.TRAININGPEAKS_API_AUTH_TIMEOUT,
               10
             );
             return isNaN(parsed) ? undefined : parsed;
@@ -260,7 +263,7 @@ function getEnvironmentConfig(): EnvironmentConfig {
       elementWait: process.env.TRAININGPEAKS_ELEMENT_WAIT_TIMEOUT
         ? (() => {
             const parsed = parseInt(
-              process.env.TRAININGPEAKS_ELEMENT_WAIT_TIMEOUT!,
+              process.env.TRAININGPEAKS_ELEMENT_WAIT_TIMEOUT,
               10
             );
             return isNaN(parsed) ? undefined : parsed;
@@ -269,7 +272,7 @@ function getEnvironmentConfig(): EnvironmentConfig {
       pageLoad: process.env.TRAININGPEAKS_PAGE_LOAD_TIMEOUT
         ? (() => {
             const parsed = parseInt(
-              process.env.TRAININGPEAKS_PAGE_LOAD_TIMEOUT!,
+              process.env.TRAININGPEAKS_PAGE_LOAD_TIMEOUT,
               10
             );
             return isNaN(parsed) ? undefined : parsed;
@@ -278,7 +281,7 @@ function getEnvironmentConfig(): EnvironmentConfig {
       errorDetection: process.env.TRAININGPEAKS_ERROR_DETECTION_TIMEOUT
         ? (() => {
             const parsed = parseInt(
-              process.env.TRAININGPEAKS_ERROR_DETECTION_TIMEOUT!,
+              process.env.TRAININGPEAKS_ERROR_DETECTION_TIMEOUT,
               10
             );
             return isNaN(parsed) ? undefined : parsed;
@@ -287,7 +290,7 @@ function getEnvironmentConfig(): EnvironmentConfig {
       testExecution: process.env.TRAININGPEAKS_TEST_EXECUTION_TIMEOUT
         ? (() => {
             const parsed = parseInt(
-              process.env.TRAININGPEAKS_TEST_EXECUTION_TIMEOUT!,
+              process.env.TRAININGPEAKS_TEST_EXECUTION_TIMEOUT,
               10
             );
             return isNaN(parsed) ? undefined : parsed;
@@ -299,7 +302,7 @@ function getEnvironmentConfig(): EnvironmentConfig {
       refreshWindow: process.env.TRAININGPEAKS_TOKEN_REFRESH_WINDOW
         ? (() => {
             const parsed = parseInt(
-              process.env.TRAININGPEAKS_TOKEN_REFRESH_WINDOW!,
+              process.env.TRAININGPEAKS_TOKEN_REFRESH_WINDOW,
               10
             );
             return isNaN(parsed) ? undefined : parsed;
@@ -308,7 +311,7 @@ function getEnvironmentConfig(): EnvironmentConfig {
       validationWindow: process.env.TRAININGPEAKS_TOKEN_VALIDATION_WINDOW
         ? (() => {
             const parsed = parseInt(
-              process.env.TRAININGPEAKS_TOKEN_VALIDATION_WINDOW!,
+              process.env.TRAININGPEAKS_TOKEN_VALIDATION_WINDOW,
               10
             );
             return isNaN(parsed) ? undefined : parsed;
@@ -317,7 +320,7 @@ function getEnvironmentConfig(): EnvironmentConfig {
       defaultExpiration: process.env.TRAININGPEAKS_TOKEN_DEFAULT_EXPIRATION
         ? (() => {
             const parsed = parseInt(
-              process.env.TRAININGPEAKS_TOKEN_DEFAULT_EXPIRATION!,
+              process.env.TRAININGPEAKS_TOKEN_DEFAULT_EXPIRATION,
               10
             );
             return isNaN(parsed) ? undefined : parsed;
@@ -335,7 +338,7 @@ function getEnvironmentConfig(): EnvironmentConfig {
       launchTimeout: process.env.TRAININGPEAKS_BROWSER_LAUNCH_TIMEOUT
         ? (() => {
             const parsed = parseInt(
-              process.env.TRAININGPEAKS_BROWSER_LAUNCH_TIMEOUT!,
+              process.env.TRAININGPEAKS_BROWSER_LAUNCH_TIMEOUT,
               10
             );
             return isNaN(parsed) ? undefined : parsed;
@@ -344,7 +347,7 @@ function getEnvironmentConfig(): EnvironmentConfig {
       pageWaitTimeout: process.env.TRAININGPEAKS_BROWSER_PAGE_WAIT_TIMEOUT
         ? (() => {
             const parsed = parseInt(
-              process.env.TRAININGPEAKS_BROWSER_PAGE_WAIT_TIMEOUT!,
+              process.env.TRAININGPEAKS_BROWSER_PAGE_WAIT_TIMEOUT,
               10
             );
             return isNaN(parsed) ? undefined : parsed;
@@ -378,7 +381,7 @@ function getEnvironmentConfig(): EnvironmentConfig {
       retryAttempts: process.env.TRAININGPEAKS_RETRY_ATTEMPTS
         ? (() => {
             const parsed = parseInt(
-              process.env.TRAININGPEAKS_RETRY_ATTEMPTS!,
+              process.env.TRAININGPEAKS_RETRY_ATTEMPTS,
               10
             );
             return isNaN(parsed) ? undefined : parsed;
@@ -386,7 +389,7 @@ function getEnvironmentConfig(): EnvironmentConfig {
         : undefined,
       retryDelay: process.env.TRAININGPEAKS_RETRY_DELAY
         ? (() => {
-            const parsed = parseInt(process.env.TRAININGPEAKS_RETRY_DELAY!, 10);
+            const parsed = parseInt(process.env.TRAININGPEAKS_RETRY_DELAY, 10);
             return isNaN(parsed) ? undefined : parsed;
           })()
         : undefined,
@@ -514,7 +517,7 @@ export function validateConfig(config: TrainingPeaksSDKConfig): void {
     }
     try {
       new URL(url);
-    } catch (error) {
+    } catch {
       throw new ValidationError(`Invalid URL format for ${key}: ${url}`);
     }
   });

@@ -5,7 +5,6 @@ export {
   createSteadyStep,
   createWarmupStep,
 } from './workout-steps';
-
 export {
   createIntervalWorkout,
   createLongSteadyWorkout,

@@ -2,6 +2,7 @@ import { WorkoutStructureBuilder } from '@/domain/builders/workout-structure-bui
 import { WorkoutStructureElementBuilder } from '@/domain/builders/workout-structure-element-builder';
 import type { WorkoutStructure } from '@/types';
 import { ElementType } from '@/types';
+
 import {
   createCooldownStep,
   createIntervalStep,

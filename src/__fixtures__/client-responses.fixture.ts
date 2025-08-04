@@ -3,9 +3,10 @@
  * Provides test data for client response scenarios
  */
 
-import type { ErrorResponse, UserResponse } from '@/domain/schemas';
 import { faker } from '@faker-js/faker';
 import { Factory } from 'rosie';
+
+import type { ErrorResponse, UserResponse } from '@/domain/schemas';
 
 // Simple response data using Faker
 export const createSuccessResponse = () => ({

@@ -1,1 +1,1 @@
-export { createLogger, type LoggerType } from './logger';
+export { createLogger, type Logger, type LoggerType } from './logger';

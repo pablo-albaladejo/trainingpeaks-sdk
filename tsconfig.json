@@ -29,8 +29,10 @@
       "@adapters/*": ["adapters/*"],
       "@application/*": ["application/*"],
       "@domain/*": ["domain/*"],
-      "@infrastructure/*": ["infrastructure/*"],
+      "@entrypoints/*": ["entrypoints/*"],
       "@fixtures/*": ["__fixtures__/*"],
+      "@infrastructure/*": ["infrastructure/*"],
+      "@sdk/*": ["sdk/*"],
       "@types/*": ["types/*"]
     }
   },

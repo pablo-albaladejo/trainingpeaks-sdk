@@ -3,13 +3,13 @@
  * Core business entity for workout management
  */
 
+import { ValidationError } from '@/domain/errors/domain-errors';
+import { WorkoutValidationError } from '@/domain/errors/workout-errors';
 import type { Workout as WorkoutType } from '@/domain/schemas/entities.schema';
 import type {
   WorkoutStructure,
   WorkoutStructureElement,
 } from '@/domain/schemas/workout-structure.schema';
-import { ValidationError } from '@/domain/errors/domain-errors';
-import { WorkoutValidationError } from '@/domain/errors/workout-errors';
 
 export type Workout = WorkoutType;
 export type WorkoutElement = WorkoutStructureElement;

@@ -3,13 +3,14 @@
  * Factory pattern fixtures for creating TrainingPeaksConfig using rosie and faker
  */
 
+import { faker } from '@faker-js/faker';
+import { Factory } from 'rosie';
+
 import {
   AuthMethod,
   TrainingPeaksClientConfig,
   TrainingPeaksConfig,
 } from '@/types';
-import { faker } from '@faker-js/faker';
-import { Factory } from 'rosie';
 
 /**
  * TrainingPeaksConfig Factory

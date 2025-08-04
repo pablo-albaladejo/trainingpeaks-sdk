@@ -13,12 +13,14 @@ export type AuthToken = AuthTokenType;
 export const createAuthToken = (
   accessToken: string,
   tokenType: string,
-  expiresAt: Date,
+  expiresIn: number,
+  expires: Date,
   refreshToken?: string
 ): AuthToken => ({
   accessToken,
   tokenType,
-  expiresAt,
+  expiresIn,
+  expires,
   refreshToken,
 });
 
@@ -26,7 +28,7 @@ export const createAuthToken = (
  * Check if token is expired
  */
 export const isTokenExpired = (token: AuthToken): boolean => {
-  return new Date() > token.expiresAt;
+  return new Date() > token.expires;
 };
 
 /**
@@ -42,12 +44,12 @@ export const isTokenValid = (token: AuthToken): boolean => {
 export const refreshAuthToken = (
   token: AuthToken,
   newAccessToken: string,
-  newExpiresAt: Date,
+  newExpires: Date,
   newRefreshToken?: string
 ): AuthToken => ({
   ...token,
   accessToken: newAccessToken,
-  expiresAt: newExpiresAt,
+  expires: newExpires,
   refreshToken: newRefreshToken || token.refreshToken,
 });
 
@@ -56,7 +58,7 @@ export const refreshAuthToken = (
  */
 export const shouldRefreshToken = (token: AuthToken): boolean => {
   const fiveMinutesFromNow = new Date(Date.now() + 5 * 60 * 1000);
-  return token.expiresAt <= fiveMinutesFromNow;
+  return token.expires <= fiveMinutesFromNow;
 };
 
 /**
@@ -64,7 +66,7 @@ export const shouldRefreshToken = (token: AuthToken): boolean => {
  */
 export const getRemainingValidityTime = (token: AuthToken): number => {
   const now = new Date();
-  const remaining = token.expiresAt.getTime() - now.getTime();
+  const remaining = token.expires.getTime() - now.getTime();
   return Math.max(0, remaining);
 };
 

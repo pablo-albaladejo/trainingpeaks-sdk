@@ -16,7 +16,7 @@ export class TrainingPeaksError extends SDKError {
     message: string,
     code?: ErrorCode,
     context?: SDKErrorContext,
-    originalError?: Error
+    _originalError?: Error
   ) {
     super(message, code || ERROR_CODES.INTERNAL_ERROR, context);
     this.name = 'TrainingPeaksError';
@@ -28,7 +28,7 @@ export class ValidationError extends SDKError {
   constructor(
     message: string,
     context?: SDKErrorContext,
-    originalError?: Error
+    _originalError?: Error
   ) {
     super(message, ERROR_CODES.VALIDATION_FAILED, context);
     this.name = 'ValidationError';
@@ -40,7 +40,7 @@ export class AuthenticationError extends SDKError {
   constructor(
     message: string,
     context?: SDKErrorContext,
-    originalError?: Error
+    _originalError?: Error
   ) {
     super(message, ERROR_CODES.AUTH_FAILED, context);
     this.name = 'AuthenticationError';
@@ -52,7 +52,7 @@ export class NetworkError extends SDKError {
   constructor(
     message: string,
     context?: SDKErrorContext,
-    originalError?: Error
+    _originalError?: Error
   ) {
     super(message, ERROR_CODES.NETWORK_REQUEST_FAILED, context);
     this.name = 'NetworkError';
@@ -64,7 +64,7 @@ export class AuthorizationError extends SDKError {
   constructor(
     message: string,
     context?: SDKErrorContext,
-    originalError?: Error
+    _originalError?: Error
   ) {
     super(message, ERROR_CODES.AUTH_FAILED, context);
     this.name = 'AuthorizationError';
@@ -76,7 +76,7 @@ export class RateLimitError extends SDKError {
   constructor(
     message: string,
     context?: SDKErrorContext,
-    originalError?: Error
+    _originalError?: Error
   ) {
     super(message, ERROR_CODES.NETWORK_REQUEST_FAILED, context);
     this.name = 'RateLimitError';
@@ -88,7 +88,7 @@ export class WorkoutError extends SDKError {
   constructor(
     message: string,
     context?: SDKErrorContext,
-    originalError?: Error
+    _originalError?: Error
   ) {
     super(message, ERROR_CODES.WORKOUT_CREATION_FAILED, context);
     this.name = 'WorkoutError';

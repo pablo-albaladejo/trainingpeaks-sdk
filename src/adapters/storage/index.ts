@@ -1,1 +1,1 @@
-export * from './memory-storage-adapter';
+export * from './in-memory';

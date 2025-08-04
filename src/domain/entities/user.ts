@@ -3,8 +3,8 @@
  * Core business entity for user management
  */
 
-import type { User as UserType } from '@/domain/schemas/entities.schema';
 import { ValidationError } from '@/domain/errors/domain-errors';
+import type { User as UserType } from '@/domain/schemas/entities.schema';
 
 export type User = UserType;
 

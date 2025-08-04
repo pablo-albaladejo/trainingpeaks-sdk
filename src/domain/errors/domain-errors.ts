@@ -39,3 +39,13 @@ export class NetworkError extends Error {
     this.name = 'NetworkError';
   }
 }
+
+export class UserError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string = 'USER_ERROR'
+  ) {
+    super(message);
+    this.name = 'UserError';
+  }
+}

@@ -4,9 +4,8 @@
  */
 
 import { z } from 'zod';
+
 import { WorkoutStructureSchema } from './workout-structure.schema';
-
-
 
 // User Entity Schema
 export const UserSchema = z.object({
@@ -20,8 +19,10 @@ export const UserSchema = z.object({
 export const AuthTokenSchema = z.object({
   accessToken: z.string().min(1),
   tokenType: z.string().min(1),
-  expiresAt: z.date(),
+  expiresIn: z.number().nonnegative().finite(),
+  expires: z.date(),
   refreshToken: z.string().min(1).optional(),
+  scope: z.string().min(1).optional(),
 });
 
 // Workout Entity Schema
