@@ -21,6 +21,25 @@ const BROWSER_HEADERS = {
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
 } as const;
 
+/**
+ * Helper function to extract detailed error information from HttpResponse
+ */
+const getDetailedErrorMessage = <T>(
+  response: HttpResponse<T>,
+  operation: string
+): string => {
+  if (response.error) {
+    const error = response.error;
+    if ('status' in error && 'statusText' in error) {
+      const status = error.status as number;
+      const statusText = error.statusText as string;
+      return `${operation} failed: HTTP ${status} ${statusText} - ${error.message}`;
+    }
+    return `${operation} failed: ${error.message}`;
+  }
+  return `${operation} failed: Unknown error`;
+};
+
 type AuthRepositoryDependencies = {
   httpClient: HttpClient;
   sessionStorage: SessionStorage;
@@ -484,7 +503,9 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
     );
 
     if (!response.success) {
-      throw new Error('Failed to get request verification token');
+      throw new Error(
+        getDetailedErrorMessage(response, 'Get request verification token')
+      );
     }
 
     if (!response.data) {
@@ -504,7 +525,9 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
     );
 
     if (!submitLoginResponse.success) {
-      throw new Error('Failed to submit login');
+      throw new Error(
+        getDetailedErrorMessage(submitLoginResponse, 'Submit login')
+      );
     }
 
     const tpAuthCookie = submitLoginResponse.cookies?.find((cookie) =>
@@ -519,7 +542,9 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
     const authTokenResponse = await getAuthToken(deps.httpClient, tpAuthCookie);
 
     if (!authTokenResponse.success) {
-      throw new Error('Failed to get auth token');
+      throw new Error(
+        getDetailedErrorMessage(authTokenResponse, 'Get auth token')
+      );
     }
 
     if (!authTokenResponse.data) {
@@ -539,7 +564,9 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
     });
 
     if (!userResponse.success) {
-      throw new Error('Failed to get user information');
+      throw new Error(
+        getDetailedErrorMessage(userResponse, 'Get user information')
+      );
     }
 
     if (!userResponse.data) {
