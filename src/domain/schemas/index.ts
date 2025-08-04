@@ -1,6 +1,6 @@
 /**
  * Domain Schemas Index
- * Centralized exports for all domain schemas and types
+ * Centralized exports for pure domain schemas and types only
  */
 
 // Entity schemas and types
@@ -11,6 +11,8 @@ export {
   UserSchema,
   type Workout,
   WorkoutSchema,
+  type TrainingPeaksAthlete,
+  TrainingPeaksAthleteSchema,
 } from './entities.schema';
 
 // Value object schemas and types
@@ -27,59 +29,23 @@ export {
   WorkoutFileSchema,
   type WorkoutMetadata,
   WorkoutMetadataSchema,
+  type TrainingPeaksSettings,
+  TrainingPeaksSettingsSchema,
+  type TrainingPeaksAccountSettings,
+  TrainingPeaksAccountSettingsSchema,
+  type TrainingPeaksCalendarSettings,
+  TrainingPeaksCalendarSettingsSchema,
+  type TrainingPeaksWorkoutSettings,
+  TrainingPeaksWorkoutSettingsSchema,
+  type TrainingPeaksDashboardSettings,
+  TrainingPeaksDashboardSettingsSchema,
+  type TrainingPeaksPromptSettings,
+  TrainingPeaksPromptSettingsSchema,
+  type TrainingPeaksMetric,
+  TrainingPeaksMetricSchema,
+  type TrainingPeaksDateOptions,
+  TrainingPeaksDateOptionsSchema,
 } from './value-objects.schema';
-
-// Repository schemas and types
-export {
-  type CreateWorkoutRequest,
-  CreateWorkoutRequestSchema,
-  type UpdateWorkoutRequest,
-  UpdateWorkoutRequestSchema,
-  type WorkoutFilters,
-  WorkoutFiltersSchema,
-  type WorkoutResponse,
-  WorkoutResponseSchema,
-  type WorkoutsListResponse,
-  WorkoutsListResponseSchema,
-  type WorkoutStats,
-  WorkoutStatsSchema,
-} from './repository.schema';
-
-// API response schemas and types
-export {
-  type AuthTokenStorageData,
-  AuthTokenStorageDataSchema,
-  type ErrorResponse,
-  ErrorResponseSchema,
-  type LoginPageResponse,
-  LoginPageResponseSchema,
-  type LoginResponse,
-  LoginResponseSchema,
-  type TokenResponse,
-  TokenResponseSchema,
-  type TokenResponseWithoutExpiration,
-  TokenResponseWithoutExpirationSchema,
-  type TokenResponseWithZeroExpiration,
-  TokenResponseWithZeroExpirationSchema,
-  type UserApiResponse,
-  UserApiResponseSchema,
-  type UserInfoResponse,
-  UserInfoResponseSchema,
-  type UserResponse,
-  UserResponseSchema,
-  type UserStorageData,
-  UserStorageDataSchema,
-} from './api-responses.schema';
-
-// API request schemas and types
-export {
-  type ApiConfig,
-  ApiConfigSchema,
-  type LoginRequest,
-  LoginRequestSchema,
-  type RefreshTokenRequest,
-  RefreshTokenRequestSchema,
-} from './api-requests.schema';
 
 // Workout structure schemas and types
 export {

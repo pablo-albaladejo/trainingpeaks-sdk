@@ -1,11 +1,12 @@
 /**
- * API Response Schemas
- * Zod schemas for API response validation and serialization
+ * HTTP Response Schemas
+ * Zod schemas for HTTP API response validation and serialization (Adapters Layer)
  */
 
 import { z } from 'zod';
 
-import { UserPreferencesSchema } from './value-objects.schema';
+import { UserPreferencesSchema, TrainingPeaksSettingsSchema } from '@/domain/schemas/value-objects.schema';
+import { TrainingPeaksAthleteSchema } from '@/domain/schemas/entities.schema';
 
 // UserResponse Schema
 export const UserResponseSchema = z.object({
@@ -147,6 +148,85 @@ export const AuthTokenStorageDataSchema = z.object({
   refreshToken: z.string().min(1).optional(),
 });
 
+// TrainingPeaks API Response Schemas
+export const TrainingPeaksTokenResponseSchema = z.object({
+  success: z.boolean(),
+  token: z.object({
+    access_token: z.string().min(1),
+    token_type: z.string(),
+    expires_in: z.number(),
+    refresh_token: z.string(),
+    scope: z.string(),
+    expires: z.string(),
+  }),
+});
+
+export const TrainingPeaksUserResponseSchema = z.object({
+  user: z.object({
+    userId: z.number(),
+    settings: TrainingPeaksSettingsSchema,
+    athletes: z.array(TrainingPeaksAthleteSchema),
+    personId: z.number(),
+    accountSettingsId: z.number(),
+    userName: z.string(),
+    email: z.string().email(),
+    isEmailVerified: z.boolean(),
+    firstName: z.string(),
+    lastName: z.string(),
+    userType: z.number(),
+    userIdentifierHash: z.string(),
+    expireDate: z.string(),
+    premiumTrial: z.boolean(),
+    premiumTrialDaysRemaining: z.number(),
+    lastLogon: z.string(),
+    numberOfVisits: z.number(),
+    created: z.string(),
+    age: z.number(),
+    birthday: z.string(),
+    gender: z.string(),
+    dateFormat: z.string(),
+    timeZone: z.string(),
+    units: z.number(),
+    temperatureUnit: z.number(),
+    windSpeedUnit: z.number(),
+    allowMarketingEmails: z.boolean(),
+    address: z.string().nullable(),
+    address2: z.string().nullable(),
+    city: z.string().nullable(),
+    state: z.string().nullable(),
+    zipCode: z.string().nullable(),
+    country: z.string().nullable(),
+    phone: z.string().nullable(),
+    cellPhone: z.string().nullable(),
+    language: z.string(),
+    latitude: z.number().nullable(),
+    longitude: z.number().nullable(),
+    personPhotoUrl: z.string().nullable(),
+    affiliateId: z.number(),
+    isAthlete: z.boolean(),
+    fullName: z.string(),
+  }),
+  accountStatus: z.object({
+    status: z.number(),
+    lockedOut: z.boolean(),
+    demoExpired: z.boolean(),
+    pastDue: z.boolean(),
+    pastDueAccountSetup: z.boolean(),
+    tooManyBasicAthletes: z.boolean(),
+    isAthlete: z.boolean(),
+    isCoachedAthlete: z.boolean(),
+    isCoach: z.boolean(),
+    isCoachingGroupOwner: z.boolean(),
+    athleteInZuoraSystem: z.boolean(),
+    lockedOutOfMobile: z.boolean(),
+    coachingGroupId: z.number().nullable(),
+    coachingGroupOwnerId: z.number().nullable(),
+    billingTier: z.number(),
+    maximumBasicAthletes: z.number(),
+    paymentRequired: z.boolean(),
+  }),
+});
+
 // Type exports
 export type UserResponse = z.infer<typeof UserResponseSchema>;
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
@@ -163,3 +243,8 @@ export type LoginResponse = z.infer<typeof LoginResponseSchema>;
 export type UserApiResponse = z.infer<typeof UserApiResponseSchema>;
 export type UserStorageData = z.infer<typeof UserStorageDataSchema>;
 export type AuthTokenStorageData = z.infer<typeof AuthTokenStorageDataSchema>;
+
+// TrainingPeaks API Response Types
+export type TrainingPeaksTokenResponse = z.infer<typeof TrainingPeaksTokenResponseSchema>;
+export type TrainingPeaksUserResponse = z.infer<typeof TrainingPeaksUserResponseSchema>;
+export type TrainingPeaksUser = TrainingPeaksUserResponse['user'];

@@ -42,7 +42,34 @@ export const WorkoutSchema = z.object({
   structure: WorkoutStructureSchema.optional(),
 });
 
+// TrainingPeaks Athlete Entity Schema
+export const TrainingPeaksAthleteSchema = z.object({
+  athleteId: z.number().positive(),
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  email: z.string().email(),
+  phone: z.string().nullable().optional(),
+  cellPhone: z.string().nullable().optional(),
+  age: z.number().nonnegative().optional(),
+  athleteType: z.number(),
+  userType: z.number(),
+  lastPlannedWorkout: z.string().nullable().optional(),
+  settings: z.unknown().optional(),
+  personPhotoUrl: z.string().url().nullable().optional(),
+  coachedBy: z.number().nullable().optional(),
+  userName: z.string().min(1),
+  lastUpgradeOn: z.string().nullable().optional(),
+  downgradeAllowed: z.boolean().default(false),
+  expireOn: z.string(),
+  premiumTrial: z.boolean().default(false),
+  premiumTrialDaysRemaining: z.number().nonnegative().default(0),
+  downgradeAllowedOn: z.string().optional(),
+  workoutIndexState: z.number().default(0),
+  prCalcState: z.number().default(0),
+});
+
 // Type exports
 export type User = z.infer<typeof UserSchema>;
 export type AuthToken = z.infer<typeof AuthTokenSchema>;
 export type Workout = z.infer<typeof WorkoutSchema>;
+export type TrainingPeaksAthlete = z.infer<typeof TrainingPeaksAthleteSchema>;

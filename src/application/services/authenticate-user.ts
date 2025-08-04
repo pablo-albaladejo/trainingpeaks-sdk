@@ -1,5 +1,6 @@
-import type { AuthToken, Credentials, User } from '@/domain';
+import type { Credentials } from '@/domain';
+import type { Session } from '@/application/ports/session-storage';
 
-export type AuthenticateUserResult = { token: AuthToken; user: User };
+export type AuthenticateUserResult = Session;
 
 export type AuthenticateUser = (credentials: Credentials) => Promise<AuthenticateUserResult>; 

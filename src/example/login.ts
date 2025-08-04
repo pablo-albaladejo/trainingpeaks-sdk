@@ -39,7 +39,7 @@ const main = async (): Promise<void> => {
     // Perform login
     const result = await sdk.login({ username, password });
 
-    console.log('Login successful:', result);
+    console.log('Login successful:', JSON.stringify(result, null, 2));
   } catch (error) {
     console.error('Login failed:', error);
     process.exit(1);

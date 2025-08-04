@@ -5,25 +5,21 @@
 
 // Entities
 export * from './entities/auth-token';
+export * from './entities/training-peaks-athlete';
 export * from './entities/user';
 export * from './entities/workout';
 export * from './entities/workout-aggregate';
 
 // Value Objects
 export * from './value-objects/credentials';
+export * from './value-objects/training-peaks-settings';
 export * from './value-objects/workout-file';
-
-// Contexts
-export * from './contexts/auth-context';
 
 // Errors
 export * from './errors/domain-errors';
 
-// Schemas (only unique types, not re-exporting entities/value objects)
+// Schemas (only pure domain types)
 export {
-  type ApiConfig,
-  type LoginRequest,
-  type RefreshTokenRequest,
   WorkoutElementType,
   WorkoutIntensityClass,
   WorkoutIntensityMetric,

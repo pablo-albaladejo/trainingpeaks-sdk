@@ -3,7 +3,8 @@
  * Handles user authentication workflow
  */
 
-import { AuthToken, Credentials, User } from '@/domain';
+import { Credentials } from '@/domain';
+import type { Session } from '@/application/ports/session-storage';
 
 import { AuthenticateUser } from '../services';
 
@@ -13,7 +14,7 @@ export type ExecuteLoginUserUseCase = (
 
 export type ExecuteLoginUserUseCaseResult = (
   credentials: Credentials
-) => Promise<{ token: AuthToken; user: User }>;
+) => Promise<Session>;
 
 /**
  * Login use case implementation
@@ -23,6 +24,6 @@ export const executeLoginUserUseCase: ExecuteLoginUserUseCase =
   (authenticateUser: AuthenticateUser) =>
   async (
     credentials: Credentials
-  ): Promise<{ token: AuthToken; user: User }> => {
+  ): Promise<Session> => {
     return await authenticateUser(credentials);
   };

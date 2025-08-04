@@ -8,6 +8,14 @@ import {
   type AuthToken,
   Credentials,
 } from '@/domain';
+import type {
+  TrainingPeaksTokenResponse,
+  TrainingPeaksUserResponse,
+} from '@/adapters/schemas/http-responses.schema';
+import { 
+  mapTPUserToUser,
+  mapTPTokenToAuthToken 
+} from '@/adapters/mappers';
 
 /**
  * Common browser headers used for TrainingPeaks API requests
@@ -80,23 +88,11 @@ const submitLogin = async (
   );
 };
 
-type TPTokenResponse = {
-  success: boolean;
-  token: {
-    access_token: string;
-    token_type: string;
-    expires_in: number;
-    refresh_token: string;
-    scope: string;
-    expires: string;
-  };
-};
-
 const getAuthToken = async (
   httpClient: HttpClient,
   cookies: string
-): Promise<HttpResponse<TPTokenResponse>> => {
-  return await httpClient.get<TPTokenResponse>(
+): Promise<HttpResponse<TrainingPeaksTokenResponse>> => {
+  return await httpClient.get<TrainingPeaksTokenResponse>(
     'https://tpapi.trainingpeaks.com/users/v3/token',
     {
       headers: {
@@ -115,345 +111,11 @@ const getAuthToken = async (
   );
 };
 
-// Tipos específicos para la respuesta de usuario de TrainingPeaks
-type TPAthlete = {
-  athleteId: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string | null;
-  cellPhone: string | null;
-  age: number;
-  athleteType: number;
-  userType: number;
-  lastPlannedWorkout: string | null;
-  settings: unknown;
-  personPhotoUrl: string | null;
-  coachedBy: number | null;
-  userName: string;
-  lastUpgradeOn: string | null;
-  downgradeAllowed: boolean;
-  expireOn: string;
-  premiumTrial: boolean;
-  premiumTrialDaysRemaining: number;
-  downgradeAllowedOn: string;
-  workoutIndexState: number;
-  prCalcState: number;
-};
-
-type TPAccountSettings = {
-  accountSettingsId: number;
-  userType: number;
-  isAthlete: boolean;
-  headerImageUrl: string;
-  headerLink: string;
-  helpUrl: string;
-  logonFailedUrl: string;
-  logOffUrl: string;
-  displayTrainingPeaksLogo: boolean;
-  coachType: number;
-  isCoached: boolean;
-  isPremium: boolean;
-  accessGroupIds: number[];
-  premiumTrial: boolean;
-  lastLogon: string;
-};
-
-type TPCalendarSettings = {
-  compactView: boolean;
-  showAvailability: boolean;
-  showNotes: boolean;
-  showWorkouts: boolean;
-  showStrengthWorkouts: boolean;
-  showNutrition: boolean;
-  showMetrics: boolean;
-  showSummary: boolean;
-  showFitnessFormFatigue: boolean;
-  showComplianceColoring: boolean;
-  showWeather: boolean;
-  orderComplianceBy: string[];
-  focusEventId: number | null;
-  workoutLabelLayout: number[];
-  weekSummaryAtpLayout: number[];
-  showPayments: boolean;
-};
-
-type TPWorkoutLayout = {
-  [key: string]: number[];
-};
-
-type TPWorkoutSettings = {
-  layout: TPWorkoutLayout;
-};
-
-type TPMetric = {
-  type: number;
-};
-
-type TPDateOptions = {
-  quickDateSelectOption: number | null;
-  startDate: string | null;
-  endDate: string | null;
-};
-
-type TPDashboardPod = {
-  workoutTypeIds?: string[];
-  quickDateSelectOption?: number;
-  showTSSPerDay?: boolean;
-  showIntensityFactorPerDay?: boolean;
-  showTSBFill?: boolean;
-  atlConstant?: number;
-  atlStartValue?: number;
-  showSecondAtlSeries?: boolean;
-  atlConstant2?: number;
-  atlStartValue2?: number;
-  ctlConstant?: number;
-  ctlStartValue?: number;
-  index: number;
-  chartType: number;
-  title: string | null;
-  dateOptions: TPDateOptions;
-  durationUnits?: number;
-  summaryType?: number;
-  dateGrouping?: number;
-  caloriesType?: number;
-  includeGoalCalories?: boolean;
-  peakType?: number;
-  useComparison?: boolean;
-  displayState?: number;
-  comparisonDateOptions?: TPDateOptions;
-  tags?: unknown;
-  showPlanned?: boolean;
-  hideAverage?: boolean;
-  units?: number | null;
-  showMarkers?: boolean;
-  dataFields?: number[];
-  powerProfileGrouping?: number;
-  displayCategoryLabels?: boolean;
-  displayCaloriesConsumed?: boolean;
-  displayCaloriesExpended?: boolean;
-  displayBy?: number;
-};
-
-type TPDashboardSettings = {
-  pods: TPDashboardPod[];
-  dateOptions: TPDateOptions;
-};
-
-type TPLayoutPod = {
-  index: number;
-  podType: number;
-  heightInRows: number;
-  widthInColumns: number;
-  columns?: number[] | null;
-  useComparison?: boolean;
-  dateOptions?: TPDateOptions | null;
-  displayState?: number;
-};
-
-type TPLayout = {
-  pods: TPLayoutPod[];
-  workoutTypeId: number;
-};
-
-type TPExpandoSettings = {
-  layouts: TPLayout[];
-  mapType: string;
-};
-
-type TPPromptPreferences = {
-  showPairUnpairModal: boolean;
-  showWelcome: boolean;
-  showGoalsAssistanceBanner: boolean;
-  showUnpairConfirmationModal: boolean;
-  'showWhatsNew:CALENDAR_NOTES_ATHLETE': boolean;
-  showQuickViewTips: boolean;
-  contextMenuTip: boolean;
-  showEnterEventModal: boolean;
-  showExpandoTips: boolean;
-  searchChalkboard: boolean;
-  showComplete: boolean;
-  recuringNewChip: boolean;
-  weatherNewChip: boolean;
-  garminMaxStepsWarning: boolean;
-};
-
-type TPPromptChoices = {
-  searchChalkboard: string;
-  showEnterEventModal: string;
-  showQuickViewTips: string;
-  showExpandoTips: string;
-  showComplete: string;
-  showLandingSelection: string;
-};
-
-type TPPromptDates = {
-  searchChalkboard: string;
-  showEnterEventModal: string;
-  showQuickViewTips: string;
-  showExpandoTips: string;
-  showComplete: string;
-  showGoalsAssistanceBanner: string;
-  autoDismissNotifications: string;
-};
-
-type TPPromptSettings = {
-  promptPreferences: TPPromptPreferences;
-  promptChoices: TPPromptChoices;
-  promptDates: TPPromptDates;
-};
-
-type TPSearchSettings = {
-  exactMatch: boolean;
-  displayedColumns: string[];
-  sortBy: string;
-  sortOrder: number;
-};
-
-type TPLimiterSettings = {
-  hours: {
-    showSwimLimiters: boolean;
-    showBikeLimiters: boolean;
-    showRunLimiters: boolean;
-    showStrengthPhase: boolean;
-  };
-  tss: {
-    showSwimLimiters: boolean;
-    showBikeLimiters: boolean;
-    showRunLimiters: boolean;
-    showStrengthPhase: boolean;
-  };
-  ctl: {
-    showSwimLimiters: boolean;
-    showBikeLimiters: boolean;
-    showRunLimiters: boolean;
-    showStrengthPhase: boolean;
-  };
-};
-
-type TPATPSettings = {
-  displayGraph: boolean;
-  displayPlannedCTL: boolean;
-  displayActualCTL: boolean;
-  displayPlannedTSB: boolean;
-  displayActualTSB: boolean;
-  displaySettings: unknown;
-  limiterSettings: TPLimiterSettings;
-};
-
-type TPGeneralSettings = {
-  defaultLandingPage: string;
-  initialLoadedGroup: unknown | null;
-  language: string | null;
-};
-
-type TPExperimentsSettings = {
-  openLibrary: unknown | null;
-};
-
-type TPAffiliateSettings = {
-  affiliateId: number;
-  code: string;
-  isTrainingPeaks: boolean;
-};
-
-type TPAppleWatchSettings = {
-  autoSendWorkouts: string;
-};
-
-type TPPrivacySettings = {
-  womensHealthMetrics: unknown;
-  comments: unknown;
-};
-
-type TPSettings = {
-  account: TPAccountSettings;
-  calendar: TPCalendarSettings;
-  workout: TPWorkoutSettings;
-  metrics: TPMetric[];
-  dashboard: TPDashboardSettings;
-  expando: TPExpandoSettings;
-  prompt: TPPromptSettings;
-  search: TPSearchSettings;
-  atp: TPATPSettings;
-  general: TPGeneralSettings;
-  experiments: TPExperimentsSettings;
-  affiliate: TPAffiliateSettings;
-  appleWatch: TPAppleWatchSettings;
-  privacy: TPPrivacySettings;
-};
-
-type TPUserResponse = {
-  user: {
-    userId: number;
-    settings: TPSettings;
-    athletes: TPAthlete[];
-    personId: number;
-    accountSettingsId: number;
-    userName: string;
-    email: string;
-    isEmailVerified: boolean;
-    firstName: string;
-    lastName: string;
-    userType: number;
-    userIdentifierHash: string;
-    expireDate: string;
-    premiumTrial: boolean;
-    premiumTrialDaysRemaining: number;
-    lastLogon: string;
-    numberOfVisits: number;
-    created: string;
-    age: number;
-    birthday: string;
-    gender: string;
-    dateFormat: string;
-    timeZone: string;
-    units: number;
-    temperatureUnit: number;
-    windSpeedUnit: number;
-    allowMarketingEmails: boolean;
-    address: string | null;
-    address2: string | null;
-    city: string | null;
-    state: string | null;
-    zipCode: string | null;
-    country: string | null;
-    phone: string | null;
-    cellPhone: string | null;
-    language: string;
-    latitude: number | null;
-    longitude: number | null;
-    personPhotoUrl: string | null;
-    affiliateId: number;
-    isAthlete: boolean;
-    fullName: string;
-  };
-  accountStatus: {
-    status: number;
-    lockedOut: boolean;
-    demoExpired: boolean;
-    pastDue: boolean;
-    pastDueAccountSetup: boolean;
-    tooManyBasicAthletes: boolean;
-    isAthlete: boolean;
-    isCoachedAthlete: boolean;
-    isCoach: boolean;
-    isCoachingGroupOwner: boolean;
-    athleteInZuoraSystem: boolean;
-    lockedOutOfMobile: boolean;
-    coachingGroupId: number | null;
-    coachingGroupOwnerId: number | null;
-    billingTier: number;
-    maximumBasicAthletes: number;
-    paymentRequired: boolean;
-  };
-};
-
 const getUser = async (
   httpClient: HttpClient,
   authToken: AuthToken
-): Promise<HttpResponse<TPUserResponse>> => {
-  return await httpClient.get<TPUserResponse>(
+): Promise<HttpResponse<TrainingPeaksUserResponse>> => {
+  return await httpClient.get<TrainingPeaksUserResponse>(
     'https://tpapi.trainingpeaks.com/users/v3/user',
     {
       headers: {
@@ -551,7 +213,8 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
       throw new Error('No auth token data received');
     }
 
-    const authToken = authTokenResponse.data.token;
+    const authTokenData = authTokenResponse.data;
+    const authToken = authTokenData.token;
 
     // Get user information using the auth token
     const userResponse = await getUser(deps.httpClient, {
@@ -575,22 +238,13 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
 
     const userData = userResponse.data;
 
+    // Map TrainingPeaks API responses to domain entities using mappers
+    const user = mapTPUserToUser(userData.user);
+    const token = mapTPTokenToAuthToken(authToken);
+
     const session: Session = {
-      token: {
-        accessToken: authToken.access_token,
-        tokenType: authToken.token_type,
-        expiresIn: authToken.expires_in,
-        expires: new Date(authToken.expires),
-        refreshToken: authToken.refresh_token,
-        scope: authToken.scope,
-      },
-      user: {
-        id: userData.user.userId.toString(),
-        name:
-          userData.user.fullName ||
-          `${userData.user.firstName} ${userData.user.lastName}`.trim(),
-        avatar: userData.user.personPhotoUrl || undefined,
-      },
+      token,
+      user,
     };
 
     await deps.sessionStorage.set(session);

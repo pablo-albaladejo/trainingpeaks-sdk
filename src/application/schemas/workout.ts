@@ -1,6 +1,6 @@
 /**
- * Repository Schemas
- * Zod schemas for repository types used in fixtures
+ * Repository Contract Schemas
+ * Zod schemas for repository contract types (Application Layer)
  */
 
 import { z } from 'zod';

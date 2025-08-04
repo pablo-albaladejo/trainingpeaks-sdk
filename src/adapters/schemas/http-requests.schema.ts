@@ -1,6 +1,6 @@
 /**
- * API Request Schemas
- * Zod schemas for API request validation
+ * HTTP Request Schemas
+ * Zod schemas for HTTP API request validation (Adapters Layer)
  */
 
 import { z } from 'zod';
