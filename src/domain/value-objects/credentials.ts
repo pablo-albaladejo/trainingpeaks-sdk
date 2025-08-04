@@ -16,26 +16,29 @@ export const createCredentials = (
   password: string
 ): Credentials => {
   const trimmedUsername = username.trim();
-  
+
   // Validate invariants
   if (!trimmedUsername) {
     throw new ValidationError('Username cannot be empty', 'username');
   }
-  
+
   if (!password) {
     throw new ValidationError('Password cannot be empty', 'password');
   }
-  
+
   if (trimmedUsername.length > 100) {
-    throw new ValidationError('Username cannot exceed 100 characters', 'username');
+    throw new ValidationError(
+      'Username cannot exceed 100 characters',
+      'username'
+    );
   }
-  
+
   // Create immutable object
   const credentials = {
     username: trimmedUsername,
     password,
   };
-  
+
   return Object.freeze(credentials);
 };
 
@@ -49,7 +52,9 @@ export const validateCredentials = (credentials: Credentials): boolean => {
 /**
  * Create credentials with masked password for logging
  */
-export const createMaskedCredentials = (credentials: Credentials): Credentials => {
+export const createMaskedCredentials = (
+  credentials: Credentials
+): Credentials => {
   return createCredentials(credentials.username, '***');
 };
 

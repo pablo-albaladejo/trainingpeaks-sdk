@@ -219,15 +219,35 @@ export type UserPreferences = z.infer<typeof UserPreferencesSchema>;
 export type WorkoutMetadata = z.infer<typeof WorkoutMetadataSchema>;
 
 // TrainingPeaks Settings Types
-export type TrainingPeaksAccountSettings = z.infer<typeof TrainingPeaksAccountSettingsSchema>;
-export type TrainingPeaksCalendarSettings = z.infer<typeof TrainingPeaksCalendarSettingsSchema>;
-export type TrainingPeaksWorkoutSettings = z.infer<typeof TrainingPeaksWorkoutSettingsSchema>;
+export type TrainingPeaksAccountSettings = z.infer<
+  typeof TrainingPeaksAccountSettingsSchema
+>;
+export type TrainingPeaksCalendarSettings = z.infer<
+  typeof TrainingPeaksCalendarSettingsSchema
+>;
+export type TrainingPeaksWorkoutSettings = z.infer<
+  typeof TrainingPeaksWorkoutSettingsSchema
+>;
 export type TrainingPeaksMetric = z.infer<typeof TrainingPeaksMetricSchema>;
-export type TrainingPeaksDateOptions = z.infer<typeof TrainingPeaksDateOptionsSchema>;
-export type TrainingPeaksDashboardPod = z.infer<typeof TrainingPeaksDashboardPodSchema>;
-export type TrainingPeaksDashboardSettings = z.infer<typeof TrainingPeaksDashboardSettingsSchema>;
-export type TrainingPeaksPromptPreferences = z.infer<typeof TrainingPeaksPromptPreferencesSchema>;
-export type TrainingPeaksPromptChoices = z.infer<typeof TrainingPeaksPromptChoicesSchema>;
-export type TrainingPeaksPromptDates = z.infer<typeof TrainingPeaksPromptDatesSchema>;
-export type TrainingPeaksPromptSettings = z.infer<typeof TrainingPeaksPromptSettingsSchema>;
+export type TrainingPeaksDateOptions = z.infer<
+  typeof TrainingPeaksDateOptionsSchema
+>;
+export type TrainingPeaksDashboardPod = z.infer<
+  typeof TrainingPeaksDashboardPodSchema
+>;
+export type TrainingPeaksDashboardSettings = z.infer<
+  typeof TrainingPeaksDashboardSettingsSchema
+>;
+export type TrainingPeaksPromptPreferences = z.infer<
+  typeof TrainingPeaksPromptPreferencesSchema
+>;
+export type TrainingPeaksPromptChoices = z.infer<
+  typeof TrainingPeaksPromptChoicesSchema
+>;
+export type TrainingPeaksPromptDates = z.infer<
+  typeof TrainingPeaksPromptDatesSchema
+>;
+export type TrainingPeaksPromptSettings = z.infer<
+  typeof TrainingPeaksPromptSettingsSchema
+>;
 export type TrainingPeaksSettings = z.infer<typeof TrainingPeaksSettingsSchema>;

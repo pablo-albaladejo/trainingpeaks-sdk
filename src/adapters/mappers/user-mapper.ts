@@ -3,19 +3,16 @@
  * Maps between TrainingPeaks API responses and domain entities
  */
 
-import type { User } from '@/domain';
 import type { TrainingPeaksUser } from '@/adapters/schemas/http-responses.schema';
+import type { User } from '@/domain';
 
 /**
  * Maps TrainingPeaks API user response to domain User entity
  */
-export const mapTPUserToUser = (
-  tpUser: TrainingPeaksUser
-): User => {
+export const mapTPUserToUser = (tpUser: TrainingPeaksUser): User => {
   return {
     id: tpUser.userId.toString(),
-    name: tpUser.fullName || 
-          `${tpUser.firstName} ${tpUser.lastName}`.trim(),
+    name: tpUser.fullName || `${tpUser.firstName} ${tpUser.lastName}`.trim(),
     avatar: tpUser.personPhotoUrl || undefined,
     preferences: {
       timezone: tpUser.timeZone,
@@ -31,9 +28,7 @@ export const mapTPUserToUser = (
 /**
  * Maps multiple TrainingPeaks users to domain users
  */
-export const mapTPUsersToUsers = (
-  tpUsers: TrainingPeaksUser[]
-): User[] => {
+export const mapTPUsersToUsers = (tpUsers: TrainingPeaksUser[]): User[] => {
   return tpUsers.map(mapTPUserToUser);
 };
 

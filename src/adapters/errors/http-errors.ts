@@ -131,14 +131,14 @@ export const createHttpError = (
         ERROR_CODES.NETWORK_SERVER_ERROR,
         errorContext
       );
-    
+
     case 502:
       return new HttpError(
         `Bad gateway: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.NETWORK_RESPONSE_INVALID,
         errorContext
       );
-    
+
     case 503:
       return new HttpError(
         `Service unavailable: ${getErrorMessage(data) || statusText}`,

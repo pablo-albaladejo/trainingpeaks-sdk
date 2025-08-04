@@ -4,25 +4,25 @@
  */
 
 import type {
-  TrainingPeaksSettings,
   TrainingPeaksAccountSettings,
   TrainingPeaksCalendarSettings,
-  TrainingPeaksWorkoutSettings,
   TrainingPeaksDashboardSettings,
-  TrainingPeaksPromptSettings,
-  TrainingPeaksMetric,
   TrainingPeaksDateOptions,
+  TrainingPeaksMetric,
+  TrainingPeaksPromptSettings,
+  TrainingPeaksSettings,
+  TrainingPeaksWorkoutSettings,
 } from '@/domain/schemas/value-objects.schema';
 
 export type {
-  TrainingPeaksSettings,
   TrainingPeaksAccountSettings,
   TrainingPeaksCalendarSettings,
-  TrainingPeaksWorkoutSettings,
   TrainingPeaksDashboardSettings,
-  TrainingPeaksPromptSettings,
-  TrainingPeaksMetric,
   TrainingPeaksDateOptions,
+  TrainingPeaksMetric,
+  TrainingPeaksPromptSettings,
+  TrainingPeaksSettings,
+  TrainingPeaksWorkoutSettings,
 };
 
 /**
@@ -54,7 +54,7 @@ export const createTrainingPeaksSettings = (
     appleWatch,
     privacy,
   };
-  
+
   return Object.freeze(settings);
 };
 
@@ -95,7 +95,7 @@ export const createAccountSettings = (
     premiumTrial,
     lastLogon,
   };
-  
+
   return Object.freeze(accountSettings);
 };
 
@@ -138,7 +138,7 @@ export const createCalendarSettings = (
     weekSummaryAtpLayout: [...weekSummaryAtpLayout], // Create copy
     showPayments,
   };
-  
+
   return Object.freeze(calendarSettings);
 };
 
@@ -153,11 +153,11 @@ export const createWorkoutSettings = (
   for (const [key, value] of Object.entries(layout)) {
     layoutCopy[key] = [...value];
   }
-  
+
   const workoutSettings: TrainingPeaksWorkoutSettings = {
     layout: layoutCopy,
   };
-  
+
   return Object.freeze(workoutSettings);
 };
 
@@ -174,7 +174,7 @@ export const createDateOptions = (
     startDate,
     endDate,
   };
-  
+
   return Object.freeze(dateOptions);
 };
 
@@ -185,14 +185,16 @@ export const createMetric = (type: number): TrainingPeaksMetric => {
   const metric: TrainingPeaksMetric = {
     type,
   };
-  
+
   return Object.freeze(metric);
 };
 
 /**
  * Check if settings have premium features enabled
  */
-export const hasPremiumFeatures = (settings: TrainingPeaksSettings): boolean => {
+export const hasPremiumFeatures = (
+  settings: TrainingPeaksSettings
+): boolean => {
   return settings.account.isPremium || settings.account.premiumTrial;
 };
 
@@ -220,6 +222,8 @@ export const getUserType = (settings: TrainingPeaksSettings): number => {
 /**
  * Get access group IDs
  */
-export const getAccessGroupIds = (settings: TrainingPeaksSettings): number[] => {
+export const getAccessGroupIds = (
+  settings: TrainingPeaksSettings
+): number[] => {
   return [...settings.account.accessGroupIds]; // Return copy
 };

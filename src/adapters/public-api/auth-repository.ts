@@ -1,5 +1,10 @@
 import { Logger } from '@/adapters';
 import { type HttpClient } from '@/adapters/http';
+import { mapTPTokenToAuthToken, mapTPUserToUser } from '@/adapters/mappers';
+import type {
+  TrainingPeaksTokenResponse,
+  TrainingPeaksUserResponse,
+} from '@/adapters/schemas/http-responses.schema';
 import { HttpResponse, Session, SessionStorage } from '@/application';
 import {
   AuthRepository,
@@ -8,14 +13,6 @@ import {
   type AuthToken,
   Credentials,
 } from '@/domain';
-import type {
-  TrainingPeaksTokenResponse,
-  TrainingPeaksUserResponse,
-} from '@/adapters/schemas/http-responses.schema';
-import { 
-  mapTPUserToUser,
-  mapTPTokenToAuthToken 
-} from '@/adapters/mappers';
 
 /**
  * Common browser headers used for TrainingPeaks API requests

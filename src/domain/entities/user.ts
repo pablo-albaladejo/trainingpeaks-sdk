@@ -21,19 +21,19 @@ export const createUser = (
   if (!id || id.trim().length === 0) {
     throw new ValidationError('User ID cannot be empty', 'id');
   }
-  
+
   if (!name || name.trim().length === 0) {
     throw new ValidationError('User name cannot be empty', 'name');
   }
-  
+
   if (name.trim().length > 100) {
     throw new ValidationError('User name cannot exceed 100 characters', 'name');
   }
-  
+
   if (avatar && !isValidUrl(avatar)) {
     throw new ValidationError('Avatar must be a valid URL', 'avatar');
   }
-  
+
   return {
     id: id.trim(),
     name: name.trim(),
@@ -49,11 +49,11 @@ export const updateUserName = (user: User, newName: string): User => {
   if (!newName || newName.trim().length === 0) {
     throw new ValidationError('User name cannot be empty', 'name');
   }
-  
+
   if (newName.trim().length > 100) {
     throw new ValidationError('User name cannot exceed 100 characters', 'name');
   }
-  
+
   return {
     ...user,
     name: newName.trim(),
@@ -78,7 +78,7 @@ export const updateUserAvatar = (user: User, avatar?: string): User => {
   if (avatar && !isValidUrl(avatar)) {
     throw new ValidationError('Avatar must be a valid URL', 'avatar');
   }
-  
+
   return {
     ...user,
     avatar,

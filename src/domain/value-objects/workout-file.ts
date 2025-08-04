@@ -54,7 +54,7 @@ export const createWorkoutFile = (
     content,
     mimeType: trimmedMimeType,
   };
-  
+
   return Object.freeze(workoutFile);
 };
 
@@ -109,7 +109,7 @@ export const updateWorkoutFileContent = (
   if (!newContent) {
     throw new ValidationError('File content cannot be empty', 'content');
   }
-  
+
   return createWorkoutFile(file.fileName, newContent, file.mimeType);
 };
 

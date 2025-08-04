@@ -4,7 +4,6 @@
  */
 
 export { createHttpClient } from './axios-http-client';
-
 export type {
   HttpClient,
   HttpClientConfig,

@@ -3,8 +3,8 @@
  * Maps between TrainingPeaks API token responses and domain AuthToken entities
  */
 
-import type { AuthToken } from '@/domain';
 import type { TrainingPeaksTokenResponse } from '@/adapters/schemas/http-responses.schema';
+import type { AuthToken } from '@/domain';
 
 /**
  * Maps TrainingPeaks API token response to domain AuthToken entity

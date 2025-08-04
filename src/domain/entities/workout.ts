@@ -47,41 +47,62 @@ export const createWorkout = (
   if (!id || id.trim().length === 0) {
     throw new ValidationError('Workout ID cannot be empty', 'id');
   }
-  
+
   if (!name || name.trim().length === 0) {
     throw new ValidationError('Workout name cannot be empty', 'name');
   }
-  
+
   if (name.trim().length > 200) {
-    throw new ValidationError('Workout name cannot exceed 200 characters', 'name');
+    throw new ValidationError(
+      'Workout name cannot exceed 200 characters',
+      'name'
+    );
   }
-  
+
   if (duration < 0) {
-    throw new ValidationError('Workout duration cannot be negative', 'duration');
+    throw new ValidationError(
+      'Workout duration cannot be negative',
+      'duration'
+    );
   }
-  
+
   if (!isFinite(duration)) {
-    throw new ValidationError('Workout duration must be a finite number', 'duration');
+    throw new ValidationError(
+      'Workout duration must be a finite number',
+      'duration'
+    );
   }
-  
+
   if (distance !== undefined && (distance < 0 || !isFinite(distance))) {
-    throw new ValidationError('Workout distance must be a non-negative finite number', 'distance');
+    throw new ValidationError(
+      'Workout distance must be a non-negative finite number',
+      'distance'
+    );
   }
-  
+
   if (description && description.length > 1000) {
-    throw new ValidationError('Workout description cannot exceed 1000 characters', 'description');
+    throw new ValidationError(
+      'Workout description cannot exceed 1000 characters',
+      'description'
+    );
   }
-  
+
   if (activityType && activityType.trim().length > 50) {
-    throw new ValidationError('Activity type cannot exceed 50 characters', 'activityType');
+    throw new ValidationError(
+      'Activity type cannot exceed 50 characters',
+      'activityType'
+    );
   }
-  
+
   if (fileName && fileName.trim().length > 255) {
-    throw new ValidationError('File name cannot exceed 255 characters', 'fileName');
+    throw new ValidationError(
+      'File name cannot exceed 255 characters',
+      'fileName'
+    );
   }
-  
+
   const now = new Date();
-  
+
   return {
     id: id.trim(),
     name: name.trim(),
@@ -110,13 +131,17 @@ export const createStructuredWorkout = (
   activityType?: string
 ): Workout => {
   if (!structure) {
-    throw new WorkoutValidationError('Workout structure is required for structured workout');
+    throw new WorkoutValidationError(
+      'Workout structure is required for structured workout'
+    );
   }
-  
+
   if (!structure.structure || structure.structure.length === 0) {
-    throw new WorkoutValidationError('Workout structure must contain at least one element');
+    throw new WorkoutValidationError(
+      'Workout structure must contain at least one element'
+    );
   }
-  
+
   const totalDuration = calculateWorkoutDuration(structure);
 
   return createWorkout(
@@ -136,29 +161,49 @@ export const createStructuredWorkout = (
  */
 export const updateWorkout = (
   workout: Workout,
-  updates: Partial<Pick<Workout, 'name' | 'description' | 'distance' | 'activityType'>>
+  updates: Partial<
+    Pick<Workout, 'name' | 'description' | 'distance' | 'activityType'>
+  >
 ): Workout => {
   // Validate updates
-  if (updates.name !== undefined && (!updates.name || updates.name.trim().length === 0)) {
+  if (
+    updates.name !== undefined &&
+    (!updates.name || updates.name.trim().length === 0)
+  ) {
     throw new ValidationError('Workout name cannot be empty', 'name');
   }
-  
+
   if (updates.name && updates.name.trim().length > 200) {
-    throw new ValidationError('Workout name cannot exceed 200 characters', 'name');
+    throw new ValidationError(
+      'Workout name cannot exceed 200 characters',
+      'name'
+    );
   }
-  
+
   if (updates.description && updates.description.length > 1000) {
-    throw new ValidationError('Workout description cannot exceed 1000 characters', 'description');
+    throw new ValidationError(
+      'Workout description cannot exceed 1000 characters',
+      'description'
+    );
   }
-  
-  if (updates.distance !== undefined && (updates.distance < 0 || !isFinite(updates.distance))) {
-    throw new ValidationError('Workout distance must be a non-negative finite number', 'distance');
+
+  if (
+    updates.distance !== undefined &&
+    (updates.distance < 0 || !isFinite(updates.distance))
+  ) {
+    throw new ValidationError(
+      'Workout distance must be a non-negative finite number',
+      'distance'
+    );
   }
-  
+
   if (updates.activityType && updates.activityType.trim().length > 50) {
-    throw new ValidationError('Activity type cannot exceed 50 characters', 'activityType');
+    throw new ValidationError(
+      'Activity type cannot exceed 50 characters',
+      'activityType'
+    );
   }
-  
+
   return {
     ...workout,
     ...updates,
@@ -183,7 +228,7 @@ export const getWorkoutDistance = (workout: Workout): number | undefined => {
   if (workout.distance !== undefined) {
     return workout.distance;
   }
-  
+
   // Could implement structure-based distance calculation here
   return undefined;
 };

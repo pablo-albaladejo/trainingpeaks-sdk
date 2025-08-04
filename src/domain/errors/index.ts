@@ -15,8 +15,7 @@ export class TrainingPeaksError extends SDKError {
   constructor(
     message: string,
     code?: ErrorCode,
-    context?: SDKErrorContext,
-    _originalError?: Error
+    context?: SDKErrorContext
   ) {
     super(message, code || ERROR_CODES.INTERNAL_ERROR, context);
     this.name = 'TrainingPeaksError';
@@ -27,8 +26,7 @@ export class TrainingPeaksError extends SDKError {
 export class ValidationError extends SDKError {
   constructor(
     message: string,
-    context?: SDKErrorContext,
-    _originalError?: Error
+    context?: SDKErrorContext
   ) {
     super(message, ERROR_CODES.VALIDATION_FAILED, context);
     this.name = 'ValidationError';
@@ -39,8 +37,7 @@ export class ValidationError extends SDKError {
 export class AuthenticationError extends SDKError {
   constructor(
     message: string,
-    context?: SDKErrorContext,
-    _originalError?: Error
+    context?: SDKErrorContext
   ) {
     super(message, ERROR_CODES.AUTH_FAILED, context);
     this.name = 'AuthenticationError';
@@ -51,8 +48,7 @@ export class AuthenticationError extends SDKError {
 export class NetworkError extends SDKError {
   constructor(
     message: string,
-    context?: SDKErrorContext,
-    _originalError?: Error
+    context?: SDKErrorContext
   ) {
     super(message, ERROR_CODES.NETWORK_REQUEST_FAILED, context);
     this.name = 'NetworkError';
@@ -63,8 +59,7 @@ export class NetworkError extends SDKError {
 export class AuthorizationError extends SDKError {
   constructor(
     message: string,
-    context?: SDKErrorContext,
-    _originalError?: Error
+    context?: SDKErrorContext
   ) {
     super(message, ERROR_CODES.AUTH_FAILED, context);
     this.name = 'AuthorizationError';
@@ -75,8 +70,7 @@ export class AuthorizationError extends SDKError {
 export class RateLimitError extends SDKError {
   constructor(
     message: string,
-    context?: SDKErrorContext,
-    _originalError?: Error
+    context?: SDKErrorContext
   ) {
     super(message, ERROR_CODES.NETWORK_REQUEST_FAILED, context);
     this.name = 'RateLimitError';
@@ -87,8 +81,7 @@ export class RateLimitError extends SDKError {
 export class WorkoutError extends SDKError {
   constructor(
     message: string,
-    context?: SDKErrorContext,
-    _originalError?: Error
+    context?: SDKErrorContext
   ) {
     super(message, ERROR_CODES.WORKOUT_CREATION_FAILED, context);
     this.name = 'WorkoutError';

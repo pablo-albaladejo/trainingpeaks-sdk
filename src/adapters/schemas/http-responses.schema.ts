@@ -5,8 +5,11 @@
 
 import { z } from 'zod';
 
-import { UserPreferencesSchema, TrainingPeaksSettingsSchema } from '@/domain/schemas/value-objects.schema';
 import { TrainingPeaksAthleteSchema } from '@/domain/schemas/entities.schema';
+import {
+  TrainingPeaksSettingsSchema,
+  UserPreferencesSchema,
+} from '@/domain/schemas/value-objects.schema';
 
 // UserResponse Schema
 export const UserResponseSchema = z.object({
@@ -245,6 +248,10 @@ export type UserStorageData = z.infer<typeof UserStorageDataSchema>;
 export type AuthTokenStorageData = z.infer<typeof AuthTokenStorageDataSchema>;
 
 // TrainingPeaks API Response Types
-export type TrainingPeaksTokenResponse = z.infer<typeof TrainingPeaksTokenResponseSchema>;
-export type TrainingPeaksUserResponse = z.infer<typeof TrainingPeaksUserResponseSchema>;
+export type TrainingPeaksTokenResponse = z.infer<
+  typeof TrainingPeaksTokenResponseSchema
+>;
+export type TrainingPeaksUserResponse = z.infer<
+  typeof TrainingPeaksUserResponseSchema
+>;
 export type TrainingPeaksUser = TrainingPeaksUserResponse['user'];

@@ -37,34 +37,40 @@ export const createTrainingPeaksAthlete = (
 ): TrainingPeaksAthlete => {
   // Validate invariants
   if (athleteId <= 0) {
-    throw new ValidationError('Athlete ID must be a positive number', 'athleteId');
+    throw new ValidationError(
+      'Athlete ID must be a positive number',
+      'athleteId'
+    );
   }
-  
+
   if (!firstName || firstName.trim().length === 0) {
     throw new ValidationError('First name cannot be empty', 'firstName');
   }
-  
+
   if (!lastName || lastName.trim().length === 0) {
     throw new ValidationError('Last name cannot be empty', 'lastName');
   }
-  
+
   if (!email || email.trim().length === 0) {
     throw new ValidationError('Email cannot be empty', 'email');
   }
-  
+
   if (!userName || userName.trim().length === 0) {
     throw new ValidationError('Username cannot be empty', 'userName');
   }
-  
+
   // Validate email format
   if (!isValidEmail(email)) {
     throw new ValidationError('Invalid email format', 'email');
   }
-  
+
   if (personPhotoUrl && !isValidUrl(personPhotoUrl)) {
-    throw new ValidationError('Person photo URL must be a valid URL', 'personPhotoUrl');
+    throw new ValidationError(
+      'Person photo URL must be a valid URL',
+      'personPhotoUrl'
+    );
   }
-  
+
   return {
     athleteId,
     firstName: firstName.trim(),
@@ -115,7 +121,9 @@ export const isCoachedAthlete = (athlete: TrainingPeaksAthlete): boolean => {
 /**
  * Get remaining premium trial days
  */
-export const getRemainingTrialDays = (athlete: TrainingPeaksAthlete): number => {
+export const getRemainingTrialDays = (
+  athlete: TrainingPeaksAthlete
+): number => {
   if (!athlete.premiumTrial) return 0;
   return Math.max(0, athlete.premiumTrialDaysRemaining);
 };

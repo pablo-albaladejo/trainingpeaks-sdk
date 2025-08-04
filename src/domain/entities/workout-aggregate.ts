@@ -5,7 +5,10 @@
  */
 
 import { ValidationError } from '@/domain/errors/domain-errors';
-import { WorkoutStructureError,WorkoutValidationError } from '@/domain/errors/workout-errors';
+import {
+  WorkoutStructureError,
+  WorkoutValidationError,
+} from '@/domain/errors/workout-errors';
 import type { Workout } from '@/domain/schemas/entities.schema';
 import type { WorkoutStructure } from '@/domain/schemas/workout-structure.schema';
 
@@ -127,7 +130,10 @@ export const removeWorkoutStructure = (
   newDuration: number
 ): WorkoutAggregate => {
   if (newDuration < 0 || !isFinite(newDuration)) {
-    throw new ValidationError('Duration must be a non-negative finite number', 'duration');
+    throw new ValidationError(
+      'Duration must be a non-negative finite number',
+      'duration'
+    );
   }
 
   const updatedWorkout = {
@@ -156,7 +162,10 @@ export const addWorkoutFile = (
   }
 
   if (fileName.trim().length > 255) {
-    throw new ValidationError('File name cannot exceed 255 characters', 'fileName');
+    throw new ValidationError(
+      'File name cannot exceed 255 characters',
+      'fileName'
+    );
   }
 
   const updatedWorkout = {
@@ -262,7 +271,9 @@ export const getAggregateSummary = (aggregate: WorkoutAggregate) => {
  */
 const validateWorkoutStructure = (structure: WorkoutStructure): void => {
   if (!structure.structure || structure.structure.length === 0) {
-    throw new WorkoutStructureError('Workout structure must contain at least one element');
+    throw new WorkoutStructureError(
+      'Workout structure must contain at least one element'
+    );
   }
 
   // Validate temporal consistency

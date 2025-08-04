@@ -11,4 +11,4 @@ export const HTTP_METHODS = {
   PATCH: 'PATCH',
 } as const;
 
-export type HttpMethod = typeof HTTP_METHODS[keyof typeof HTTP_METHODS]; 
+export type HttpMethod = (typeof HTTP_METHODS)[keyof typeof HTTP_METHODS];

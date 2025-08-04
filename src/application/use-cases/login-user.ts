@@ -3,8 +3,8 @@
  * Handles user authentication workflow
  */
 
-import { Credentials } from '@/domain';
 import type { Session } from '@/application/ports/session-storage';
+import { Credentials } from '@/domain';
 
 import { AuthenticateUser } from '../services';
 
@@ -22,8 +22,6 @@ export type ExecuteLoginUserUseCaseResult = (
  */
 export const executeLoginUserUseCase: ExecuteLoginUserUseCase =
   (authenticateUser: AuthenticateUser) =>
-  async (
-    credentials: Credentials
-  ): Promise<Session> => {
+  async (credentials: Credentials): Promise<Session> => {
     return await authenticateUser(credentials);
   };
