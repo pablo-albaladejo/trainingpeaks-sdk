@@ -487,9 +487,11 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
       throw new Error('Failed to get request verification token');
     }
 
-    const requestVerificationToken = getRequestVerificationToken(
-      response.data!
-    );
+    if (!response.data) {
+      throw new Error('No response data received from login page');
+    }
+
+    const requestVerificationToken = getRequestVerificationToken(response.data);
 
     if (!requestVerificationToken) {
       throw new Error('Request verification token not found');
@@ -519,7 +521,12 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
     if (!authTokenResponse.success) {
       throw new Error('Failed to get auth token');
     }
-    const authToken = authTokenResponse.data!.token;
+
+    if (!authTokenResponse.data) {
+      throw new Error('No auth token data received');
+    }
+
+    const authToken = authTokenResponse.data.token;
 
     // Get user information using the auth token
     const userResponse = await getUser(deps.httpClient, {
@@ -535,7 +542,11 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
       throw new Error('Failed to get user information');
     }
 
-    const userData = userResponse.data!;
+    if (!userResponse.data) {
+      throw new Error('No user data received');
+    }
+
+    const userData = userResponse.data;
 
     const session: Session = {
       token: {
