@@ -9,6 +9,18 @@ import {
   Credentials,
 } from '@/domain';
 
+/**
+ * Common browser headers used for TrainingPeaks API requests
+ */
+const BROWSER_HEADERS = {
+  'sec-ch-ua':
+    '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
+  'sec-ch-ua-mobile': '?0',
+  'sec-ch-ua-platform': '"macOS"',
+  'user-agent':
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+} as const;
+
 type AuthRepositoryDependencies = {
   httpClient: HttpClient;
   sessionStorage: SessionStorage;
@@ -38,17 +50,12 @@ const submitLogin = async (
         'content-type': 'application/x-www-form-urlencoded',
         origin: 'null',
         priority: 'u=0, i',
-        'sec-ch-ua':
-          '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"macOS"',
         'sec-fetch-dest': 'document',
         'sec-fetch-mode': 'navigate',
         'sec-fetch-site': 'same-origin',
         'sec-fetch-user': '?1',
         'upgrade-insecure-requests': '1',
-        'user-agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+        ...BROWSER_HEADERS,
       },
     }
   );
@@ -79,16 +86,11 @@ const getAuthToken = async (
         origin: 'https://app.trainingpeaks.com',
         priority: 'u=1, i',
         referer: 'https://app.trainingpeaks.com/',
-        'sec-ch-ua':
-          '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"macOS"',
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-site',
-        'user-agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
         Cookie: cookies,
+        ...BROWSER_HEADERS,
       },
     }
   );
@@ -443,15 +445,10 @@ const getUser = async (
         origin: 'https://app.trainingpeaks.com',
         priority: 'u=1, i',
         referer: 'https://app.trainingpeaks.com/',
-        'sec-ch-ua':
-          '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"macOS"',
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-site',
-        'user-agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+        ...BROWSER_HEADERS,
       },
     }
   );
