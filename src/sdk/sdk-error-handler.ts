@@ -4,7 +4,12 @@
  */
 
 import { HttpError } from '@/adapters/errors/http-errors';
-import { AuthenticationError, NetworkError, UserError, ValidationError } from '@/domain/errors/domain-errors';
+import {
+  AuthenticationError,
+  NetworkError,
+  UserError,
+  ValidationError,
+} from '@/domain/errors/domain-errors';
 import { ERROR_CODES } from '@/domain/errors/error-codes';
 import { SDKError } from '@/domain/errors/sdk-error';
 
@@ -29,7 +34,10 @@ export class ClientError extends SDKError {
       context?: Record<string, unknown>;
     } = {}
   ) {
-    super(message, code, { ...options.context, originalError: options.originalError });
+    super(message, code, {
+      ...options.context,
+      originalError: options.originalError,
+    });
     this.name = 'ClientError';
     this.operation = operation;
     this.suggestions = options.suggestions || [];
@@ -63,17 +71,12 @@ export const transformToClientError = (
 ): ClientError => {
   // Handle domain errors
   if (error instanceof AuthenticationError) {
-    return new ClientError(
-      error.message,
-      ERROR_CODES.AUTH_FAILED,
-      operation,
-      {
-        suggestions: getSuggestionsForCode(ERROR_CODES.AUTH_FAILED),
-        isRetryable: false,
-        originalError: error,
-        context,
-      }
-    );
+    return new ClientError(error.message, ERROR_CODES.AUTH_FAILED, operation, {
+      suggestions: getSuggestionsForCode(ERROR_CODES.AUTH_FAILED),
+      isRetryable: false,
+      originalError: error,
+      context,
+    });
   }
 
   if (error instanceof ValidationError) {
@@ -105,47 +108,32 @@ export const transformToClientError = (
   }
 
   if (error instanceof UserError) {
-    return new ClientError(
-      error.message,
-      error.code,
-      operation,
-      {
-        suggestions: getSuggestionsForCode(error.code),
-        isRetryable: false,
-        originalError: error,
-        context,
-      }
-    );
+    return new ClientError(error.message, error.code, operation, {
+      suggestions: getSuggestionsForCode(error.code),
+      isRetryable: false,
+      originalError: error,
+      context,
+    });
   }
 
   // Handle HTTP errors
   if (error instanceof HttpError) {
-    return new ClientError(
-      error.message,
-      error.code,
-      operation,
-      {
-        suggestions: getSuggestionsForHttpError(error),
-        isRetryable: error.status >= 500 || error.status === 429,
-        httpStatus: error.status,
-        originalError: error,
-        context: { ...context, url: error.url, method: error.method },
-      }
-    );
+    return new ClientError(error.message, error.code, operation, {
+      suggestions: getSuggestionsForHttpError(error),
+      isRetryable: error.status >= 500 || error.status === 429,
+      httpStatus: error.status,
+      originalError: error,
+      context: { ...context, url: error.url, method: error.method },
+    });
   }
 
   // Handle SDK errors
   if (error instanceof SDKError) {
-    return new ClientError(
-      error.message,
-      error.code,
-      operation,
-      {
-        suggestions: getSuggestionsForCode(error.code),
-        originalError: error,
-        context,
-      }
-    );
+    return new ClientError(error.message, error.code, operation, {
+      suggestions: getSuggestionsForCode(error.code),
+      originalError: error,
+      context,
+    });
   }
 
   // Handle generic errors
@@ -154,13 +142,16 @@ export const transformToClientError = (
     ERROR_CODES.UNKNOWN_ERROR,
     operation,
     {
-      suggestions: ['Check network connection', 'Verify API credentials', 'Try again later'],
+      suggestions: [
+        'Check network connection',
+        'Verify API credentials',
+        'Try again later',
+      ],
       originalError: error,
       context,
     }
   );
 };
-
 
 /**
  * Get actionable suggestions for HTTP errors
@@ -173,28 +164,28 @@ const getSuggestionsForHttpError = (error: HttpError): string[] => {
         'Ensure all required fields are included',
         'Verify data types match API expectations',
       ];
-    
+
     case 401:
       return [
         'Check if your authentication token is valid',
         'Try refreshing your authentication token',
         'Verify your API credentials are correct',
       ];
-    
+
     case 403:
       return [
         'Verify you have permission to access this resource',
         'Check if your account has the required subscription plan',
         'Contact support if you believe this is an error',
       ];
-    
+
     case 404:
       return [
         'Verify the resource ID exists',
         'Check if the resource has been deleted',
         'Ensure you have access to this resource',
       ];
-    
+
     case 408:
     case 504:
       return [
@@ -202,7 +193,7 @@ const getSuggestionsForHttpError = (error: HttpError): string[] => {
         'Check your network connection',
         'Consider increasing timeout settings',
       ];
-    
+
     case 429:
       return [
         'You have exceeded the rate limit',
@@ -210,7 +201,7 @@ const getSuggestionsForHttpError = (error: HttpError): string[] => {
         'Consider implementing exponential backoff',
         'Check your subscription plan for higher limits',
       ];
-    
+
     case 500:
     case 502:
     case 503:
@@ -220,7 +211,7 @@ const getSuggestionsForHttpError = (error: HttpError): string[] => {
         'Check the service status page',
         'Contact support if the issue persists',
       ];
-    
+
     default:
       return [
         'Check the HTTP status code for specific guidance',
@@ -242,28 +233,28 @@ const getSuggestionsForCode = (code: string): string[] => {
         'Check if your token has expired',
         'Try re-authenticating',
       ];
-    
+
     case ERROR_CODES.NETWORK_TIMEOUT:
       return [
         'Check your network connection',
         'Try again with a longer timeout',
         'Verify the service is available',
       ];
-    
+
     case ERROR_CODES.NETWORK_RATE_LIMITED:
       return [
         'Reduce the frequency of your requests',
         'Implement exponential backoff',
         'Check your rate limit allowance',
       ];
-    
+
     case ERROR_CODES.VALIDATION_FAILED:
       return [
         'Check your input parameters',
         'Ensure required fields are provided',
         'Verify data formats are correct',
       ];
-    
+
     default:
       return ['Check the error code documentation for specific guidance'];
   }
@@ -291,7 +282,7 @@ export const withClientResponseHandling = async <TSuccess, TError>(
  */
 export const createUserFriendlyMessage = (error: ClientError): string => {
   const baseMessage = `Operation "${error.operation}" failed`;
-  
+
   if (error.httpStatus) {
     switch (error.httpStatus) {
       case 401:
@@ -310,6 +301,6 @@ export const createUserFriendlyMessage = (error: ClientError): string => {
         return `${baseMessage}: ${error.message}`;
     }
   }
-  
+
   return `${baseMessage}: ${error.message}`;
 };
