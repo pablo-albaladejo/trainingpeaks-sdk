@@ -152,7 +152,7 @@ export const DEFAULT_API_URLS = createApiUrls();
 export const API_BASE_URLS = DEFAULT_API_URLS.baseUrls;
 
 /**
- * API Origins - derived from DEFAULT_API_URLS for backward compatibility  
+ * API Origins - derived from DEFAULT_API_URLS for backward compatibility
  */
 export const API_ORIGINS = DEFAULT_API_URLS.origins;
 
