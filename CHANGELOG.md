@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## 1.9.0 (2025-07-23)
+
+* feat: add comprehensive integration tests for authentication ([01a9caa](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/01a9caa))
+
 ## <small>1.8.1 (2025-07-23)</small>
 
 * refactor: centralize type definitions ([6add43a](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/6add43a))
