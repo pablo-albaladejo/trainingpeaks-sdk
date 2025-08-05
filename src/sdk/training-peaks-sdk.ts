@@ -11,7 +11,11 @@ import {
   createWorkoutRepository,
 } from '@/adapters/public-api';
 import { getSDKConfig, type TrainingPeaksClientConfig } from '@/config';
-import { getWorkoutsListEntrypoint,loginEntrypoint, logoutEntrypoint } from '@/entrypoints';
+import {
+  getWorkoutsListEntrypoint,
+  loginEntrypoint,
+  logoutEntrypoint,
+} from '@/entrypoints';
 
 /**
  * Creates a new TrainingPeaks SDK instance with unified authentication
@@ -29,12 +33,13 @@ export const createTrainingPeaksSdk = (
   });
   logger.info('TrainingPeaks SDK initialized', { config });
 
+  const sessionStorage = createInMemorySessionStorage();
+
   const httpClient = createHttpClient({
     enableCookies: true,
     logger,
+    sessionStorage, // Enable automatic Bearer token injection
   });
-
-  const sessionStorage = createInMemorySessionStorage();
 
   const authRepository = createAuthRepository({
     httpClient,
@@ -67,7 +72,11 @@ export const createTrainingPeaksSdk = (
     /**
      * Get workouts list for athlete between dates
      */
-    getWorkoutsList: getWorkoutsListEntrypoint({ tpRepository, sessionStorage, logger }),
+    getWorkoutsList: getWorkoutsListEntrypoint({
+      tpRepository,
+      sessionStorage,
+      logger,
+    }),
 
     /**
      * Logger

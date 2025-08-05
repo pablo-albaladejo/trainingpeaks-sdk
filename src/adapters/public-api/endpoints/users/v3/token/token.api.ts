@@ -21,7 +21,7 @@ export const getAuthToken = async (
     headers: {
       accept: '*/*',
       ...TRAININGPEAKS_API_HEADERS,
-      Cookie: cookies,
     },
+    cookies, // Use the new cookies option
   });
 };

@@ -62,6 +62,7 @@ const normalizeHttpClientConfig = (config: HttpClientConfig) => {
     retryMaxDelay: config.retryMaxDelay ?? DEFAULT_RETRY_CONFIG.maxDelay!,
     retryJitter: config.retryJitter ?? DEFAULT_RETRY_CONFIG.jitter!,
     logger: config.logger,
+    sessionStorage: config.sessionStorage,
   };
 };
 
@@ -155,6 +156,34 @@ const makeRequest = async <T>(
     timeout: config.options?.timeout ?? baseConfig.timeout,
     withCredentials: baseConfig.enableCookies ?? false,
   };
+
+  // Add Bearer token automatically if session storage is available
+  if (baseConfig.sessionStorage) {
+    try {
+      const session = await baseConfig.sessionStorage.get();
+      if (session?.token?.accessToken) {
+        axiosConfig.headers = {
+          ...axiosConfig.headers,
+          Authorization: `Bearer ${session.token.accessToken}`,
+        };
+      }
+    } catch (error) {
+      // Don't fail the request if session retrieval fails, just log it
+      if (baseConfig.logger) {
+        baseConfig.logger.warn('Failed to retrieve session for Bearer token', {
+          error,
+        });
+      }
+    }
+  }
+
+  // Add manual cookies if provided
+  if (config.options?.cookies) {
+    axiosConfig.headers = {
+      ...axiosConfig.headers,
+      Cookie: config.options.cookies,
+    };
+  }
 
   // Create retry handler with config
   const retryHandler = new RetryHandler({

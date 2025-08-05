@@ -1,6 +1,7 @@
 import type { HttpError } from '@/adapters/errors/http-errors';
 import type { Logger } from '@/adapters/logging/logger';
 import { type HttpMethod } from '@/application';
+import type { SessionStorage } from './session-storage';
 
 /**
  * Configuration options for HTTP requests
@@ -9,6 +10,7 @@ export interface RequestOptions {
   headers?: Record<string, string>;
   timeout?: number;
   params?: Record<string, string | number | boolean>;
+  cookies?: string;
 }
 
 /**
@@ -62,6 +64,8 @@ export type HttpClientConfig = {
   retryJitter?: boolean;
   // Logging configuration
   logger?: Logger;
+  // Session storage for automatic Bearer token injection
+  sessionStorage?: SessionStorage;
 };
 
 /**
