@@ -32,6 +32,7 @@ import {
   HttpError,
   type HttpErrorResponse,
 } from '../errors/http-errors';
+import { executeRequestWithRefresh } from './request-with-refresh';
 import { DEFAULT_RETRY_CONFIG, RetryHandler } from './retry-handler';
 
 /**
@@ -237,9 +238,22 @@ const makeRequest = async <T>(
   }
 
   try {
-    // Execute request with retry logic
+    // Execute request with retry logic and automatic token refresh
     const response: AxiosResponse<T> = await retryHandler.execute(
-      () => client.request(axiosConfig),
+      () => {
+        // Use refresh-enabled request if session storage is available
+        if (baseConfig.sessionStorage && baseConfig.logger) {
+          return executeRequestWithRefresh(axiosConfig, config, {
+            client,
+            sessionStorage: baseConfig.sessionStorage,
+            logger: baseConfig.logger,
+            maxRefreshRetries: 1,
+          });
+        } else {
+          // Fallback to normal request without refresh capability
+          return client.request(axiosConfig);
+        }
+      },
       {
         url: config.url,
         method: config.method,
@@ -300,7 +314,7 @@ const makeRequest = async <T>(
 /**
  * Handle and transform errors into standardized HttpError instances
  */
-const handleError = (
+export const handleError = (
   error: unknown,
   requestConfig: InternalRequestConfig,
   logger?: Logger,

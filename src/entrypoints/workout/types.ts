@@ -1,5 +1,5 @@
 import { Logger } from '@/adapters';
-import { SessionStorage,TrainingPeaksRepository } from '@/application';
+import { SessionStorage, TrainingPeaksRepository } from '@/application';
 import type { WorkoutListItem } from '@/domain';
 
 /**

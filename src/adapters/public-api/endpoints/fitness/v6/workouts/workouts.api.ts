@@ -3,9 +3,9 @@
  * HTTP API calls for fitness/v6/workouts endpoints
  */
 
+import { generateWorkoutListUrl } from '@/adapters/public-api/constants/api-urls';
 import type { HttpClient } from '@/application';
 
-import { generateWorkoutListUrl } from '@/adapters/public-api/constants/api-urls';
 import { GetWorkoutsListApiResponseSchema } from './workouts.schemas';
 import type {
   GetWorkoutsListApiResponse,

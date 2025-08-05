@@ -1,4 +1,4 @@
-import { describe, expect,it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { HTTP_STATUS, type HttpStatus } from './http-status';
 

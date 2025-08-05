@@ -1,4 +1,4 @@
-import { describe, expect,it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { HTTP_METHODS, type HttpMethod } from './http-methods';
 

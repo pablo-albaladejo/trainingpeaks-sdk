@@ -1,4 +1,6 @@
-import { beforeEach,describe, expect, it, vi } from 'vitest';
+/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Logger } from '@/adapters';
 import { HttpError } from '@/adapters/errors/http-errors';
@@ -71,7 +73,7 @@ describe('AuthRepository', () => {
 
   describe('login', () => {
     const validCredentials = createCredentials('testuser', 'password123');
-    
+
     const mockLoginPageResponse = `
       <html>
         <form>
@@ -104,7 +106,8 @@ describe('AuthRepository', () => {
 
     beforeEach(() => {
       // Mock successful login flow by default
-      vi.mocked(mockHttpClient.get).mockImplementation((url) => {
+      const mockedGet = vi.mocked(mockHttpClient.get);
+      mockedGet.mockImplementation((url) => {
         if (url.includes('login')) {
           return Promise.resolve({
             success: true,
@@ -123,10 +126,14 @@ describe('AuthRepository', () => {
             data: mockUserResponse,
           } as HttpResponse<typeof mockUserResponse>);
         }
-        return Promise.resolve({ success: false, error: new Error('Not found') });
+        return Promise.resolve({
+          success: false,
+          error: new HttpError('Not found', 404),
+        } as HttpResponse<unknown>);
       });
 
-      vi.mocked(mockHttpClient.post).mockResolvedValue({
+      const mockedPost = vi.mocked(mockHttpClient.post);
+      mockedPost.mockResolvedValue({
         success: true,
         cookies: ['Production_tpAuth=test-cookie-value; Path=/'],
       } as HttpResponse<unknown>);
@@ -134,7 +141,7 @@ describe('AuthRepository', () => {
 
     it('should successfully login with valid credentials', async () => {
       const repository = createAuthRepository(dependencies);
-      
+
       const session = await repository.login(validCredentials);
 
       expect(session).toBeDefined();
@@ -147,30 +154,33 @@ describe('AuthRepository', () => {
 
     it('should store session after successful login', async () => {
       const repository = createAuthRepository(dependencies);
-      
+
       await repository.login(validCredentials);
 
       expect(mockSessionStorage.set).toHaveBeenCalledOnce();
-      expect(vi.mocked(mockSessionStorage.set).mock.calls[0][0]).toMatchObject({
-        user: expect.objectContaining({ id: '123' }),
-        token: expect.objectContaining({ accessToken: 'access-token-123' }),
-      });
+      const setCall = vi.mocked(mockSessionStorage.set).mock.calls[0][0];
+      expect(setCall.user.id).toBe('123');
+      expect(setCall.token.accessToken).toBe('access-token-123');
     });
 
-    it('should throw validation error for invalid credentials', async () => {
+    it('should throw validation error for invalid credentials', () => {
       // Empty credentials should throw ValidationError from createCredentials
-      expect(() => createCredentials('', '')).toThrow('Username cannot be empty');
+      expect(() => createCredentials('', '')).toThrow(
+        'Username cannot be empty'
+      );
     });
 
     it('should throw error when login page request fails', async () => {
       vi.mocked(mockHttpClient.get).mockResolvedValue({
         success: false,
-        error: new Error('Network error'),
-      });
+        error: new HttpError('Network error', 500),
+      } as HttpResponse<unknown>);
 
       const repository = createAuthRepository(dependencies);
 
-      await expect(repository.login(validCredentials)).rejects.toThrow(HttpError);
+      await expect(repository.login(validCredentials)).rejects.toThrow(
+        HttpError
+      );
     });
 
     it('should throw error when request verification token is missing', async () => {
@@ -181,18 +191,22 @@ describe('AuthRepository', () => {
 
       const repository = createAuthRepository(dependencies);
 
-      await expect(repository.login(validCredentials)).rejects.toThrow(HttpError);
+      await expect(repository.login(validCredentials)).rejects.toThrow(
+        HttpError
+      );
     });
 
     it('should throw error when login submission fails', async () => {
       vi.mocked(mockHttpClient.post).mockResolvedValue({
         success: false,
-        error: new Error('Login failed'),
-      });
+        error: new HttpError('Login failed', 500),
+      } as HttpResponse<unknown>);
 
       const repository = createAuthRepository(dependencies);
 
-      await expect(repository.login(validCredentials)).rejects.toThrow(HttpError);
+      await expect(repository.login(validCredentials)).rejects.toThrow(
+        HttpError
+      );
     });
 
     it('should throw error when auth cookie is missing', async () => {
@@ -203,7 +217,9 @@ describe('AuthRepository', () => {
 
       const repository = createAuthRepository(dependencies);
 
-      await expect(repository.login(validCredentials)).rejects.toThrow(HttpError);
+      await expect(repository.login(validCredentials)).rejects.toThrow(
+        HttpError
+      );
     });
 
     it('should throw error when token request fails', async () => {
@@ -217,15 +233,20 @@ describe('AuthRepository', () => {
         if (url.includes('token')) {
           return Promise.resolve({
             success: false,
-            error: new Error('Token request failed'),
-          });
+            error: new HttpError('Token request failed', 500),
+          } as HttpResponse<unknown>);
         }
-        return Promise.resolve({ success: false, error: new Error('Not found') });
+        return Promise.resolve({
+          success: false,
+          error: new HttpError('Not found', 404),
+        } as HttpResponse<unknown>);
       });
 
       const repository = createAuthRepository(dependencies);
 
-      await expect(repository.login(validCredentials)).rejects.toThrow(HttpError);
+      await expect(repository.login(validCredentials)).rejects.toThrow(
+        HttpError
+      );
     });
 
     it('should throw error when user request fails', async () => {
@@ -248,12 +269,17 @@ describe('AuthRepository', () => {
             error: new Error('User request failed'),
           });
         }
-        return Promise.resolve({ success: false, error: new Error('Not found') });
+        return Promise.resolve({
+          success: false,
+          error: new HttpError('Not found', 404),
+        } as HttpResponse<unknown>);
       });
 
       const repository = createAuthRepository(dependencies);
 
-      await expect(repository.login(validCredentials)).rejects.toThrow(HttpError);
+      await expect(repository.login(validCredentials)).rejects.toThrow(
+        HttpError
+      );
     });
 
     it('should throw error when token is expired', async () => {
@@ -278,12 +304,17 @@ describe('AuthRepository', () => {
             data: expiredTokenResponse,
           } as HttpResponse<typeof expiredTokenResponse>);
         }
-        return Promise.resolve({ success: false, error: new Error('Not found') });
+        return Promise.resolve({
+          success: false,
+          error: new HttpError('Not found', 404),
+        } as HttpResponse<unknown>);
       });
 
       const repository = createAuthRepository(dependencies);
 
-      await expect(repository.login(validCredentials)).rejects.toThrow(HttpError);
+      await expect(repository.login(validCredentials)).rejects.toThrow(
+        HttpError
+      );
     });
 
     it('should handle missing response data gracefully', async () => {
@@ -294,36 +325,43 @@ describe('AuthRepository', () => {
             data: undefined, // Missing data
           } as HttpResponse<string>);
         }
-        return Promise.resolve({ success: false, error: new Error('Not found') });
+        return Promise.resolve({
+          success: false,
+          error: new HttpError('Not found', 404),
+        } as HttpResponse<unknown>);
       });
 
       const repository = createAuthRepository(dependencies);
 
-      await expect(repository.login(validCredentials)).rejects.toThrow(HttpError);
+      await expect(repository.login(validCredentials)).rejects.toThrow(
+        HttpError
+      );
     });
   });
 
   describe('logout', () => {
     it('should clear session storage', async () => {
       const repository = createAuthRepository(dependencies);
-      
+
       await repository.logout();
 
       expect(mockSessionStorage.clear).toHaveBeenCalledOnce();
     });
 
     it('should handle session storage errors gracefully', async () => {
-      vi.mocked(mockSessionStorage.clear).mockRejectedValue(new Error('Storage error'));
-      
+      vi.mocked(mockSessionStorage.clear).mockRejectedValue(
+        new Error('Storage error')
+      );
+
       const repository = createAuthRepository(dependencies);
-      
+
       // Should not throw, logout should always succeed
       await expect(repository.logout()).resolves.toBeUndefined();
     });
 
     it('should be idempotent', async () => {
       const repository = createAuthRepository(dependencies);
-      
+
       await repository.logout();
       await repository.logout();
       await repository.logout();
@@ -335,7 +373,7 @@ describe('AuthRepository', () => {
   describe('Integration Tests', () => {
     it('should handle complete login/logout cycle', async () => {
       const repository = createAuthRepository(dependencies);
-      
+
       // Setup successful login mocks
       vi.mocked(mockHttpClient.get).mockImplementation((url) => {
         if (url.includes('login')) {
@@ -357,7 +395,7 @@ describe('AuthRepository', () => {
                 scope: 'read',
               },
             },
-          } as HttpResponse<any>);
+          } as HttpResponse<unknown>);
         }
         if (url.includes('user')) {
           return Promise.resolve({
@@ -370,9 +408,12 @@ describe('AuthRepository', () => {
                 lastName: 'User',
               },
             },
-          } as HttpResponse<any>);
+          } as HttpResponse<unknown>);
         }
-        return Promise.resolve({ success: false, error: new Error('Not found') });
+        return Promise.resolve({
+          success: false,
+          error: new HttpError('Not found', 404),
+        } as HttpResponse<unknown>);
       });
 
       vi.mocked(mockHttpClient.post).mockResolvedValue({
@@ -383,13 +424,13 @@ describe('AuthRepository', () => {
       // Login
       const credentials = createCredentials('user', 'pass');
       const session = await repository.login(credentials);
-      
+
       expect(session).toBeDefined();
       expect(mockSessionStorage.set).toHaveBeenCalledWith(session);
 
       // Logout
       await repository.logout();
-      
+
       expect(mockSessionStorage.clear).toHaveBeenCalled();
     });
   });

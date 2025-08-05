@@ -5,7 +5,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { getWorkoutsListEntrypoint } from './entrypoint';
-import type { GetWorkoutsListCommand,WorkoutEntrypointDependencies } from './types';
+import type {
+  GetWorkoutsListCommand,
+  WorkoutEntrypointDependencies,
+} from './types';
 
 const mockLogger = {
   info: vi.fn(),

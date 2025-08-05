@@ -25,7 +25,11 @@ describe('HTTP Errors', () => {
         method: 'GET' as const,
       };
 
-      const error = new HttpError('Resource not found', ERROR_CODES.WORKOUT_NOT_FOUND, context);
+      const error = new HttpError(
+        'Resource not found',
+        ERROR_CODES.WORKOUT_NOT_FOUND,
+        context
+      );
 
       expect(error.name).toBe('HttpError');
       expect(error.message).toBe('Resource not found');
@@ -42,7 +46,11 @@ describe('HTTP Errors', () => {
         statusText: 'Internal Server Error',
       };
 
-      const error = new HttpError('Server error', ERROR_CODES.NETWORK_SERVER_ERROR, context);
+      const error = new HttpError(
+        'Server error',
+        ERROR_CODES.NETWORK_SERVER_ERROR,
+        context
+      );
 
       expect(error).toBeInstanceOf(Error);
       expect(error.name).toBe('HttpError');
@@ -57,7 +65,10 @@ describe('HTTP Errors', () => {
         data: { message: 'Invalid input' },
       };
 
-      const error = createHttpError(response, { url: '/api/test', method: 'POST' });
+      const error = createHttpError(response, {
+        url: '/api/test',
+        method: 'POST',
+      });
 
       expect(error.status).toBe(400);
       expect(error.code).toBe(ERROR_CODES.VALIDATION_FAILED);
@@ -160,10 +171,14 @@ describe('HTTP Errors', () => {
   describe('Type guards', () => {
     describe('isHttpError', () => {
       it('should return true for HttpError instances', () => {
-        const error = new HttpError('Test error', ERROR_CODES.NETWORK_REQUEST_FAILED, {
-          status: 500,
-          statusText: 'Error',
-        });
+        const error = new HttpError(
+          'Test error',
+          ERROR_CODES.NETWORK_REQUEST_FAILED,
+          {
+            status: 500,
+            statusText: 'Error',
+          }
+        );
 
         expect(isHttpError(error)).toBe(true);
       });
@@ -180,19 +195,27 @@ describe('HTTP Errors', () => {
 
     describe('isClientError', () => {
       it('should return true for 4xx status codes', () => {
-        const error = new HttpError('Client error', ERROR_CODES.VALIDATION_FAILED, {
-          status: 400,
-          statusText: 'Bad Request',
-        });
+        const error = new HttpError(
+          'Client error',
+          ERROR_CODES.VALIDATION_FAILED,
+          {
+            status: 400,
+            statusText: 'Bad Request',
+          }
+        );
 
         expect(isClientError(error)).toBe(true);
       });
 
       it('should return false for non-4xx status codes', () => {
-        const serverError = new HttpError('Server error', ERROR_CODES.NETWORK_SERVER_ERROR, {
-          status: 500,
-          statusText: 'Server Error',
-        });
+        const serverError = new HttpError(
+          'Server error',
+          ERROR_CODES.NETWORK_SERVER_ERROR,
+          {
+            status: 500,
+            statusText: 'Server Error',
+          }
+        );
 
         expect(isClientError(serverError)).toBe(false);
         expect(isClientError(new Error('Regular error'))).toBe(false);
@@ -201,19 +224,27 @@ describe('HTTP Errors', () => {
 
     describe('isServerError', () => {
       it('should return true for 5xx status codes', () => {
-        const error = new HttpError('Server error', ERROR_CODES.NETWORK_SERVER_ERROR, {
-          status: 500,
-          statusText: 'Server Error',
-        });
+        const error = new HttpError(
+          'Server error',
+          ERROR_CODES.NETWORK_SERVER_ERROR,
+          {
+            status: 500,
+            statusText: 'Server Error',
+          }
+        );
 
         expect(isServerError(error)).toBe(true);
       });
 
       it('should return false for non-5xx status codes', () => {
-        const clientError = new HttpError('Client error', ERROR_CODES.VALIDATION_FAILED, {
-          status: 400,
-          statusText: 'Bad Request',
-        });
+        const clientError = new HttpError(
+          'Client error',
+          ERROR_CODES.VALIDATION_FAILED,
+          {
+            status: 400,
+            statusText: 'Bad Request',
+          }
+        );
 
         expect(isServerError(clientError)).toBe(false);
         expect(isServerError(new Error('Regular error'))).toBe(false);
@@ -224,11 +255,15 @@ describe('HTTP Errors', () => {
       it('should return true for retryable status codes', () => {
         const retryableCodes = [500, 502, 503, 504, 408, 429];
 
-        retryableCodes.forEach(status => {
-          const error = new HttpError('Retryable error', ERROR_CODES.NETWORK_SERVER_ERROR, {
-            status,
-            statusText: 'Error',
-          });
+        retryableCodes.forEach((status) => {
+          const error = new HttpError(
+            'Retryable error',
+            ERROR_CODES.NETWORK_SERVER_ERROR,
+            {
+              status,
+              statusText: 'Error',
+            }
+          );
 
           expect(isRetryableError(error)).toBe(true);
         });
@@ -237,11 +272,15 @@ describe('HTTP Errors', () => {
       it('should return false for non-retryable status codes', () => {
         const nonRetryableCodes = [400, 401, 403, 404];
 
-        nonRetryableCodes.forEach(status => {
-          const error = new HttpError('Non-retryable error', ERROR_CODES.VALIDATION_FAILED, {
-            status,
-            statusText: 'Error',
-          });
+        nonRetryableCodes.forEach((status) => {
+          const error = new HttpError(
+            'Non-retryable error',
+            ERROR_CODES.VALIDATION_FAILED,
+            {
+              status,
+              statusText: 'Error',
+            }
+          );
 
           expect(isRetryableError(error)).toBe(false);
         });
@@ -256,7 +295,9 @@ describe('HTTP Errors', () => {
       it('should throw HttpError with 400 status', () => {
         const context = { url: '/api/test', method: 'POST' as const };
 
-        expect(() => throwValidationError('Validation failed', context)).toThrow(HttpError);
+        expect(() =>
+          throwValidationError('Validation failed', context)
+        ).toThrow(HttpError);
 
         try {
           throwValidationError('Validation failed', context);
@@ -274,7 +315,9 @@ describe('HTTP Errors', () => {
       it('should throw HttpError with 401 status', () => {
         const context = { url: '/api/test', method: 'GET' as const };
 
-        expect(() => throwUnauthorizedError('Access denied', context)).toThrow(HttpError);
+        expect(() => throwUnauthorizedError('Access denied', context)).toThrow(
+          HttpError
+        );
 
         try {
           throwUnauthorizedError('Access denied', context);
@@ -290,20 +333,28 @@ describe('HTTP Errors', () => {
 
     describe('throwServerError', () => {
       it('should re-throw HttpError if already HttpError', () => {
-        const originalError = new HttpError('Original error', ERROR_CODES.NETWORK_SERVER_ERROR, {
-          status: 500,
-          statusText: 'Server Error',
-        });
+        const originalError = new HttpError(
+          'Original error',
+          ERROR_CODES.NETWORK_SERVER_ERROR,
+          {
+            status: 500,
+            statusText: 'Server Error',
+          }
+        );
         const context = { url: '/api/test', method: 'GET' as const };
 
-        expect(() => throwServerError(originalError, 'Fallback', context)).toThrow(originalError);
+        expect(() =>
+          throwServerError(originalError, 'Fallback', context)
+        ).toThrow(originalError);
       });
 
       it('should create new HttpError for regular errors', () => {
         const originalError = new Error('Database connection failed');
         const context = { url: '/api/test', method: 'GET' as const };
 
-        expect(() => throwServerError(originalError, 'Fallback', context)).toThrow(HttpError);
+        expect(() =>
+          throwServerError(originalError, 'Fallback', context)
+        ).toThrow(HttpError);
 
         try {
           throwServerError(originalError, 'Fallback', context);
@@ -319,7 +370,9 @@ describe('HTTP Errors', () => {
       it('should use fallback message for non-Error objects', () => {
         const context = { url: '/api/test', method: 'GET' as const };
 
-        expect(() => throwServerError('string error', 'Fallback message', context)).toThrow(HttpError);
+        expect(() =>
+          throwServerError('string error', 'Fallback message', context)
+        ).toThrow(HttpError);
 
         try {
           throwServerError('string error', 'Fallback message', context);

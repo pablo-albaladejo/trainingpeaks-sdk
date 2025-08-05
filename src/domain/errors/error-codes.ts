@@ -90,7 +90,8 @@ export const ERROR_MESSAGES = {
     'Request verification token missing',
   [ERROR_CODES.AUTH_COOKIE_MISSING]: 'Required authentication cookie missing',
   [ERROR_CODES.AUTH_USER_DATA_MISSING]: 'User data missing from response',
-  [ERROR_CODES.AUTH_NO_ACTIVE_SESSION]: 'No active session found. Please login first.',
+  [ERROR_CODES.AUTH_NO_ACTIVE_SESSION]:
+    'No active session found. Please login first.',
 
   [ERROR_CODES.WORKOUT_CREATION_FAILED]: 'Failed to create workout',
   [ERROR_CODES.WORKOUT_UPLOAD_FAILED]: 'Failed to upload workout',

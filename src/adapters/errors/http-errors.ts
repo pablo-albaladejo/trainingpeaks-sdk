@@ -254,7 +254,7 @@ export const throwHttpErrorFromResponse: <T>(
   const errorMessage = response.error
     ? String(response.error)
     : `${operation} failed`;
-    
+
   const httpErrorResponse: HttpErrorResponse = {
     status: 0,
     statusText: 'Unknown Error',
@@ -376,9 +376,9 @@ export const throwCookieNotFoundError: (
 /**
  * Helper function to create and throw token expired error
  */
-export const throwTokenExpiredError: (
+export const throwTokenExpiredError: (context: ErrorRequestContext) => never = (
   context: ErrorRequestContext
-) => never = (context: ErrorRequestContext): never => {
+): never => {
   const httpErrorResponse: HttpErrorResponse = {
     status: 401,
     statusText: 'Unauthorized',

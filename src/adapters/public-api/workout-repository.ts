@@ -19,7 +19,6 @@ import {
 import { generateWorkoutListUrl } from './constants/api-urls';
 import { getWorkoutsList } from './endpoints';
 
-
 type WorkoutRepositoryDependencies = {
   httpClient: HttpClient;
   logger: Logger;
@@ -33,7 +32,6 @@ const createGetWorkoutsList = (
   ): Promise<readonly WorkoutListItem[]> => {
     try {
       deps.logger.info('Getting workouts list', { params });
-
 
       // Call the API endpoint
       const apiResponse = await getWorkoutsList(deps.httpClient, {
@@ -57,7 +55,13 @@ const createGetWorkoutsList = (
         method: 'GET',
       };
 
-      handleRepositoryError(error, 'get workouts list', errorContext, deps.logger, params);
+      handleRepositoryError(
+        error,
+        'get workouts list',
+        errorContext,
+        deps.logger,
+        params
+      );
     }
   };
 };

@@ -8,7 +8,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { TrainingPeaksClientConfig } from '@/config';
 
-import { createTrainingPeaksSdk, type TrainingPeaksSdk } from './training-peaks-sdk';
+import {
+  createTrainingPeaksSdk,
+  type TrainingPeaksSdk,
+} from './training-peaks-sdk';
 
 // Mock all dependencies to isolate SDK tests
 vi.mock('@/adapters', () => ({
@@ -123,7 +126,7 @@ describe('TrainingPeaks SDK', () => {
       const config1: TrainingPeaksClientConfig = {
         debug: { enabled: true, level: 'debug' },
       };
-      
+
       const config2: TrainingPeaksClientConfig = {
         debug: { enabled: false, level: 'error' },
       };
@@ -137,7 +140,7 @@ describe('TrainingPeaks SDK', () => {
       expect(sdk1.getWorkoutsList).not.toBe(sdk2.getWorkoutsList);
     });
 
-    it('should initialize logger with correct configuration', async () => {
+    it('should initialize logger with correct configuration', () => {
       const config: TrainingPeaksClientConfig = {
         debug: {
           enabled: true,
@@ -146,7 +149,7 @@ describe('TrainingPeaks SDK', () => {
       };
 
       const sdk = createTrainingPeaksSdk(config);
-      
+
       // Verify SDK was created successfully with logger
       expect(sdk.logger).toBeDefined();
       expect(typeof sdk.logger.info).toBe('function');
@@ -154,7 +157,7 @@ describe('TrainingPeaks SDK', () => {
 
     it('should initialize HTTP client with cookies enabled', () => {
       const sdk = createTrainingPeaksSdk(mockConfig);
-      
+
       // Verify SDK was created successfully (integration test)
       expect(sdk).toBeDefined();
       expect(sdk.login).toBeDefined();
@@ -164,7 +167,7 @@ describe('TrainingPeaks SDK', () => {
 
     it('should initialize session storage', () => {
       const sdk = createTrainingPeaksSdk(mockConfig);
-      
+
       // Verify SDK was created successfully
       expect(sdk).toBeDefined();
       expect(sdk.getWorkoutsList).toBeDefined(); // This requires session storage
@@ -172,7 +175,7 @@ describe('TrainingPeaks SDK', () => {
 
     it('should initialize repositories with correct dependencies', () => {
       const sdk = createTrainingPeaksSdk(mockConfig);
-      
+
       // Verify all methods are available (integration test)
       expect(sdk.login).toBeDefined();
       expect(sdk.logout).toBeDefined();
@@ -181,7 +184,7 @@ describe('TrainingPeaks SDK', () => {
 
     it('should initialize entrypoints with correct dependencies', () => {
       const sdk = createTrainingPeaksSdk(mockConfig);
-      
+
       // Verify entrypoints are properly wired
       expect(typeof sdk.login).toBe('function');
       expect(typeof sdk.logout).toBe('function');
@@ -221,7 +224,7 @@ describe('TrainingPeaks SDK', () => {
 
     it('should not expose internal dependencies', () => {
       const sdkKeys = Object.keys(sdk);
-      
+
       expect(sdkKeys).toEqual(['login', 'logout', 'getWorkoutsList', 'logger']);
       expect(sdkKeys).not.toContain('httpClient');
       expect(sdkKeys).not.toContain('sessionStorage');
@@ -239,7 +242,7 @@ describe('TrainingPeaks SDK', () => {
       };
 
       const sdk = createTrainingPeaksSdk(customConfig);
-      
+
       // Verify SDK was created successfully with custom config
       expect(sdk).toBeDefined();
       expect(sdk.login).toBeDefined();
@@ -247,7 +250,7 @@ describe('TrainingPeaks SDK', () => {
 
     it('should handle undefined configuration', () => {
       const sdk = createTrainingPeaksSdk();
-      
+
       // Verify SDK works with default configuration
       expect(sdk).toBeDefined();
       expect(sdk.login).toBeDefined();
@@ -261,7 +264,7 @@ describe('TrainingPeaks SDK', () => {
       };
 
       const sdk = createTrainingPeaksSdk(partialConfig);
-      
+
       // Verify SDK works with partial configuration
       expect(sdk).toBeDefined();
       expect(sdk.logger).toBeDefined();
@@ -273,34 +276,30 @@ describe('TrainingPeaks SDK', () => {
       const sdk = createTrainingPeaksSdk(mockConfig);
 
       // TypeScript compilation ensures proper typing
-      expect(sdk).toMatchObject({
-        login: expect.any(Function),
-        logout: expect.any(Function),
-        getWorkoutsList: expect.any(Function),
-        logger: expect.objectContaining({
-          info: expect.any(Function),
-          error: expect.any(Function),
-          warn: expect.any(Function),
-          debug: expect.any(Function),
-        }),
-      });
+      expect(typeof sdk.login).toBe('function');
+      expect(typeof sdk.logout).toBe('function');
+      expect(typeof sdk.getWorkoutsList).toBe('function');
+      expect(typeof sdk.logger.info).toBe('function');
+      expect(typeof sdk.logger.error).toBe('function');
+      expect(typeof sdk.logger.warn).toBe('function');
+      expect(typeof sdk.logger.debug).toBe('function');
     });
 
     it('should infer return type correctly', () => {
       type ExpectedSDKType = {
-        login: Function;
-        logout: Function;
-        getWorkoutsList: Function;
+        login: (...args: unknown[]) => unknown;
+        logout: (...args: unknown[]) => unknown;
+        getWorkoutsList: (...args: unknown[]) => unknown;
         logger: {
-          info: Function;
-          error: Function;
-          warn: Function;
-          debug: Function;
+          info: (...args: unknown[]) => unknown;
+          error: (...args: unknown[]) => unknown;
+          warn: (...args: unknown[]) => unknown;
+          debug: (...args: unknown[]) => unknown;
         };
       };
 
       const sdk = createTrainingPeaksSdk(mockConfig);
-      
+
       // Type assertion to verify structural compatibility
       const typedSdk: ExpectedSDKType = sdk;
       expect(typedSdk).toBeDefined();
@@ -312,7 +311,7 @@ describe('TrainingPeaks SDK', () => {
       // Test with invalid config structure
       const invalidConfig = {
         debug: {
-          level: 'invalid-level' as any,
+          level: 'invalid-level' as 'debug' | 'info' | 'warn' | 'error',
         },
       };
 
@@ -322,7 +321,7 @@ describe('TrainingPeaks SDK', () => {
 
     it('should create SDK even with empty config', () => {
       const sdk = createTrainingPeaksSdk({});
-      
+
       expect(sdk).toBeDefined();
       expect(sdk.login).toBeDefined();
       expect(sdk.logout).toBeDefined();
@@ -341,12 +340,12 @@ describe('TrainingPeaks SDK', () => {
       expect(sdk.logout).toBeDefined();
       expect(sdk.getWorkoutsList).toBeDefined();
       expect(sdk.logger).toBeDefined();
-      
+
       // Verify methods are functions
       expect(typeof sdk.login).toBe('function');
       expect(typeof sdk.logout).toBe('function');
       expect(typeof sdk.getWorkoutsList).toBe('function');
-      
+
       // Verify logger has expected methods
       expect(typeof sdk.logger.info).toBe('function');
       expect(typeof sdk.logger.error).toBe('function');
@@ -357,11 +356,11 @@ describe('TrainingPeaks SDK', () => {
     it('should create functional SDK instances', () => {
       const sdk1 = createTrainingPeaksSdk({ debug: { enabled: true } });
       const sdk2 = createTrainingPeaksSdk({ debug: { enabled: false } });
-      
+
       // Both instances should be fully functional
       expect(sdk1).toBeDefined();
       expect(sdk2).toBeDefined();
-      
+
       // They should be different instances
       expect(sdk1).not.toBe(sdk2);
       expect(sdk1.login).not.toBe(sdk2.login);

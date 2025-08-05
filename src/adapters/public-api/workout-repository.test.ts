@@ -79,10 +79,15 @@ describe('createWorkoutRepository', () => {
       const result = await workoutRepository.getWorkoutsList(params);
 
       expect(result).toEqual(mockWorkouts);
-      expect(mockLogger.info).toHaveBeenCalledWith('Getting workouts list', { params });
-      expect(mockLogger.info).toHaveBeenCalledWith('Workouts list retrieved successfully', {
-        count: 1,
+      expect(mockLogger.info).toHaveBeenCalledWith('Getting workouts list', {
+        params,
       });
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'Workouts list retrieved successfully',
+        {
+          count: 1,
+        }
+      );
     });
 
     it('should handle HTTP errors and re-throw them', async () => {
@@ -111,7 +116,9 @@ describe('createWorkoutRepository', () => {
         endDate: '2025-01-02',
       };
 
-      await expect(workoutRepository.getWorkoutsList(params)).rejects.toThrow(httpError);
+      await expect(workoutRepository.getWorkoutsList(params)).rejects.toThrow(
+        httpError
+      );
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to get workouts list',
         { error: httpError, params }

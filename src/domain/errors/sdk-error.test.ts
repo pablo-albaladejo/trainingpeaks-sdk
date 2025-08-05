@@ -20,7 +20,11 @@ describe('SDKError', () => {
         timestamp: Date.now(),
       };
 
-      const error = new SDKError('Test error with context', 'TEST_002', context);
+      const error = new SDKError(
+        'Test error with context',
+        'TEST_002',
+        context
+      );
 
       expect(error.message).toBe('Test error with context');
       expect(error.code).toBe('TEST_002');
@@ -111,9 +115,14 @@ describe('SDKError', () => {
         context: error.context,
       });
 
-      expect(() => JSON.parse(serialized)).not.toThrow();
-      
-      const parsed = JSON.parse(serialized);
+      expect(() => JSON.parse(serialized) as unknown).not.toThrow();
+
+      const parsed = JSON.parse(serialized) as {
+        name: string;
+        message: string;
+        code: string;
+        context: unknown;
+      };
       expect(parsed.name).toBe('SDKError');
       expect(parsed.message).toBe('Serializable error');
       expect(parsed.code).toBe('TEST_011');

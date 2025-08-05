@@ -1,4 +1,4 @@
-import { describe, expect,it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { AUTH_CONSTANTS, type AuthConstant } from './auth';
 

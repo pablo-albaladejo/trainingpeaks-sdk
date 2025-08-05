@@ -1,0 +1,133 @@
+/**
+ * Request with Automatic Token Refresh
+ * Handles automatic token refresh on 401 errors
+ */
+
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+
+import type {
+  HttpResponse,
+  InternalRequestConfig,
+  SessionStorage,
+} from '@/application';
+
+import type { Logger } from '../logging/logger';
+import { createTokenRefreshHandler } from './token-refresh-handler';
+
+/**
+ * Configuration for request with refresh
+ */
+type RequestWithRefreshConfig = {
+  client: AxiosInstance;
+  sessionStorage: SessionStorage;
+  logger: Logger;
+  maxRefreshRetries?: number;
+};
+
+/**
+ * Executes HTTP request with automatic token refresh on 401 errors
+ */
+export const executeRequestWithRefresh = async <T>(
+  axiosConfig: AxiosRequestConfig,
+  requestConfig: InternalRequestConfig,
+  config: RequestWithRefreshConfig
+): Promise<AxiosResponse<T>> => {
+  const { client, sessionStorage, logger, maxRefreshRetries = 1 } = config;
+  let retries = 0;
+
+  while (retries <= maxRefreshRetries) {
+    try {
+      // Execute the request
+      const response = await client.request<T>(axiosConfig);
+      return response;
+    } catch (error: unknown) {
+      // Check if it's a 401 error and we have refresh capability
+      const is401Error =
+        (error as { response?: { status?: number } })?.response?.status === 401;
+      const isLastRetry = retries >= maxRefreshRetries;
+
+      if (!is401Error || isLastRetry) {
+        // Not a 401 error or no more retries left, propagate the error
+        throw error;
+      }
+
+      logger.warn('Received 401 error, attempting token refresh', {
+        url: requestConfig.url,
+        method: requestConfig.method,
+        retry: retries + 1,
+        maxRetries: maxRefreshRetries,
+      });
+
+      // Create a simple HTTP client for refresh (to avoid circular dependency)
+      const refreshHttpClient = {
+        get: async <TData>(url: string, options?: Record<string, unknown>) => {
+          const response = await client.request<TData>({
+            method: 'GET',
+            url,
+            ...options,
+          });
+          return {
+            data: response.data,
+            success: true,
+            cookies: [],
+          } as HttpResponse<TData>;
+        },
+        post: async <TData>(
+          url: string,
+          data?: unknown,
+          options?: Record<string, unknown>
+        ) => {
+          const response = await client.request<TData>({
+            method: 'POST',
+            url,
+            data,
+            ...options,
+          });
+          return {
+            data: response.data,
+            success: true,
+            cookies: [],
+          } as HttpResponse<TData>;
+        },
+        put: async <TData>(): Promise<HttpResponse<TData>> =>
+          Promise.resolve({ data: null as TData, success: false, cookies: [] }),
+        patch: async <TData>(): Promise<HttpResponse<TData>> =>
+          Promise.resolve({ data: null as TData, success: false, cookies: [] }),
+        delete: async <TData>(): Promise<HttpResponse<TData>> =>
+          Promise.resolve({ data: null as TData, success: false, cookies: [] }),
+      };
+
+      // Attempt token refresh
+      const tokenHandler = createTokenRefreshHandler(
+        refreshHttpClient,
+        sessionStorage,
+        logger
+      );
+
+      const refreshedToken = await tokenHandler.ensureValidToken();
+
+      if (!refreshedToken) {
+        logger.error('Token refresh failed, cannot retry request');
+        throw error; // Original 401 error
+      }
+
+      // Update the Authorization header with new token
+      axiosConfig.headers = {
+        ...axiosConfig.headers,
+        Authorization: `Bearer ${refreshedToken.accessToken}`,
+      };
+
+      logger.info('Token refreshed successfully, retrying request', {
+        url: requestConfig.url,
+        method: requestConfig.method,
+        retry: retries + 1,
+      });
+
+      retries++;
+      // Continue the loop to retry the request
+    }
+  }
+
+  // This should never be reached, but TypeScript requires it
+  throw new Error('Unexpected end of retry loop');
+};

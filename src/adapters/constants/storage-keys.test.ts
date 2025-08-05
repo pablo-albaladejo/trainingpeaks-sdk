@@ -1,4 +1,4 @@
-import { describe, expect,it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { STORAGE_KEYS, type StorageKey } from './storage-keys';
 

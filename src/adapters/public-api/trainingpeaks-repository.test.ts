@@ -43,7 +43,9 @@ describe('TrainingPeaksRepository', () => {
     it('should delegate getWorkoutsList to workout repository', () => {
       const repository = createTrainingPeaksRepository(dependencies);
 
-      expect(repository.getWorkoutsList).toBe(mockWorkoutRepository.getWorkoutsList);
+      expect(repository.getWorkoutsList).toBe(
+        mockWorkoutRepository.getWorkoutsList
+      );
     });
 
     it('should create different instances for different dependencies', () => {
@@ -83,10 +85,12 @@ describe('TrainingPeaksRepository', () => {
 
       // Verify all required methods exist
       const requiredMethods = ['login', 'logout', 'getWorkoutsList'];
-      
-      requiredMethods.forEach(method => {
+
+      requiredMethods.forEach((method) => {
         expect(repository).toHaveProperty(method);
-        expect(typeof repository[method as keyof typeof repository]).toBe('function');
+        expect(typeof repository[method as keyof typeof repository]).toBe(
+          'function'
+        );
       });
     });
 
@@ -113,7 +117,9 @@ describe('TrainingPeaksRepository', () => {
 
       expect(repository.login).toBe(newAuthRepository.login);
       expect(repository.logout).toBe(newAuthRepository.logout);
-      expect(repository.getWorkoutsList).toBe(mockWorkoutRepository.getWorkoutsList);
+      expect(repository.getWorkoutsList).toBe(
+        mockWorkoutRepository.getWorkoutsList
+      );
     });
 
     it('should handle workout repository replacement', () => {
@@ -128,7 +134,9 @@ describe('TrainingPeaksRepository', () => {
 
       expect(repository.login).toBe(mockAuthRepository.login);
       expect(repository.logout).toBe(mockAuthRepository.logout);
-      expect(repository.getWorkoutsList).toBe(newWorkoutRepository.getWorkoutsList);
+      expect(repository.getWorkoutsList).toBe(
+        newWorkoutRepository.getWorkoutsList
+      );
     });
   });
 });

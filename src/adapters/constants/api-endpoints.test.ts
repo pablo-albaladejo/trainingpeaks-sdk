@@ -1,4 +1,4 @@
-import { describe, expect,it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { API_ENDPOINTS, type ApiEndpointPath } from './api-endpoints';
 

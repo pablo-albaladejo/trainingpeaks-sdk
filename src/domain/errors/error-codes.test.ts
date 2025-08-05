@@ -56,16 +56,16 @@ describe('Error Codes', () => {
       const authCodes = Object.entries(ERROR_CODES)
         .filter(([key]) => key.startsWith('AUTH_'))
         .map(([, value]) => value);
-      
-      authCodes.forEach(code => {
+
+      authCodes.forEach((code) => {
         expect(code).toMatch(/^AUTH_1\d{3}$/);
       });
 
       const workoutCodes = Object.entries(ERROR_CODES)
         .filter(([key]) => key.startsWith('WORKOUT_'))
         .map(([, value]) => value);
-      
-      workoutCodes.forEach(code => {
+
+      workoutCodes.forEach((code) => {
         expect(code).toMatch(/^WORKOUT_2\d{3}$/);
       });
     });
@@ -76,7 +76,7 @@ describe('Error Codes', () => {
       const errorCodes = Object.values(ERROR_CODES);
       const messageKeys = Object.keys(ERROR_MESSAGES);
 
-      errorCodes.forEach(code => {
+      errorCodes.forEach((code) => {
         expect(messageKeys).toContain(code);
         expect(ERROR_MESSAGES[code as ErrorCode]).toBeDefined();
         expect(typeof ERROR_MESSAGES[code as ErrorCode]).toBe('string');
@@ -85,23 +85,37 @@ describe('Error Codes', () => {
     });
 
     it('should have meaningful authentication error messages', () => {
-      expect(ERROR_MESSAGES[ERROR_CODES.AUTH_FAILED]).toBe('Authentication failed');
-      expect(ERROR_MESSAGES[ERROR_CODES.AUTH_TOKEN_EXPIRED]).toBe('Authentication token has expired');
-      expect(ERROR_MESSAGES[ERROR_CODES.AUTH_INVALID_CREDENTIALS]).toBe('Invalid credentials provided');
+      expect(ERROR_MESSAGES[ERROR_CODES.AUTH_FAILED]).toBe(
+        'Authentication failed'
+      );
+      expect(ERROR_MESSAGES[ERROR_CODES.AUTH_TOKEN_EXPIRED]).toBe(
+        'Authentication token has expired'
+      );
+      expect(ERROR_MESSAGES[ERROR_CODES.AUTH_INVALID_CREDENTIALS]).toBe(
+        'Invalid credentials provided'
+      );
     });
 
     it('should have meaningful workout error messages', () => {
-      expect(ERROR_MESSAGES[ERROR_CODES.WORKOUT_NOT_FOUND]).toBe('Workout not found');
-      expect(ERROR_MESSAGES[ERROR_CODES.WORKOUT_VALIDATION_FAILED]).toBe('Workout validation failed');
+      expect(ERROR_MESSAGES[ERROR_CODES.WORKOUT_NOT_FOUND]).toBe(
+        'Workout not found'
+      );
+      expect(ERROR_MESSAGES[ERROR_CODES.WORKOUT_VALIDATION_FAILED]).toBe(
+        'Workout validation failed'
+      );
     });
 
     it('should have meaningful network error messages', () => {
-      expect(ERROR_MESSAGES[ERROR_CODES.NETWORK_TIMEOUT]).toBe('Network request timed out');
-      expect(ERROR_MESSAGES[ERROR_CODES.NETWORK_RATE_LIMITED]).toBe('Rate limit exceeded');
+      expect(ERROR_MESSAGES[ERROR_CODES.NETWORK_TIMEOUT]).toBe(
+        'Network request timed out'
+      );
+      expect(ERROR_MESSAGES[ERROR_CODES.NETWORK_RATE_LIMITED]).toBe(
+        'Rate limit exceeded'
+      );
     });
 
     it('should not have empty or whitespace-only messages', () => {
-      Object.values(ERROR_MESSAGES).forEach(message => {
+      Object.values(ERROR_MESSAGES).forEach((message) => {
         expect(message.trim()).toBe(message);
         expect(message.length).toBeGreaterThan(0);
       });
@@ -113,7 +127,7 @@ describe('Error Codes', () => {
       const errorCodes = Object.values(ERROR_CODES);
       const statusKeys = Object.keys(ERROR_STATUS_CODES);
 
-      errorCodes.forEach(code => {
+      errorCodes.forEach((code) => {
         expect(statusKeys).toContain(code);
         expect(ERROR_STATUS_CODES[code as ErrorCode]).toBeDefined();
         expect(typeof ERROR_STATUS_CODES[code as ErrorCode]).toBe('number');
@@ -125,7 +139,9 @@ describe('Error Codes', () => {
       expect(ERROR_STATUS_CODES[ERROR_CODES.AUTH_FAILED]).toBe(401);
       expect(ERROR_STATUS_CODES[ERROR_CODES.AUTH_TOKEN_EXPIRED]).toBe(401);
       expect(ERROR_STATUS_CODES[ERROR_CODES.AUTH_TOKEN_INVALID]).toBe(401);
-      expect(ERROR_STATUS_CODES[ERROR_CODES.AUTH_INVALID_CREDENTIALS]).toBe(401);
+      expect(ERROR_STATUS_CODES[ERROR_CODES.AUTH_INVALID_CREDENTIALS]).toBe(
+        401
+      );
     });
 
     it('should map not found errors to 404', () => {
@@ -135,14 +151,20 @@ describe('Error Codes', () => {
 
     it('should map validation errors to 400 (Bad Request)', () => {
       expect(ERROR_STATUS_CODES[ERROR_CODES.VALIDATION_FAILED]).toBe(400);
-      expect(ERROR_STATUS_CODES[ERROR_CODES.VALIDATION_REQUIRED_FIELD]).toBe(400);
-      expect(ERROR_STATUS_CODES[ERROR_CODES.WORKOUT_VALIDATION_FAILED]).toBe(400);
+      expect(ERROR_STATUS_CODES[ERROR_CODES.VALIDATION_REQUIRED_FIELD]).toBe(
+        400
+      );
+      expect(ERROR_STATUS_CODES[ERROR_CODES.WORKOUT_VALIDATION_FAILED]).toBe(
+        400
+      );
     });
 
     it('should map server errors to 5xx range', () => {
       expect(ERROR_STATUS_CODES[ERROR_CODES.INTERNAL_ERROR]).toBe(500);
       expect(ERROR_STATUS_CODES[ERROR_CODES.NETWORK_SERVER_ERROR]).toBe(500);
-      expect(ERROR_STATUS_CODES[ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE]).toBe(503);
+      expect(ERROR_STATUS_CODES[ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE]).toBe(
+        503
+      );
     });
 
     it('should map rate limiting to 429', () => {
@@ -154,9 +176,7 @@ describe('Error Codes', () => {
     });
 
     it('should use valid HTTP status codes', () => {
-      const validStatusCodes = [200, 201, 204, 400, 401, 403, 404, 408, 409, 422, 429, 500, 501, 502, 503, 504];
-      
-      Object.values(ERROR_STATUS_CODES).forEach(statusCode => {
+      Object.values(ERROR_STATUS_CODES).forEach((statusCode) => {
         expect(statusCode).toBeGreaterThanOrEqual(400);
         expect(statusCode).toBeLessThan(600);
         expect(Number.isInteger(statusCode)).toBe(true);
@@ -179,7 +199,7 @@ describe('Error Codes', () => {
         ERROR_CODES.UNKNOWN_ERROR,
       ];
 
-      errorCodes.forEach(code => {
+      errorCodes.forEach((code) => {
         expect(typeof code).toBe('string');
         expect(ERROR_MESSAGES[code]).toBeDefined();
         expect(ERROR_STATUS_CODES[code]).toBeDefined();
@@ -206,8 +226,8 @@ describe('Error Codes', () => {
 
     it('should have consistent key names across objects', () => {
       const errorCodeKeys = Object.keys(ERROR_CODES);
-      
-      errorCodeKeys.forEach(key => {
+
+      errorCodeKeys.forEach((key) => {
         const errorCode = ERROR_CODES[key as keyof typeof ERROR_CODES];
         expect(ERROR_MESSAGES[errorCode as ErrorCode]).toBeDefined();
         expect(ERROR_STATUS_CODES[errorCode as ErrorCode]).toBeDefined();

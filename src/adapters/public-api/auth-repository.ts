@@ -30,7 +30,6 @@ import {
 import type { TokenEndpointResponse } from './endpoints/users/v3/token';
 import type { UserProfileEndpointResponse } from './endpoints/users/v3/user';
 
-
 type AuthRepositoryDependencies = {
   httpClient: HttpClient;
   sessionStorage: SessionStorage;
@@ -57,7 +56,11 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
         url: API_ENDPOINTS.LOGIN_PAGE,
         method: 'GET',
       };
-      throwHttpErrorFromResponse(response, 'Get request verification token', errorContext);
+      throwHttpErrorFromResponse(
+        response,
+        'Get request verification token',
+        errorContext
+      );
     }
 
     if (!response.data) {
@@ -65,7 +68,10 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
         url: API_ENDPOINTS.LOGIN_PAGE,
         method: 'GET',
       };
-      throwMissingDataError('No response data received from login page', errorContext);
+      throwMissingDataError(
+        'No response data received from login page',
+        errorContext
+      );
     }
 
     const requestVerificationToken = getRequestVerificationToken(response.data);
@@ -75,7 +81,10 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
         url: API_ENDPOINTS.LOGIN_PAGE,
         method: 'GET',
       };
-      throwValidationError('Request verification token not found', errorContext);
+      throwValidationError(
+        'Request verification token not found',
+        errorContext
+      );
     }
 
     // Submit login form
@@ -91,7 +100,11 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
         method: 'POST',
         requestData: { username: credentials.username },
       };
-      throwHttpErrorFromResponse(submitLoginResponse, 'Submit login', errorContext);
+      throwHttpErrorFromResponse(
+        submitLoginResponse,
+        'Submit login',
+        errorContext
+      );
     }
 
     const tpAuthCookie = submitLoginResponse.cookies?.find((cookie) =>
@@ -115,7 +128,11 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
         url: API_ENDPOINTS.TOKEN,
         method: 'GET',
       };
-      throwHttpErrorFromResponse(authTokenResponse, 'Get auth token', errorContext);
+      throwHttpErrorFromResponse(
+        authTokenResponse,
+        'Get auth token',
+        errorContext
+      );
     }
 
     if (!authTokenResponse.data) {
@@ -144,7 +161,11 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
         url: API_ENDPOINTS.USER_PROFILE,
         method: 'GET',
       };
-      throwHttpErrorFromResponse(userResponse, 'Get user information', errorContext);
+      throwHttpErrorFromResponse(
+        userResponse,
+        'Get user information',
+        errorContext
+      );
     }
 
     if (!userResponse.data) {
