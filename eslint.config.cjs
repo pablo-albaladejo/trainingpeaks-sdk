@@ -1,32 +1,47 @@
-// @ts-check
-import eslint from '@eslint/js';
-import vitest from '@vitest/eslint-plugin';
-import simpleImportSort from 'eslint-plugin-simple-import-sort';
-import unusedImports from 'eslint-plugin-unused-imports';
-import tseslint from 'typescript-eslint';
+// eslint.config.cjs - ESLint 9 Flat Config
+const typescriptEslint = require('@typescript-eslint/eslint-plugin');
+const typescriptParser = require('@typescript-eslint/parser');
+const simpleImportSort = require('eslint-plugin-simple-import-sort');
+const unusedImports = require('eslint-plugin-unused-imports');
+const vitest = require('@vitest/eslint-plugin');
+const js = require('@eslint/js');
+const globals = require('globals');
 
-export default tseslint.config(
+module.exports = [
+  // Global ignores
   {
-    ignores: ['dist/', 'node_modules/', 'coverage/'],
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'dist-cjs/**'],
   },
-  eslint.configs.recommended,
-  ...tseslint.configs.recommended,
-  // TypeScript files with type checking
-  ...tseslint.configs.recommendedTypeChecked,
+
+  // Base configuration for TypeScript files
   {
-    files: ['**/*.ts'],
+    files: ['src/**/*.ts'],
     languageOptions: {
+      parser: typescriptParser,
       parserOptions: {
         project: ['./tsconfig.json', './tsconfig.test.json'],
-        tsconfigRootDir: import.meta.dirname,
+        tsconfigRootDir: __dirname,
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+        NodeJS: 'readonly',
       },
     },
     plugins: {
+      '@typescript-eslint': typescriptEslint,
       'simple-import-sort': simpleImportSort,
       'unused-imports': unusedImports,
-      vitest,
+      vitest: vitest,
     },
     rules: {
+      ...js.configs.recommended.rules,
+      ...typescriptEslint.configs.recommended.rules,
+      ...typescriptEslint.configs['recommended-type-checked'].rules,
+      ...vitest.configs.recommended.rules,
+
       'no-console': 'error',
       'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
@@ -34,12 +49,13 @@ export default tseslint.config(
       'unused-imports/no-unused-vars': 'error',
       '@typescript-eslint/no-unused-vars': 'off',
       'no-unused-vars': 'off',
-      // TypeScript type checking rules
+
       '@typescript-eslint/no-unsafe-assignment': 'error',
       '@typescript-eslint/no-unsafe-member-access': 'error',
       '@typescript-eslint/no-unsafe-call': 'error',
       '@typescript-eslint/no-unsafe-return': 'error',
-      ...vitest.configs.recommended.rules,
+      '@typescript-eslint/no-unsafe-argument': 'error',
+
       'vitest/no-disabled-tests': 'error',
       'vitest/no-focused-tests': 'error',
       'vitest/no-identical-title': 'error',
@@ -47,17 +63,21 @@ export default tseslint.config(
       'vitest/prefer-lowercase-title': ['error', { ignore: ['describe'] }],
       'vitest/prefer-hooks-in-order': 'error',
       'vitest/prefer-hooks-on-top': 'error',
-      'vitest/prefer-strict-equal': 'off', // Allow toEqual instead of toStrictEqual
+      'vitest/prefer-strict-equal': 'off',
       'vitest/prefer-to-have-length': 'error',
-      'vitest/require-top-level-describe': 'off', // Allow test setup without describe blocks
+      'vitest/require-top-level-describe': 'off',
     },
   },
+
+  // Override for logging files
   {
     files: ['src/adapters/logging/**/*.ts'],
     rules: {
-      'no-console': 'off', // Allow console in logger
+      'no-console': 'off',
     },
   },
+
+  // Override for fixture files
   {
     files: ['**/__fixtures__/**/*.ts'],
     rules: {
@@ -72,5 +92,5 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-property-access': 'off',
       '@typescript-eslint/no-unsafe-type-assertion': 'off',
     },
-  }
-);
+  },
+];

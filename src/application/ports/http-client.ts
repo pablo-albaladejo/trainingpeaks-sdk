@@ -1,3 +1,5 @@
+import type { HttpError } from '@/adapters/errors/http-errors';
+import type { Logger } from '@/adapters/logging/logger';
 import { type HttpMethod } from '@/application';
 
 /**
@@ -15,7 +17,7 @@ export interface RequestOptions {
 export type HttpResponse<T> = {
   data: T | null;
   success: boolean;
-  error?: Error;
+  error?: HttpError;
   cookies?: string[];
 };
 
@@ -50,6 +52,16 @@ export type HttpClientConfig = {
   headers?: Record<string, string>;
   enableCookies?: boolean;
   maxRedirects?: number;
+  // Browser simulation
+  enableBrowserHeaders?: boolean;
+  // Retry configuration
+  retryAttempts?: number;
+  retryDelay?: number;
+  retryBackoff?: number;
+  retryMaxDelay?: number;
+  retryJitter?: boolean;
+  // Logging configuration
+  logger?: Logger;
 };
 
 /**

@@ -21,6 +21,7 @@ export interface HttpErrorContext extends SDKErrorContext {
   requestData?: unknown;
   responseData?: unknown;
   headers?: Record<string, string>;
+  requestId?: string;
 }
 
 /**
@@ -31,6 +32,7 @@ export class HttpError extends SDKError {
   public readonly statusText: string;
   public readonly url?: string;
   public readonly method?: string;
+  public readonly requestId?: string;
 
   constructor(message: string, code: string, context: HttpErrorContext) {
     super(message, code, context);
@@ -39,6 +41,7 @@ export class HttpError extends SDKError {
     this.statusText = context.statusText;
     this.url = context.url;
     this.method = context.method;
+    this.requestId = context.requestId;
   }
 }
 
@@ -51,10 +54,11 @@ export const createHttpError = (
     url?: string;
     method?: string;
     requestData?: unknown;
+    requestId?: string;
   } = {}
 ): HttpError => {
   const { status, statusText, data } = response;
-  const { url, method, requestData } = context;
+  const { url, method, requestData, requestId } = context;
 
   const errorContext: HttpErrorContext = {
     status,
@@ -64,6 +68,7 @@ export const createHttpError = (
     requestData,
     responseData: data,
     headers: response.headers,
+    requestId,
   };
 
   // Map status codes to specific error codes and messages

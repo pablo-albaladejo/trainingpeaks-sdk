@@ -4,6 +4,7 @@
  */
 
 import { faker } from '@faker-js/faker';
+import { trainingPeaksClientConfigBuilder } from '@fixtures/training-peaks-config.fixture';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
@@ -89,14 +90,14 @@ describe('Configuration System', () => {
       process.env.TRAININGPEAKS_BASE_URL = envBaseUrl;
       process.env.TRAININGPEAKS_DEBUG = 'true';
 
-      const clientConfig: TrainingPeaksClientConfig = {
+      const clientConfig = trainingPeaksClientConfigBuilder.build({
         urls: {
           baseUrl: clientBaseUrl,
         },
         debug: {
           enabled: false,
         },
-      };
+      });
 
       // Act
       const config = getSDKConfig(clientConfig);
@@ -110,12 +111,12 @@ describe('Configuration System', () => {
     it('should allow partial client configuration', () => {
       // Arrange
       const partialBaseUrl = faker.internet.url();
-      const clientConfig: TrainingPeaksClientConfig = {
+      const clientConfig = trainingPeaksClientConfigBuilder.build({
         urls: {
           baseUrl: partialBaseUrl,
         },
-        // No debug config provided
-      };
+        // No debug config provided - will use defaults
+      });
 
       // Act
       const config = getSDKConfig(clientConfig);

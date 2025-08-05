@@ -12,6 +12,7 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'rosie';
 
+import type { Session } from '@/application/ports/session-storage';
 import type {
   AuthToken,
   Credentials,
@@ -37,17 +38,18 @@ export const userPreferencesBuilder = new Factory<UserPreferences>()
   .attr('language', () => faker.helpers.arrayElement(['en', 'es', 'fr', 'de']))
   .attr('theme', () => faker.helpers.arrayElement(['light', 'dark', 'auto']))
   .attr('notifications', () => faker.datatype.boolean())
-  .option('timezone', 'UTC')
-  .option('units', 'metric')
-  .option('language', 'en')
-  .option('theme', 'light')
-  .option('notifications', true)
   .after((preferences, options) => {
     return {
-      timezone: options.timezone || preferences.timezone,
-      units: options.units || preferences.units,
-      language: options.language || preferences.language,
-      theme: options.theme || preferences.theme,
+      timezone:
+        options.timezone !== undefined
+          ? options.timezone
+          : preferences.timezone,
+      units: options.units !== undefined ? options.units : preferences.units,
+      language:
+        options.language !== undefined
+          ? options.language
+          : preferences.language,
+      theme: options.theme !== undefined ? options.theme : preferences.theme,
       notifications:
         options.notifications !== undefined
           ? options.notifications
@@ -64,14 +66,27 @@ export const authTokenBuilder = new Factory<AuthToken>()
   .attr('tokenType', () =>
     faker.helpers.arrayElement(['Bearer', 'JWT', 'OAuth'])
   )
-  .attr('expiresAt', () => new Date(Date.now() + 60 * 60 * 1000)) // Default: 1 hour from now
+  .attr('expiresIn', () => 3600) // Default: 1 hour in seconds
+  .attr('expires', () => new Date(Date.now() + 60 * 60 * 1000)) // Default: 1 hour from now
   .attr('refreshToken', () => faker.string.alphanumeric(32))
-  .after((token) => {
+  .attr('scope', () =>
+    faker.helpers.arrayElement(['read', 'write', 'read write', 'admin'])
+  )
+  .after((token, options) => {
+    // Calculate expires based on expiresIn if provided in options, otherwise use defaults
+    const expiresIn = options.expiresIn || token.expiresIn;
+    const expires = options.expires || new Date(Date.now() + expiresIn * 1000);
+
     return {
-      accessToken: token.accessToken,
-      tokenType: token.tokenType,
-      expiresAt: token.expiresAt,
-      refreshToken: token.refreshToken,
+      accessToken: options.accessToken || token.accessToken,
+      tokenType: options.tokenType || token.tokenType,
+      expiresIn: expiresIn,
+      expires: expires,
+      refreshToken:
+        options.refreshToken !== undefined
+          ? options.refreshToken
+          : token.refreshToken,
+      scope: options.scope !== undefined ? options.scope : token.scope,
     };
   });
 
@@ -81,11 +96,11 @@ export const authTokenBuilder = new Factory<AuthToken>()
 export const createAuthToken = (
   options: { expiresInMinutes?: number } = {}
 ) => {
-  const expiresAt = new Date(
-    Date.now() + (options.expiresInMinutes || 60) * 60 * 1000
-  );
+  const expiresInSeconds = (options.expiresInMinutes || 60) * 60;
+  const expires = new Date(Date.now() + expiresInSeconds * 1000);
   return authTokenBuilder.build({
-    expiresAt,
+    expiresIn: expiresInSeconds,
+    expires,
   });
 };
 
@@ -99,20 +114,55 @@ export const userBuilder = new Factory<User>()
   .attr('avatar', () => faker.image.avatar())
   .attr('preferences', () => userPreferencesBuilder.build())
   .after((user, options) => {
-    const preferences = userPreferencesBuilder.build({
-      timezone: options.timezone || 'UTC',
-      units: options.units || 'metric',
-      language: options.language || 'en',
-      theme: options.theme || 'light',
-      notifications:
-        options.notifications !== undefined ? options.notifications : true,
-    });
+    // Create preferences, respecting overrides FIRST and falling back to existing values
+    let preferences = user.preferences;
+
+    if (
+      options.timezone !== undefined ||
+      options.units !== undefined ||
+      options.language !== undefined ||
+      options.theme !== undefined ||
+      options.notifications !== undefined
+    ) {
+      preferences = {
+        timezone:
+          options.timezone !== undefined
+            ? options.timezone
+            : user.preferences?.timezone,
+        units:
+          options.units !== undefined ? options.units : user.preferences?.units,
+        language:
+          options.language !== undefined
+            ? options.language
+            : user.preferences?.language,
+        theme:
+          options.theme !== undefined ? options.theme : user.preferences?.theme,
+        notifications:
+          options.notifications !== undefined
+            ? options.notifications
+            : user.preferences?.notifications,
+      };
+    }
 
     return {
-      id: options.id || user.id,
-      name: options.name || user.name,
-      avatar: options.avatar || user.avatar,
+      id: options.id !== undefined ? options.id : user.id,
+      name: options.name !== undefined ? options.name : user.name,
+      avatar: options.avatar !== undefined ? options.avatar : user.avatar,
       preferences,
+    };
+  });
+
+/**
+ * Session Builder
+ * Creates Session objects combining AuthToken and User entities
+ */
+export const sessionBuilder = new Factory<Session>()
+  .attr('token', () => authTokenBuilder.build())
+  .attr('user', () => userBuilder.build())
+  .after((session, options) => {
+    return {
+      token: options.token !== undefined ? options.token : session.token,
+      user: options.user !== undefined ? options.user : session.user,
     };
   });
 
@@ -123,15 +173,16 @@ export const userBuilder = new Factory<User>()
 export const credentialsBuilder = new Factory<Credentials>()
   .attr('username', () => faker.internet.userName())
   .attr('password', () => faker.internet.password())
-  .option('username', 'testuser')
-  .option('password', 'testpass123')
-  .option('passwordLength', 12)
   .after((credentials, options) => {
     return {
-      username: options.username || credentials.username,
+      username:
+        options.username !== undefined
+          ? options.username
+          : credentials.username,
       password:
-        options.password ||
-        faker.internet.password({ length: options.passwordLength }),
+        options.password !== undefined
+          ? options.password
+          : credentials.password,
     };
   });
 

@@ -1,48 +1,58 @@
 import { Logger } from '@/adapters';
+import {
+  createHttpError,
+  type HttpErrorResponse,
+  isHttpError,
+} from '@/adapters/errors/http-errors';
 import { type HttpClient } from '@/adapters/http';
 import { mapTPTokenToAuthToken, mapTPUserToUser } from '@/adapters/mappers';
-import type {
-  TrainingPeaksTokenResponse,
-  TrainingPeaksUserResponse,
-} from '@/adapters/schemas/http-responses.schema';
 import { HttpResponse, Session, SessionStorage } from '@/application';
 import {
   AuthRepository,
   AuthRepositoryLogin,
   AuthRepositoryLogout,
-  type AuthToken,
   Credentials,
+  isTokenExpired,
+  validateCredentials,
 } from '@/domain';
 
-/**
- * Common browser headers used for TrainingPeaks API requests
- */
-const BROWSER_HEADERS = {
-  'sec-ch-ua':
-    '"Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"',
-  'sec-ch-ua-mobile': '?0',
-  'sec-ch-ua-platform': '"macOS"',
-  'user-agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
-} as const;
+import { API_ENDPOINTS } from './constants/api-urls';
+import {
+  getAuthToken,
+  getLoginPage,
+  getRequestVerificationToken,
+  getUser,
+  submitLogin,
+} from './endpoints';
+import type { TokenEndpointResponse } from './endpoints/users/v3/token';
+import type { UserProfileEndpointResponse } from './endpoints/users/v3/user';
 
 /**
- * Helper function to extract detailed error information from HttpResponse
+ * Helper function to throw structured HttpError based on HttpResponse
  */
-const getDetailedErrorMessage = <T>(
+const throwHttpError = <T>(
   response: HttpResponse<T>,
   operation: string
-): string => {
-  if (response.error) {
-    const error = response.error;
-    if ('status' in error && 'statusText' in error) {
-      const status = error.status as number;
-      const statusText = error.statusText as string;
-      return `${operation} failed: HTTP ${status} ${statusText} - ${error.message}`;
-    }
-    return `${operation} failed: ${error.message}`;
+): never => {
+  if (response.error && isHttpError(response.error)) {
+    // Re-throw the existing HttpError
+    throw response.error;
   }
-  return `${operation} failed: Unknown error`;
+
+  // Create structured HttpError for non-HTTP errors
+  const errorMessage = response.error
+    ? String(response.error)
+    : `${operation} failed`;
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 0,
+    statusText: 'Unknown Error',
+    data: { message: errorMessage },
+  };
+
+  throw createHttpError(httpErrorResponse, {
+    url: 'unknown',
+    method: 'GET',
+  });
 };
 
 type AuthRepositoryDependencies = {
@@ -51,132 +61,56 @@ type AuthRepositoryDependencies = {
   logger: Logger;
 };
 
-const submitLogin = async (
-  httpClient: HttpClient,
-  requestVerificationToken: string,
-  credentials: Credentials
-) => {
-  const formData = new URLSearchParams({
-    Username: credentials.username,
-    __RequestVerificationToken: requestVerificationToken,
-    Password: credentials.password,
-  });
-
-  return await httpClient.post<string>(
-    'https://home.trainingpeaks.com/login',
-    formData.toString(),
-    {
-      headers: {
-        accept:
-          'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        'accept-language': 'en-US,en;q=0.9',
-        'cache-control': 'max-age=0',
-        'content-type': 'application/x-www-form-urlencoded',
-        origin: 'null',
-        priority: 'u=0, i',
-        'sec-fetch-dest': 'document',
-        'sec-fetch-mode': 'navigate',
-        'sec-fetch-site': 'same-origin',
-        'sec-fetch-user': '?1',
-        'upgrade-insecure-requests': '1',
-        ...BROWSER_HEADERS,
-      },
-    }
-  );
-};
-
-const getAuthToken = async (
-  httpClient: HttpClient,
-  cookies: string
-): Promise<HttpResponse<TrainingPeaksTokenResponse>> => {
-  return await httpClient.get<TrainingPeaksTokenResponse>(
-    'https://tpapi.trainingpeaks.com/users/v3/token',
-    {
-      headers: {
-        accept: '*/*',
-        'accept-language': 'en-US,en;q=0.9',
-        origin: 'https://app.trainingpeaks.com',
-        priority: 'u=1, i',
-        referer: 'https://app.trainingpeaks.com/',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site',
-        Cookie: cookies,
-        ...BROWSER_HEADERS,
-      },
-    }
-  );
-};
-
-const getUser = async (
-  httpClient: HttpClient,
-  authToken: AuthToken
-): Promise<HttpResponse<TrainingPeaksUserResponse>> => {
-  return await httpClient.get<TrainingPeaksUserResponse>(
-    'https://tpapi.trainingpeaks.com/users/v3/user',
-    {
-      headers: {
-        accept: 'application/json, text/javascript, */*; q=0.01',
-        'accept-language': 'en-GB,en;q=0.9,es-ES;q=0.8,es;q=0.7,en-US;q=0.6',
-        authorization: `Bearer ${authToken.accessToken}`,
-        'content-type': 'application/json',
-        origin: 'https://app.trainingpeaks.com',
-        priority: 'u=1, i',
-        referer: 'https://app.trainingpeaks.com/',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site',
-        ...BROWSER_HEADERS,
-      },
-    }
-  );
-};
-
-const getRequestVerificationToken = (html: string): string | null => {
-  // Extract all input elements from the form
-  const inputMatches = html.match(/<input[^>]+>/g) || [];
-
-  for (const input of inputMatches) {
-    // Look for the __RequestVerificationToken input
-    const nameMatch = input.match(/name="__RequestVerificationToken"/);
-    if (nameMatch) {
-      // Extract the value
-      const valueMatch = input.match(/value="([^"]*)"/);
-      return valueMatch?.[1] || null;
-    }
-  }
-
-  return null;
-};
-
 const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
   return async (credentials: Credentials) => {
-    const response = await deps.httpClient.get<string>(
-      'https://home.trainingpeaks.com/login',
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-      }
-    );
+    // Validate credentials using domain logic
+    if (!validateCredentials(credentials)) {
+      const httpErrorResponse: HttpErrorResponse = {
+        status: 400,
+        statusText: 'Bad Request',
+        data: { message: 'Invalid credentials provided' },
+      };
+      throw createHttpError(httpErrorResponse, {
+        url: API_ENDPOINTS.LOGIN_PAGE,
+        method: 'POST',
+        requestData: { username: credentials.username },
+      });
+    }
+
+    // Get login page to extract request verification token
+    const response = await getLoginPage(deps.httpClient);
 
     if (!response.success) {
-      throw new Error(
-        getDetailedErrorMessage(response, 'Get request verification token')
-      );
+      throwHttpError(response, 'Get request verification token');
     }
 
     if (!response.data) {
-      throw new Error('No response data received from login page');
+      const httpErrorResponse: HttpErrorResponse = {
+        status: 502,
+        statusText: 'Bad Gateway',
+        data: { message: 'No response data received from login page' },
+      };
+      throw createHttpError(httpErrorResponse, {
+        url: API_ENDPOINTS.LOGIN_PAGE,
+        method: 'GET',
+      });
     }
 
     const requestVerificationToken = getRequestVerificationToken(response.data);
 
     if (!requestVerificationToken) {
-      throw new Error('Request verification token not found');
+      const httpErrorResponse: HttpErrorResponse = {
+        status: 400,
+        statusText: 'Bad Request',
+        data: { message: 'Request verification token not found' },
+      };
+      throw createHttpError(httpErrorResponse, {
+        url: API_ENDPOINTS.LOGIN_PAGE,
+        method: 'GET',
+      });
     }
 
+    // Submit login form
     const submitLoginResponse = await submitLogin(
       deps.httpClient,
       requestVerificationToken,
@@ -184,9 +118,7 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
     );
 
     if (!submitLoginResponse.success) {
-      throw new Error(
-        getDetailedErrorMessage(submitLoginResponse, 'Submit login')
-      );
+      throwHttpError(submitLoginResponse, 'Submit login');
     }
 
     const tpAuthCookie = submitLoginResponse.cookies?.find((cookie) =>
@@ -194,23 +126,38 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
     );
 
     if (!tpAuthCookie) {
-      throw new Error('TP Auth cookie not found');
+      const httpErrorResponse: HttpErrorResponse = {
+        status: 401,
+        statusText: 'Unauthorized',
+        data: { message: 'TP Auth cookie not found' },
+      };
+      throw createHttpError(httpErrorResponse, {
+        url: API_ENDPOINTS.LOGIN_PAGE,
+        method: 'POST',
+        requestData: { username: credentials.username },
+      });
     }
 
     // Get the auth token using the cookies
     const authTokenResponse = await getAuthToken(deps.httpClient, tpAuthCookie);
 
     if (!authTokenResponse.success) {
-      throw new Error(
-        getDetailedErrorMessage(authTokenResponse, 'Get auth token')
-      );
+      throwHttpError(authTokenResponse, 'Get auth token');
     }
 
     if (!authTokenResponse.data) {
-      throw new Error('No auth token data received');
+      const httpErrorResponse: HttpErrorResponse = {
+        status: 502,
+        statusText: 'Bad Gateway',
+        data: { message: 'No auth token data received' },
+      };
+      throw createHttpError(httpErrorResponse, {
+        url: API_ENDPOINTS.TOKEN,
+        method: 'GET',
+      });
     }
 
-    const authTokenData = authTokenResponse.data;
+    const authTokenData = authTokenResponse.data as TokenEndpointResponse;
     const authToken = authTokenData.token;
 
     // Get user information using the auth token
@@ -224,20 +171,39 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
     });
 
     if (!userResponse.success) {
-      throw new Error(
-        getDetailedErrorMessage(userResponse, 'Get user information')
-      );
+      throwHttpError(userResponse, 'Get user information');
     }
 
     if (!userResponse.data) {
-      throw new Error('No user data received');
+      const httpErrorResponse: HttpErrorResponse = {
+        status: 502,
+        statusText: 'Bad Gateway',
+        data: { message: 'No user data received' },
+      };
+      throw createHttpError(httpErrorResponse, {
+        url: API_ENDPOINTS.USER_PROFILE,
+        method: 'GET',
+      });
     }
 
-    const userData = userResponse.data;
+    const userData = userResponse.data as UserProfileEndpointResponse;
 
     // Map TrainingPeaks API responses to domain entities using mappers
     const user = mapTPUserToUser(userData.user);
     const token = mapTPTokenToAuthToken(authToken);
+
+    // Validate token expiration using domain logic
+    if (isTokenExpired(token)) {
+      const httpErrorResponse: HttpErrorResponse = {
+        status: 401,
+        statusText: 'Unauthorized',
+        data: { message: 'Received expired token from TrainingPeaks API' },
+      };
+      throw createHttpError(httpErrorResponse, {
+        url: API_ENDPOINTS.TOKEN,
+        method: 'GET',
+      });
+    }
 
     const session: Session = {
       token,

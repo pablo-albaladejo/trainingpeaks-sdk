@@ -1,32 +1,31 @@
 /**
- * AuthToken Mappers
+ * AuthToken API Mappers
  * Maps between TrainingPeaks API token responses and domain AuthToken entities
  */
 
-import type { TrainingPeaksTokenResponse } from '@/adapters/schemas/http-responses.schema';
-import type { AuthToken } from '@/domain';
+import type { TokenEndpointResponse } from '@/adapters/public-api/endpoints/users/v3/token';
+import { type AuthToken, createAuthToken } from '@/domain';
 
 /**
  * Maps TrainingPeaks API token response to domain AuthToken entity
  */
 export const mapTPTokenToAuthToken = (
-  tpToken: TrainingPeaksTokenResponse['token']
+  tpToken: TokenEndpointResponse['token']
 ): AuthToken => {
-  return {
-    accessToken: tpToken.access_token,
-    tokenType: tpToken.token_type,
-    expiresIn: tpToken.expires_in,
-    expires: new Date(tpToken.expires),
-    refreshToken: tpToken.refresh_token || undefined,
-    scope: tpToken.scope || undefined,
-  };
+  return createAuthToken(
+    tpToken.access_token,
+    tpToken.token_type,
+    tpToken.expires_in,
+    new Date(tpToken.expires),
+    tpToken.refresh_token || undefined
+  );
 };
 
 /**
  * Safe mapper that handles potentially undefined TrainingPeaks token
  */
 export const mapTPTokenToAuthTokenSafe = (
-  tpToken: TrainingPeaksTokenResponse['token'] | undefined | null
+  tpToken: TokenEndpointResponse['token'] | undefined | null
 ): AuthToken | null => {
   if (!tpToken) {
     return null;

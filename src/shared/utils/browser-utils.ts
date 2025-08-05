@@ -191,3 +191,91 @@ export const generateRandomViewport = (): { width: number; height: number } => {
 
   return allSizes[Math.floor(Math.random() * allSizes.length)]!;
 };
+
+/**
+ * Generate random Chrome version for sec-ch-ua header
+ */
+const generateRandomChromeVersion = (): string => {
+  const majorVersions = [120, 121, 122, 123, 124, 125, 126, 127, 128];
+  const majorVersion =
+    majorVersions[Math.floor(Math.random() * majorVersions.length)]!;
+  const minorVersion = Math.floor(Math.random() * 10);
+  const patchVersion = Math.floor(Math.random() * 10);
+  const buildVersion = Math.floor(Math.random() * 1000);
+
+  return `${majorVersion}.${minorVersion}.${patchVersion}.${buildVersion}`;
+};
+
+/**
+ * Generate random sec-ch-ua header value
+ */
+const generateRandomSecChUa = (): string => {
+  const brandOptions = [
+    '"Not)A;Brand"',
+    '"Not_A Brand"',
+    '"Not;A=Brand"',
+    '"Not A;Brand"',
+  ];
+
+  const brand = brandOptions[Math.floor(Math.random() * brandOptions.length)]!;
+  const brandVersion = Math.floor(Math.random() * 24) + 8; // 8-31
+  const chromeVersion = generateRandomChromeVersion().split('.')[0]; // Just major version
+
+  return `${brand};v="${brandVersion}", "Chromium";v="${chromeVersion}", "Google Chrome";v="${chromeVersion}"`;
+};
+
+/**
+ * Generate random platform for sec-ch-ua-platform header
+ */
+const generateRandomPlatform = (): string => {
+  const platforms = ['"macOS"', '"Windows"', '"Linux"'];
+  return platforms[Math.floor(Math.random() * platforms.length)]!;
+};
+
+/**
+ * Generate random mobile indicator
+ */
+const generateRandomMobile = (): string => {
+  return Math.random() > 0.8 ? '?1' : '?0'; // 20% chance of mobile
+};
+
+/**
+ * Generate random browser headers for HTTP requests
+ * Creates realistic browser headers to avoid detection as a bot
+ */
+export const generateRandomBrowserHeaders = (): Record<string, string> => {
+  return {
+    'sec-ch-ua': generateRandomSecChUa(),
+    'sec-ch-ua-mobile': generateRandomMobile(),
+    'sec-ch-ua-platform': generateRandomPlatform(),
+    'user-agent': generateRandomUserAgent(),
+  };
+};
+
+/**
+ * Generate consistent browser headers (same session)
+ * Useful when you need the same headers across multiple requests
+ */
+export const generateConsistentBrowserHeaders = (): Record<string, string> => {
+  const userAgent = generateRandomUserAgent();
+  const parsed = parseUserAgent(userAgent);
+
+  // Generate consistent headers based on the user agent
+  const isMobile = isMobileUserAgent(userAgent);
+  const platform = parsed.os.includes('Mac')
+    ? '"macOS"'
+    : parsed.os.includes('Windows')
+      ? '"Windows"'
+      : '"Linux"';
+
+  // Extract Chrome version from user agent for consistency
+  const chromeMatch = userAgent.match(/Chrome\/([0-9]+)/);
+  const chromeVersion = chromeMatch ? chromeMatch[1] : '120';
+
+  return {
+    'sec-ch-ua': `"Not)A;Brand";v="8", "Chromium";v="${chromeVersion}", "Google Chrome";v="${chromeVersion}"`,
+    'sec-ch-ua-mobile': isMobile ? '?1' : '?0',
+    'sec-ch-ua-platform': platform,
+    'user-agent': userAgent,
+  };
+};

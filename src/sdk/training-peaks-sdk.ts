@@ -30,6 +30,7 @@ export const createTrainingPeaksSdk = (
 
   const httpClient = createHttpClient({
     enableCookies: true,
+    logger,
   });
 
   const sessionStorage = createInMemorySessionStorage();

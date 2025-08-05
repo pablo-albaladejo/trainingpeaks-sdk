@@ -33,8 +33,13 @@ const main = async (): Promise<void> => {
 
     console.log('Using credentials for user:', username);
 
-    // Create SDK instance
-    const sdk = createTrainingPeaksSdk({});
+    // Create SDK instance with debug logging to see curl commands
+    const sdk = createTrainingPeaksSdk({
+      debug: {
+        enabled: true,
+        level: 'debug',
+      },
+    });
 
     // Perform login
     const result = await sdk.login({ username, password });

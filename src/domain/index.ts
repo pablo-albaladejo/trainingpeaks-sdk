@@ -19,7 +19,7 @@ export * from './value-objects/workout-file';
 export * from './errors/domain-errors';
 
 // Schemas (only pure domain types)
-export {
+export type {
   WorkoutElementType,
   WorkoutIntensityClass,
   WorkoutIntensityMetric,

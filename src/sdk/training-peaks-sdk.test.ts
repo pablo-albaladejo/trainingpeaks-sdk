@@ -3,6 +3,7 @@
  * Tests for the new functional client implementation
  */
 import { faker } from '@faker-js/faker';
+import { trainingPeaksClientConfigBuilder } from '@fixtures/training-peaks-config.fixture';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createTrainingPeaksSdk } from './training-peaks-sdk';
@@ -26,12 +27,21 @@ vi.mock('@/config', () => ({
 
 describe('createTrainingPeaksClient', () => {
   it('should create a client instance with all required methods', () => {
-    const client = createTrainingPeaksSdk({
+    // Arrange
+    const clientConfig = trainingPeaksClientConfigBuilder.build({
       debug: {
         enabled: true,
         level: 'debug',
       },
     });
+
+    // Act
+    const client = createTrainingPeaksSdk(clientConfig);
+
+    // Assert
+    expect(client).toBeDefined();
+    expect(typeof client.login).toBe('function');
+    expect(typeof client.logout).toBe('function');
 
     // Verify logger is working by checking it exists and has methods
     expect(client.logger).toBeDefined();
@@ -39,18 +49,16 @@ describe('createTrainingPeaksClient', () => {
     expect(typeof client.logger.debug).toBe('function');
     expect(typeof client.logger.warn).toBe('function');
     expect(typeof client.logger.error).toBe('function');
-
-    expect(client).toBeDefined();
-    expect(typeof client.login).toBe('function');
-    expect(typeof client.logout).toBe('function');
   });
 
   it('should accept configuration options', () => {
-    const config = {
+    // Arrange
+    const config = trainingPeaksClientConfigBuilder.build({
       apiKey: faker.string.uuid(),
       baseUrl: faker.internet.url(),
-    };
+    });
 
+    // Act & Assert
     expect(() => createTrainingPeaksSdk(config)).not.toThrow();
   });
 });

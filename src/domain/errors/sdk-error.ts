@@ -1,6 +1,6 @@
 /**
  * SDK Error Base Class
- * Base error class for all SDK-related errors
+ * Base error class for all SDK-related errors with integrated logging
  */
 
 export type SDKErrorContext = {
