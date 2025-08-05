@@ -1,0 +1,3 @@
+# Run lint and tests before commit
+npm run lint
+npm run format

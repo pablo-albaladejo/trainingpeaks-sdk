@@ -1,0 +1,655 @@
+---
+description: Unit testing standards and patterns for npm libraries using Vitest
+globs: **/*.test.ts,**/*.spec.ts
+alwaysApply: false
+---
+
+# Unit Testing Standards for NPM Libraries
+
+## Testing Framework Setup
+
+### Vitest Configuration
+
+```typescript
+// vitest.config.ts
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+    test: {
+        environment: 'node',
+        globals: true,
+        coverage: {
+            provider: 'v8',
+            reporter: ['text', 'json', 'html'],
+            exclude: ['node_modules/', 'dist/', '**/*.d.ts', '**/*.test.ts', '**/__fixtures__/**'],
+        },
+    },
+});
+```
+
+### Test File Organization
+
+```
+src/
+├── services/
+│   ├── UserService.ts
+│   └── UserService.test.ts
+├── utils/
+│   ├── validation.ts
+│   └── validation.test.ts
+└── __fixtures__/
+    └── testData.ts
+```
+
+## Test Structure
+
+### Test File Template
+
+```typescript
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { UserService } from './UserService';
+import { UserRepository } from '../repositories/UserRepository';
+import { createMockUser } from '../__fixtures__/testData';
+
+describe('UserService', () => {
+    let userService: UserService;
+    let mockUserRepository: vi.Mocked<UserRepository>;
+
+    beforeEach(() => {
+        mockUserRepository = {
+            findById: vi.fn(),
+            save: vi.fn(),
+            delete: vi.fn(),
+        };
+        userService = new UserService(mockUserRepository);
+    });
+
+    describe('createUser', () => {
+        it('should create a user successfully', async () => {
+            // Arrange
+            const input = { email: 'test@example.com', name: 'Test User' };
+            const expectedUser = createMockUser(input);
+            mockUserRepository.save.mockResolvedValue();
+
+            // Act
+            const result = await userService.createUser(input);
+
+            // Assert
+            expect(result).toEqual(expectedUser);
+            expect(mockUserRepository.save).toHaveBeenCalledWith(expectedUser);
+        });
+
+        it('should throw error when email is invalid', async () => {
+            // Arrange
+            const input = { email: 'invalid-email', name: 'Test User' };
+
+            // Act & Assert
+            await expect(userService.createUser(input)).rejects.toThrow('Invalid email');
+        });
+    });
+});
+```
+
+## Mocking Patterns
+
+### Interface Mocking
+
+```typescript
+// Use vi.mocked for better type safety
+import { vi } from 'vitest';
+
+interface HttpClient {
+    get<T>(url: string): Promise<T>;
+    post<T>(url: string, data: unknown): Promise<T>;
+}
+
+const mockHttpClient = vi.mocked<HttpClient>({
+    get: vi.fn(),
+    post: vi.fn(),
+});
+```
+
+### Function Mocking
+
+```typescript
+// Mock external dependencies
+import { fetchUser } from './userApi';
+
+vi.mock('./userApi', () => ({
+    fetchUser: vi.fn(),
+}));
+
+describe('UserService', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('should handle API errors', async () => {
+        const mockFetchUser = vi.mocked(fetchUser);
+        mockFetchUser.mockRejectedValue(new Error('API Error'));
+
+        await expect(userService.getUser('123')).rejects.toThrow('API Error');
+    });
+});
+```
+
+### Module Mocking
+
+```typescript
+// Mock entire modules
+vi.mock('axios', () => ({
+    default: {
+        get: vi.fn(),
+        post: vi.fn(),
+    },
+}));
+
+// Mock with implementation
+vi.mock('./config', () => ({
+    getConfig: () => ({
+        apiKey: 'test-key',
+        baseUrl: 'http://test.com',
+    }),
+}));
+```
+
+## Test Data Management
+
+### Test Fixtures with Rosie Factory
+
+All fixtures MUST follow this base structure:
+
+```typescript
+/**
+ * [Entity Name] Fixtures
+ * Factory pattern fixtures for creating [Entity] using rosie and faker
+ *
+ * This fixture demonstrates:
+ * - [Key patterns and features]
+ * - [Dependencies and relationships]
+ * - [Reusable patterns]
+ */
+
+import type { [EntityType] } from '@/domain';
+import { faker } from '@faker-js/faker';
+import { Factory } from 'rosie';
+import { randomNumber, randomString } from './utils.fixture';
+
+/**
+ * [Entity] Builder
+ * Creates [Entity] with proper [dependencies/relationships]
+ */
+export const [entityName]Builder = new Factory<[EntityType]>()
+  .attr('property', () => faker.[generator]())
+  .option('optionName', defaultValue)
+  .after((entity, options) => {
+    // Custom logic here
+    return entity;
+  });
+```
+
+#### **🚨 CRITICAL Rules for Fixtures**
+
+**Complex Structures MUST Have Separate Builders**
+
+```typescript
+// ✅ CORRECT: Separate builder for complex structure
+export const userPreferencesBuilder = new Factory()
+    .attr('timezone', () => faker.location.timeZone())
+    .attr('units', () => faker.helpers.arrayElement(['metric', 'imperial']));
+
+export const userBuilder = new Factory<User>().attr('preferences', () => userPreferencesBuilder.build());
+```
+
+**Never Use Helper Functions for Structures**
+
+```typescript
+// ❌ WRONG: Helper functions for structures
+export const createUserPreferences = () => ({
+    timezone: faker.location.timeZone(),
+    units: faker.helpers.arrayElement(['metric', 'imperial']),
+});
+```
+
+#### **Simple Test Fixtures**
+
+```typescript
+// __fixtures__/testData.ts
+import { User, CreateUserInput } from '../types';
+import { faker } from '@faker-js/faker';
+import { Factory } from 'rosie';
+
+export const userBuilder = new Factory<User>()
+    .attr('id', () => faker.string.uuid())
+    .attr('email', () => faker.internet.email())
+    .attr('name', () => faker.person.fullName())
+    .attr('createdAt', () => faker.date.past())
+    .option('isActive', true)
+    .after((user, options) => {
+        if (!options.isActive) {
+            user.status = 'INACTIVE';
+        }
+        return user;
+    });
+
+export const createUserInputBuilder = new Factory<CreateUserInput>()
+    .attr('email', () => faker.internet.email())
+    .attr('name', () => faker.person.fullName());
+
+// Legacy helper functions for backward compatibility
+export function createMockUser(overrides: Partial<User> = {}): User {
+    return userBuilder.build(overrides);
+}
+
+export function createMockCreateUserInput(overrides: Partial<CreateUserInput> = {}): CreateUserInput {
+    return createUserInputBuilder.build(overrides);
+}
+```
+
+### Test Utilities
+
+```typescript
+// __fixtures__/testUtils.ts
+export function createMockRepository<T>() {
+    return {
+        findById: vi.fn(),
+        save: vi.fn(),
+        delete: vi.fn(),
+        findAll: vi.fn(),
+    } as unknown as T;
+}
+
+export function createMockHttpClient() {
+    return {
+        get: vi.fn(),
+        post: vi.fn(),
+        put: vi.fn(),
+        delete: vi.fn(),
+    };
+}
+```
+
+## Testing Patterns
+
+### Happy Path Testing
+
+```typescript
+describe('UserService.createUser', () => {
+    it('should create user with valid input', async () => {
+        // Arrange
+        const input = createMockCreateUserInput();
+        const expectedUser = createMockUser();
+        mockUserRepository.save.mockResolvedValue();
+
+        // Act
+        const result = await userService.createUser(input);
+
+        // Assert
+        expect(result).toEqual(expectedUser);
+        expect(mockUserRepository.save).toHaveBeenCalledWith(expectedUser);
+    });
+});
+```
+
+### Error Path Testing
+
+```typescript
+describe('UserService.createUser', () => {
+    it('should throw ValidationError for invalid email', async () => {
+        // Arrange
+        const input = createMockCreateUserInput({ email: 'invalid-email' });
+
+        // Act & Assert
+        await expect(userService.createUser(input)).rejects.toThrow(ValidationError);
+    });
+
+    it('should throw UserExistsError when user already exists', async () => {
+        // Arrange
+        const input = createMockCreateUserInput();
+        mockUserRepository.findByEmail.mockResolvedValue(createMockUser());
+
+        // Act & Assert
+        await expect(userService.createUser(input)).rejects.toThrow(UserExistsError);
+    });
+});
+```
+
+### Edge Case Testing
+
+```typescript
+describe('UserService.createUser', () => {
+    it('should handle empty name', async () => {
+        const input = createMockCreateUserInput({ name: '' });
+        await expect(userService.createUser(input)).rejects.toThrow('Name is required');
+    });
+
+    it('should handle very long email', async () => {
+        const longEmail = 'a'.repeat(300) + '@example.com';
+        const input = createMockCreateUserInput({ email: longEmail });
+        await expect(userService.createUser(input)).rejects.toThrow('Email too long');
+    });
+});
+```
+
+## Testing Utilities and Helpers
+
+### Custom Matchers
+
+```typescript
+// __fixtures__/customMatchers.ts
+import { expect } from 'vitest';
+
+expect.extend({
+    toBeValidEmail(received: string) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const pass = emailRegex.test(received);
+
+        return {
+            message: () => `expected ${received} to be a valid email`,
+            pass,
+        };
+    },
+});
+
+declare global {
+    namespace Vi {
+        interface JestAssertion<T = any> {
+            toBeValidEmail(): T;
+        }
+    }
+}
+```
+
+### Test Helpers
+
+```typescript
+// __fixtures__/testHelpers.ts
+export async function expectThrowsAsync(method: () => Promise<unknown>, errorType?: new (...args: any[]) => Error) {
+    let error: Error | undefined;
+
+    try {
+        await method();
+    } catch (e) {
+        error = e as Error;
+    }
+
+    expect(error).toBeDefined();
+    if (errorType) {
+        expect(error).toBeInstanceOf(errorType);
+    }
+
+    return error;
+}
+
+export function createSpyOn<T extends object, K extends keyof T>(obj: T, method: K): vi.SpyInstance {
+    return vi.spyOn(obj, method);
+}
+```
+
+## Testing Async Code
+
+### Promise Testing
+
+```typescript
+describe('Async operations', () => {
+    it('should handle successful async operation', async () => {
+        const result = await userService.createUser(createMockCreateUserInput());
+        expect(result).toBeDefined();
+    });
+
+    it('should handle async errors', async () => {
+        mockUserRepository.save.mockRejectedValue(new Error('Database error'));
+
+        await expect(userService.createUser(createMockCreateUserInput())).rejects.toThrow('Database error');
+    });
+});
+```
+
+### Timeout Testing
+
+```typescript
+describe('Timeout handling', () => {
+    it('should timeout after specified duration', async () => {
+        mockUserRepository.save.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 1000)));
+
+        await expect(userService.createUser(createMockCreateUserInput(), { timeout: 100 })).rejects.toThrow(
+            'Operation timed out',
+        );
+    });
+});
+```
+
+## Testing Configuration and Options
+
+### Configuration Testing
+
+```typescript
+describe('Library configuration', () => {
+    it('should use default configuration when none provided', () => {
+        const client = new LibraryClient();
+        expect(client.config.timeout).toBe(5000);
+        expect(client.config.retries).toBe(3);
+    });
+
+    it('should override default configuration', () => {
+        const client = new LibraryClient({ timeout: 10000, retries: 5 });
+        expect(client.config.timeout).toBe(10000);
+        expect(client.config.retries).toBe(5);
+    });
+});
+```
+
+## Performance Testing
+
+### Memory Leak Testing
+
+```typescript
+describe('Memory management', () => {
+    it('should not leak memory on repeated operations', async () => {
+        const initialMemory = process.memoryUsage().heapUsed;
+
+        for (let i = 0; i < 1000; i++) {
+            await userService.createUser(createMockCreateUserInput());
+        }
+
+        const finalMemory = process.memoryUsage().heapUsed;
+        const memoryIncrease = finalMemory - initialMemory;
+
+        // Memory increase should be reasonable (less than 10MB)
+        expect(memoryIncrease).toBeLessThan(10 * 1024 * 1024);
+    });
+});
+```
+
+## Coverage Requirements
+
+### Coverage Targets
+
+- **Statements**: 90%+
+- **Branches**: 85%+
+- **Functions**: 90%+
+- **Lines**: 90%+
+
+## E2E Testing for NPM Packages
+
+### Package Validation Tests
+
+E2E tests for npm packages verify that the built package works correctly when consumed by end users in real-world
+scenarios.
+
+#### **Basic Package Validation Test**
+
+```javascript
+#!/usr/bin/env node
+
+/**
+ * Basic E2E Test for Built NPM Package
+ * Tests fundamental package functionality and API surface
+ */
+
+import { MyLibrary } from '../dist/index.js';
+
+console.log('🧪 Testing NPM Package (ES Modules)...\n');
+
+async function runBasicE2ETest() {
+    try {
+        // Test 1: Import and instantiation
+        console.log('✅ Step 1: Import successful');
+
+        const client = new MyLibrary({
+            debug: true,
+            timeout: 5000,
+        });
+
+        console.log('✅ Step 2: Client instantiation successful');
+
+        // Test 2: Configuration methods
+        const config = client.getConfig();
+        if (!config || !config.baseUrl || !config.timeout) {
+            throw new Error('Configuration methods not working');
+        }
+        console.log('✅ Step 3: Configuration methods work');
+
+        // Test 3: API surface verification
+        const requiredMethods = ['createUser', 'getUser', 'updateUser', 'deleteUser'];
+        requiredMethods.forEach(method => {
+            if (typeof client[method] !== 'function') {
+                throw new Error(`Missing required method: ${method}`);
+            }
+        });
+        console.log('✅ Step 4: All required methods exist');
+
+        console.log('\n🎉 Basic E2E test passed!');
+    } catch (error) {
+        console.error('❌ E2E test failed:', error.message);
+        process.exit(1);
+    }
+}
+
+runBasicE2ETest();
+```
+
+#### **Advanced Workflow Test**
+
+```javascript
+#!/usr/bin/env node
+
+/**
+ * Advanced E2E Test: Complete User Workflow
+ * Simulates how a developer would use the package in a real application
+ */
+
+import { MyLibrary } from '../dist/index.js';
+
+async function runAdvancedE2ETest() {
+    try {
+        const client = new MyLibrary({
+            baseUrl: 'https://api.example.com',
+            timeout: 10000,
+        });
+
+        // Test complete user lifecycle
+        const user = await client.createUser({
+            name: 'John Doe',
+            email: 'john@example.com',
+        });
+
+        const retrievedUser = await client.getUser(user.id);
+        expect(retrievedUser).toEqual(user);
+
+        const updatedUser = await client.updateUser(user.id, {
+            name: 'John Smith',
+        });
+
+        await client.deleteUser(user.id);
+
+        console.log('✅ Advanced E2E test passed!');
+    } catch (error) {
+        console.error('❌ Advanced E2E test failed:', error.message);
+        process.exit(1);
+    }
+}
+
+runAdvancedE2ETest();
+```
+
+### E2E Test Configuration
+
+```json
+// package.json
+{
+    "scripts": {
+        "test:e2e": "node e2e-test/test-built-library.mjs",
+        "test:e2e:advanced": "node e2e-test/advanced-workflow-test.mjs"
+    }
+}
+```
+
+### E2E Test Structure
+
+```
+e2e-test/
+├── test-built-library.mjs      # Basic package validation
+├── advanced-workflow-test.mjs  # Complete workflow testing
+├── commonjs-test.cjs          # CommonJS compatibility
+└── types-test.mjs             # TypeScript types validation
+```
+
+### Coverage Exclusions
+
+```typescript
+// Exclude from coverage
+/* istanbul ignore next */
+export function internalHelper() {
+    // This function is not part of the public API
+}
+
+// Conditional coverage
+export function conditionalFunction(flag: boolean) {
+    if (flag) {
+        /* istanbul ignore next */
+        return 'flag is true';
+    }
+    return 'flag is false';
+}
+```
+
+## Test Documentation
+
+### Test Descriptions
+
+```typescript
+describe('UserService', () => {
+    describe('createUser', () => {
+        it('should create a new user with valid email and name', async () => {
+            // Test implementation
+        });
+
+        it('should throw ValidationError when email format is invalid', async () => {
+            // Test implementation
+        });
+
+        it('should throw UserExistsError when email already exists in system', async () => {
+            // Test implementation
+        });
+    });
+});
+```
+
+### Test Comments
+
+```typescript
+it('should handle concurrent user creation', async () => {
+    // This test verifies that the service can handle multiple
+    // simultaneous user creation requests without conflicts
+
+    const promises = Array.from({ length: 10 }, () => userService.createUser(createMockCreateUserInput()));
+
+    const results = await Promise.all(promises);
+    expect(results).toHaveLength(10);
+});
+```
+
+description: globs: alwaysApply: false
+
+---

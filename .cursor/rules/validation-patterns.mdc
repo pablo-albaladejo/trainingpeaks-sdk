@@ -1,0 +1,594 @@
+---
+description: Validation patterns and best practices for npm libraries using Zod
+globs: **/*.ts,**/*.js,**/*.mjs
+alwaysApply: false
+---
+
+# Validation Patterns for NPM Libraries
+
+## Schema Definition
+
+### Base Schema Structure
+
+```typescript
+import { z } from 'zod';
+
+// Base schemas for common patterns
+export const EmailSchema = z.string().email('Invalid email format');
+export const UrlSchema = z.string().url('Invalid URL format');
+export const UuidSchema = z.string().uuid('Invalid UUID format');
+
+// Common validation schemas
+export const NonEmptyStringSchema = z.string().min(1, 'String cannot be empty');
+export const PositiveNumberSchema = z.number().positive('Number must be positive');
+export const NonNegativeNumberSchema = z.number().nonnegative('Number must be non-negative');
+
+// Date schemas
+export const IsoDateSchema = z.string().datetime('Invalid ISO date format');
+export const DateSchema = z.date().or(z.string().transform(val => new Date(val)));
+```
+
+### Complex Schema Patterns
+
+```typescript
+// Nested object schemas
+export const AddressSchema = z.object({
+    street: NonEmptyStringSchema,
+    city: NonEmptyStringSchema,
+    state: NonEmptyStringSchema,
+    zipCode: z.string().regex(/^\d{5}(-\d{4})?$/, 'Invalid ZIP code format'),
+    country: NonEmptyStringSchema.default('US'),
+});
+
+export const UserSchema = z.object({
+    id: UuidSchema.optional(),
+    email: EmailSchema,
+    name: NonEmptyStringSchema,
+    age: z.number().min(18, 'User must be at least 18 years old').optional(),
+    address: AddressSchema.optional(),
+    preferences: z
+        .object({
+            newsletter: z.boolean().default(false),
+            theme: z.enum(['light', 'dark']).default('light'),
+        })
+        .optional(),
+    createdAt: DateSchema.optional(),
+    updatedAt: DateSchema.optional(),
+});
+
+// Array schemas
+export const UserArraySchema = z.array(UserSchema);
+export const StringArraySchema = z.array(NonEmptyStringSchema).min(1, 'At least one item required');
+```
+
+## Input Validation
+
+### Function Input Validation
+
+```typescript
+// Validate function parameters
+export function createUser(input: unknown): User {
+    const validatedInput = UserSchema.parse(input);
+    return validatedInput;
+}
+
+// Validate with custom error handling
+export function createUserWithValidation(input: unknown): Result<User, ValidationError> {
+    const result = UserSchema.safeParse(input);
+
+    if (!result.success) {
+        return {
+            success: false,
+            error: new ValidationError('Invalid user data', result.error.issues),
+        };
+    }
+
+    return {
+        success: true,
+        data: result.data,
+    };
+}
+
+// Validate with transformation
+export function createUserWithTransform(input: unknown): User {
+    const validatedInput = UserSchema.transform(data => ({
+        ...data,
+        id: data.id ?? generateUuid(),
+        createdAt: data.createdAt ?? new Date(),
+        updatedAt: new Date(),
+    })).parse(input);
+
+    return validatedInput;
+}
+```
+
+### Configuration Validation
+
+```typescript
+// Library configuration schema
+export const LibraryConfigSchema = z.object({
+    apiKey: NonEmptyStringSchema,
+    baseUrl: UrlSchema,
+    timeout: PositiveNumberSchema.default(30000),
+    retries: z.number().int().min(0).max(10).default(3),
+    headers: z.record(z.string()).optional(),
+    debug: z.boolean().default(false),
+});
+
+export type LibraryConfig = z.infer<typeof LibraryConfigSchema>;
+
+// Validate configuration on initialization
+export class LibraryClient {
+    private config: LibraryConfig;
+
+    constructor(config: unknown) {
+        this.config = LibraryConfigSchema.parse(config);
+    }
+}
+```
+
+## Error Handling
+
+### Custom Validation Errors
+
+```typescript
+export class ValidationError extends Error {
+    constructor(
+        message: string,
+        public issues: z.ZodIssue[],
+        public field?: string,
+    ) {
+        super(message);
+        this.name = 'ValidationError';
+    }
+
+    // Convert Zod issues to user-friendly messages
+    getFieldErrors(): Record<string, string[]> {
+        const fieldErrors: Record<string, string[]> = {};
+
+        for (const issue of this.issues) {
+            const field = issue.path.join('.');
+            if (!fieldErrors[field]) {
+                fieldErrors[field] = [];
+            }
+            fieldErrors[field].push(issue.message);
+        }
+
+        return fieldErrors;
+    }
+
+    // Get first error message
+    getFirstError(): string {
+        return this.issues[0]?.message ?? this.message;
+    }
+}
+
+export class RequiredFieldError extends ValidationError {
+    constructor(field: string) {
+        super(`Field '${field}' is required`, [], field);
+        this.name = 'RequiredFieldError';
+    }
+}
+
+export class InvalidFormatError extends ValidationError {
+    constructor(field: string, expectedFormat: string) {
+        super(`Field '${field}' must be in format: ${expectedFormat}`, [], field);
+        this.name = 'InvalidFormatError';
+    }
+}
+```
+
+### Error Utilities
+
+```typescript
+export function isValidationError(error: unknown): error is ValidationError {
+    return error instanceof ValidationError;
+}
+
+export function isRequiredFieldError(error: unknown): error is RequiredFieldError {
+    return error instanceof RequiredFieldError;
+}
+
+export function isInvalidFormatError(error: unknown): error is InvalidFormatError {
+    return error instanceof InvalidFormatError;
+}
+
+// Create user-friendly error messages
+export function createUserFriendlyError(error: ValidationError): string {
+    const fieldErrors = error.getFieldErrors();
+    const errorMessages = Object.entries(fieldErrors).map(([field, messages]) => {
+        return `${field}: ${messages.join(', ')}`;
+    });
+
+    return errorMessages.join('; ');
+}
+```
+
+## Advanced Validation Patterns
+
+### Conditional Validation
+
+```typescript
+// Conditional validation based on other fields
+export const ConditionalUserSchema = UserSchema.refine(
+    data => {
+        // If user is under 18, require parent email
+        if (data.age && data.age < 18) {
+            return data.parentEmail && EmailSchema.safeParse(data.parentEmail).success;
+        }
+        return true;
+    },
+    {
+        message: 'Parent email is required for users under 18',
+        path: ['parentEmail'],
+    },
+);
+
+// Conditional validation with different schemas
+export const PaymentMethodSchema = z.discriminatedUnion('type', [
+    z.object({
+        type: z.literal('credit_card'),
+        cardNumber: z.string().regex(/^\d{16}$/, 'Invalid card number'),
+        expiryMonth: z.number().min(1).max(12),
+        expiryYear: z.number().min(new Date().getFullYear()),
+        cvv: z.string().regex(/^\d{3,4}$/, 'Invalid CVV'),
+    }),
+    z.object({
+        type: z.literal('bank_transfer'),
+        accountNumber: z.string().min(8, 'Invalid account number'),
+        routingNumber: z.string().regex(/^\d{9}$/, 'Invalid routing number'),
+    }),
+]);
+```
+
+### Custom Validators
+
+```typescript
+// Custom validation functions
+export function validatePassword(password: string): boolean {
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    return password.length >= minLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar;
+}
+
+export const PasswordSchema = z.string().min(8, 'Password must be at least 8 characters').refine(validatePassword, {
+    message: 'Password must contain uppercase, lowercase, number, and special character',
+});
+
+// Custom async validators
+export async function validateUniqueEmail(email: string): Promise<boolean> {
+    // Check if email exists in database
+    const existingUser = await userRepository.findByEmail(email);
+    return !existingUser;
+}
+
+export const UniqueEmailSchema = EmailSchema.refine(validateUniqueEmail, {
+    message: 'Email already exists',
+});
+```
+
+## Schema Composition
+
+### Reusable Schema Components
+
+```typescript
+// Base entity schema
+export const BaseEntitySchema = z.object({
+    id: UuidSchema,
+    createdAt: DateSchema,
+    updatedAt: DateSchema,
+});
+
+// Extend base schema for specific entities
+export const ProductSchema = BaseEntitySchema.extend({
+    name: NonEmptyStringSchema,
+    price: PositiveNumberSchema,
+    description: z.string().optional(),
+    category: z.enum(['electronics', 'clothing', 'books']),
+    inStock: z.boolean().default(true),
+});
+
+export const OrderSchema = BaseEntitySchema.extend({
+    userId: UuidSchema,
+    products: z.array(
+        z.object({
+            productId: UuidSchema,
+            quantity: PositiveNumberSchema,
+            price: PositiveNumberSchema,
+        }),
+    ),
+    status: z.enum(['pending', 'processing', 'shipped', 'delivered']).default('pending'),
+    total: PositiveNumberSchema,
+});
+```
+
+### Schema Transformations
+
+```typescript
+// Transform data during validation
+export const UserInputSchema = z.object({
+    email: EmailSchema,
+    name: NonEmptyStringSchema,
+    age: z.string().transform(val => parseInt(val, 10)),
+});
+
+export const UserOutputSchema = UserSchema.transform(user => ({
+    ...user,
+    displayName: `${user.name} (${user.email})`,
+    isAdult: (user.age ?? 0) >= 18,
+}));
+
+// Transform with error handling
+export const SafeTransformSchema = z.string().transform(val => {
+    try {
+        return JSON.parse(val);
+    } catch {
+        throw new Error('Invalid JSON string');
+    }
+});
+```
+
+## Validation Middleware
+
+### Request Validation
+
+```typescript
+// Validate HTTP request data
+export function validateRequest<T>(schema: z.ZodSchema<T>) {
+  return (req: unknown): T => {
+    try {
+      return schema.parse(req);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new ValidationError('Invalid request data', error.issues);
+      }
+      throw error;
+  };
+}
+
+// Validate specific request parts
+export function validateBody<T>(schema: z.ZodSchema<T>) {
+  return (body: unknown): T => {
+    return schema.parse(body);
+  };
+}
+
+export function validateQuery<T>(schema: z.ZodSchema<T>) {
+  return (query: unknown): T => {
+    return schema.parse(query);
+  };
+}
+
+export function validateParams<T>(schema: z.ZodSchema<T>) {
+  return (params: unknown): T => {
+    return schema.parse(params);
+  };
+}
+```
+
+### Response Validation
+
+```typescript
+// Validate API responses
+export function validateResponse<T>(schema: z.ZodSchema<T>) {
+    return (response: unknown): T => {
+        try {
+            return schema.parse(response);
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                throw new ValidationError('Invalid response format', error.issues);
+            }
+            throw error;
+        }
+    };
+}
+
+// Validate with fallback
+export function validateResponseWithFallback<T>(schema: z.ZodSchema<T>, fallback: T) {
+    return (response: unknown): T => {
+        const result = schema.safeParse(response);
+        return result.success ? result.data : fallback;
+    };
+}
+```
+
+## Testing Validation
+
+### Validation Test Utilities
+
+```typescript
+// Test validation schemas
+export function expectValidationSuccess<T>(schema: z.ZodSchema<T>, input: unknown, expected?: T): void {
+    const result = schema.safeParse(input);
+    expect(result.success).toBe(true);
+
+    if (expected) {
+        expect(result.data).toEqual(expected);
+    }
+}
+
+export function expectValidationError(schema: z.ZodSchema, input: unknown, expectedError?: string): void {
+    const result = schema.safeParse(input);
+    expect(result.success).toBe(false);
+
+    if (expectedError) {
+        expect(result.error.issues[0]?.message).toContain(expectedError);
+    }
+}
+
+// Test validation error details
+export function expectFieldError(schema: z.ZodSchema, input: unknown, field: string, expectedMessage?: string): void {
+    const result = schema.safeParse(input);
+    expect(result.success).toBe(false);
+
+    const fieldIssue = result.error.issues.find(issue => issue.path.join('.') === field);
+
+    expect(fieldIssue).toBeDefined();
+
+    if (expectedMessage) {
+        expect(fieldIssue?.message).toContain(expectedMessage);
+    }
+}
+```
+
+### Test Examples
+
+```typescript
+describe('UserSchema', () => {
+    it('should validate valid user data', () => {
+        const validUser = {
+            email: 'test@example.com',
+            name: 'John Doe',
+            age: 25,
+        };
+
+        expectValidationSuccess(UserSchema, validUser);
+    });
+
+    it('should reject invalid email', () => {
+        const invalidUser = {
+            email: 'invalid-email',
+            name: 'John Doe',
+        };
+
+        expectValidationError(UserSchema, invalidUser, 'Invalid email format');
+    });
+
+    it('should reject empty name', () => {
+        const invalidUser = {
+            email: 'test@example.com',
+            name: '',
+        };
+
+        expectFieldError(UserSchema, invalidUser, 'name', 'String cannot be empty');
+    });
+
+    it('should reject user under 18', () => {
+        const invalidUser = {
+            email: 'test@example.com',
+            name: 'John Doe',
+            age: 16,
+        };
+
+        expectFieldError(UserSchema, invalidUser, 'age', 'User must be at least 18 years old');
+    });
+});
+```
+
+## Performance Optimization
+
+### Schema Caching
+
+```typescript
+// Cache compiled schemas for better performance
+const schemaCache = new Map<string, z.ZodSchema>();
+
+export function getCachedSchema<T>(key: string, factory: () => z.ZodSchema<T>): z.ZodSchema<T> {
+    if (!schemaCache.has(key)) {
+        schemaCache.set(key, factory());
+    }
+    return schemaCache.get(key) as z.ZodSchema<T>;
+}
+
+// Use cached schemas
+export const CachedUserSchema = getCachedSchema('user', () => UserSchema);
+export const CachedProductSchema = getCachedSchema('product', () => ProductSchema);
+```
+
+### Lazy Validation
+
+```typescript
+// Validate only when needed
+export function createLazyValidator<T>(schema: z.ZodSchema<T>) {
+    let validated: T | null = null;
+    let validationError: ValidationError | null = null;
+
+    return {
+        validate: (input: unknown): T => {
+            if (validated !== null) {
+                return validated;
+            }
+
+            if (validationError) {
+                throw validationError;
+            }
+
+            try {
+                validated = schema.parse(input);
+                return validated;
+            } catch (error) {
+                if (error instanceof z.ZodError) {
+                    validationError = new ValidationError('Validation failed', error.issues);
+                    throw validationError;
+                }
+                throw error;
+            }
+        },
+
+        reset: () => {
+            validated = null;
+            validationError = null;
+        },
+    };
+}
+```
+
+## Integration with Libraries
+
+### Express.js Integration
+
+```typescript
+import { Request, Response, NextFunction } from 'express';
+
+export function validateRequestMiddleware<T>(schema: z.ZodSchema<T>) {
+    return (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const validatedData = schema.parse(req.body);
+            req.body = validatedData;
+            next();
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({
+                    error: 'Validation failed',
+                    details: error.issues,
+                });
+            } else {
+                next(error);
+            }
+        }
+    };
+}
+
+// Usage
+app.post('/users', validateRequestMiddleware(UserSchema), createUserController);
+```
+
+### GraphQL Integration
+
+```typescript
+import { GraphQLError } from 'graphql';
+
+export function validateGraphQLInput<T>(schema: z.ZodSchema<T>, input: unknown): T {
+    try {
+        return schema.parse(input);
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            throw new GraphQLError('Validation failed', {
+                extensions: {
+                    code: 'VALIDATION_ERROR',
+                    issues: error.issues,
+                },
+            });
+        }
+        throw error;
+    }
+}
+```
+
+description: globs: alwaysApply: false
+
+---

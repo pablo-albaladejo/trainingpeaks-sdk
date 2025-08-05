@@ -1,0 +1,47 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "removeComments": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@adapters/*": ["adapters/*"],
+      "@application/*": ["application/*"],
+      "@domain/*": ["domain/*"],
+      "@entrypoints/*": ["entrypoints/*"],
+      "@fixtures/*": ["__fixtures__/*"],
+      "@infrastructure/*": ["infrastructure/*"],
+      "@sdk/*": ["sdk/*"],
+      "@types/*": ["types/*"]
+    }
+  },
+  "include": ["src/**/*", "test/integration", "examples"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "src/test.setup.ts"
+  ]
+}

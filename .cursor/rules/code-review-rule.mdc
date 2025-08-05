@@ -1,0 +1,413 @@
+---
+description: Code review checklist and standards for npm libraries
+globs: **/*.ts,**/*.js,**/*.mjs
+alwaysApply: false
+---
+
+# Code Review Standards for NPM Libraries
+
+## Review Checklist
+
+### 🏗️ Architecture & Design
+
+#### [ ] Clean Architecture Principles
+
+- [ ] Domain layer has no external dependencies
+- [ ] Application layer depends only on domain interfaces
+- [ ] Adapters implement domain interfaces
+- [ ] Dependencies flow inward (domain → application → adapters)
+
+#### [ ] Library API Design
+
+- [ ] Public API is well-defined and minimal
+- [ ] Internal implementation details are not exposed
+- [ ] API follows consistent naming conventions
+- [ ] Configuration options are reasonable and documented
+- [ ] Error types are specific and actionable
+
+#### [ ] Module Organization
+
+- [ ] Clear separation between public and internal modules
+- [ ] Barrel exports are properly organized
+- [ ] No circular dependencies
+- [ ] Related functionality is grouped together
+
+### 📝 Code Quality
+
+#### [ ] TypeScript Best Practices
+
+- [ ] Strict TypeScript configuration is used
+- [ ] Types are explicit and meaningful
+- [ ] No `any` types in public API
+- [ ] Generic types are properly constrained
+- [ ] Union types are used appropriately
+
+#### [ ] Function Design
+
+- [ ] Functions have single responsibility
+- [ ] Parameters use options objects for complex inputs
+- [ ] Return types are explicit
+- [ ] Error handling is consistent
+- [ ] Async functions are properly typed
+
+#### [ ] Class Design
+
+- [ ] Classes follow SOLID principles
+- [ ] Immutability is preferred for domain entities
+- [ ] Dependencies are injected via constructor
+- [ ] Private methods and properties are properly scoped
+- [ ] Getters and setters are used appropriately
+
+### 🔒 Security & Safety
+
+#### [ ] Input Validation
+
+- [ ] All user inputs are validated
+- [ ] Validation uses schema libraries (Zod, Joi, etc.)
+- [ ] Error messages don't expose sensitive information
+- [ ] Input sanitization is performed where needed
+
+#### [ ] Error Handling
+
+- [ ] Custom error types are defined for different scenarios
+- [ ] Errors include meaningful messages and context
+- [ ] Error types are exported for user handling
+- [ ] Async errors are properly propagated
+
+#### [ ] Configuration Security
+
+- [ ] Sensitive configuration is not hardcoded
+- [ ] Environment variables are used appropriately
+- [ ] Configuration validation is implemented
+- [ ] Default values are secure
+
+### 🧪 Testing
+
+#### [ ] Test Coverage
+
+- [ ] Public API has comprehensive test coverage
+- [ ] Edge cases and error scenarios are tested
+- [ ] Mocking is used appropriately
+- [ ] Test data is realistic and varied
+
+#### [ ] Test Quality
+
+- [ ] Tests are readable and well-documented
+- [ ] Test names clearly describe what is being tested
+- [ ] Arrange-Act-Assert pattern is followed
+- [ ] Tests are independent and isolated
+
+#### [ ] Test Organization
+
+- [ ] Test files mirror source file structure
+- [ ] Fixtures and utilities are properly organized
+- [ ] Custom matchers are used where appropriate
+- [ ] Test utilities are reusable
+
+### 📚 Documentation
+
+#### [ ] API Documentation
+
+- [ ] All public functions have JSDoc comments
+- [ ] Parameters and return types are documented
+- [ ] Examples are provided for complex APIs
+- [ ] Error scenarios are documented
+
+#### [ ] README Quality
+
+- [ ] Installation instructions are clear
+- [ ] Quick start example is provided
+- [ ] API reference is comprehensive
+- [ ] Examples cover common use cases
+
+#### [ ] Type Definitions
+
+- [ ] Public types are well-documented
+- [ ] Complex types have explanatory comments
+- [ ] Type names are descriptive and consistent
+- [ ] Generic type parameters are documented
+
+### 🚀 Performance & Optimization
+
+#### [ ] Bundle Size
+
+- [ ] Dependencies are minimal and necessary
+- [ ] Tree-shaking is supported
+- [ ] Bundle analysis shows reasonable size
+- [ ] No unnecessary code is included
+
+#### [ ] Runtime Performance
+
+- [ ] Algorithms are efficient
+- [ ] Memory usage is reasonable
+- [ ] Caching is implemented where beneficial
+- [ ] Async operations are optimized
+
+#### [ ] Lazy Loading
+
+- [ ] Heavy dependencies are loaded lazily
+- [ ] Optional features are dynamically imported
+- [ ] Initial bundle size is minimized
+- [ ] Loading strategies are documented
+
+### 🔄 Backward Compatibility
+
+#### [ ] API Stability
+
+- [ ] Public API changes are backward compatible
+- [ ] Deprecation warnings are provided for breaking changes
+- [ ] Migration guides are available
+- [ ] Versioning follows semantic versioning
+
+#### [ ] Type Safety
+
+- [ ] Type definitions are stable
+- [ ] Breaking type changes are properly versioned
+- [ ] Type exports are consistent
+- [ ] Generic types maintain compatibility
+
+## Review Process
+
+### Pre-Review Checklist
+
+#### [ ] Before Submitting
+
+- [ ] All tests pass locally
+- [ ] Code is formatted and linted
+- [ ] Documentation is updated
+- [ ] Changelog is updated if needed
+- [ ] Bundle size impact is assessed
+
+#### [ ] Pull Request Description
+
+- [ ] Clear description of changes
+- [ ] Breaking changes are highlighted
+- [ ] Testing instructions are provided
+- [ ] Related issues are linked
+
+### Review Guidelines
+
+#### [ ] Review Focus Areas
+
+1. **Functionality**: Does the code work as intended?
+2. **Architecture**: Does it follow clean architecture principles?
+3. **API Design**: Is the public API well-designed?
+4. **Testing**: Are there adequate tests?
+5. **Documentation**: Is everything properly documented?
+6. **Performance**: Are there performance implications?
+7. **Security**: Are there security concerns?
+
+#### [ ] Review Comments
+
+- Be constructive and specific
+- Provide examples when possible
+- Suggest alternatives when appropriate
+- Focus on the code, not the person
+- Use the checklist above as a guide
+
+#### [ ] Approval Criteria
+
+- All checklist items are satisfied
+- Tests pass in CI
+- Documentation is complete
+- No security issues identified
+- Performance impact is acceptable
+
+## Common Issues to Watch For
+
+### 🚨 Critical Issues
+
+#### [ ] Security Vulnerabilities
+
+- [ ] Input validation bypasses
+- [ ] Sensitive data exposure
+- [ ] Insecure default configurations
+- [ ] Dependency vulnerabilities
+
+#### [ ] Breaking Changes
+
+- [ ] Public API modifications without deprecation
+- [ ] Type definition changes
+- [ ] Configuration option removals
+- [ ] Default behavior changes
+
+#### [ ] Performance Problems
+
+- [ ] Memory leaks
+- [ ] Inefficient algorithms
+- [ ] Unnecessary dependencies
+- [ ] Large bundle size increases
+
+### ⚠️ Important Issues
+
+#### [ ] Code Quality
+
+- [ ] Inconsistent naming conventions
+- [ ] Poor error handling
+- [ ] Missing type annotations
+- [ ] Code duplication
+
+#### [ ] Testing Gaps
+
+- [ ] Missing test coverage
+- [ ] Inadequate error scenario testing
+- [ ] Poor test organization
+- [ ] Unrealistic test data
+
+#### [ ] Documentation Issues
+
+- [ ] Missing API documentation
+- [ ] Unclear examples
+- [ ] Outdated documentation
+- [ ] Poor README quality
+
+### 💡 Suggestions for Improvement
+
+#### [ ] Code Enhancements
+
+- [ ] Better error messages
+- [ ] More efficient algorithms
+- [ ] Improved type safety
+- [ ] Better abstraction
+
+#### [ ] User Experience
+
+- [ ] More intuitive API design
+- [ ] Better error handling
+- [ ] Improved documentation
+- [ ] Additional examples
+
+## Review Templates
+
+### ✅ Approval Template
+
+```markdown
+## ✅ Approved
+
+Great work! This PR meets all our standards:
+
+- ✅ Architecture follows clean architecture principles
+- ✅ API design is well-thought-out and consistent
+- ✅ Comprehensive test coverage
+- ✅ Documentation is complete and clear
+- ✅ No security or performance concerns
+
+Ready to merge! 🚀
+```
+
+### 🔄 Request Changes Template
+
+```markdown
+## 🔄 Changes Requested
+
+Thanks for the contribution! Please address the following issues:
+
+### Critical Issues
+
+- [ ] **Security**: [Describe security concern]
+- [ ] **Breaking Change**: [Describe breaking change]
+
+### Important Issues
+
+- [ ] **Code Quality**: [Describe code quality issue]
+- [ ] **Testing**: [Describe testing gap]
+- [ ] **Documentation**: [Describe documentation issue]
+
+### Suggestions
+
+- 💡 Consider [suggestion for improvement]
+
+Please update the PR and request another review when ready.
+```
+
+### 💬 Discussion Template
+
+```markdown
+## 💬 Discussion
+
+I have some questions about this implementation:
+
+### Questions
+
+1. [Question about design decision]
+2. [Question about implementation approach]
+
+### Considerations
+
+- [Consideration about alternative approach]
+- [Consideration about future impact]
+
+Let's discuss these points before proceeding.
+```
+
+## Automated Checks
+
+### [ ] CI/CD Pipeline
+
+- [ ] TypeScript compilation passes
+- [ ] All tests pass
+- [ ] Linting passes
+- [ ] Code coverage meets thresholds
+- [ ] Bundle size is within limits
+
+### [ ] Pre-commit Hooks
+
+- [ ] Code formatting is applied
+- [ ] Linting errors are fixed
+- [ ] Type checking passes
+- [ ] Tests run locally
+
+### [ ] Automated Tools
+
+- [ ] Security scanning
+- [ ] Dependency vulnerability checks
+- [ ] Bundle analysis
+- [ ] Performance regression detection
+
+## Review Metrics
+
+### [ ] Track Review Quality
+
+- [ ] Review time per PR
+- [ ] Number of review iterations
+- [ ] Issues found in production
+- [ ] User feedback on releases
+
+### [ ] Continuous Improvement
+
+- [ ] Regular review process updates
+- [ ] Checklist refinement
+- [ ] Team training on review standards
+- [ ] Feedback collection from reviewers
+
+## Special Considerations for Libraries
+
+### [ ] Public API Design
+
+- [ ] API is intuitive and discoverable
+- [ ] Configuration options are reasonable
+- [ ] Error types are specific and actionable
+- [ ] Examples demonstrate best practices
+
+### [ ] Versioning Strategy
+
+- [ ] Semantic versioning is followed
+- [ ] Breaking changes are properly communicated
+- [ ] Migration guides are provided
+- [ ] Deprecation warnings are clear
+
+### [ ] Distribution
+
+- [ ] Package.json is properly configured
+- [ ] Entry points are correctly defined
+- [ ] Type definitions are included
+- [ ] Bundle size is optimized
+
+### [ ] Community Impact
+
+- [ ] Changes consider existing users
+- [ ] Migration path is clear
+- [ ] Documentation is comprehensive
+- [ ] Examples are practical description: globs: alwaysApply: false
+
+---
