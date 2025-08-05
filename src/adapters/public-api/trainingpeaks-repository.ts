@@ -1,8 +1,9 @@
 import type { TrainingPeaksRepository } from '@/application';
-import type { AuthRepository } from '@/domain';
+import type { AuthRepository, WorkoutRepository } from '@/domain';
 
 type TrainingPeaksRepositoryDependencies = {
   authRepository: AuthRepository;
+  workoutRepository: WorkoutRepository;
 };
 
 export const createTrainingPeaksRepository = (
@@ -11,5 +12,6 @@ export const createTrainingPeaksRepository = (
   return {
     login: deps.authRepository.login,
     logout: deps.authRepository.logout,
+    getWorkoutsList: deps.workoutRepository.getWorkoutsList,
   };
 };

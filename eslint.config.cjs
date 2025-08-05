@@ -1,28 +1,28 @@
 // eslint.config.cjs - ESLint 9 Flat Config
-const typescriptEslint = require('@typescript-eslint/eslint-plugin');
-const typescriptParser = require('@typescript-eslint/parser');
+const tseslint = require('typescript-eslint');
 const simpleImportSort = require('eslint-plugin-simple-import-sort');
 const unusedImports = require('eslint-plugin-unused-imports');
 const vitest = require('@vitest/eslint-plugin');
 const js = require('@eslint/js');
 const globals = require('globals');
 
-module.exports = [
+module.exports = tseslint.config(
   // Global ignores
   {
     ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'dist-cjs/**'],
   },
 
-  // Base configuration for TypeScript files
+  // Base configurations
+  js.configs.recommended,
+  ...tseslint.configs.recommendedTypeChecked,
+
+  // TypeScript configuration
   {
     files: ['src/**/*.ts'],
     languageOptions: {
-      parser: typescriptParser,
       parserOptions: {
         project: ['./tsconfig.json', './tsconfig.test.json'],
         tsconfigRootDir: __dirname,
-        ecmaVersion: 'latest',
-        sourceType: 'module',
       },
       globals: {
         ...globals.node,
@@ -31,16 +31,11 @@ module.exports = [
       },
     },
     plugins: {
-      '@typescript-eslint': typescriptEslint,
       'simple-import-sort': simpleImportSort,
       'unused-imports': unusedImports,
       vitest: vitest,
     },
     rules: {
-      ...js.configs.recommended.rules,
-      ...typescriptEslint.configs.recommended.rules,
-      ...typescriptEslint.configs['recommended-type-checked'].rules,
-      ...vitest.configs.recommended.rules,
 
       'no-console': 'error',
       'simple-import-sort/imports': 'error',
@@ -69,9 +64,17 @@ module.exports = [
     },
   },
 
-  // Override for logging files
+  // Override for logging files  
   {
     files: ['src/adapters/logging/**/*.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+
+  // Override for example files to allow console statements
+  {
+    files: ['src/example/**/*.ts'],
     rules: {
       'no-console': 'off',
     },
@@ -92,5 +95,5 @@ module.exports = [
       '@typescript-eslint/no-unsafe-property-access': 'off',
       '@typescript-eslint/no-unsafe-type-assertion': 'off',
     },
-  },
-];
+  }
+);

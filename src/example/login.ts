@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+ 
 import { config } from 'dotenv';
 
 import { createTrainingPeaksSdk } from '@/sdk/training-peaks-sdk';

@@ -321,7 +321,7 @@ describe('generateCurlCommand', () => {
       // Arrange
       const request: CurlRequestData = {
         method: 'POST',
-        url: 'https://api.trainingpeaks.com/login',
+        url: 'https://tpapi.trainingpeaks.com/login',
         headers: {
           Authorization: 'Bearer token123',
           'Content-Type': 'application/json',
@@ -340,7 +340,7 @@ describe('generateCurlCommand', () => {
 
       // Assert
       expect(result).toContain(
-        "curl -X POST 'https://api.trainingpeaks.com/login'"
+        "curl -X POST 'https://tpapi.trainingpeaks.com/login'"
       );
       expect(result).toContain("-H 'Authorization: Bearer token123'");
       expect(result).toContain("-H 'Content-Type: application/json'");

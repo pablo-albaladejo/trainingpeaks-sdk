@@ -24,6 +24,8 @@ export type ApiConfig = {
   baseUrls?: Partial<BaseUrls>;
   /** API version for users endpoint (default: 'v3') */
   usersVersion?: string;
+  /** API version for fitness endpoint (default: 'v6') */
+  fitnessVersion?: string;
   /** Custom paths for specific endpoints */
   paths?: Partial<{
     login: string;
@@ -32,6 +34,9 @@ export type ApiConfig = {
     userProfile: string;
     tokenRefresh: string;
     userPreferences: string;
+    fitness: string;
+    athletes: string;
+    workouts: string;
   }>;
   /** Custom endpoint overrides (full URLs) */
   endpoints?: Partial<{
@@ -40,6 +45,7 @@ export type ApiConfig = {
     USER_PROFILE: string;
     TOKEN_REFRESH: string;
     USER_PREFERENCES: string;
+    WORKOUTS_LIST: string;
   }>;
 };
 
@@ -62,6 +68,9 @@ export const DEFAULT_PATHS = {
   userProfile: '/user',
   tokenRefresh: '/token/refresh',
   userPreferences: '/preferences',
+  fitness: '/fitness',
+  athletes: '/athletes',
+  workouts: '/workouts',
 } as const;
 
 /**
@@ -80,6 +89,7 @@ export type ApiUrls = {
     USER_PROFILE: string;
     TOKEN_REFRESH: string;
     USER_PREFERENCES: string;
+    WORKOUTS_LIST: string;
   };
   origins: {
     APP: string;
@@ -105,11 +115,13 @@ export const createApiUrls = (config: ApiConfig = {}): ApiUrls => {
     ...config.paths,
   };
 
-  // Get API version (default to 'v3')
+  // Get API versions (default to 'v3' for users, 'v6' for fitness)
   const usersVersion = config.usersVersion ?? 'v3';
+  const fitnessVersion = config.fitnessVersion ?? 'v6';
 
   // Build derived URLs
   const usersBase = `${baseUrls.api}${paths.users}/${usersVersion}`;
+  const fitnessBase = `${baseUrls.api}${paths.fitness}/${fitnessVersion}`;
 
   // Generate endpoints with defaults
   const generatedEndpoints = {
@@ -118,6 +130,7 @@ export const createApiUrls = (config: ApiConfig = {}): ApiUrls => {
     USER_PROFILE: `${usersBase}${paths.userProfile}`,
     TOKEN_REFRESH: `${usersBase}${paths.tokenRefresh}`,
     USER_PREFERENCES: `${usersBase}${paths.userPreferences}`,
+    WORKOUTS_LIST: `${fitnessBase}${paths.athletes}`,
   };
 
   // Override with custom endpoints if provided
@@ -160,3 +173,21 @@ export const API_ORIGINS = DEFAULT_API_URLS.origins;
  * API Endpoints - derived from DEFAULT_API_URLS for backward compatibility
  */
 export const API_ENDPOINTS = DEFAULT_API_URLS.endpoints;
+
+/**
+ * Generates workout list URL for a specific athlete and date range
+ * @param athleteId - The athlete ID to fetch workouts for
+ * @param startDate - Start date in YYYY-MM-DD format
+ * @param endDate - End date in YYYY-MM-DD format
+ * @param config - Optional API configuration overrides
+ * @returns Complete workout list URL
+ */
+export const generateWorkoutListUrl = (
+  athleteId: string,
+  startDate: string,
+  endDate: string,
+  config: ApiConfig = {}
+): string => {
+  const apiUrls = createApiUrls(config);
+  return `${apiUrls.endpoints.WORKOUTS_LIST}/${athleteId}/workouts/${startDate}/${endDate}`;
+};

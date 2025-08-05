@@ -215,3 +215,196 @@ export const isRetryableError = (error: unknown): boolean => {
     error.status === 504
   );
 };
+
+// =====================================
+// HIGH-LEVEL ERROR THROWING UTILITIES
+// =====================================
+
+import type { HttpResponse } from '@/application';
+
+/**
+ * Request context for better error reporting
+ */
+export type ErrorRequestContext = {
+  url: string;
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  requestData?: unknown;
+  requestId?: string;
+};
+
+/**
+ * Helper function to create and throw structured HttpError from response
+ * Handles both existing HttpErrors and generic errors
+ */
+export const throwHttpErrorFromResponse: <T>(
+  response: HttpResponse<T>,
+  operation: string,
+  context: ErrorRequestContext
+) => never = <T>(
+  response: HttpResponse<T>,
+  operation: string,
+  context: ErrorRequestContext
+): never => {
+  if (response.error && isHttpError(response.error)) {
+    // Re-throw the existing HttpError
+    throw response.error;
+  }
+
+  // Create structured HttpError for non-HTTP errors
+  const errorMessage = response.error
+    ? String(response.error)
+    : `${operation} failed`;
+    
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 0,
+    statusText: 'Unknown Error',
+    data: { message: errorMessage },
+  };
+
+  throw createHttpError(httpErrorResponse, context);
+};
+
+/**
+ * Helper function to create and throw validation error
+ */
+export const throwValidationError: (
+  message: string,
+  context: ErrorRequestContext
+) => never = (message: string, context: ErrorRequestContext): never => {
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 400,
+    statusText: 'Bad Request',
+    data: { message },
+  };
+
+  throw createHttpError(httpErrorResponse, context);
+};
+
+/**
+ * Helper function to create and throw missing data error
+ */
+export const throwMissingDataError: (
+  message: string,
+  context: ErrorRequestContext
+) => never = (message: string, context: ErrorRequestContext): never => {
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 502,
+    statusText: 'Bad Gateway',
+    data: { message },
+  };
+
+  throw createHttpError(httpErrorResponse, context);
+};
+
+/**
+ * Helper function to create and throw unauthorized error
+ */
+export const throwUnauthorizedError: (
+  message: string,
+  context: ErrorRequestContext
+) => never = (message: string, context: ErrorRequestContext): never => {
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 401,
+    statusText: 'Unauthorized',
+    data: { message },
+  };
+
+  throw createHttpError(httpErrorResponse, context);
+};
+
+/**
+ * Helper function to create and throw generic server error
+ */
+export const throwServerError: (
+  error: unknown,
+  fallbackMessage: string,
+  context: ErrorRequestContext
+) => never = (
+  error: unknown,
+  fallbackMessage: string,
+  context: ErrorRequestContext
+): never => {
+  // If it's already an HttpError, re-throw it
+  if (isHttpError(error)) {
+    throw error;
+  }
+
+  // Create structured HttpError for other errors
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 500,
+    statusText: 'Internal Server Error',
+    data: {
+      message: error instanceof Error ? error.message : fallbackMessage,
+    },
+  };
+
+  throw createHttpError(httpErrorResponse, context);
+};
+
+/**
+ * Helper function to create and throw authentication-specific errors
+ */
+export const throwAuthError: (
+  message: string,
+  context: ErrorRequestContext
+) => never = (message: string, context: ErrorRequestContext): never => {
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 401,
+    statusText: 'Unauthorized',
+    data: { message },
+  };
+
+  throw createHttpError(httpErrorResponse, context);
+};
+
+/**
+ * Helper function to create and throw cookie not found error
+ */
+export const throwCookieNotFoundError: (
+  cookieName: string,
+  context: ErrorRequestContext
+) => never = (cookieName: string, context: ErrorRequestContext): never => {
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 401,
+    statusText: 'Unauthorized',
+    data: { message: `${cookieName} cookie not found` },
+  };
+
+  throw createHttpError(httpErrorResponse, context);
+};
+
+/**
+ * Helper function to create and throw token expired error
+ */
+export const throwTokenExpiredError: (
+  context: ErrorRequestContext
+) => never = (context: ErrorRequestContext): never => {
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 401,
+    statusText: 'Unauthorized',
+    data: { message: 'Received expired token from TrainingPeaks API' },
+  };
+
+  throw createHttpError(httpErrorResponse, context);
+};
+
+/**
+ * Helper function to handle repository operation errors with logging
+ * Logs the error and throws appropriate HttpError
+ */
+export const handleRepositoryError: (
+  error: unknown,
+  operation: string,
+  context: ErrorRequestContext,
+  logger: { error: (message: string, details?: unknown) => void },
+  params?: unknown
+) => never = (
+  error: unknown,
+  operation: string,
+  context: ErrorRequestContext,
+  logger: { error: (message: string, details?: unknown) => void },
+  params?: unknown
+): never => {
+  logger.error(`Failed to ${operation}`, { error, params });
+  throwServerError(error, `Failed to ${operation}`, context);
+};

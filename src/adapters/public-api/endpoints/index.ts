@@ -10,3 +10,6 @@ export * from './users/v3/user';
 
 // Login Endpoint
 export * from './login';
+
+// Fitness API v6 Endpoints
+export * from './fitness/v6/workouts';

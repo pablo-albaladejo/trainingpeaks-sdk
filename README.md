@@ -129,7 +129,7 @@ You can configure the SDK behavior using environment variables:
 
 ```bash
 # API Base URL (optional)
-TRAININGPEAKS_API_URL=https://api.trainingpeaks.com
+TRAININGPEAKS_API_BASE_URL=https://tpapi.trainingpeaks.com
 
 # Request timeout in milliseconds (optional)
 TRAININGPEAKS_TIMEOUT=30000
@@ -144,7 +144,7 @@ TRAININGPEAKS_DEBUG=true
 import { TrainingPeaksSDK } from 'trainingpeaks-sdk';
 
 const sdk = new TrainingPeaksSDK({
-  apiUrl: 'https://api.trainingpeaks.com',
+  apiBaseUrl: 'https://tpapi.trainingpeaks.com',
   timeout: 30000,
   debug: false
 });

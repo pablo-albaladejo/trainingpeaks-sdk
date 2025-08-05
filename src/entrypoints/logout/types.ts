@@ -11,11 +11,6 @@ export type LogoutEntrypointDependencies = {
 
 /**
  * Logout Entrypoint Response
+ * Returns void on success or throws an error
  */
-export type LogoutEntrypointResponse = {
-  success: boolean;
-  error?: {
-    code: string;
-    message: string;
-  };
-};
+export type LogoutEntrypointResponse = void;
