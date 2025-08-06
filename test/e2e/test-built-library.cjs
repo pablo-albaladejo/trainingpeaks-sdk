@@ -19,7 +19,10 @@ async function runE2ETests() {
     const client = new TrainingPeaksClient({
       debug: true,
       timeout: 5000,
-      baseUrl: 'https://www.trainingpeaks.com',
+    const client = new TrainingPeaksClient({
+      debug: true,
+      timeout: 5000,
+      baseUrl: process.env.TP_API_BASE_URL ?? 'https://tpapi.trainingpeaks.com',
     });
 
     console.log('✅ Step 2: Client instantiation successful');
