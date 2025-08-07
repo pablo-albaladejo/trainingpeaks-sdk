@@ -3,7 +3,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Logger } from '@/adapters';
-import { HttpError } from '@/adapters/errors/http-errors';
+import {
+  createHttpError,
+  HttpError,
+} from '@/adapters/errors/http-errors';
 import { type HttpClient, type HttpResponse } from '@/adapters/http';
 import { SessionStorage } from '@/application';
 import { createCredentials } from '@/domain';
@@ -128,7 +131,7 @@ describe('AuthRepository', () => {
         }
         return Promise.resolve({
           success: false,
-          error: new HttpError('Not found', 404),
+          error: createHttpError({ status: 404, statusText: 'Not Found' }),
         } as HttpResponse<unknown>);
       });
 
@@ -173,7 +176,10 @@ describe('AuthRepository', () => {
     it('should throw error when login page request fails', async () => {
       vi.mocked(mockHttpClient.get).mockResolvedValue({
         success: false,
-        error: new HttpError('Network error', 500),
+        error: createHttpError({
+          status: 500,
+          statusText: 'Internal Server Error',
+        }),
       } as HttpResponse<unknown>);
 
       const repository = createAuthRepository(dependencies);
@@ -199,7 +205,11 @@ describe('AuthRepository', () => {
     it('should throw error when login submission fails', async () => {
       vi.mocked(mockHttpClient.post).mockResolvedValue({
         success: false,
-        error: new HttpError('Login failed', 500),
+        error: createHttpError({
+          status: 500,
+          statusText: 'Internal Server Error',
+          data: { message: 'Login failed' },
+        }),
       } as HttpResponse<unknown>);
 
       const repository = createAuthRepository(dependencies);
@@ -233,12 +243,16 @@ describe('AuthRepository', () => {
         if (url.includes('token')) {
           return Promise.resolve({
             success: false,
-            error: new HttpError('Token request failed', 500),
+            error: createHttpError({
+              status: 500,
+              statusText: 'Internal Server Error',
+              data: { message: 'Token request failed' },
+            }),
           } as HttpResponse<unknown>);
         }
         return Promise.resolve({
           success: false,
-          error: new HttpError('Not found', 404),
+          error: createHttpError({ status: 404, statusText: 'Not Found' }),
         } as HttpResponse<unknown>);
       });
 
@@ -271,7 +285,7 @@ describe('AuthRepository', () => {
         }
         return Promise.resolve({
           success: false,
-          error: new HttpError('Not found', 404),
+          error: createHttpError({ status: 404, statusText: 'Not Found' }),
         } as HttpResponse<unknown>);
       });
 
@@ -306,7 +320,7 @@ describe('AuthRepository', () => {
         }
         return Promise.resolve({
           success: false,
-          error: new HttpError('Not found', 404),
+          error: createHttpError({ status: 404, statusText: 'Not Found' }),
         } as HttpResponse<unknown>);
       });
 
@@ -327,7 +341,7 @@ describe('AuthRepository', () => {
         }
         return Promise.resolve({
           success: false,
-          error: new HttpError('Not found', 404),
+          error: createHttpError({ status: 404, statusText: 'Not Found' }),
         } as HttpResponse<unknown>);
       });
 
@@ -412,7 +426,7 @@ describe('AuthRepository', () => {
         }
         return Promise.resolve({
           success: false,
-          error: new HttpError('Not found', 404),
+          error: createHttpError({ status: 404, statusText: 'Not Found' }),
         } as HttpResponse<unknown>);
       });
 

@@ -51,7 +51,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "build": "npm run type-check && npm run build:esm && npm run build:cjs",
+    "build": "npm run type-check && npm run build:esm && npm run build:cjs && npm run docs",
     "build:esm": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json --resolve-full-paths",
     "build:cjs": "tsc -p tsconfig.build.json --module commonjs --outDir dist-cjs && tsc-alias -p tsconfig.build.json --outDir dist-cjs --resolve-full-paths && node scripts/make-cjs.js",
     "clean": "rm -rf dist dist-cjs",
@@ -72,7 +72,8 @@
     "check-imports": "bash scripts/check-imports.sh",
     "pre-release": "npm run clean && npm run format:check && npm run lint && npm run check-imports && npm run build && npm run test:coverage",
     "release": "semantic-release",
-    "release:dry-run": "semantic-release --dry-run"
+    "release:dry-run": "semantic-release --dry-run",
+    "docs": "typedoc"
   },
   "keywords": [
     "trainingpeaks",
@@ -125,6 +126,7 @@
     "prettier": "^3.6.2",
     "semantic-release": "^24.2.7",
     "tsc-alias": "^1.8.16",
+    "typedoc": "^0.28.9",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.39.0",
     "vite-tsconfig-paths": "^5.1.4",
