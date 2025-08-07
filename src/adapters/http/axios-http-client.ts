@@ -32,6 +32,7 @@ import {
   HttpError,
   type HttpErrorResponse,
 } from '../errors/http-errors';
+import { executeRequestWithRefresh } from './request-with-refresh';
 import { DEFAULT_RETRY_CONFIG, RetryHandler } from './retry-handler';
 
 /**
@@ -62,6 +63,7 @@ const normalizeHttpClientConfig = (config: HttpClientConfig) => {
     retryMaxDelay: config.retryMaxDelay ?? DEFAULT_RETRY_CONFIG.maxDelay!,
     retryJitter: config.retryJitter ?? DEFAULT_RETRY_CONFIG.jitter!,
     logger: config.logger,
+    sessionStorage: config.sessionStorage,
   };
 };
 
@@ -156,6 +158,34 @@ const makeRequest = async <T>(
     withCredentials: baseConfig.enableCookies ?? false,
   };
 
+  // Add Bearer token automatically if session storage is available
+  if (baseConfig.sessionStorage) {
+    try {
+      const session = await baseConfig.sessionStorage.get();
+      if (session?.token?.accessToken) {
+        axiosConfig.headers = {
+          ...axiosConfig.headers,
+          Authorization: `Bearer ${session.token.accessToken}`,
+        };
+      }
+    } catch (error) {
+      // Don't fail the request if session retrieval fails, just log it
+      if (baseConfig.logger) {
+        baseConfig.logger.warn('Failed to retrieve session for Bearer token', {
+          error,
+        });
+      }
+    }
+  }
+
+  // Add manual cookies if provided
+  if (config.options?.cookies) {
+    axiosConfig.headers = {
+      ...axiosConfig.headers,
+      Cookie: config.options.cookies,
+    };
+  }
+
   // Create retry handler with config
   const retryHandler = new RetryHandler({
     attempts: baseConfig.retryAttempts,
@@ -208,9 +238,22 @@ const makeRequest = async <T>(
   }
 
   try {
-    // Execute request with retry logic
+    // Execute request with retry logic and automatic token refresh
     const response: AxiosResponse<T> = await retryHandler.execute(
-      () => client.request(axiosConfig),
+      () => {
+        // Use refresh-enabled request if session storage is available
+        if (baseConfig.sessionStorage && baseConfig.logger) {
+          return executeRequestWithRefresh(axiosConfig, config, {
+            client,
+            sessionStorage: baseConfig.sessionStorage,
+            logger: baseConfig.logger,
+            maxRefreshRetries: 1,
+          });
+        } else {
+          // Fallback to normal request without refresh capability
+          return client.request(axiosConfig);
+        }
+      },
       {
         url: config.url,
         method: config.method,
@@ -271,7 +314,7 @@ const makeRequest = async <T>(
 /**
  * Handle and transform errors into standardized HttpError instances
  */
-const handleError = (
+export const handleError = (
   error: unknown,
   requestConfig: InternalRequestConfig,
   logger?: Logger,

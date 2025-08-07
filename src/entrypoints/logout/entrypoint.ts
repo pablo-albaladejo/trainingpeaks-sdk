@@ -16,14 +16,9 @@ export type LogoutCommand = {
 };
 
 /**
- * Logout result indicating success or failure
+ * Logout result - returns void on success or throws error
  */
-export type LogoutResult = {
-  success: boolean;
-  message: string;
-  userId?: string;
-  sessionCleared: boolean;
-};
+export type LogoutResult = void;
 
 /**
  * Dependencies required for logout entrypoint
@@ -51,12 +46,8 @@ const entrypoint = (dependencies: LogoutEntrypointDependencies) => {
 
       logger.info('Logout completed successfully', { userId: command.userId });
 
-      return {
-        success: true,
-        message: 'Logout completed successfully',
-        userId: command.userId,
-        sessionCleared: true,
-      };
+      // Return void on success
+      return;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown logout error';
@@ -70,20 +61,11 @@ const entrypoint = (dependencies: LogoutEntrypointDependencies) => {
         logger.warn(
           'Force logout requested, proceeding despite repository error'
         );
-        return {
-          success: true,
-          message: 'Force logout completed (repository error ignored)',
-          userId: command.userId,
-          sessionCleared: true,
-        };
+        return; // Return void on force success
       }
 
-      return {
-        success: false,
-        message: `Logout failed: ${errorMessage}`,
-        userId: command.userId,
-        sessionCleared: false,
-      };
+      // Throw error instead of returning error object
+      throw error instanceof Error ? error : new Error(errorMessage);
     }
   };
 };
