@@ -72,7 +72,8 @@
     "check-imports": "bash scripts/check-imports.sh",
     "pre-release": "npm run clean && npm run format:check && npm run lint && npm run check-imports && npm run build && npm run test:coverage",
     "release": "semantic-release",
-    "release:dry-run": "semantic-release --dry-run"
+    "release:dry-run": "semantic-release --dry-run",
+    "prepare": "husky"
   },
   "keywords": [
     "trainingpeaks",
@@ -120,6 +121,7 @@
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-unused-imports": "^4.1.4",
     "globals": "^16.3.0",
+    "husky": "^9.1.7",
     "prettier": "^3.6.2",
     "semantic-release": "^24.2.7",
     "tsc-alias": "^1.8.16",

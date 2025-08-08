@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import { Factory } from 'rosie';
 
 import { HttpError } from '@/adapters/errors/http-errors';
+import { ERROR_CODES } from '@/domain/errors/error-codes';
 
 import { httpErrorBuilder } from './http-errors.fixture';
 
@@ -43,11 +44,9 @@ export function randomUrl(): string {
 /**
  * Helper function to create error builders with default options
  */
-function makeErrorBuilder(options: {
-  status: number;
-  statusText: string;
-  code: string;
-}) {
+function makeErrorBuilder(
+  options: Pick<HttpError, 'status' | 'statusText' | 'code'>
+): Factory<HttpError> {
   return new Factory<HttpError>()
     .extend(httpErrorBuilder)
     .option('status', options.status)
@@ -62,7 +61,7 @@ function makeErrorBuilder(options: {
 export const clientErrorBuilder = makeErrorBuilder({
   status: 400,
   statusText: 'Bad Request',
-  code: 'CLIENT_ERROR',
+  code: ERROR_CODES.VALIDATION_FAILED,
 });
 
 /**
@@ -72,5 +71,5 @@ export const clientErrorBuilder = makeErrorBuilder({
 export const serverErrorBuilder = makeErrorBuilder({
   status: 500,
   statusText: 'Internal Server Error',
-  code: 'SERVER_ERROR',
+  code: ERROR_CODES.NETWORK_SERVER_ERROR,
 });

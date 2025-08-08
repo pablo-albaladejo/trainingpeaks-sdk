@@ -13,16 +13,53 @@ TRAININGPEAKS_TEST_ATHLETE_ID=your_athlete_id  # Optional for get-workouts-list 
 ```
 
 **⚠️ Important Security Notes**: 
-- **Never commit credentials**: Always add the `.env` file to your `.gitignore` to prevent committing sensitive credentials to version control
-- **Use environment variables**: Never hardcode credentials directly in your source code
-- **Limit access**: Only grant the minimum necessary permissions to accounts used with the SDK
-- **Rotate credentials**: Regularly update your TrainingPeaks passwords and API credentials
-- **Secure storage**: Store production credentials in secure secret management systems, not in plain text files
+- **Never commit credentials**: Always add all environment files to your `.gitignore` to prevent committing sensitive credentials to version control.
+- **Use environment variables**: Never hardcode credentials directly in your source code.
+- **Limit access**: Only grant the minimum necessary permissions to accounts used with the SDK.
+- **Rotate credentials**: Regularly update your TrainingPeaks passwords and API credentials.
+- **Secure storage**: Store production credentials in secure secret management systems, not in plain text files.
+- **Debug logs security**: Debug logs may contain sensitive request details such as tokens and Authorization headers. Redact these secrets from debug logs and never share such logs publicly to maintain security.
+
+**Recommended .gitignore entries:**
+```gitignore
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+
+# Keep example file (with placeholder values only)
+!.env.example
+```
+
+**Create a safe .env.example file:** Commit a sanitized `.env.example` file with placeholder values and no real secrets for safe sharing and onboarding.
 
 2. **Build the SDK**: Make sure the SDK is built before running examples:
 
 ```bash
 npm run build
+```
+
+## Loading Environment Variables
+
+Since tsx does not auto-load .env files, you have two options:
+
+**Option 1: Auto-load with tsx**
+```bash
+npx tsx -r dotenv/config src/example/login.ts
+npx tsx -r dotenv/config src/example/get-workouts-list.ts
+```
+
+**Option 2: Export variables manually**
+```bash
+export TRAININGPEAKS_TEST_USERNAME=your_username
+export TRAININGPEAKS_TEST_PASSWORD=your_password
+export TRAININGPEAKS_TEST_ATHLETE_ID=your_athlete_id
+
+# Then run examples normally
+npx tsx src/example/login.ts
+npx tsx src/example/get-workouts-list.ts
 ```
 
 ## Available Examples

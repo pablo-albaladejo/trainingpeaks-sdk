@@ -11,7 +11,7 @@ import { WorkoutStructureSchema } from './workout-structure.schema';
 export const UserSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1).max(100),
-  username: z.string().min(1).max(100),
+  username: z.string().trim().min(1).max(100),
   avatar: z
     .string()
     .url()

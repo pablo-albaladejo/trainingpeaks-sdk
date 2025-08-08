@@ -52,10 +52,13 @@ describe('getWorkoutsList', () => {
 
     const result = await getWorkoutsList(mockHttpClient, params);
 
-    expect(mockGet).toHaveBeenCalledWith(
-      expect.stringMatching(
-        /\/fitness\/v6\/athletes\/3120341\/workouts\/2025-04-07\/2025-04-08(\?.*)?$/
-      )
+    expect(mockGet).toHaveBeenCalledWith(expect.any(String));
+
+    // Validate URL using URL constructor for more robust checking
+    const [calledUrl] = mockGet.mock.calls[0];
+    const url = new URL(calledUrl, 'http://example.com');
+    expect(url.pathname).toBe(
+      '/fitness/v6/athletes/3120341/workouts/2025-04-07/2025-04-08'
     );
     expect(result).toEqual(mockWorkoutsData);
   });

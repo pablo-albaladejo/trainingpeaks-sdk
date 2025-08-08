@@ -21,7 +21,9 @@ import { refreshAuthToken as refreshUserAuthToken } from '../public-api/endpoint
 type TokenRefreshState = {
   refreshPromise: Promise<AuthToken | null> | null;
   lastRefreshAttempt: number;
+  failureCount: number;
   readonly REFRESH_COOLDOWN: number;
+  readonly MAX_BACKOFF: number;
 };
 
 /**
@@ -157,15 +159,26 @@ const ensureValidToken = async (
       // Only set cooldown after successful refresh (when we actually got a token)
       if (refreshedToken) {
         state.lastRefreshAttempt = now;
+        state.failureCount = 0; // Reset failure count on success
       } else {
-        // Reset lastRefreshAttempt on failure to allow retry sooner
-        state.lastRefreshAttempt = 0;
+        // Implement failure backoff with exponential delay
+        state.failureCount++;
+        const backoffDelay = Math.min(
+          Math.pow(2, state.failureCount - 1) * 30000, // REFRESH_COOLDOWN
+          300000 // MAX_BACKOFF
+        );
+        state.lastRefreshAttempt = now - state.REFRESH_COOLDOWN + backoffDelay;
       }
 
       return refreshedToken;
     } catch (error) {
-      // Reset lastRefreshAttempt on failure to allow retry sooner
-      state.lastRefreshAttempt = 0;
+      // Implement failure backoff for caught exceptions
+      state.failureCount++;
+      const backoffDelay = Math.min(
+        Math.pow(2, state.failureCount - 1) * 30000, // REFRESH_COOLDOWN
+        300000 // MAX_BACKOFF
+      );
+      state.lastRefreshAttempt = now - state.REFRESH_COOLDOWN + backoffDelay;
       throw error;
     } finally {
       state.refreshPromise = null;
@@ -197,7 +210,9 @@ export const createTokenRefreshHandler = (
   const state: TokenRefreshState = {
     refreshPromise: null,
     lastRefreshAttempt: 0,
+    failureCount: 0,
     REFRESH_COOLDOWN: 30000, // 30 seconds
+    MAX_BACKOFF: 300000, // 5 minutes
   };
 
   // Return the public interface

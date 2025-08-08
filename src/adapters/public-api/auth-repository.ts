@@ -9,7 +9,7 @@ import {
 } from '@/adapters/errors/http-errors';
 import { type HttpClient } from '@/adapters/http';
 import { mapTPTokenToAuthToken, mapTPUserToUser } from '@/adapters/mappers';
-import { Session, SessionStorage } from '@/application';
+import { type HttpMethod, Session, SessionStorage } from '@/application';
 import {
   AuthRepository,
   AuthRepositoryLogin,
@@ -38,7 +38,7 @@ type AuthRepositoryDependencies = {
 
 const createErrorContext = (
   url: string,
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+  method: HttpMethod,
   requestData?: Record<string, unknown>
 ): ErrorRequestContext => ({
   url,
@@ -115,10 +115,11 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
       );
     }
 
-    // Get the auth token using the cookies
-    const authTokenResponse = await getAuthToken(deps.httpClient, [
-      tpAuthCookie,
-    ]);
+    // Get the auth token using all cookies from the login response
+    const authTokenResponse = await getAuthToken(
+      deps.httpClient,
+      submitLoginResponse.cookies || []
+    );
 
     if (!authTokenResponse.success) {
       throwHttpErrorFromResponse(

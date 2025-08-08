@@ -15,6 +15,42 @@ import type { Logger } from '../logging/logger';
 import { createTokenRefreshHandler } from './token-refresh-handler';
 
 /**
+ * Helper to extract Set-Cookie headers from response
+ */
+const extractSetCookieHeaders = (response: AxiosResponse): string[] => {
+  const setCookieHeader = response.headers['set-cookie'];
+  if (Array.isArray(setCookieHeader)) {
+    return setCookieHeader;
+  } else if (typeof setCookieHeader === 'string') {
+    return [setCookieHeader];
+  }
+  return [];
+};
+
+/**
+ * Helper to wrap axios request and extract cookies
+ */
+const requestAndWrap = async <TData>(
+  client: AxiosInstance,
+  method: string,
+  url: string,
+  data?: unknown,
+  options?: AxiosRequestConfig
+): Promise<HttpResponse<TData>> => {
+  const response = await client.request<TData>({
+    method,
+    url,
+    data,
+    ...options,
+  });
+  return {
+    data: response.data,
+    success: true,
+    cookies: extractSetCookieHeaders(response),
+  } as HttpResponse<TData>;
+};
+
+/**
  * Configuration for request with refresh
  */
 type RequestWithRefreshConfig = {
@@ -58,96 +94,40 @@ export const executeRequestWithRefresh = async <T>(
         maxRetries: maxRefreshRetries,
       });
 
-      // Helper to extract Set-Cookie headers from response
-      const extractSetCookieHeaders = (response: AxiosResponse): string[] => {
-        const setCookieHeader = response.headers['set-cookie'];
-        if (Array.isArray(setCookieHeader)) {
-          return setCookieHeader;
-        } else if (typeof setCookieHeader === 'string') {
-          return [setCookieHeader];
-        }
-        return [];
-      };
-
       // Create a simple HTTP client for refresh (to avoid circular dependency)
       const refreshHttpClient = {
-        get: async <TData>(url: string, options?: Record<string, unknown>) => {
-          const response = await client.request<TData>({
-            method: 'GET',
-            url,
-            ...options,
-          });
-          return {
-            data: response.data,
-            success: true,
-            cookies: extractSetCookieHeaders(response),
-          } as HttpResponse<TData>;
+        get: async <TData>(url: string, options?: AxiosRequestConfig) => {
+          return requestAndWrap<TData>(client, 'GET', url, undefined, options);
         },
         post: async <TData>(
           url: string,
           data?: unknown,
-          options?: Record<string, unknown>
+          options?: AxiosRequestConfig
         ) => {
-          const response = await client.request<TData>({
-            method: 'POST',
-            url,
-            data,
-            ...options,
-          });
-          return {
-            data: response.data,
-            success: true,
-            cookies: extractSetCookieHeaders(response),
-          } as HttpResponse<TData>;
+          return requestAndWrap<TData>(client, 'POST', url, data, options);
         },
         put: async <TData>(
           url: string,
           data?: unknown,
-          options?: Record<string, unknown>
+          options?: AxiosRequestConfig
         ) => {
-          const response = await client.request<TData>({
-            method: 'PUT',
-            url,
-            data,
-            ...options,
-          });
-          return {
-            data: response.data,
-            success: true,
-            cookies: extractSetCookieHeaders(response),
-          } as HttpResponse<TData>;
+          return requestAndWrap<TData>(client, 'PUT', url, data, options);
         },
         patch: async <TData>(
           url: string,
           data?: unknown,
-          options?: Record<string, unknown>
+          options?: AxiosRequestConfig
         ) => {
-          const response = await client.request<TData>({
-            method: 'PATCH',
-            url,
-            data,
-            ...options,
-          });
-          return {
-            data: response.data,
-            success: true,
-            cookies: extractSetCookieHeaders(response),
-          } as HttpResponse<TData>;
+          return requestAndWrap<TData>(client, 'PATCH', url, data, options);
         },
-        delete: async <TData>(
-          url: string,
-          options?: Record<string, unknown>
-        ) => {
-          const response = await client.request<TData>({
-            method: 'DELETE',
+        delete: async <TData>(url: string, options?: AxiosRequestConfig) => {
+          return requestAndWrap<TData>(
+            client,
+            'DELETE',
             url,
-            ...options,
-          });
-          return {
-            data: response.data,
-            success: true,
-            cookies: extractSetCookieHeaders(response),
-          } as HttpResponse<TData>;
+            undefined,
+            options
+          );
         },
       };
 

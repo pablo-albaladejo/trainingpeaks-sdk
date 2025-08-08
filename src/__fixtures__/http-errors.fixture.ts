@@ -16,9 +16,7 @@ import {
   HttpError,
   type HttpErrorContext,
 } from '@/adapters/errors/http-errors';
-import {
-  HTTP_METHODS,
-} from '@/application/constants/http-methods';
+import { HTTP_METHODS } from '@/application/constants/http-methods';
 
 /**
  * HttpErrorContext Builder

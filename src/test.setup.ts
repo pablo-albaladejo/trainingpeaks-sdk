@@ -54,8 +54,6 @@ export const logger = {
 // Reset all mocks before each test
 beforeEach(() => {
   vi.resetAllMocks();
-  // Also clear global console mocks
-  Object.values(globalConsoleMocks).forEach((mock) => mock.mockClear());
 });
 
 // Export for use in tests

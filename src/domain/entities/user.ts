@@ -102,17 +102,23 @@ const validateStringField = (
   fieldName: string,
   maxLength: number = 100
 ): void => {
+  // Map field names to consistent keys
+  const fieldKeyMap: Record<string, string> = {
+    'User ID': 'id',
+    'User name': 'name',
+    Username: 'username',
+  };
+
+  const fieldKey = fieldKeyMap[fieldName] || fieldName.toLowerCase();
+
   if (!value || value.trim().length === 0) {
-    throw new ValidationError(
-      `${fieldName} cannot be empty`,
-      fieldName.toLowerCase()
-    );
+    throw new ValidationError(`${fieldName} cannot be empty`, fieldKey);
   }
 
   if (value.trim().length > maxLength) {
     throw new ValidationError(
       `${fieldName} cannot exceed ${maxLength} characters`,
-      fieldName.toLowerCase()
+      fieldKey
     );
   }
 };

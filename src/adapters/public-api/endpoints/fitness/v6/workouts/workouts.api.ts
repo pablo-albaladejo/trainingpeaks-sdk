@@ -3,6 +3,7 @@
  * HTTP API calls for fitness/v6/workouts endpoints
  */
 
+import { createHttpError } from '@/adapters/errors/http-errors';
 import { generateWorkoutListUrl } from '@/adapters/public-api/constants/api-urls';
 import type { HttpClient } from '@/application';
 
@@ -28,9 +29,15 @@ export const getWorkoutsList = async (
 
   // Check if the request was successful
   if (!response.success || response.data == null) {
-    throw new Error(
-      `Failed to fetch workouts list: response data is null or undefined. URL: ${url}`
-    );
+    const errorResponse = {
+      status: response.error?.status || 500,
+      statusText: response.error?.statusText || 'Internal Server Error',
+      data: {
+        message:
+          'Failed to fetch workouts list: response data is null or undefined',
+      },
+    };
+    throw createHttpError(errorResponse, { url, method: 'GET' });
   }
 
   // Validate the response using Zod schema

@@ -1,5 +1,4 @@
 import type { AuthRepository, WorkoutRepository } from '@/domain';
 
-export interface TrainingPeaksRepository
-  extends Pick<AuthRepository, 'login' | 'logout'>,
-    Pick<WorkoutRepository, 'getWorkoutsList'> {}
+export type TrainingPeaksRepository = Pick<AuthRepository, 'login' | 'logout'> &
+  Pick<WorkoutRepository, 'getWorkoutsList'>;

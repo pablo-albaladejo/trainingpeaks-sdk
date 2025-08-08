@@ -21,21 +21,24 @@ export class SDKError extends Error {
     this.cause = options?.cause;
   }
 
-  toJSON(): {
-    name: string;
-    message: string;
-    code: string;
-    context?: SDKErrorContext;
-    stack?: string;
-    cause?: unknown;
-  } {
+  toJSON(): Record<string, unknown> {
+    // Normalize the cause to avoid circular references and ensure JSON safety
+    const normalizedCause =
+      this.cause instanceof Error
+        ? {
+            name: this.cause.name,
+            message: this.cause.message,
+            stack: this.cause.stack,
+          }
+        : this.cause;
+
     return {
       name: this.name,
       message: this.message,
       code: this.code,
       context: this.context,
       stack: this.stack,
-      cause: this.cause,
+      cause: normalizedCause,
     };
   }
 }

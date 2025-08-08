@@ -70,7 +70,7 @@ describe('Token API', () => {
         expect.objectContaining({
           headers: expect.objectContaining({
             accept: '*/*',
-            'content-type': 'application/json',
+            'Content-Type': 'application/json',
           }),
         })
       );

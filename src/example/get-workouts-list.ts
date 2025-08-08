@@ -95,7 +95,12 @@ const main = async (): Promise<void> => {
     console.log('\n🎉 Example completed successfully!');
   } catch (error) {
     console.error('❌ An error occurred:', error);
-    process.exit(1);
+    // Ensure error is properly typed before re-throwing
+    if (error instanceof Error) {
+      throw error;
+    } else {
+      throw new Error(String(error));
+    }
   }
 };
 

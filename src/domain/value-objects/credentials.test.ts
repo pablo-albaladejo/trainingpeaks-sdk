@@ -57,7 +57,7 @@ describe('Credentials Value Object', () => {
       expect(() => {
         // Attempt to mutate the immutable credentials object
         Object.assign(credentials, { username: 'modified' });
-      }).toThrow();
+      }).toThrow(TypeError);
     });
 
     describe('Validation Errors', () => {

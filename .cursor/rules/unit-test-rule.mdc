@@ -121,6 +121,8 @@ vi.mock('./userApi', () => ({
 
 describe('UserService', () => {
     beforeEach(() => {
+        // vi.resetAllMocks resets both call history and mock implementations
+        // You may need to re-stub mocks in each test or beforeEach block
         vi.resetAllMocks();
     });
 
