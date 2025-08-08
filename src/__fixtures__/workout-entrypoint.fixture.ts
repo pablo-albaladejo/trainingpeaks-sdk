@@ -258,8 +258,6 @@ export const athleteSpecificCommandBuilder =
  * Helper functions for creating test data
  */
 
-
-
 /**
  * Creates a session for workout entrypoint testing
  */
