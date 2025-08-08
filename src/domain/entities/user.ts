@@ -14,7 +14,7 @@ export type User = UserType;
 const FIELD_KEY_MAP: Record<string, string> = {
   'user id': 'id',
   'user name': 'name',
-  'username': 'username',
+  username: 'username',
 };
 
 /**
@@ -116,7 +116,7 @@ const validateStringField = (
   const fieldKey = FIELD_KEY_MAP[normalizedFieldName] || normalizedFieldName;
 
   const trimmed = value?.trim() || '';
-  
+
   if (trimmed.length === 0) {
     throw new ValidationError(`${fieldName} cannot be empty`, fieldKey);
   }

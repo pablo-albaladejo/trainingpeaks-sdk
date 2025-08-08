@@ -21,7 +21,8 @@ export const ApiWorkoutItemSchema = z.object({
       return !isNaN(date.getTime());
     },
     {
-      message: 'workoutDay must be a valid date string (ISO datetime or YYYY-MM-DD format)',
+      message:
+        'workoutDay must be a valid date string (ISO datetime or YYYY-MM-DD format)',
     }
   ),
   startTime: z.string().datetime().nullable(),

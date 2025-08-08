@@ -98,7 +98,7 @@ const main = async (): Promise<void> => {
     if (error instanceof Error) {
       throw error;
     } else {
-      // Wrap non-Error objects and preserve original as cause  
+      // Wrap non-Error objects and preserve original as cause
       const wrappedError = new Error(String(error));
       (wrappedError as Error & { cause?: unknown }).cause = error;
       throw wrappedError;

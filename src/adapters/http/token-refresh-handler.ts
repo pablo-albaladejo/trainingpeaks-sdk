@@ -140,7 +140,7 @@ const ensureValidToken = async (
       30000 * Math.pow(2, state.failureCount), // BASE_COOLDOWN * 2^failureCount
       300000 // MAX_BACKOFF
     );
-    
+
     if (now - state.lastRefreshAttempt < currentCooldown) {
       logger.warn('Token refresh attempted too recently, skipping', {
         lastAttempt: state.lastRefreshAttempt,
@@ -164,7 +164,7 @@ const ensureValidToken = async (
 
       // Set attempt timestamp and handle success/failure
       state.lastRefreshAttempt = now;
-      
+
       if (refreshedToken) {
         // Reset failure count on success
         state.failureCount = 0;

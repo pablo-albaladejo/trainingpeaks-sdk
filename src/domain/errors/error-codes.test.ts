@@ -17,7 +17,6 @@ const ERROR_CODE_PATTERNS = {
 
 describe('Error Codes', () => {
   describe('ERROR_CODES', () => {
-
     it('should contain workout error codes', () => {
       expect(ERROR_CODES.WORKOUT_CREATION_FAILED).toMatch(
         ERROR_CODE_PATTERNS.WORKOUT
@@ -37,7 +36,6 @@ describe('Error Codes', () => {
       expect(ERROR_CODES.USER_FETCH_FAILED).toMatch(ERROR_CODE_PATTERNS.USER);
       expect(ERROR_CODES.USER_NOT_FOUND).toMatch(ERROR_CODE_PATTERNS.USER);
     });
-
 
     it('should contain validation error codes', () => {
       expect(ERROR_CODES.VALIDATION_FAILED).toBe('VALIDATION_5001');

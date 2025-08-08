@@ -61,7 +61,10 @@ export class SDKError extends Error {
           message: this.cause.message,
         };
         // Only include stack for Error objects if not in production
-        if (this.cause.stack !== undefined && process.env.NODE_ENV !== 'production') {
+        if (
+          this.cause.stack !== undefined &&
+          process.env.NODE_ENV !== 'production'
+        ) {
           errorCause.stack = this.cause.stack;
         }
         result.cause = errorCause;

@@ -77,8 +77,8 @@ describe('Token API', () => {
       // Verify Content-Type header case-insensitively
       const [, , options] = mockHttpClient.post.mock.calls[0];
       const headers = options?.headers || {};
-      const contentTypeKey = Object.keys(headers).find(key => 
-        key.toLowerCase() === 'content-type'
+      const contentTypeKey = Object.keys(headers).find(
+        (key) => key.toLowerCase() === 'content-type'
       );
       expect(contentTypeKey).toBeDefined();
       expect(headers[contentTypeKey!]).toBe('application/json');
