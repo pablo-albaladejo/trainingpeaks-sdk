@@ -23,7 +23,11 @@ describe('AUTH_CONSTANTS', () => {
     const tokenType: AuthConstant = 'Bearer';
     expectTypeOf(cookieName).toEqualTypeOf<AuthConstant>();
     expectTypeOf(tokenType).toEqualTypeOf<AuthConstant>();
-    expectTypeOf(AUTH_CONSTANTS.DEFAULT_AUTH_COOKIE).toEqualTypeOf<AuthConstant>();
-    expectTypeOf(AUTH_CONSTANTS.DEFAULT_TOKEN_TYPE).toEqualTypeOf<AuthConstant>();
+    expectTypeOf(
+      AUTH_CONSTANTS.DEFAULT_AUTH_COOKIE
+    ).toEqualTypeOf<AuthConstant>();
+    expectTypeOf(
+      AUTH_CONSTANTS.DEFAULT_TOKEN_TYPE
+    ).toEqualTypeOf<AuthConstant>();
   });
 });

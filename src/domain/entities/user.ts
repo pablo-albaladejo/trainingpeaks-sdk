@@ -103,7 +103,10 @@ const validateStringField = (
   maxLength: number = 100
 ): void => {
   if (!value || value.trim().length === 0) {
-    throw new ValidationError(`${fieldName} cannot be empty`, fieldName.toLowerCase());
+    throw new ValidationError(
+      `${fieldName} cannot be empty`,
+      fieldName.toLowerCase()
+    );
   }
 
   if (value.trim().length > maxLength) {

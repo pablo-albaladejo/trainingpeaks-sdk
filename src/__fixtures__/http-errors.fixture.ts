@@ -16,7 +16,9 @@ import {
   HttpError,
   type HttpErrorContext,
 } from '@/adapters/errors/http-errors';
-import { HTTP_METHODS, type HttpMethod } from '@/application/constants/http-methods';
+import {
+  HTTP_METHODS,
+} from '@/application/constants/http-methods';
 
 /**
  * HttpErrorContext Builder
@@ -26,9 +28,7 @@ export const httpErrorContextBuilder = new Factory<HttpErrorContext>()
   .attr('status', () => 500)
   .attr('statusText', () => 'Internal Server Error')
   .attr('url', () => faker.internet.url())
-  .attr('method', () =>
-    faker.helpers.arrayElement(Object.values(HTTP_METHODS))
-  )
+  .attr('method', () => faker.helpers.arrayElement(Object.values(HTTP_METHODS)))
   .attr('requestData', () => undefined)
   .attr('responseData', () => undefined)
   .attr('headers', () => ({}))

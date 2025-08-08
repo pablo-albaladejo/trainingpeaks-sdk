@@ -163,15 +163,17 @@ const createAxiosConfig = async (
       if (session?.token?.accessToken) {
         const currentHeaders =
           (axiosConfig.headers as Record<string, string>) || {};
-        
+
         // Check for existing Authorization header (case-insensitive)
         const authHeaderExists = Object.keys(currentHeaders).some(
           (key) => key.toLowerCase() === 'authorization'
         );
-        
+
         axiosConfig.headers = {
           ...currentHeaders,
-          ...(authHeaderExists ? {} : { Authorization: `Bearer ${session.token.accessToken}` }),
+          ...(authHeaderExists
+            ? {}
+            : { Authorization: `Bearer ${session.token.accessToken}` }),
         };
       }
     } catch (error) {
@@ -188,12 +190,14 @@ const createAxiosConfig = async (
   if (config.options?.cookies && config.options.cookies.length > 0) {
     const currentHeaders =
       (axiosConfig.headers as Record<string, string>) || {};
-    
+
     // Find existing Cookie header (case-insensitive)
     const existingCookieKey = Object.keys(currentHeaders).find(
       (key) => key.toLowerCase() === 'cookie'
     );
-    const existingCookies = existingCookieKey ? currentHeaders[existingCookieKey] : undefined;
+    const existingCookies = existingCookieKey
+      ? currentHeaders[existingCookieKey]
+      : undefined;
     const newCookies = config.options.cookies.join('; ');
 
     // Merge existing cookies with new ones safely

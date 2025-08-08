@@ -21,15 +21,27 @@ describe('Error Codes', () => {
       expect(ERROR_CODES.AUTH_FAILED).toMatch(ERROR_CODE_PATTERNS.AUTH);
       expect(ERROR_CODES.AUTH_TOKEN_EXPIRED).toMatch(ERROR_CODE_PATTERNS.AUTH);
       expect(ERROR_CODES.AUTH_TOKEN_INVALID).toMatch(ERROR_CODE_PATTERNS.AUTH);
-      expect(ERROR_CODES.AUTH_TOKEN_REFRESH_FAILED).toMatch(ERROR_CODE_PATTERNS.AUTH);
-      expect(ERROR_CODES.AUTH_NO_ADAPTER_FOUND).toMatch(ERROR_CODE_PATTERNS.AUTH);
+      expect(ERROR_CODES.AUTH_TOKEN_REFRESH_FAILED).toMatch(
+        ERROR_CODE_PATTERNS.AUTH
+      );
+      expect(ERROR_CODES.AUTH_NO_ADAPTER_FOUND).toMatch(
+        ERROR_CODE_PATTERNS.AUTH
+      );
     });
 
     it('should contain workout error codes', () => {
-      expect(ERROR_CODES.WORKOUT_CREATION_FAILED).toMatch(ERROR_CODE_PATTERNS.WORKOUT);
-      expect(ERROR_CODES.WORKOUT_UPLOAD_FAILED).toMatch(ERROR_CODE_PATTERNS.WORKOUT);
-      expect(ERROR_CODES.WORKOUT_DELETION_FAILED).toMatch(ERROR_CODE_PATTERNS.WORKOUT);
-      expect(ERROR_CODES.WORKOUT_NOT_FOUND).toMatch(ERROR_CODE_PATTERNS.WORKOUT);
+      expect(ERROR_CODES.WORKOUT_CREATION_FAILED).toMatch(
+        ERROR_CODE_PATTERNS.WORKOUT
+      );
+      expect(ERROR_CODES.WORKOUT_UPLOAD_FAILED).toMatch(
+        ERROR_CODE_PATTERNS.WORKOUT
+      );
+      expect(ERROR_CODES.WORKOUT_DELETION_FAILED).toMatch(
+        ERROR_CODE_PATTERNS.WORKOUT
+      );
+      expect(ERROR_CODES.WORKOUT_NOT_FOUND).toMatch(
+        ERROR_CODE_PATTERNS.WORKOUT
+      );
     });
 
     it('should contain user error codes', () => {
@@ -39,8 +51,12 @@ describe('Error Codes', () => {
 
     it('should contain network error codes', () => {
       expect(ERROR_CODES.NETWORK_TIMEOUT).toMatch(ERROR_CODE_PATTERNS.NETWORK);
-      expect(ERROR_CODES.NETWORK_CONNECTION_FAILED).toMatch(ERROR_CODE_PATTERNS.NETWORK);
-      expect(ERROR_CODES.NETWORK_REQUEST_FAILED).toMatch(ERROR_CODE_PATTERNS.NETWORK);
+      expect(ERROR_CODES.NETWORK_CONNECTION_FAILED).toMatch(
+        ERROR_CODE_PATTERNS.NETWORK
+      );
+      expect(ERROR_CODES.NETWORK_REQUEST_FAILED).toMatch(
+        ERROR_CODE_PATTERNS.NETWORK
+      );
     });
 
     it('should contain validation error codes', () => {
