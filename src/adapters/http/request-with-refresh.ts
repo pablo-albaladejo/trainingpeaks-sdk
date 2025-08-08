@@ -58,6 +58,17 @@ export const executeRequestWithRefresh = async <T>(
         maxRetries: maxRefreshRetries,
       });
 
+      // Helper to extract Set-Cookie headers from response
+      const extractSetCookieHeaders = (response: AxiosResponse): string[] => {
+        const setCookieHeader = response.headers['set-cookie'];
+        if (Array.isArray(setCookieHeader)) {
+          return setCookieHeader;
+        } else if (typeof setCookieHeader === 'string') {
+          return [setCookieHeader];
+        }
+        return [];
+      };
+
       // Create a simple HTTP client for refresh (to avoid circular dependency)
       const refreshHttpClient = {
         get: async <TData>(url: string, options?: Record<string, unknown>) => {
@@ -69,7 +80,7 @@ export const executeRequestWithRefresh = async <T>(
           return {
             data: response.data,
             success: true,
-            cookies: [],
+            cookies: extractSetCookieHeaders(response),
           } as HttpResponse<TData>;
         },
         post: async <TData>(
@@ -86,7 +97,7 @@ export const executeRequestWithRefresh = async <T>(
           return {
             data: response.data,
             success: true,
-            cookies: [],
+            cookies: extractSetCookieHeaders(response),
           } as HttpResponse<TData>;
         },
         put: async <TData>(
@@ -103,7 +114,7 @@ export const executeRequestWithRefresh = async <T>(
           return {
             data: response.data,
             success: true,
-            cookies: [],
+            cookies: extractSetCookieHeaders(response),
           } as HttpResponse<TData>;
         },
         patch: async <TData>(
@@ -120,7 +131,7 @@ export const executeRequestWithRefresh = async <T>(
           return {
             data: response.data,
             success: true,
-            cookies: [],
+            cookies: extractSetCookieHeaders(response),
           } as HttpResponse<TData>;
         },
         delete: async <TData>(
@@ -135,7 +146,7 @@ export const executeRequestWithRefresh = async <T>(
           return {
             data: response.data,
             success: true,
-            cookies: [],
+            cookies: extractSetCookieHeaders(response),
           } as HttpResponse<TData>;
         },
       };

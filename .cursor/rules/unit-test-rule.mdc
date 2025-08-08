@@ -121,7 +121,7 @@ vi.mock('./userApi', () => ({
 
 describe('UserService', () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should handle API errors', async () => {

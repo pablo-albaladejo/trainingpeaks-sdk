@@ -18,14 +18,14 @@ import type {
  */
 export const getAuthToken = async (
   httpClient: HttpClient,
-  cookies: string
+  cookies: string[]
 ): Promise<HttpResponse<TrainingPeaksTokenResponse>> => {
   return await httpClient.get<TrainingPeaksTokenResponse>(API_ENDPOINTS.TOKEN, {
     headers: {
       accept: '*/*',
       ...TRAININGPEAKS_API_HEADERS,
     },
-    cookies: [cookies], // Convert string to array
+    cookies: cookies,
   });
 };
 
@@ -42,7 +42,7 @@ export const refreshAuthToken = async (
     {
       headers: {
         accept: '*/*',
-        'content-type': 'application/json',
+        'Content-Type': 'application/json',
         ...TRAININGPEAKS_API_HEADERS,
       },
     }

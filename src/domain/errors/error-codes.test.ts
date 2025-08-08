@@ -7,32 +7,40 @@ import {
   type ErrorCode,
 } from './error-codes';
 
+// Regex constants for error code patterns
+const ERROR_CODE_PATTERNS = {
+  AUTH: /^AUTH_1\d{3}$/,
+  WORKOUT: /^WORKOUT_2\d{3}$/,
+  USER: /^USER_3\d{3}$/,
+  NETWORK: /^NETWORK_4\d{3}$/,
+} as const;
+
 describe('Error Codes', () => {
   describe('ERROR_CODES', () => {
     it('should contain authentication error codes', () => {
-      expect(ERROR_CODES.AUTH_FAILED).toMatch(/^AUTH_1\d{3}$/);
-      expect(ERROR_CODES.AUTH_TOKEN_EXPIRED).toMatch(/^AUTH_1\d{3}$/);
-      expect(ERROR_CODES.AUTH_TOKEN_INVALID).toMatch(/^AUTH_1\d{3}$/);
-      expect(ERROR_CODES.AUTH_TOKEN_REFRESH_FAILED).toMatch(/^AUTH_1\d{3}$/);
-      expect(ERROR_CODES.AUTH_NO_ADAPTER_FOUND).toMatch(/^AUTH_1\d{3}$/);
+      expect(ERROR_CODES.AUTH_FAILED).toMatch(ERROR_CODE_PATTERNS.AUTH);
+      expect(ERROR_CODES.AUTH_TOKEN_EXPIRED).toMatch(ERROR_CODE_PATTERNS.AUTH);
+      expect(ERROR_CODES.AUTH_TOKEN_INVALID).toMatch(ERROR_CODE_PATTERNS.AUTH);
+      expect(ERROR_CODES.AUTH_TOKEN_REFRESH_FAILED).toMatch(ERROR_CODE_PATTERNS.AUTH);
+      expect(ERROR_CODES.AUTH_NO_ADAPTER_FOUND).toMatch(ERROR_CODE_PATTERNS.AUTH);
     });
 
     it('should contain workout error codes', () => {
-      expect(ERROR_CODES.WORKOUT_CREATION_FAILED).toMatch(/^WORKOUT_2\d{3}$/);
-      expect(ERROR_CODES.WORKOUT_UPLOAD_FAILED).toMatch(/^WORKOUT_2\d{3}$/);
-      expect(ERROR_CODES.WORKOUT_DELETION_FAILED).toMatch(/^WORKOUT_2\d{3}$/);
-      expect(ERROR_CODES.WORKOUT_NOT_FOUND).toMatch(/^WORKOUT_2\d{3}$/);
+      expect(ERROR_CODES.WORKOUT_CREATION_FAILED).toMatch(ERROR_CODE_PATTERNS.WORKOUT);
+      expect(ERROR_CODES.WORKOUT_UPLOAD_FAILED).toMatch(ERROR_CODE_PATTERNS.WORKOUT);
+      expect(ERROR_CODES.WORKOUT_DELETION_FAILED).toMatch(ERROR_CODE_PATTERNS.WORKOUT);
+      expect(ERROR_CODES.WORKOUT_NOT_FOUND).toMatch(ERROR_CODE_PATTERNS.WORKOUT);
     });
 
     it('should contain user error codes', () => {
-      expect(ERROR_CODES.USER_FETCH_FAILED).toMatch(/^USER_3\d{3}$/);
-      expect(ERROR_CODES.USER_NOT_FOUND).toMatch(/^USER_3\d{3}$/);
+      expect(ERROR_CODES.USER_FETCH_FAILED).toMatch(ERROR_CODE_PATTERNS.USER);
+      expect(ERROR_CODES.USER_NOT_FOUND).toMatch(ERROR_CODE_PATTERNS.USER);
     });
 
     it('should contain network error codes', () => {
-      expect(ERROR_CODES.NETWORK_TIMEOUT).toMatch(/^NETWORK_4\d{3}$/);
-      expect(ERROR_CODES.NETWORK_CONNECTION_FAILED).toMatch(/^NETWORK_4\d{3}$/);
-      expect(ERROR_CODES.NETWORK_REQUEST_FAILED).toMatch(/^NETWORK_4\d{3}$/);
+      expect(ERROR_CODES.NETWORK_TIMEOUT).toMatch(ERROR_CODE_PATTERNS.NETWORK);
+      expect(ERROR_CODES.NETWORK_CONNECTION_FAILED).toMatch(ERROR_CODE_PATTERNS.NETWORK);
+      expect(ERROR_CODES.NETWORK_REQUEST_FAILED).toMatch(ERROR_CODE_PATTERNS.NETWORK);
     });
 
     it('should contain validation error codes', () => {
@@ -58,7 +66,7 @@ describe('Error Codes', () => {
         .map(([, value]) => value);
 
       authCodes.forEach((code) => {
-        expect(code).toMatch(/^AUTH_1\d{3}$/);
+        expect(code).toMatch(ERROR_CODE_PATTERNS.AUTH);
       });
 
       const workoutCodes = Object.entries(ERROR_CODES)
@@ -66,7 +74,7 @@ describe('Error Codes', () => {
         .map(([, value]) => value);
 
       workoutCodes.forEach((code) => {
-        expect(code).toMatch(/^WORKOUT_2\d{3}$/);
+        expect(code).toMatch(ERROR_CODE_PATTERNS.WORKOUT);
       });
     });
   });

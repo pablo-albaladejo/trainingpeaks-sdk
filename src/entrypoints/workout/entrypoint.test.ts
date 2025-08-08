@@ -39,7 +39,7 @@ const mockDependencies: WorkoutEntrypointDependencies = {
 
 describe('getWorkoutsListEntrypoint', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
   it('should return workout data directly when API call succeeds', async () => {
     const mockApiResponse = [
@@ -73,9 +73,7 @@ describe('getWorkoutsListEntrypoint', () => {
 
   it('should throw error when API call fails', async () => {
     const mockError = new Error('API Error');
-    mockTpRepository.getWorkoutsList.mockRejectedValueOnce(
-      mockError as unknown as Error
-    );
+    mockTpRepository.getWorkoutsList.mockRejectedValueOnce(mockError);
 
     const command = getWorkoutsListCommandBuilder.build({
       athleteId: '3120341',

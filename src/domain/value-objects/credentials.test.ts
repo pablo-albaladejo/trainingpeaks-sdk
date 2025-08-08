@@ -55,7 +55,8 @@ describe('Credentials Value Object', () => {
       // Assert
       expect(Object.isFrozen(credentials)).toBe(true);
       expect(() => {
-        (credentials as unknown as { username: string }).username = 'modified';
+        // Attempt to mutate the immutable credentials object
+        Object.assign(credentials, { username: 'modified' });
       }).toThrow();
     });
 

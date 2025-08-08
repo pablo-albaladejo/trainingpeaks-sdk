@@ -81,7 +81,7 @@ describe('TrainingPeaks SDK', () => {
   let mockConfig: TrainingPeaksClientConfig;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mockConfig = trainingPeaksClientConfigBuilder.build();
   });
 

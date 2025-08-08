@@ -153,8 +153,15 @@ const ensureValidToken = async (
 
     try {
       const refreshedToken = await state.refreshPromise;
-      // Only set cooldown after successful refresh
-      state.lastRefreshAttempt = now;
+      
+      // Only set cooldown after successful refresh (when we actually got a token)
+      if (refreshedToken) {
+        state.lastRefreshAttempt = now;
+      } else {
+        // Reset lastRefreshAttempt on failure to allow retry sooner
+        state.lastRefreshAttempt = 0;
+      }
+      
       return refreshedToken;
     } catch (error) {
       // Reset lastRefreshAttempt on failure to allow retry sooner

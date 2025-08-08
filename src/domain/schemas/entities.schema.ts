@@ -12,7 +12,12 @@ export const UserSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1).max(100),
   username: z.string().min(1).max(100),
-  avatar: z.string().url().optional(),
+  avatar: z
+    .string()
+    .url()
+    .or(z.literal(''))
+    .optional()
+    .transform((val) => (val === '' ? undefined : val)),
   preferences: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -56,7 +61,13 @@ export const TrainingPeaksAthleteSchema = z.object({
   userType: z.number(),
   lastPlannedWorkout: z.string().nullable().optional(),
   settings: z.unknown().optional(),
-  personPhotoUrl: z.string().url().nullable().optional(),
+  personPhotoUrl: z
+    .string()
+    .url()
+    .or(z.literal(''))
+    .nullable()
+    .optional()
+    .transform((val) => (val === '' ? null : val)),
   coachedBy: z.number().nullable().optional(),
   userName: z.string().min(1),
   lastUpgradeOn: z.string().nullable().optional(),

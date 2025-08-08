@@ -36,7 +36,7 @@ describe('Axios HTTP Client', () => {
 
   beforeEach(() => {
     // Reset all mocks
-    vi.clearAllMocks();
+    vi.resetAllMocks();
 
     // Create mock logger
     mockLogger = {

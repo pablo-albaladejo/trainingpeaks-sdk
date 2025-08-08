@@ -21,7 +21,9 @@ describe('AUTH_CONSTANTS', () => {
   it('should export AuthConstant type correctly', () => {
     const cookieName: AuthConstant = 'Production_tpAuth';
     const tokenType: AuthConstant = 'Bearer';
-    expectTypeOf(cookieName).toBeString();
-    expectTypeOf(tokenType).toBeString();
+    expectTypeOf(cookieName).toEqualTypeOf<AuthConstant>();
+    expectTypeOf(tokenType).toEqualTypeOf<AuthConstant>();
+    expectTypeOf(AUTH_CONSTANTS.DEFAULT_AUTH_COOKIE).toEqualTypeOf<AuthConstant>();
+    expectTypeOf(AUTH_CONSTANTS.DEFAULT_TOKEN_TYPE).toEqualTypeOf<AuthConstant>();
   });
 });

@@ -21,13 +21,21 @@ export class SDKError extends Error {
     this.cause = options?.cause;
   }
 
-  toJSON() {
+  toJSON(): {
+    name: string;
+    message: string;
+    code: string;
+    context?: SDKErrorContext;
+    stack?: string;
+    cause?: unknown;
+  } {
     return {
       name: this.name,
       message: this.message,
       code: this.code,
       context: this.context,
       stack: this.stack,
+      cause: this.cause,
     };
   }
 }

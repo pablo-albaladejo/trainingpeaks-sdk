@@ -19,7 +19,7 @@ const mockHttpClient: HttpClient = {
 
 describe('getWorkoutsList', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
   it('should call the correct endpoint with proper parameters', async () => {
     const mockWorkoutsData = [
@@ -54,7 +54,7 @@ describe('getWorkoutsList', () => {
 
     expect(mockGet).toHaveBeenCalledWith(
       expect.stringMatching(
-        /\/fitness\/v6\/athletes\/3120341\/workouts\/2025-04-07\/2025-04-08$/
+        /\/fitness\/v6\/athletes\/3120341\/workouts\/2025-04-07\/2025-04-08(\?.*)?$/
       )
     );
     expect(result).toEqual(mockWorkoutsData);

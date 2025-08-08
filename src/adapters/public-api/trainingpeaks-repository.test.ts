@@ -20,7 +20,7 @@ describe('TrainingPeaksRepository', () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('createTrainingPeaksRepository', () => {

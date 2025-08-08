@@ -32,7 +32,7 @@ const mockHttpClient: HttpClient = {
 
 describe('createWorkoutRepository', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
   it('should create workout repository with getWorkoutsList method', () => {
     const workoutRepository = createWorkoutRepository({

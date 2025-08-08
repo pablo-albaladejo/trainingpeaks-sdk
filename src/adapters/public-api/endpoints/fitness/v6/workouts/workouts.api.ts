@@ -27,9 +27,9 @@ export const getWorkoutsList = async (
   const response = await httpClient.get(url);
 
   // Check if the request was successful
-  if (!response.success || response.data === null) {
+  if (!response.success || response.data == null) {
     throw new Error(
-      `Failed to fetch workouts list: response data is null. URL: ${url}`
+      `Failed to fetch workouts list: response data is null or undefined. URL: ${url}`
     );
   }
 

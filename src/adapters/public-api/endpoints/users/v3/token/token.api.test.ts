@@ -21,7 +21,7 @@ const mockHttpClient: HttpClient = {
 
 describe('Token API', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('getAuthToken', () => {
@@ -34,10 +34,10 @@ describe('Token API', () => {
 
       vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse);
 
-      await getAuthToken(mockHttpClient, 'test-cookie');
+      await getAuthToken(mockHttpClient, ['test-cookie']);
 
       expect(mockHttpClient.get).toHaveBeenCalledWith(
-        expect.any(String),
+        expect.stringMatching(/\/users\/v3\/token$/),
         expect.objectContaining({
           headers: expect.objectContaining({
             accept: '*/*',
@@ -65,7 +65,7 @@ describe('Token API', () => {
       await refreshAuthToken(mockHttpClient, refreshRequest);
 
       expect(mockHttpClient.post).toHaveBeenCalledWith(
-        expect.any(String),
+        expect.stringMatching(/\/users\/v3\/token\/refresh$/),
         refreshRequest,
         expect.objectContaining({
           headers: expect.objectContaining({
@@ -92,7 +92,7 @@ describe('Token API', () => {
       await refreshAuthToken(mockHttpClient, refreshRequest);
 
       expect(mockHttpClient.post).toHaveBeenCalledWith(
-        expect.any(String),
+        expect.stringMatching(/\/users\/v3\/token\/refresh$/),
         refreshRequest,
         expect.any(Object)
       );

@@ -313,7 +313,7 @@ describe('HTTP Errors', () => {
     });
 
     describe('throwAuthError', () => {
-      it('should throw HttpError with 401 status', () => {
+      it('should throw HttpError with 401 status and AUTH_TOKEN_INVALID code', () => {
         const context = { url: '/api/test', method: 'GET' as const };
 
         expect(() => throwAuthError('Access denied', context)).toThrow(
@@ -326,6 +326,7 @@ describe('HTTP Errors', () => {
           expect(isHttpError(error)).toBe(true);
           if (isHttpError(error)) {
             expect(error.status).toBe(401);
+            expect(error.code).toBe(ERROR_CODES.AUTH_TOKEN_INVALID);
             expect(error.message).toContain('Access denied');
           }
         }

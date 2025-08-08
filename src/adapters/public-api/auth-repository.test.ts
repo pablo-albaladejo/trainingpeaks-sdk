@@ -23,7 +23,7 @@ describe('AuthRepository', () => {
   let dependencies: Parameters<typeof createAuthRepository>[0];
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
 
     mockHttpClient = {
       get: vi.fn(),

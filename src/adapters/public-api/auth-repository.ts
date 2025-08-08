@@ -116,7 +116,7 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
     }
 
     // Get the auth token using the cookies
-    const authTokenResponse = await getAuthToken(deps.httpClient, tpAuthCookie);
+    const authTokenResponse = await getAuthToken(deps.httpClient, [tpAuthCookie]);
 
     if (!authTokenResponse.success) {
       throwHttpErrorFromResponse(

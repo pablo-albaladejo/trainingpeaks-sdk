@@ -41,21 +41,36 @@ export function randomUrl(): string {
 }
 
 /**
+ * Helper function to create error builders with default options
+ */
+function makeErrorBuilder(options: {
+  status: number;
+  statusText: string;
+  code: string;
+}) {
+  return new Factory<HttpError>()
+    .extend(httpErrorBuilder)
+    .option('status', options.status)
+    .option('statusText', options.statusText)
+    .option('code', options.code);
+}
+
+/**
  * Client Error Builder
  * Creates 4xx client errors for testing non-retry scenarios
  */
-export const clientErrorBuilder = new Factory<HttpError>()
-  .extend(httpErrorBuilder)
-  .option('status', 400)
-  .option('statusText', 'Bad Request')
-  .option('code', 'CLIENT_ERROR');
+export const clientErrorBuilder = makeErrorBuilder({
+  status: 400,
+  statusText: 'Bad Request',
+  code: 'CLIENT_ERROR',
+});
 
 /**
  * Server Error Builder
  * Creates 5xx server errors for testing retry scenarios
  */
-export const serverErrorBuilder = new Factory<HttpError>()
-  .extend(httpErrorBuilder)
-  .option('status', 500)
-  .option('statusText', 'Internal Server Error')
-  .option('code', 'SERVER_ERROR');
+export const serverErrorBuilder = makeErrorBuilder({
+  status: 500,
+  statusText: 'Internal Server Error',
+  code: 'SERVER_ERROR',
+});

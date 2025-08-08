@@ -19,31 +19,12 @@ export const createUser = (
   preferences?: Record<string, unknown>
 ): User => {
   // Validate invariants
-  if (!id || id.trim().length === 0) {
-    throw new ValidationError('User ID cannot be empty', 'id');
-  }
+  validateStringField(id, 'User ID');
+  validateStringField(name, 'User name');
+  validateStringField(username, 'Username');
 
-  if (!name || name.trim().length === 0) {
-    throw new ValidationError('User name cannot be empty', 'name');
-  }
-
-  if (name.trim().length > 100) {
-    throw new ValidationError('User name cannot exceed 100 characters', 'name');
-  }
-
-  if (!username || username.trim().length === 0) {
-    throw new ValidationError('Username cannot be empty', 'username');
-  }
-
-  if (username.trim().length > 100) {
-    throw new ValidationError(
-      'Username cannot exceed 100 characters',
-      'username'
-    );
-  }
-
-  if (avatar && !isValidUrl(avatar)) {
-    throw new ValidationError('Avatar must be a valid URL', 'avatar');
+  if (avatar) {
+    validateAvatarUrl(avatar);
   }
 
   return {
@@ -59,13 +40,7 @@ export const createUser = (
  * Update user name with validation
  */
 export const updateUserName = (user: User, newName: string): User => {
-  if (!newName || newName.trim().length === 0) {
-    throw new ValidationError('User name cannot be empty', 'name');
-  }
-
-  if (newName.trim().length > 100) {
-    throw new ValidationError('User name cannot exceed 100 characters', 'name');
-  }
+  validateStringField(newName, 'User name');
 
   return {
     ...user,
@@ -88,8 +63,8 @@ export const updateUserPreferences = (
  * Update user avatar with validation
  */
 export const updateUserAvatar = (user: User, avatar?: string): User => {
-  if (avatar && !isValidUrl(avatar)) {
-    throw new ValidationError('Avatar must be a valid URL', 'avatar');
+  if (avatar) {
+    validateAvatarUrl(avatar);
   }
 
   return {
@@ -117,6 +92,35 @@ export const getUserPreference = <T>(
     return defaultValue;
   }
   return user.preferences[key] as T;
+};
+
+/**
+ * Helper function to validate string fields
+ */
+const validateStringField = (
+  value: string,
+  fieldName: string,
+  maxLength: number = 100
+): void => {
+  if (!value || value.trim().length === 0) {
+    throw new ValidationError(`${fieldName} cannot be empty`, fieldName.toLowerCase());
+  }
+
+  if (value.trim().length > maxLength) {
+    throw new ValidationError(
+      `${fieldName} cannot exceed ${maxLength} characters`,
+      fieldName.toLowerCase()
+    );
+  }
+};
+
+/**
+ * Helper function to validate avatar URL
+ */
+const validateAvatarUrl = (avatar: string): void => {
+  if (!isValidUrl(avatar)) {
+    throw new ValidationError('Avatar must be a valid URL', 'avatar');
+  }
 };
 
 /**
