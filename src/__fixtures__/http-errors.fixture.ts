@@ -91,7 +91,7 @@ export const httpErrorBuilder = new Factory<HttpError>()
     const message = options.message || 'HTTP Error occurred';
     const code = options.code || 'HTTP_ERROR';
 
-    const contextOptions: any = {};
+    const contextOptions: Partial<HttpErrorContext> = {};
     if (options.status !== undefined) contextOptions.status = options.status;
     if (options.statusText !== undefined)
       contextOptions.statusText = options.statusText;

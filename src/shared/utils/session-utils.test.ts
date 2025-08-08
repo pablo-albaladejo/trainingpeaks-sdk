@@ -2,6 +2,7 @@
  * Tests for session utilities
  */
 
+import { sessionBuilder } from '@fixtures/auth.fixture';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createHttpError } from '@/adapters/errors/http-errors';
@@ -19,16 +20,15 @@ describe('getAthleteIdFromSession', () => {
     warn: vi.fn(),
   };
 
-  const mockSession = {
+  const mockSession = sessionBuilder.build({
     user: {
       id: '12345',
-      email: 'test@example.com',
     },
     token: {
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
     },
-  };
+  });
 
   it('should return athlete ID from session when session exists', async () => {
     const mockSessionStorage = {

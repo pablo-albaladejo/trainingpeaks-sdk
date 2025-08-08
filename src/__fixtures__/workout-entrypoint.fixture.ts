@@ -143,10 +143,26 @@ export const workoutSessionBuilder = new Factory<Session>()
 export const mockWorkoutDependenciesBuilder =
   new Factory<WorkoutEntrypointDependencies>()
     .attr('logger', () => ({
-      info: () => {},
-      error: () => {},
-      warn: () => {},
-      debug: () => {},
+      info: (message: string, ...args: unknown[]) => {
+        // Stub implementation - parameters unused
+        void message;
+        void args;
+      },
+      error: (message: string, ...args: unknown[]) => {
+        // Stub implementation - parameters unused
+        void message;
+        void args;
+      },
+      warn: (message: string, ...args: unknown[]) => {
+        // Stub implementation - parameters unused
+        void message;
+        void args;
+      },
+      debug: (message: string, ...args: unknown[]) => {
+        // Stub implementation - parameters unused
+        void message;
+        void args;
+      },
     }))
     .attr('tpRepository', () => ({
       login: () => Promise.resolve({} as any),
@@ -189,6 +205,11 @@ export const runningWorkoutItemBuilder = new Factory<WorkoutListItem>()
  * API Response Array Builder
  * Creates arrays of WorkoutListItem for API response testing
  */
+type WorkoutListBuilderOptions = {
+  athleteId?: number;
+  workoutType?: number;
+};
+
 export const workoutListResponseBuilder = new Factory<
   readonly WorkoutListItem[]
 >()
@@ -197,7 +218,7 @@ export const workoutListResponseBuilder = new Factory<
   .option('athleteId', undefined)
   .after((_, options) => {
     const count = options.count || 1;
-    const builderOptions: any = {};
+    const builderOptions: WorkoutListBuilderOptions = {};
 
     if (options.athleteId) {
       builderOptions.athleteId = options.athleteId;
@@ -237,48 +258,7 @@ export const athleteSpecificCommandBuilder =
  * Helper functions for creating test data
  */
 
-/**
- * Creates a workout list API response with specific parameters
- */
-export const createWorkoutListResponse = (
-  options: {
-    count?: number;
-    athleteId?: number;
-    workoutType?: 'strength' | 'running' | 'cycling' | 'swimming' | 'other';
-  } = {}
-) => {
-  const count = options.count || 1;
-  const builderOptions: any = {};
 
-  if (options.athleteId) {
-    builderOptions.athleteId = options.athleteId;
-  }
-  if (options.workoutType) {
-    builderOptions.workoutType = options.workoutType;
-  }
-
-  return Array.from({ length: count }, () =>
-    workoutListItemBuilder.build(builderOptions)
-  );
-};
-
-/**
- * Creates a command for getting workouts list
- */
-export const createGetWorkoutsListCommand = (
-  options: {
-    athleteId?: string;
-    startDate?: string;
-    endDate?: string;
-    includeAthleteId?: boolean;
-  } = {}
-) => {
-  return getWorkoutsListCommandBuilder.build({
-    athleteId: options.athleteId,
-    startDate: options.startDate,
-    endDate: options.endDate,
-  });
-};
 
 /**
  * Creates a session for workout entrypoint testing
