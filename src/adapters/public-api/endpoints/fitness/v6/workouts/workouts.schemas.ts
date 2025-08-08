@@ -14,7 +14,16 @@ export const ApiWorkoutItemSchema = z.object({
   title: z.string(),
   workoutTypeValueId: z.number(),
   code: z.string().nullable(),
-  workoutDay: z.string().min(1), // Accept any non-empty string for now
+  workoutDay: z.string().refine(
+    (val) => {
+      // Try parsing as a Date to validate it's a valid date string
+      const date = new Date(val);
+      return !isNaN(date.getTime());
+    },
+    {
+      message: 'workoutDay must be a valid date string (ISO datetime or YYYY-MM-DD format)',
+    }
+  ),
   startTime: z.string().datetime().nullable(),
   startTimePlanned: z.string().datetime().nullable(),
   isItAnOr: z.boolean(),

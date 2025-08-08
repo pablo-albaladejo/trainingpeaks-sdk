@@ -59,7 +59,7 @@ describe('Token API', () => {
       vi.mocked(mockHttpClient.post).mockResolvedValue(mockResponse);
 
       const refreshRequest: RefreshTokenRequest = {
-        refresh_token: 'test-refresh-token',
+        refreshToken: 'test-refresh-token',
       };
 
       await refreshAuthToken(mockHttpClient, refreshRequest);
@@ -70,10 +70,18 @@ describe('Token API', () => {
         expect.objectContaining({
           headers: expect.objectContaining({
             accept: '*/*',
-            'Content-Type': 'application/json',
           }),
         })
       );
+
+      // Verify Content-Type header case-insensitively
+      const [, , options] = mockHttpClient.post.mock.calls[0];
+      const headers = options?.headers || {};
+      const contentTypeKey = Object.keys(headers).find(key => 
+        key.toLowerCase() === 'content-type'
+      );
+      expect(contentTypeKey).toBeDefined();
+      expect(headers[contentTypeKey!]).toBe('application/json');
     });
 
     it('should send refresh token in request body', async () => {
@@ -86,7 +94,7 @@ describe('Token API', () => {
       vi.mocked(mockHttpClient.post).mockResolvedValue(mockResponse);
 
       const refreshRequest: RefreshTokenRequest = {
-        refresh_token: 'test-refresh-token',
+        refreshToken: 'test-refresh-token',
       };
 
       await refreshAuthToken(mockHttpClient, refreshRequest);

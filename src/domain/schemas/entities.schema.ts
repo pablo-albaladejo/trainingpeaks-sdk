@@ -10,7 +10,7 @@ import { WorkoutStructureSchema } from './workout-structure.schema';
 // User Entity Schema
 export const UserSchema = z.object({
   id: z.string().min(1),
-  name: z.string().min(1).max(100),
+  name: z.string().trim().min(1).max(100),
   username: z.string().trim().min(1).max(100),
   avatar: z
     .string()

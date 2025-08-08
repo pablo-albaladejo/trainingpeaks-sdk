@@ -18,7 +18,9 @@ import { createTokenRefreshHandler } from './token-refresh-handler';
  * Helper to extract Set-Cookie headers from response
  */
 const extractSetCookieHeaders = (response: AxiosResponse): string[] => {
-  const setCookieHeader = response.headers['set-cookie'];
+  // Try lowercase first (Node.js Axios default), then fallback to proper case
+  const setCookieHeader = (response.headers['set-cookie'] as string | string[] | undefined) || 
+                          (response.headers['Set-Cookie'] as string | string[] | undefined);
   if (Array.isArray(setCookieHeader)) {
     return setCookieHeader;
   } else if (typeof setCookieHeader === 'string') {
@@ -32,7 +34,7 @@ const extractSetCookieHeaders = (response: AxiosResponse): string[] => {
  */
 const requestAndWrap = async <TData>(
   client: AxiosInstance,
-  method: string,
+  method: AxiosRequestConfig['method'],
   url: string,
   data?: unknown,
   options?: AxiosRequestConfig

@@ -52,6 +52,7 @@ describe('getWorkoutsList', () => {
 
     const result = await getWorkoutsList(mockHttpClient, params);
 
+    expect(mockGet).toHaveBeenCalledTimes(1);
     expect(mockGet).toHaveBeenCalledWith(expect.any(String));
 
     // Validate URL using URL constructor for more robust checking

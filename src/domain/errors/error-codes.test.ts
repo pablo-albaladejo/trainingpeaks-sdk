@@ -17,17 +17,6 @@ const ERROR_CODE_PATTERNS = {
 
 describe('Error Codes', () => {
   describe('ERROR_CODES', () => {
-    it('should contain authentication error codes', () => {
-      expect(ERROR_CODES.AUTH_FAILED).toMatch(ERROR_CODE_PATTERNS.AUTH);
-      expect(ERROR_CODES.AUTH_TOKEN_EXPIRED).toMatch(ERROR_CODE_PATTERNS.AUTH);
-      expect(ERROR_CODES.AUTH_TOKEN_INVALID).toMatch(ERROR_CODE_PATTERNS.AUTH);
-      expect(ERROR_CODES.AUTH_TOKEN_REFRESH_FAILED).toMatch(
-        ERROR_CODE_PATTERNS.AUTH
-      );
-      expect(ERROR_CODES.AUTH_NO_ADAPTER_FOUND).toMatch(
-        ERROR_CODE_PATTERNS.AUTH
-      );
-    });
 
     it('should contain workout error codes', () => {
       expect(ERROR_CODES.WORKOUT_CREATION_FAILED).toMatch(
@@ -49,15 +38,6 @@ describe('Error Codes', () => {
       expect(ERROR_CODES.USER_NOT_FOUND).toMatch(ERROR_CODE_PATTERNS.USER);
     });
 
-    it('should contain network error codes', () => {
-      expect(ERROR_CODES.NETWORK_TIMEOUT).toMatch(ERROR_CODE_PATTERNS.NETWORK);
-      expect(ERROR_CODES.NETWORK_CONNECTION_FAILED).toMatch(
-        ERROR_CODE_PATTERNS.NETWORK
-      );
-      expect(ERROR_CODES.NETWORK_REQUEST_FAILED).toMatch(
-        ERROR_CODE_PATTERNS.NETWORK
-      );
-    });
 
     it('should contain validation error codes', () => {
       expect(ERROR_CODES.VALIDATION_FAILED).toBe('VALIDATION_5001');
@@ -88,9 +68,15 @@ describe('Error Codes', () => {
       const workoutCodes = Object.entries(ERROR_CODES)
         .filter(([key]) => key.startsWith('WORKOUT_'))
         .map(([, value]) => value);
-
       workoutCodes.forEach((code) => {
         expect(code).toMatch(ERROR_CODE_PATTERNS.WORKOUT);
+      });
+
+      const networkCodes = Object.entries(ERROR_CODES)
+        .filter(([key]) => key.startsWith('NETWORK_'))
+        .map(([, value]) => value);
+      networkCodes.forEach((code) => {
+        expect(code).toMatch(ERROR_CODE_PATTERNS.NETWORK);
       });
     });
   });

@@ -9,6 +9,15 @@ import type { User as UserType } from '@/domain/schemas/entities.schema';
 export type User = UserType;
 
 /**
+ * Map field names to consistent error keys (normalized lookup)
+ */
+const FIELD_KEY_MAP: Record<string, string> = {
+  'user id': 'id',
+  'user name': 'name',
+  'username': 'username',
+};
+
+/**
  * Create a new User entity with domain invariants
  */
 export const createUser = (
@@ -102,20 +111,17 @@ const validateStringField = (
   fieldName: string,
   maxLength: number = 100
 ): void => {
-  // Map field names to consistent keys
-  const fieldKeyMap: Record<string, string> = {
-    'User ID': 'id',
-    'User name': 'name',
-    Username: 'username',
-  };
+  // Normalize field name for case-insensitive lookup
+  const normalizedFieldName = fieldName.trim().toLowerCase();
+  const fieldKey = FIELD_KEY_MAP[normalizedFieldName] || normalizedFieldName;
 
-  const fieldKey = fieldKeyMap[fieldName] || fieldName.toLowerCase();
-
-  if (!value || value.trim().length === 0) {
+  const trimmed = value?.trim() || '';
+  
+  if (trimmed.length === 0) {
     throw new ValidationError(`${fieldName} cannot be empty`, fieldKey);
   }
 
-  if (value.trim().length > maxLength) {
+  if (trimmed.length > maxLength) {
     throw new ValidationError(
       `${fieldName} cannot exceed ${maxLength} characters`,
       fieldKey

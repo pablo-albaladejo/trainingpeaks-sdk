@@ -45,7 +45,7 @@ export function randomUrl(): string {
  * Helper function to create error builders with default options
  */
 function makeErrorBuilder(
-  options: Pick<HttpError, 'status' | 'statusText' | 'code'>
+  options: Readonly<Pick<HttpError, 'status' | 'statusText' | 'code'>>
 ): Factory<HttpError> {
   return new Factory<HttpError>()
     .extend(httpErrorBuilder)

@@ -134,13 +134,19 @@ const ensureValidToken = async (
       return await state.refreshPromise;
     }
 
-    // Check refresh cooldown
+    // Check refresh cooldown with dynamic backoff
     const now = Date.now();
-    if (now - state.lastRefreshAttempt < state.REFRESH_COOLDOWN) {
+    const currentCooldown = Math.min(
+      30000 * Math.pow(2, state.failureCount), // BASE_COOLDOWN * 2^failureCount
+      300000 // MAX_BACKOFF
+    );
+    
+    if (now - state.lastRefreshAttempt < currentCooldown) {
       logger.warn('Token refresh attempted too recently, skipping', {
         lastAttempt: state.lastRefreshAttempt,
-        cooldownRemaining:
-          state.REFRESH_COOLDOWN - (now - state.lastRefreshAttempt),
+        failureCount: state.failureCount,
+        currentCooldown,
+        cooldownRemaining: currentCooldown - (now - state.lastRefreshAttempt),
       });
       return isTokenExpired(token) ? null : token;
     }
@@ -156,29 +162,22 @@ const ensureValidToken = async (
     try {
       const refreshedToken = await state.refreshPromise;
 
-      // Only set cooldown after successful refresh (when we actually got a token)
+      // Set attempt timestamp and handle success/failure
+      state.lastRefreshAttempt = now;
+      
       if (refreshedToken) {
-        state.lastRefreshAttempt = now;
-        state.failureCount = 0; // Reset failure count on success
+        // Reset failure count on success
+        state.failureCount = 0;
       } else {
-        // Implement failure backoff with exponential delay
+        // Increment failure count for exponential backoff
         state.failureCount++;
-        const backoffDelay = Math.min(
-          Math.pow(2, state.failureCount - 1) * 30000, // REFRESH_COOLDOWN
-          300000 // MAX_BACKOFF
-        );
-        state.lastRefreshAttempt = now - state.REFRESH_COOLDOWN + backoffDelay;
       }
 
       return refreshedToken;
     } catch (error) {
-      // Implement failure backoff for caught exceptions
+      // Set attempt timestamp and increment failure count for exponential backoff
+      state.lastRefreshAttempt = now;
       state.failureCount++;
-      const backoffDelay = Math.min(
-        Math.pow(2, state.failureCount - 1) * 30000, // REFRESH_COOLDOWN
-        300000 // MAX_BACKOFF
-      );
-      state.lastRefreshAttempt = now - state.REFRESH_COOLDOWN + backoffDelay;
       throw error;
     } finally {
       state.refreshPromise = null;

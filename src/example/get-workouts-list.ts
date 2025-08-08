@@ -94,12 +94,14 @@ const main = async (): Promise<void> => {
 
     console.log('\n🎉 Example completed successfully!');
   } catch (error) {
-    console.error('❌ An error occurred:', error);
     // Ensure error is properly typed before re-throwing
     if (error instanceof Error) {
       throw error;
     } else {
-      throw new Error(String(error));
+      // Wrap non-Error objects and preserve original as cause  
+      const wrappedError = new Error(String(error));
+      (wrappedError as Error & { cause?: unknown }).cause = error;
+      throw wrappedError;
     }
   }
 };

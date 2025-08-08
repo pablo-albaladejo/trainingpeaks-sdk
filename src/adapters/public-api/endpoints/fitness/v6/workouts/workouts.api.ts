@@ -32,7 +32,7 @@ export const getWorkoutsList = async (
     const errorResponse = {
       status: response.error?.status || 500,
       statusText: response.error?.statusText || 'Internal Server Error',
-      data: {
+      data: (response.error as { data?: unknown })?.data || {
         message:
           'Failed to fetch workouts list: response data is null or undefined',
       },
