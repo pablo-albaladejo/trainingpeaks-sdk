@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+
+import {
+  loginFailedErrorBuilder,
+  networkErrorBuilder,
+  notFoundErrorBuilder,
+  tokenRequestFailedErrorBuilder,
+} from '@fixtures/http-errors.fixture';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Logger } from '@/adapters';
@@ -128,7 +134,7 @@ describe('AuthRepository', () => {
         }
         return Promise.resolve({
           success: false,
-          error: new HttpError('Not found', 404),
+          error: notFoundErrorBuilder.build(),
         } as HttpResponse<unknown>);
       });
 
@@ -173,7 +179,10 @@ describe('AuthRepository', () => {
     it('should throw error when login page request fails', async () => {
       vi.mocked(mockHttpClient.get).mockResolvedValue({
         success: false,
-        error: new HttpError('Network error', 500),
+        error: networkErrorBuilder.build({
+          url: 'https://example.com/login',
+          method: 'GET',
+        }),
       } as HttpResponse<unknown>);
 
       const repository = createAuthRepository(dependencies);
@@ -199,7 +208,7 @@ describe('AuthRepository', () => {
     it('should throw error when login submission fails', async () => {
       vi.mocked(mockHttpClient.post).mockResolvedValue({
         success: false,
-        error: new HttpError('Login failed', 500),
+        error: loginFailedErrorBuilder.build(),
       } as HttpResponse<unknown>);
 
       const repository = createAuthRepository(dependencies);
@@ -233,12 +242,12 @@ describe('AuthRepository', () => {
         if (url.includes('token')) {
           return Promise.resolve({
             success: false,
-            error: new HttpError('Token request failed', 500),
+            error: tokenRequestFailedErrorBuilder.build(),
           } as HttpResponse<unknown>);
         }
         return Promise.resolve({
           success: false,
-          error: new HttpError('Not found', 404),
+          error: notFoundErrorBuilder.build(),
         } as HttpResponse<unknown>);
       });
 
@@ -271,7 +280,7 @@ describe('AuthRepository', () => {
         }
         return Promise.resolve({
           success: false,
-          error: new HttpError('Not found', 404),
+          error: notFoundErrorBuilder.build(),
         } as HttpResponse<unknown>);
       });
 
@@ -306,7 +315,7 @@ describe('AuthRepository', () => {
         }
         return Promise.resolve({
           success: false,
-          error: new HttpError('Not found', 404),
+          error: notFoundErrorBuilder.build(),
         } as HttpResponse<unknown>);
       });
 
@@ -327,7 +336,7 @@ describe('AuthRepository', () => {
         }
         return Promise.resolve({
           success: false,
-          error: new HttpError('Not found', 404),
+          error: notFoundErrorBuilder.build(),
         } as HttpResponse<unknown>);
       });
 
@@ -412,7 +421,7 @@ describe('AuthRepository', () => {
         }
         return Promise.resolve({
           success: false,
-          error: new HttpError('Not found', 404),
+          error: notFoundErrorBuilder.build(),
         } as HttpResponse<unknown>);
       });
 

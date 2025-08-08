@@ -55,7 +55,7 @@ describe('Credentials Value Object', () => {
       // Assert
       expect(Object.isFrozen(credentials)).toBe(true);
       expect(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (credentials as any).username = 'modified';
       }).toThrow();
     });

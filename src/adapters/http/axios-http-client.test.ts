@@ -3,10 +3,20 @@
  * Comprehensive tests for HTTP client functionality including requests, errors, retries, and configuration
  */
 
-import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import axios from 'axios';
-import type { MockedFunction } from 'vitest';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import axios, {
+  type AxiosInstance,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+} from 'axios';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type MockedFunction,
+  vi,
+} from 'vitest';
 
 import type { Logger } from '@/adapters/logging/logger';
 
@@ -19,7 +29,6 @@ vi.mock('axios-cookiejar-support');
 const mockedAxios = vi.mocked(axios, true);
 
 /* eslint-disable @typescript-eslint/unbound-method */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 describe('Axios HTTP Client', () => {
   let mockLogger: Logger;

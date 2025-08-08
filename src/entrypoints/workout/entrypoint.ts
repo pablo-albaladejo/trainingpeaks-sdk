@@ -5,6 +5,7 @@
 
 import { createHttpError } from '@/adapters/errors/http-errors';
 import { ERROR_CODES, ERROR_MESSAGES } from '@/domain/errors/error-codes';
+import { getAthleteIdFromSession } from '@/shared';
 
 import type {
   GetWorkoutsListCommand,
@@ -18,29 +19,12 @@ const getWorkoutsList = async (
 ): Promise<GetWorkoutsListResponse> => {
   try {
     // If athleteId is not provided, get it from the current user session
-    let athleteId = command.athleteId;
-
-    if (!athleteId) {
-      deps.logger.info(
-        'No athleteId provided, getting from current user session'
-      );
-
-      const session = await deps.sessionStorage.get();
-      if (!session) {
-        const httpErrorResponse = {
-          status: 401,
-          statusText: 'Unauthorized',
-          data: { message: ERROR_MESSAGES[ERROR_CODES.AUTH_NO_ACTIVE_SESSION] },
-        };
-        throw createHttpError(httpErrorResponse, {
-          url: 'session',
-          method: 'GET',
-        });
-      }
-
-      athleteId = session.user.id;
-      deps.logger.info('Using current user ID as athleteId', { athleteId });
-    }
+    const athleteId =
+      command.athleteId ||
+      (await getAthleteIdFromSession({
+        sessionStorage: deps.sessionStorage,
+        logger: deps.logger,
+      }));
 
     deps.logger.info('Get workouts list entrypoint called', {
       athleteId,

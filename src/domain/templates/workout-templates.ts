@@ -1,7 +1,6 @@
 import { WorkoutStructureBuilder } from '@/domain/builders/workout-structure-builder';
 import { WorkoutStructureElementBuilder } from '@/domain/builders/workout-structure-element-builder';
-import type { WorkoutStructure } from '@/types';
-import { ElementType } from '@/types';
+import { ElementType, type WorkoutStructure } from '@/types';
 
 import {
   createCooldownStep,

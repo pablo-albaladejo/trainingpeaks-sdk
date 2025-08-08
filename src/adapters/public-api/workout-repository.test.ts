@@ -59,6 +59,7 @@ describe('createWorkoutRepository', () => {
 
       // Mock successful API response
       mockGet.mockResolvedValueOnce({
+        success: true,
         data: mockWorkouts,
         status: 200,
         statusText: 'OK',

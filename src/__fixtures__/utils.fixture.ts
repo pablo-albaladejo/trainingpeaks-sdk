@@ -3,6 +3,8 @@ import { Factory } from 'rosie';
 
 import { HttpError } from '@/adapters/errors/http-errors';
 
+import { httpErrorBuilder } from './http-errors.fixture';
+
 /**
  * Generate a random number within a range
  * @param min - Minimum value (inclusive)
@@ -37,53 +39,6 @@ export function randomDate(): string {
 export function randomUrl(): string {
   return faker.internet.url();
 }
-
-/**
- * HttpError Builder
- * Creates HttpError instances for testing
- */
-export const httpErrorBuilder = new Factory<HttpError>()
-  .attr('message', () => faker.lorem.sentence())
-  .attr('code', () =>
-    faker.helpers.arrayElement([
-      'SERVER_ERROR',
-      'CLIENT_ERROR',
-      'NETWORK_ERROR',
-    ])
-  )
-  .attr('status', () =>
-    faker.helpers.arrayElement([400, 401, 403, 404, 500, 502, 503])
-  )
-  .attr('statusText', () =>
-    faker.helpers.arrayElement([
-      'Bad Request',
-      'Unauthorized',
-      'Forbidden',
-      'Not Found',
-      'Internal Server Error',
-      'Bad Gateway',
-      'Service Unavailable',
-    ])
-  )
-  .option('status', 500)
-  .option('statusText', 'Internal Server Error')
-  .option('code', 'SERVER_ERROR')
-  .after((error, options) => {
-    return new HttpError(error.message, options.code || error.code, {
-      status: options.status || error.status,
-      statusText: options.statusText || error.statusText,
-    });
-  });
-
-/**
- * Server Error Builder
- * Creates 5xx server errors for testing retry scenarios
- */
-export const serverErrorBuilder = new Factory<HttpError>()
-  .extend(httpErrorBuilder)
-  .option('status', 500)
-  .option('statusText', 'Internal Server Error')
-  .option('code', 'SERVER_ERROR');
 
 /**
  * Client Error Builder

@@ -36,7 +36,6 @@ module.exports = tseslint.config(
       vitest: vitest,
     },
     rules: {
-
       'no-console': 'error',
       'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
@@ -61,10 +60,11 @@ module.exports = tseslint.config(
       'vitest/prefer-strict-equal': 'off',
       'vitest/prefer-to-have-length': 'error',
       'vitest/require-top-level-describe': 'off',
+      'no-duplicate-imports': 'error',
     },
   },
 
-  // Override for logging files  
+  // Override for logging files
   {
     files: ['src/adapters/logging/**/*.ts'],
     rules: {
@@ -94,6 +94,18 @@ module.exports = tseslint.config(
       '@typescript-eslint/no-unsafe-index-signature': 'off',
       '@typescript-eslint/no-unsafe-property-access': 'off',
       '@typescript-eslint/no-unsafe-type-assertion': 'off',
+    },
+  },
+
+  // Override for test files
+  {
+    files: ['**/*.test.ts', '**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
     },
   }
 );
