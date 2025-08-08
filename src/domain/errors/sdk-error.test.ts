@@ -108,12 +108,7 @@ describe('SDKError', () => {
       };
       const error = new SDKError('Serializable error', 'TEST_011', context);
 
-      const serialized = JSON.stringify({
-        name: error.name,
-        message: error.message,
-        code: error.code,
-        context: error.context,
-      });
+      const serialized = JSON.stringify(error);
 
       expect(() => JSON.parse(serialized) as unknown).not.toThrow();
 

@@ -12,6 +12,8 @@ TRAININGPEAKS_TEST_PASSWORD=your_password
 TRAININGPEAKS_TEST_ATHLETE_ID=your_athlete_id  # Optional for get-workouts-list example
 ```
 
+**⚠️ Important Security Note**: Make sure to add the `.env` file to your `.gitignore` to prevent committing sensitive credentials to version control.
+
 2. **Build the SDK**: Make sure the SDK is built before running examples:
 
 ```bash

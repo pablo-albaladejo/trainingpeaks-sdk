@@ -57,7 +57,7 @@ export const workoutListItemBuilder = new Factory<WorkoutListItem>()
     return {
       workoutId: workout.workoutId,
       athleteId: options.athleteId || workout.athleteId,
-      title: workout.title,
+      title: options.title ?? workout.title,
       workoutTypeValueId:
         options.workoutType &&
         workoutTypeMap[options.workoutType as keyof typeof workoutTypeMap]
@@ -207,7 +207,7 @@ export const runningWorkoutItemBuilder = new Factory<WorkoutListItem>()
  */
 type WorkoutListBuilderOptions = {
   athleteId?: number;
-  workoutType?: number;
+  workoutType?: 'strength' | 'running' | 'cycling' | 'swimming' | 'other';
 };
 
 export const workoutListResponseBuilder = new Factory<

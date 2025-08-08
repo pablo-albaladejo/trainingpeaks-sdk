@@ -16,11 +16,6 @@ export type LogoutCommand = {
 };
 
 /**
- * Logout result - returns void on success or throws error
- */
-export type LogoutResult = void;
-
-/**
  * Dependencies required for logout entrypoint
  */
 export type LogoutEntrypointDependencies = {
@@ -34,7 +29,7 @@ export type LogoutEntrypointDependencies = {
 const entrypoint = (dependencies: LogoutEntrypointDependencies) => {
   const { tpRepository, logger } = dependencies;
 
-  return async (command: LogoutCommand = {}): Promise<LogoutResult> => {
+  return async (command: LogoutCommand = {}): Promise<void> => {
     try {
       logger.info('Starting logout process', {
         userId: command.userId,
@@ -45,9 +40,6 @@ const entrypoint = (dependencies: LogoutEntrypointDependencies) => {
       await tpRepository.logout();
 
       logger.info('Logout completed successfully', { userId: command.userId });
-
-      // Return void on success
-      return;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown logout error';

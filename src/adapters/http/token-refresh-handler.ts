@@ -13,7 +13,7 @@ import {
 } from '@/domain';
 
 import type { Logger } from '../logging/logger';
-import { refreshAuthToken } from '../public-api/endpoints/users/v3/token';
+import { refreshAuthToken as refreshUserAuthToken } from '../public-api/endpoints/users/v3/token';
 
 /**
  * Token refresh state interface
@@ -40,7 +40,7 @@ const performTokenRefresh = async (
     });
 
     // Call refresh endpoint
-    const refreshResponse = await refreshAuthToken(httpClient, {
+    const refreshResponse = await refreshUserAuthToken(httpClient, {
       refreshToken: currentToken.refreshToken!,
     });
 
@@ -150,11 +150,16 @@ const ensureValidToken = async (
       sessionStorage,
       logger
     );
-    state.lastRefreshAttempt = now;
 
     try {
       const refreshedToken = await state.refreshPromise;
+      // Only set cooldown after successful refresh
+      state.lastRefreshAttempt = now;
       return refreshedToken;
+    } catch (error) {
+      // Reset lastRefreshAttempt on failure to allow retry sooner
+      state.lastRefreshAttempt = 0;
+      throw error;
     } finally {
       state.refreshPromise = null;
     }

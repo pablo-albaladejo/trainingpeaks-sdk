@@ -189,5 +189,5 @@ export const generateWorkoutListUrl = (
   config: ApiConfig = {}
 ): string => {
   const apiUrls = createApiUrls(config);
-  return `${apiUrls.endpoints.WORKOUTS_LIST}/${athleteId}/workouts/${startDate}/${endDate}`;
+  return `${apiUrls.endpoints.WORKOUTS_LIST}/${encodeURIComponent(athleteId)}/workouts/${encodeURIComponent(startDate)}/${encodeURIComponent(endDate)}`;
 };

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ERROR_CODES } from '@/domain/errors/error-codes';
+import { SDKError } from '@/domain/errors/sdk-error';
 
 import {
   createHttpError,
@@ -10,8 +11,8 @@ import {
   isHttpError,
   isRetryableError,
   isServerError,
+  throwAuthError,
   throwServerError,
-  throwUnauthorizedError,
   throwValidationError,
 } from './http-errors';
 
@@ -52,7 +53,7 @@ describe('HTTP Errors', () => {
         context
       );
 
-      expect(error).toBeInstanceOf(Error);
+      expect(error).toBeInstanceOf(SDKError);
       expect(error.name).toBe('HttpError');
     });
   });
@@ -311,16 +312,16 @@ describe('HTTP Errors', () => {
       });
     });
 
-    describe('throwUnauthorizedError', () => {
+    describe('throwAuthError', () => {
       it('should throw HttpError with 401 status', () => {
         const context = { url: '/api/test', method: 'GET' as const };
 
-        expect(() => throwUnauthorizedError('Access denied', context)).toThrow(
+        expect(() => throwAuthError('Access denied', context)).toThrow(
           HttpError
         );
 
         try {
-          throwUnauthorizedError('Access denied', context);
+          throwAuthError('Access denied', context);
         } catch (error) {
           expect(isHttpError(error)).toBe(true);
           if (isHttpError(error)) {

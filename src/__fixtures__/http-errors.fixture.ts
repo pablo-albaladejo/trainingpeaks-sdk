@@ -91,6 +91,7 @@ export const httpErrorBuilder = new Factory<HttpError>()
     const message = options.message || 'HTTP Error occurred';
     const code = options.code || 'HTTP_ERROR';
 
+    // Extract known context options
     const contextOptions: Partial<HttpErrorContext> = {};
     if (options.status !== undefined) contextOptions.status = options.status;
     if (options.statusText !== undefined)
@@ -98,7 +99,13 @@ export const httpErrorBuilder = new Factory<HttpError>()
     if (options.url !== undefined) contextOptions.url = options.url;
     if (options.method !== undefined) contextOptions.method = options.method;
 
-    const context = httpErrorContextBuilder.build(contextOptions);
+    // Propagate all unknown options to the context builder
+    const contextBuilderOptions = {
+      ...options,
+      ...contextOptions,
+    };
+
+    const context = httpErrorContextBuilder.build(contextBuilderOptions);
 
     return new HttpError(message, code, context);
   });

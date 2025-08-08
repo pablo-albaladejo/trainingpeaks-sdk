@@ -3,7 +3,7 @@
  * Handles workout-related operations
  */
 
-import { createHttpError } from '@/adapters/errors/http-errors';
+import { createHttpError, isHttpError } from '@/adapters/errors/http-errors';
 import { ERROR_CODES, ERROR_MESSAGES } from '@/domain/errors/error-codes';
 import { getAthleteIdFromSession } from '@/shared';
 
@@ -43,7 +43,7 @@ const getWorkoutsList = async (
     deps.logger.error('Failed to get workouts list', { error });
 
     // If it's already an HttpError, re-throw it
-    if (error instanceof Error && error.name === 'HttpError') {
+    if (isHttpError(error)) {
       throw error;
     }
 

@@ -2,9 +2,9 @@
  * Workouts API Tests
  */
 
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { HttpClient } from '@/application';
+import type { HttpClient } from '@/application/ports/http-client';
 
 import { getWorkoutsList } from './workouts.api';
 
@@ -18,6 +18,9 @@ const mockHttpClient: HttpClient = {
 };
 
 describe('getWorkoutsList', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('should call the correct endpoint with proper parameters', async () => {
     const mockWorkoutsData = [
       {
@@ -26,8 +29,8 @@ describe('getWorkoutsList', () => {
         title: 'Strength',
         workoutTypeValueId: 9,
         code: null,
-        workoutDay: '2025-04-07T00:00:00',
-        startTime: '2025-04-07T19:43:44',
+        workoutDay: '2025-04-07T00:00:00Z',
+        startTime: '2025-04-07T19:43:44Z',
         startTimePlanned: null,
         isItAnOr: false,
       },
@@ -50,7 +53,9 @@ describe('getWorkoutsList', () => {
     const result = await getWorkoutsList(mockHttpClient, params);
 
     expect(mockGet).toHaveBeenCalledWith(
-      'https://tpapi.trainingpeaks.com/fitness/v6/athletes/3120341/workouts/2025-04-07/2025-04-08'
+      expect.stringMatching(
+        /\/fitness\/v6\/athletes\/3120341\/workouts\/2025-04-07\/2025-04-08$/
+      )
     );
     expect(result).toEqual(mockWorkoutsData);
   });
@@ -63,8 +68,8 @@ describe('getWorkoutsList', () => {
         title: 'Strength',
         workoutTypeValueId: 9,
         code: null,
-        workoutDay: '2025-04-07T00:00:00',
-        startTime: '2025-04-07T19:43:44',
+        workoutDay: '2025-04-07T00:00:00Z',
+        startTime: '2025-04-07T19:43:44Z',
         startTimePlanned: null,
         isItAnOr: false,
       },

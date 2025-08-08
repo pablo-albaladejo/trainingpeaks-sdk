@@ -7,7 +7,7 @@ import {
   strengthWorkoutItemBuilder,
   workoutSessionBuilder,
 } from '@fixtures';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getWorkoutsListEntrypoint } from './entrypoint';
 import type { WorkoutEntrypointDependencies } from './types';
@@ -38,6 +38,9 @@ const mockDependencies: WorkoutEntrypointDependencies = {
 };
 
 describe('getWorkoutsListEntrypoint', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('should return workout data directly when API call succeeds', async () => {
     const mockApiResponse = [
       strengthWorkoutItemBuilder.build({

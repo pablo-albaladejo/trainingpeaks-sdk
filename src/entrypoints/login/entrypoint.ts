@@ -24,11 +24,10 @@ const entrypoint = async (
   const credentials = createCredentials(command.username, command.password);
 
   const authenticateUser = authenticateUserService(deps.tpRepository);
-  const executeLoginUserUseCaseResult =
-    executeLoginUserUseCase(authenticateUser);
+  const executeLogin = executeLoginUserUseCase(authenticateUser);
 
   // Execute login and get session
-  const session = await executeLoginUserUseCaseResult(credentials);
+  const session = await executeLogin(credentials);
 
   // Map session to entrypoint response format
   return mapLoginSuccessToEntrypoint(session.token, session.user);

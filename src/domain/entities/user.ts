@@ -14,6 +14,7 @@ export type User = UserType;
 export const createUser = (
   id: string,
   name: string,
+  username: string,
   avatar?: string,
   preferences?: Record<string, unknown>
 ): User => {
@@ -30,6 +31,17 @@ export const createUser = (
     throw new ValidationError('User name cannot exceed 100 characters', 'name');
   }
 
+  if (!username || username.trim().length === 0) {
+    throw new ValidationError('Username cannot be empty', 'username');
+  }
+
+  if (username.trim().length > 100) {
+    throw new ValidationError(
+      'Username cannot exceed 100 characters',
+      'username'
+    );
+  }
+
   if (avatar && !isValidUrl(avatar)) {
     throw new ValidationError('Avatar must be a valid URL', 'avatar');
   }
@@ -37,6 +49,7 @@ export const createUser = (
   return {
     id: id.trim(),
     name: name.trim(),
+    username: username.trim(),
     avatar,
     preferences,
   };

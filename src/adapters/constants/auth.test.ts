@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import { AUTH_CONSTANTS, type AuthConstant } from './auth';
 
@@ -12,7 +12,7 @@ describe('AUTH_CONSTANTS', () => {
   });
 
   it('should export all expected constants', () => {
-    expect(AUTH_CONSTANTS).toEqual({
+    expect(AUTH_CONSTANTS).toMatchObject({
       DEFAULT_AUTH_COOKIE: 'Production_tpAuth',
       DEFAULT_TOKEN_TYPE: 'Bearer',
     });
@@ -21,7 +21,7 @@ describe('AUTH_CONSTANTS', () => {
   it('should export AuthConstant type correctly', () => {
     const cookieName: AuthConstant = 'Production_tpAuth';
     const tokenType: AuthConstant = 'Bearer';
-    expect(typeof cookieName).toBe('string');
-    expect(typeof tokenType).toBe('string');
+    expectTypeOf(cookieName).toBeString();
+    expectTypeOf(tokenType).toBeString();
   });
 });

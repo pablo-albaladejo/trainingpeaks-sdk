@@ -49,3 +49,13 @@ export const clientErrorBuilder = new Factory<HttpError>()
   .option('status', 400)
   .option('statusText', 'Bad Request')
   .option('code', 'CLIENT_ERROR');
+
+/**
+ * Server Error Builder
+ * Creates 5xx server errors for testing retry scenarios
+ */
+export const serverErrorBuilder = new Factory<HttpError>()
+  .extend(httpErrorBuilder)
+  .option('status', 500)
+  .option('statusText', 'Internal Server Error')
+  .option('code', 'SERVER_ERROR');

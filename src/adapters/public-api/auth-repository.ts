@@ -36,54 +36,52 @@ type AuthRepositoryDependencies = {
   logger: Logger;
 };
 
+const createErrorContext = (
+  url: string,
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+  requestData?: Record<string, unknown>
+): ErrorRequestContext => ({
+  url,
+  method,
+  ...(requestData && { requestData }),
+});
+
 const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
   return async (credentials: Credentials) => {
     // Validate credentials using domain logic
     if (!validateCredentials(credentials)) {
-      const errorContext: ErrorRequestContext = {
-        url: API_ENDPOINTS.LOGIN_PAGE,
-        method: 'POST',
-        requestData: { username: credentials.username },
-      };
-      throwValidationError('Invalid credentials provided', errorContext);
+      throwValidationError(
+        'Invalid credentials provided',
+        createErrorContext(API_ENDPOINTS.LOGIN_PAGE, 'POST', {
+          username: credentials.username,
+        })
+      );
     }
 
     // Get login page to extract request verification token
     const response = await getLoginPage(deps.httpClient);
 
     if (!response.success) {
-      const errorContext: ErrorRequestContext = {
-        url: API_ENDPOINTS.LOGIN_PAGE,
-        method: 'GET',
-      };
       throwHttpErrorFromResponse(
         response,
         'Get request verification token',
-        errorContext
+        createErrorContext(API_ENDPOINTS.LOGIN_PAGE, 'GET')
       );
     }
 
     if (!response.data) {
-      const errorContext: ErrorRequestContext = {
-        url: API_ENDPOINTS.LOGIN_PAGE,
-        method: 'GET',
-      };
       throwMissingDataError(
         'No response data received from login page',
-        errorContext
+        createErrorContext(API_ENDPOINTS.LOGIN_PAGE, 'GET')
       );
     }
 
     const requestVerificationToken = getRequestVerificationToken(response.data);
 
     if (!requestVerificationToken) {
-      const errorContext: ErrorRequestContext = {
-        url: API_ENDPOINTS.LOGIN_PAGE,
-        method: 'GET',
-      };
       throwValidationError(
         'Request verification token not found',
-        errorContext
+        createErrorContext(API_ENDPOINTS.LOGIN_PAGE, 'GET')
       );
     }
 
@@ -95,15 +93,12 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
     );
 
     if (!submitLoginResponse.success) {
-      const errorContext: ErrorRequestContext = {
-        url: API_ENDPOINTS.LOGIN_PAGE,
-        method: 'POST',
-        requestData: { username: credentials.username },
-      };
       throwHttpErrorFromResponse(
         submitLoginResponse,
         'Submit login',
-        errorContext
+        createErrorContext(API_ENDPOINTS.LOGIN_PAGE, 'POST', {
+          username: credentials.username,
+        })
       );
     }
 
@@ -112,35 +107,30 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
     );
 
     if (!tpAuthCookie) {
-      const errorContext: ErrorRequestContext = {
-        url: API_ENDPOINTS.LOGIN_PAGE,
-        method: 'POST',
-        requestData: { username: credentials.username },
-      };
-      throwCookieNotFoundError('Production_tpAuth', errorContext);
+      throwCookieNotFoundError(
+        'Production_tpAuth',
+        createErrorContext(API_ENDPOINTS.LOGIN_PAGE, 'POST', {
+          username: credentials.username,
+        })
+      );
     }
 
     // Get the auth token using the cookies
     const authTokenResponse = await getAuthToken(deps.httpClient, tpAuthCookie);
 
     if (!authTokenResponse.success) {
-      const errorContext: ErrorRequestContext = {
-        url: API_ENDPOINTS.TOKEN,
-        method: 'GET',
-      };
       throwHttpErrorFromResponse(
         authTokenResponse,
         'Get auth token',
-        errorContext
+        createErrorContext(API_ENDPOINTS.TOKEN, 'GET')
       );
     }
 
     if (!authTokenResponse.data) {
-      const errorContext: ErrorRequestContext = {
-        url: API_ENDPOINTS.TOKEN,
-        method: 'GET',
-      };
-      throwMissingDataError('No auth token data received', errorContext);
+      throwMissingDataError(
+        'No auth token data received',
+        createErrorContext(API_ENDPOINTS.TOKEN, 'GET')
+      );
     }
 
     const authTokenData = authTokenResponse.data as TokenEndpointResponse;
@@ -157,23 +147,18 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
     });
 
     if (!userResponse.success) {
-      const errorContext: ErrorRequestContext = {
-        url: API_ENDPOINTS.USER_PROFILE,
-        method: 'GET',
-      };
       throwHttpErrorFromResponse(
         userResponse,
         'Get user information',
-        errorContext
+        createErrorContext(API_ENDPOINTS.USER_PROFILE, 'GET')
       );
     }
 
     if (!userResponse.data) {
-      const errorContext: ErrorRequestContext = {
-        url: API_ENDPOINTS.USER_PROFILE,
-        method: 'GET',
-      };
-      throwMissingDataError('No user data received', errorContext);
+      throwMissingDataError(
+        'No user data received',
+        createErrorContext(API_ENDPOINTS.USER_PROFILE, 'GET')
+      );
     }
 
     const userData = userResponse.data as UserProfileEndpointResponse;
@@ -184,11 +169,7 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
 
     // Validate token expiration using domain logic
     if (isTokenExpired(token)) {
-      const errorContext: ErrorRequestContext = {
-        url: API_ENDPOINTS.TOKEN,
-        method: 'GET',
-      };
-      throwTokenExpiredError(errorContext);
+      throwTokenExpiredError(createErrorContext(API_ENDPOINTS.TOKEN, 'GET'));
     }
 
     const session: Session = {
@@ -211,7 +192,7 @@ const createLogout = (
     } catch (error) {
       // Log the error but don't throw - logout should always succeed
       deps.logger.warn('Failed to clear session storage during logout', {
-        error: error instanceof Error ? error.message : String(error),
+        error,
       });
     }
   };

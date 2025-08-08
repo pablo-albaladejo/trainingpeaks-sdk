@@ -1,0 +1,101 @@
+/* eslint-disable @typescript-eslint/unbound-method */
+
+/**
+ * Token API Tests
+ */
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { HttpClient } from '@/adapters/http';
+
+import { getAuthToken, refreshAuthToken } from './token.api';
+import type { RefreshTokenRequest } from './token.types';
+
+const mockHttpClient: HttpClient = {
+  get: vi.fn(),
+  post: vi.fn(),
+  put: vi.fn(),
+  patch: vi.fn(),
+  delete: vi.fn(),
+};
+
+describe('Token API', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('getAuthToken', () => {
+    it('should call GET with correct headers and cookies', async () => {
+      const mockResponse = {
+        data: { token: { access_token: 'test' } },
+        success: true,
+        cookies: [],
+      };
+
+      vi.mocked(mockHttpClient.get).mockResolvedValue(mockResponse);
+
+      await getAuthToken(mockHttpClient, 'test-cookie');
+
+      expect(mockHttpClient.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            accept: '*/*',
+          }),
+          cookies: ['test-cookie'],
+        })
+      );
+    });
+  });
+
+  describe('refreshAuthToken', () => {
+    it('should call POST with correct Content-Type header', async () => {
+      const mockResponse = {
+        data: { token: { access_token: 'refreshed-token' } },
+        success: true,
+        cookies: [],
+      };
+
+      vi.mocked(mockHttpClient.post).mockResolvedValue(mockResponse);
+
+      const refreshRequest: RefreshTokenRequest = {
+        refresh_token: 'test-refresh-token',
+      };
+
+      await refreshAuthToken(mockHttpClient, refreshRequest);
+
+      expect(mockHttpClient.post).toHaveBeenCalledWith(
+        expect.any(String),
+        refreshRequest,
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            accept: '*/*',
+            'content-type': 'application/json',
+          }),
+        })
+      );
+    });
+
+    it('should send refresh token in request body', async () => {
+      const mockResponse = {
+        data: { token: { access_token: 'refreshed-token' } },
+        success: true,
+        cookies: [],
+      };
+
+      vi.mocked(mockHttpClient.post).mockResolvedValue(mockResponse);
+
+      const refreshRequest: RefreshTokenRequest = {
+        refresh_token: 'test-refresh-token',
+      };
+
+      await refreshAuthToken(mockHttpClient, refreshRequest);
+
+      expect(mockHttpClient.post).toHaveBeenCalledWith(
+        expect.any(String),
+        refreshRequest,
+        expect.any(Object)
+      );
+    });
+  });
+});

@@ -2,7 +2,7 @@
  * Workout Repository Tests
  */
 
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createHttpError } from '@/adapters/errors/http-errors';
 import type { HttpClient } from '@/adapters/http';
@@ -31,6 +31,9 @@ const mockHttpClient: HttpClient = {
 };
 
 describe('createWorkoutRepository', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('should create workout repository with getWorkoutsList method', () => {
     const workoutRepository = createWorkoutRepository({
       httpClient: mockHttpClient,
@@ -50,8 +53,8 @@ describe('createWorkoutRepository', () => {
           title: 'Strength',
           workoutTypeValueId: 9,
           code: null,
-          workoutDay: '2025-04-07T00:00:00',
-          startTime: '2025-04-07T19:43:44',
+          workoutDay: '2025-04-07T00:00:00Z',
+          startTime: '2025-04-07T19:43:44Z',
           startTimePlanned: null,
           isItAnOr: false,
         },

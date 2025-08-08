@@ -23,6 +23,8 @@ describe('AuthRepository', () => {
   let dependencies: Parameters<typeof createAuthRepository>[0];
 
   beforeEach(() => {
+    vi.clearAllMocks();
+
     mockHttpClient = {
       get: vi.fn(),
       post: vi.fn(),
@@ -102,6 +104,7 @@ describe('AuthRepository', () => {
     const mockUserResponse = {
       user: {
         userId: '123',
+        userName: 'testuser',
         fullName: 'Test User',
         firstName: 'Test',
         lastName: 'User',
@@ -412,6 +415,7 @@ describe('AuthRepository', () => {
             data: {
               user: {
                 userId: '123',
+                userName: 'testuser',
                 fullName: 'Test User',
                 firstName: 'Test',
                 lastName: 'User',

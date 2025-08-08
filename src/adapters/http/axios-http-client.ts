@@ -137,14 +137,12 @@ const createAxiosInstance = (
 };
 
 /**
- * Internal method to handle HTTP requests with retry logic
+ * Helper function to create axios config with fresh tokens
  */
-const makeRequest = async <T>(
-  client: AxiosInstance,
-  jar: CookieJar | undefined,
+const createAxiosConfig = async (
   baseConfig: ReturnType<typeof normalizeHttpClientConfig>,
   config: InternalRequestConfig
-): Promise<HttpResponse<T>> => {
+): Promise<AxiosRequestConfig> => {
   const axiosConfig: AxiosRequestConfig = {
     method: config.method.toLowerCase() as HttpMethod,
     url: config.url,
@@ -163,9 +161,13 @@ const makeRequest = async <T>(
     try {
       const session = await baseConfig.sessionStorage.get();
       if (session?.token?.accessToken) {
+        const currentHeaders =
+          (axiosConfig.headers as Record<string, string>) || {};
         axiosConfig.headers = {
-          ...axiosConfig.headers,
-          Authorization: `Bearer ${session.token.accessToken}`,
+          ...currentHeaders,
+          Authorization:
+            currentHeaders.Authorization ??
+            `Bearer ${session.token.accessToken}`,
         };
       }
     } catch (error) {
@@ -179,12 +181,37 @@ const makeRequest = async <T>(
   }
 
   // Add manual cookies if provided
-  if (config.options?.cookies) {
+  if (config.options?.cookies && config.options.cookies.length > 0) {
+    const currentHeaders =
+      (axiosConfig.headers as Record<string, string>) || {};
+    const existingCookies = currentHeaders.Cookie;
+    const newCookies = config.options.cookies.join('; ');
+
+    // Merge existing cookies with new ones safely
+    const cookieValue = existingCookies
+      ? `${existingCookies}; ${newCookies}`
+      : newCookies;
+
     axiosConfig.headers = {
-      ...axiosConfig.headers,
-      Cookie: config.options.cookies,
+      ...currentHeaders,
+      Cookie: cookieValue,
     };
   }
+
+  return axiosConfig;
+};
+
+/**
+ * Internal method to handle HTTP requests with retry logic
+ */
+const makeRequest = async <T>(
+  client: AxiosInstance,
+  jar: CookieJar | undefined,
+  baseConfig: ReturnType<typeof normalizeHttpClientConfig>,
+  config: InternalRequestConfig
+): Promise<HttpResponse<T>> => {
+  // Create initial config for logging purposes
+  const initialAxiosConfig = await createAxiosConfig(baseConfig, config);
 
   // Create retry handler with config
   const retryHandler = new RetryHandler({
@@ -201,8 +228,8 @@ const makeRequest = async <T>(
       const curlData: CurlRequestData = {
         method: config.method,
         url: config.url,
-        headers: axiosConfig.headers as Record<string, string>,
-        data: axiosConfig.data,
+        headers: initialAxiosConfig.headers as Record<string, string>,
+        data: initialAxiosConfig.data,
       };
 
       // Add cookies to curl data if available
@@ -240,7 +267,10 @@ const makeRequest = async <T>(
   try {
     // Execute request with retry logic and automatic token refresh
     const response: AxiosResponse<T> = await retryHandler.execute(
-      () => {
+      async () => {
+        // Create fresh axios config for each retry attempt to ensure updated tokens
+        const axiosConfig = await createAxiosConfig(baseConfig, config);
+
         // Use refresh-enabled request if session storage is available
         if (baseConfig.sessionStorage && baseConfig.logger) {
           return executeRequestWithRefresh(axiosConfig, config, {

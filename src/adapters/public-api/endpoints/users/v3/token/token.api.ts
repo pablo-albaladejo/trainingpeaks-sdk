@@ -25,7 +25,7 @@ export const getAuthToken = async (
       accept: '*/*',
       ...TRAININGPEAKS_API_HEADERS,
     },
-    cookies, // Use the new cookies option
+    cookies: [cookies], // Convert string to array
   });
 };
 
@@ -42,6 +42,7 @@ export const refreshAuthToken = async (
     {
       headers: {
         accept: '*/*',
+        'content-type': 'application/json',
         ...TRAININGPEAKS_API_HEADERS,
       },
     }

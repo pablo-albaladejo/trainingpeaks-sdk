@@ -530,8 +530,7 @@ describe('AuthToken Entity', () => {
         tokenType: 'Bearer',
         expiresIn: 3600,
         expires: new Date('2099-01-01T00:00:00.000Z'),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        refreshToken: null as any,
+        refreshToken: null as string | null,
       };
 
       // Act

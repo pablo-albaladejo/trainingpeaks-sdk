@@ -26,7 +26,7 @@ describe('API_ENDPOINTS', () => {
     });
   });
 
-  it('should be readonly (as const)', () => {
+  it('should be mutable object with type-level readonly constraints', () => {
     expect(Object.isFrozen(API_ENDPOINTS)).toBe(false);
     const entityUsers: 'users' = API_ENDPOINTS.ENTITIES.USERS;
     expect(entityUsers).toBe('users');

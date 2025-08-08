@@ -89,12 +89,55 @@ export const executeRequestWithRefresh = async <T>(
             cookies: [],
           } as HttpResponse<TData>;
         },
-        put: async <TData>(): Promise<HttpResponse<TData>> =>
-          Promise.resolve({ data: null as TData, success: false, cookies: [] }),
-        patch: async <TData>(): Promise<HttpResponse<TData>> =>
-          Promise.resolve({ data: null as TData, success: false, cookies: [] }),
-        delete: async <TData>(): Promise<HttpResponse<TData>> =>
-          Promise.resolve({ data: null as TData, success: false, cookies: [] }),
+        put: async <TData>(
+          url: string,
+          data?: unknown,
+          options?: Record<string, unknown>
+        ) => {
+          const response = await client.request<TData>({
+            method: 'PUT',
+            url,
+            data,
+            ...options,
+          });
+          return {
+            data: response.data,
+            success: true,
+            cookies: [],
+          } as HttpResponse<TData>;
+        },
+        patch: async <TData>(
+          url: string,
+          data?: unknown,
+          options?: Record<string, unknown>
+        ) => {
+          const response = await client.request<TData>({
+            method: 'PATCH',
+            url,
+            data,
+            ...options,
+          });
+          return {
+            data: response.data,
+            success: true,
+            cookies: [],
+          } as HttpResponse<TData>;
+        },
+        delete: async <TData>(
+          url: string,
+          options?: Record<string, unknown>
+        ) => {
+          const response = await client.request<TData>({
+            method: 'DELETE',
+            url,
+            ...options,
+          });
+          return {
+            data: response.data,
+            success: true,
+            cookies: [],
+          } as HttpResponse<TData>;
+        },
       };
 
       // Attempt token refresh

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AuthRepository, WorkoutRepository } from '@/domain';
 
@@ -18,6 +18,10 @@ describe('TrainingPeaksRepository', () => {
     authRepository: mockAuthRepository,
     workoutRepository: mockWorkoutRepository,
   };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   describe('createTrainingPeaksRepository', () => {
     it('should create repository with auth and workout methods', () => {

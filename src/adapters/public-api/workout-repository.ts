@@ -62,6 +62,9 @@ const createGetWorkoutsList = (
         deps.logger,
         params
       );
+
+      // Explicit throw for type safety (handleRepositoryError should never return)
+      throw error;
     }
   };
 };

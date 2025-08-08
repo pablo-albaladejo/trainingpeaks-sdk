@@ -24,11 +24,13 @@ export const getWorkoutsList = async (
   // Generate the complete URL using the configured URL builder
   const url = generateWorkoutListUrl(athleteId, startDate, endDate);
 
-  const response = await httpClient.get<GetWorkoutsListApiResponse>(url);
+  const response = await httpClient.get(url);
 
   // Check if the request was successful
   if (!response.success || response.data === null) {
-    throw new Error('Failed to fetch workouts list: response data is null');
+    throw new Error(
+      `Failed to fetch workouts list: response data is null. URL: ${url}`
+    );
   }
 
   // Validate the response using Zod schema

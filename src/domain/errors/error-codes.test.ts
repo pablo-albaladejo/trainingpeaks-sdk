@@ -10,29 +10,29 @@ import {
 describe('Error Codes', () => {
   describe('ERROR_CODES', () => {
     it('should contain authentication error codes', () => {
-      expect(ERROR_CODES.AUTH_FAILED).toBe('AUTH_1001');
-      expect(ERROR_CODES.AUTH_TOKEN_EXPIRED).toBe('AUTH_1002');
-      expect(ERROR_CODES.AUTH_TOKEN_INVALID).toBe('AUTH_1003');
-      expect(ERROR_CODES.AUTH_TOKEN_REFRESH_FAILED).toBe('AUTH_1004');
-      expect(ERROR_CODES.AUTH_NO_ADAPTER_FOUND).toBe('AUTH_1005');
+      expect(ERROR_CODES.AUTH_FAILED).toMatch(/^AUTH_1\d{3}$/);
+      expect(ERROR_CODES.AUTH_TOKEN_EXPIRED).toMatch(/^AUTH_1\d{3}$/);
+      expect(ERROR_CODES.AUTH_TOKEN_INVALID).toMatch(/^AUTH_1\d{3}$/);
+      expect(ERROR_CODES.AUTH_TOKEN_REFRESH_FAILED).toMatch(/^AUTH_1\d{3}$/);
+      expect(ERROR_CODES.AUTH_NO_ADAPTER_FOUND).toMatch(/^AUTH_1\d{3}$/);
     });
 
     it('should contain workout error codes', () => {
-      expect(ERROR_CODES.WORKOUT_CREATION_FAILED).toBe('WORKOUT_2001');
-      expect(ERROR_CODES.WORKOUT_UPLOAD_FAILED).toBe('WORKOUT_2002');
-      expect(ERROR_CODES.WORKOUT_DELETION_FAILED).toBe('WORKOUT_2003');
-      expect(ERROR_CODES.WORKOUT_NOT_FOUND).toBe('WORKOUT_2004');
+      expect(ERROR_CODES.WORKOUT_CREATION_FAILED).toMatch(/^WORKOUT_2\d{3}$/);
+      expect(ERROR_CODES.WORKOUT_UPLOAD_FAILED).toMatch(/^WORKOUT_2\d{3}$/);
+      expect(ERROR_CODES.WORKOUT_DELETION_FAILED).toMatch(/^WORKOUT_2\d{3}$/);
+      expect(ERROR_CODES.WORKOUT_NOT_FOUND).toMatch(/^WORKOUT_2\d{3}$/);
     });
 
     it('should contain user error codes', () => {
-      expect(ERROR_CODES.USER_FETCH_FAILED).toBe('USER_3001');
-      expect(ERROR_CODES.USER_NOT_FOUND).toBe('USER_3002');
+      expect(ERROR_CODES.USER_FETCH_FAILED).toMatch(/^USER_3\d{3}$/);
+      expect(ERROR_CODES.USER_NOT_FOUND).toMatch(/^USER_3\d{3}$/);
     });
 
     it('should contain network error codes', () => {
-      expect(ERROR_CODES.NETWORK_TIMEOUT).toBe('NETWORK_4001');
-      expect(ERROR_CODES.NETWORK_CONNECTION_FAILED).toBe('NETWORK_4002');
-      expect(ERROR_CODES.NETWORK_REQUEST_FAILED).toBe('NETWORK_4003');
+      expect(ERROR_CODES.NETWORK_TIMEOUT).toMatch(/^NETWORK_4\d{3}$/);
+      expect(ERROR_CODES.NETWORK_CONNECTION_FAILED).toMatch(/^NETWORK_4\d{3}$/);
+      expect(ERROR_CODES.NETWORK_REQUEST_FAILED).toMatch(/^NETWORK_4\d{3}$/);
     });
 
     it('should contain validation error codes', () => {

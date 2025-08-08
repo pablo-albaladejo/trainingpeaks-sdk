@@ -14,9 +14,9 @@ export const ApiWorkoutItemSchema = z.object({
   title: z.string(),
   workoutTypeValueId: z.number(),
   code: z.string().nullable(),
-  workoutDay: z.string(),
-  startTime: z.string().nullable(),
-  startTimePlanned: z.string().nullable(),
+  workoutDay: z.string().datetime(),
+  startTime: z.string().datetime().nullable(),
+  startTimePlanned: z.string().datetime().nullable(),
   isItAnOr: z.boolean(),
 });
 

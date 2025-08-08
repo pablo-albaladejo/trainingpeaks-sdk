@@ -95,7 +95,7 @@ const main = async (): Promise<void> => {
     console.log('\n🎉 Example completed successfully!');
   } catch (error) {
     console.error('❌ An error occurred:', error);
-    process.exit(1);
+    throw error;
   }
 };
 

@@ -34,8 +34,13 @@ export class HttpError extends SDKError {
   public readonly method?: string;
   public readonly requestId?: string;
 
-  constructor(message: string, code: string, context: HttpErrorContext) {
-    super(message, code, context);
+  constructor(
+    message: string,
+    code: string,
+    context: HttpErrorContext,
+    options?: { cause?: unknown }
+  ) {
+    super(message, code, context, options);
     this.name = 'HttpError';
     this.status = context.status;
     this.statusText = context.statusText;
@@ -55,7 +60,8 @@ export const createHttpError = (
     method?: string;
     requestData?: unknown;
     requestId?: string;
-  } = {}
+  } = {},
+  cause?: unknown
 ): HttpError => {
   const { status, statusText, data } = response;
   const { url, method, requestData, requestId } = context;
@@ -77,28 +83,32 @@ export const createHttpError = (
       return new HttpError(
         `Bad Request: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.VALIDATION_FAILED,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 401:
       return new HttpError(
         `Authentication failed: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.AUTH_TOKEN_INVALID,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 403:
       return new HttpError(
         `Access forbidden: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.AUTH_FAILED,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 404:
       return new HttpError(
         `Resource not found: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.WORKOUT_NOT_FOUND, // or generic NOT_FOUND if we add it
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 408:
@@ -106,56 +116,64 @@ export const createHttpError = (
       return new HttpError(
         `Request timeout: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.NETWORK_TIMEOUT,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 409:
       return new HttpError(
         `Conflict: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.VALIDATION_FAILED,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 422:
       return new HttpError(
         `Validation error: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.VALIDATION_FAILED,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 429:
       return new HttpError(
         `Rate limit exceeded: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.NETWORK_RATE_LIMITED,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 500:
       return new HttpError(
         `Server error: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.NETWORK_SERVER_ERROR,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 502:
       return new HttpError(
         `Bad gateway: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.NETWORK_RESPONSE_INVALID,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 503:
       return new HttpError(
         `Service unavailable: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     default:
       return new HttpError(
         `HTTP Error ${status}: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.NETWORK_REQUEST_FAILED,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
   }
 };
@@ -256,7 +274,7 @@ export const throwHttpErrorFromResponse: <T>(
     : `${operation} failed`;
 
   const httpErrorResponse: HttpErrorResponse = {
-    status: 0,
+    status: 500,
     statusText: 'Unknown Error',
     data: { message: errorMessage },
   };
@@ -297,22 +315,6 @@ export const throwMissingDataError: (
 };
 
 /**
- * Helper function to create and throw unauthorized error
- */
-export const throwUnauthorizedError: (
-  message: string,
-  context: ErrorRequestContext
-) => never = (message: string, context: ErrorRequestContext): never => {
-  const httpErrorResponse: HttpErrorResponse = {
-    status: 401,
-    statusText: 'Unauthorized',
-    data: { message },
-  };
-
-  throw createHttpError(httpErrorResponse, context);
-};
-
-/**
  * Helper function to create and throw generic server error
  */
 export const throwServerError: (
@@ -338,7 +340,7 @@ export const throwServerError: (
     },
   };
 
-  throw createHttpError(httpErrorResponse, context);
+  throw createHttpError(httpErrorResponse, context, error);
 };
 
 /**
@@ -406,5 +408,6 @@ export const handleRepositoryError: (
   params?: unknown
 ): never => {
   logger.error(`Failed to ${operation}`, { error, params });
+  if (isHttpError(error)) throw error;
   throwServerError(error, `Failed to ${operation}`, context);
 };

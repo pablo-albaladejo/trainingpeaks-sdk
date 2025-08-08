@@ -24,7 +24,7 @@ export const mapLoginSuccessToEntrypoint = (
     user: {
       id: domainUser.id,
       name: domainUser.name,
-      username: domainUser.name, // Use name as username for now
+      username: domainUser.username,
       avatar: domainUser.avatar,
     },
   };
