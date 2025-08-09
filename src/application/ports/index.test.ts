@@ -9,6 +9,7 @@ describe('Application Ports Index', () => {
     const exportKeys = Object.keys(ports);
     expect(Array.isArray(exportKeys)).toBe(true);
     // TypeScript types don't have runtime representation, so empty object is expected
+    expect(exportKeys).toHaveLength(0);
   });
 
   it('should have expected export structure', () => {

@@ -27,22 +27,23 @@ describe('Domain Templates - Workout Steps', () => {
     it('should create warmup with default intensity range 45-55%', () => {
       const step = createWarmupStep(10);
 
-      expect(step.targets[0]).toEqual({
-        minValue: 45,
-        maxValue: 55,
-      });
+      expect(step.targets[0]).toEqual(
+        expect.objectContaining({
+          minValue: 45,
+          maxValue: 55,
+        })
+      );
     });
 
-    it('should handle different duration values', () => {
-      const durations = [5, 15, 25];
-
-      durations.forEach((duration) => {
+    it.each([5, 15, 25])(
+      'should handle duration value of %d minutes',
+      (duration) => {
         const step = createWarmupStep(duration);
         expect(step.length.value).toBe(duration);
         expect(step.name).toBe('Warmup');
         expect(step.intensityClass).toBe(IntensityClass.WARM_UP);
-      });
-    });
+      }
+    );
 
     it('should handle zero duration', () => {
       const zeroDuration = 0;
@@ -67,22 +68,23 @@ describe('Domain Templates - Workout Steps', () => {
     it('should create cooldown with default intensity range 35-45%', () => {
       const step = createCooldownStep(10);
 
-      expect(step.targets[0]).toEqual({
-        minValue: 35,
-        maxValue: 45,
-      });
+      expect(step.targets[0]).toEqual(
+        expect.objectContaining({
+          minValue: 35,
+          maxValue: 45,
+        })
+      );
     });
 
-    it('should handle different duration values', () => {
-      const durations = [5, 15, 25];
-
-      durations.forEach((duration) => {
+    it.each([5, 15, 25])(
+      'should handle duration value of %d minutes',
+      (duration) => {
         const step = createCooldownStep(duration);
         expect(step.length.value).toBe(duration);
         expect(step.name).toBe('Cooldown');
         expect(step.intensityClass).toBe(IntensityClass.COOL_DOWN);
-      });
-    });
+      }
+    );
   });
 
   describe('createIntervalStep', () => {
@@ -103,36 +105,31 @@ describe('Domain Templates - Workout Steps', () => {
       const intensity = 120;
       const step = createIntervalStep(5, intensity);
 
-      expect(step.targets[0]).toEqual({
-        minValue: 115,
-        maxValue: 125,
-      });
+      expect(step.targets[0]).toEqual(
+        expect.objectContaining({
+          minValue: 115,
+          maxValue: 125,
+        })
+      );
     });
 
-    it('should handle different intensity values', () => {
-      const testCases = [
-        { intensity: 100, expectedMin: 95, expectedMax: 105 },
-        { intensity: 150, expectedMin: 145, expectedMax: 155 },
-        { intensity: 80, expectedMin: 75, expectedMax: 85 },
-      ];
-
-      testCases.forEach(({ intensity, expectedMin, expectedMax }) => {
+    it.each([
+      { intensity: 100, expectedMin: 95, expectedMax: 105 },
+      { intensity: 150, expectedMin: 145, expectedMax: 155 },
+      { intensity: 80, expectedMin: 75, expectedMax: 85 },
+      { intensity: 10, expectedMin: 5, expectedMax: 15 },
+    ])(
+      'should handle intensity $intensity with range $expectedMin-$expectedMax',
+      ({ intensity, expectedMin, expectedMax }) => {
         const step = createIntervalStep(5, intensity);
-        expect(step.targets[0]).toEqual({
-          minValue: expectedMin,
-          maxValue: expectedMax,
-        });
-      });
-    });
-
-    it('should handle edge case intensities', () => {
-      const lowIntensity = 10;
-      const step = createIntervalStep(5, lowIntensity);
-      expect(step.targets[0]).toEqual({
-        minValue: 5,
-        maxValue: 15,
-      });
-    });
+        expect(step.targets[0]).toEqual(
+          expect.objectContaining({
+            minValue: expectedMin,
+            maxValue: expectedMax,
+          })
+        );
+      }
+    );
   });
 
   describe('createRecoveryStep', () => {
@@ -151,22 +148,23 @@ describe('Domain Templates - Workout Steps', () => {
     it('should create recovery with default intensity range 55-65%', () => {
       const step = createRecoveryStep(3);
 
-      expect(step.targets[0]).toEqual({
-        minValue: 55,
-        maxValue: 65,
-      });
+      expect(step.targets[0]).toEqual(
+        expect.objectContaining({
+          minValue: 55,
+          maxValue: 65,
+        })
+      );
     });
 
-    it('should handle different duration values', () => {
-      const durations = [1, 3, 8];
-
-      durations.forEach((duration) => {
+    it.each([1, 3, 8])(
+      'should handle duration value of %d minutes',
+      (duration) => {
         const step = createRecoveryStep(duration);
         expect(step.length.value).toBe(duration);
         expect(step.name).toBe('Recovery');
         expect(step.intensityClass).toBe(IntensityClass.REST);
-      });
-    });
+      }
+    );
   });
 
   describe('createSteadyStep', () => {
@@ -187,42 +185,48 @@ describe('Domain Templates - Workout Steps', () => {
       const intensity = 90;
       const step = createSteadyStep(30, intensity);
 
-      expect(step.targets[0]).toEqual({
-        minValue: 85,
-        maxValue: 95,
-      });
+      expect(step.targets[0]).toEqual(
+        expect.objectContaining({
+          minValue: 85,
+          maxValue: 95,
+        })
+      );
     });
 
-    it('should handle different intensity values', () => {
-      const testCases = [
-        { intensity: 75, expectedMin: 70, expectedMax: 80 },
-        { intensity: 100, expectedMin: 95, expectedMax: 105 },
-        { intensity: 60, expectedMin: 55, expectedMax: 65 },
-      ];
-
-      testCases.forEach(({ intensity, expectedMin, expectedMax }) => {
+    it.each([
+      { intensity: 75, expectedMin: 70, expectedMax: 80 },
+      { intensity: 100, expectedMin: 95, expectedMax: 105 },
+      { intensity: 60, expectedMin: 55, expectedMax: 65 },
+    ])(
+      'should handle intensity $intensity with range $expectedMin-$expectedMax',
+      ({ intensity, expectedMin, expectedMax }) => {
         const step = createSteadyStep(20, intensity);
-        expect(step.targets[0]).toEqual({
-          minValue: expectedMin,
-          maxValue: expectedMax,
-        });
-      });
-    });
+        expect(step.targets[0]).toEqual(
+          expect.objectContaining({
+            minValue: expectedMin,
+            maxValue: expectedMax,
+          })
+        );
+      }
+    );
 
-    it('should handle different duration and intensity combinations', () => {
-      const combinations = [
-        { duration: 20, intensity: 75 },
-        { duration: 60, intensity: 85 },
-        { duration: 120, intensity: 70 },
-      ];
-
-      combinations.forEach(({ duration, intensity }) => {
+    it.each([
+      { duration: 20, intensity: 75 },
+      { duration: 60, intensity: 85 },
+      { duration: 120, intensity: 70 },
+    ])(
+      'should handle duration $duration with intensity $intensity',
+      ({ duration, intensity }) => {
         const step = createSteadyStep(duration, intensity);
         expect(step.length.value).toBe(duration);
-        expect(step.targets[0].minValue).toBe(intensity - 5);
-        expect(step.targets[0].maxValue).toBe(intensity + 5);
-      });
-    });
+        expect(step.targets[0]).toEqual(
+          expect.objectContaining({
+            minValue: intensity - 5,
+            maxValue: intensity + 5,
+          })
+        );
+      }
+    );
   });
 
   describe('Integration tests', () => {

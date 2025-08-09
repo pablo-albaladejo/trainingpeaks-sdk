@@ -170,7 +170,7 @@ describe('Domain Templates - Workout Templates', () => {
       expect(tempoStep.targets[0].maxValue).toBe(intensity + 5);
     });
 
-    test.each([20, 45, 60])(
+    test.each([15, 20, 45, 60])(
       'should handle tempo duration of %d minutes',
       (duration) => {
         const workout = createTempoWorkout(10, duration, 90, 10);
@@ -267,33 +267,41 @@ describe('Domain Templates - Workout Templates', () => {
 
   describe('Integration tests', () => {
     test.each([
-      ['interval', createIntervalWorkout()],
-      ['tempo', createTempoWorkout()],
-      ['longSteady', createLongSteadyWorkout()],
-    ])('should create %s workout with consistent structure', (_, workout) => {
-      expect(workout).toHaveProperty('structure');
-      expect(Array.isArray(workout.structure)).toBe(true);
-      expect(workout.structure.length).toBeGreaterThan(0);
+      ['interval', createIntervalWorkout],
+      ['tempo', createTempoWorkout],
+      ['longSteady', createLongSteadyWorkout],
+    ])(
+      'should create %s workout with consistent structure',
+      (workoutType, workoutFactory) => {
+        const workout = workoutFactory();
+        expect(workout).toHaveProperty('structure');
+        expect(Array.isArray(workout.structure)).toBe(true);
+        expect(workout.structure.length).toBeGreaterThan(0);
 
-      // All workouts should start with warmup and end with cooldown
-      const firstElement = workout.structure[0];
-      const lastElement = workout.structure[workout.structure.length - 1];
+        // All workouts should start with warmup and end with cooldown
+        const firstElement = workout.structure[0];
+        const lastElement = workout.structure[workout.structure.length - 1];
 
-      expect(firstElement.steps[0].name).toBe('Warmup');
-      expect(lastElement.steps[0].name).toBe('Cooldown');
-    });
+        expect(firstElement.steps[0].name).toBe('Warmup');
+        expect(lastElement.steps[0].name).toBe('Cooldown');
+      }
+    );
 
     test.each([
-      ['interval', createIntervalWorkout()],
-      ['tempo', createTempoWorkout()],
-      ['longSteady', createLongSteadyWorkout()],
-    ])('should create %s workout with valid element types', (_, workout) => {
-      workout.structure.forEach((element) => {
-        expect(element.type).toBe(ElementType.STEP);
-        expect(Array.isArray(element.steps)).toBe(true);
-        expect(element.steps.length).toBeGreaterThan(0);
-      });
-    });
+      ['interval', createIntervalWorkout],
+      ['tempo', createTempoWorkout],
+      ['longSteady', createLongSteadyWorkout],
+    ])(
+      'should create %s workout with valid element types',
+      (workoutType, workoutFactory) => {
+        const workout = workoutFactory();
+        workout.structure.forEach((element) => {
+          expect(element.type).toBe(ElementType.STEP);
+          expect(Array.isArray(element.steps)).toBe(true);
+          expect(element.steps.length).toBeGreaterThan(0);
+        });
+      }
+    );
 
     it('should create workouts with different total durations', () => {
       const interval = createIntervalWorkout(10, 5, 120, 3, 4, 10); // 10 + 4*5 + 3*3 + 10 = 49 min

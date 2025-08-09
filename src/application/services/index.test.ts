@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 describe('Application Services Index', () => {
-  it('should export authenticate user service types', async () => {
+  it('should export only TypeScript types with no runtime values', async () => {
     // Since this module only exports TypeScript types, they don't exist at runtime
     const moduleExports = await import('./index');
 

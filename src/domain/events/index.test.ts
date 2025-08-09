@@ -1,10 +1,7 @@
+import { UUID_REGEX } from '@fixtures';
 import { describe, expect, it, test, vi } from 'vitest';
 
 import { LoginMethod } from '@/types';
-
-// UUID regex pattern for testing event IDs
-const uuidRegex =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 import {
   type AllDomainEvents,
@@ -42,7 +39,7 @@ describe('Domain Events', () => {
 
         expect(event.eventId).toBeDefined();
         expect(typeof event.eventId).toBe('string');
-        expect(event.eventId).toMatch(uuidRegex);
+        expect(event.eventId).toMatch(UUID_REGEX);
 
         expect(event.occurredAt).toBeInstanceOf(Date);
         expect(event.occurredAt.getTime()).toBeLessThanOrEqual(Date.now());
@@ -72,17 +69,19 @@ describe('Domain Events', () => {
 
       it('should create events with recent timestamps', () => {
         vi.useFakeTimers();
-        const fixedTime = new Date('2024-01-01T12:00:00.000Z');
-        vi.setSystemTime(fixedTime);
+        try {
+          const fixedTime = new Date('2024-01-01T12:00:00.000Z');
+          vi.setSystemTime(fixedTime);
 
-        const event = createUserLoggedInEvent(
-          'user123',
-          LoginMethod.USERNAME_PASSWORD
-        );
+          const event = createUserLoggedInEvent(
+            'user123',
+            LoginMethod.USERNAME_PASSWORD
+          );
 
-        expect(event.occurredAt.getTime()).toBe(fixedTime.getTime());
-
-        vi.useRealTimers();
+          expect(event.occurredAt.getTime()).toBe(fixedTime.getTime());
+        } finally {
+          vi.useRealTimers();
+        }
       });
     });
 
@@ -472,7 +471,7 @@ describe('Domain Events', () => {
       ];
 
       events.forEach((event) => {
-        expect(event.eventId).toMatch(uuidRegex);
+        expect(event.eventId).toMatch(UUID_REGEX);
       });
     });
   });

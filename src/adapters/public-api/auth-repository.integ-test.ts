@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 
-import { notFoundErrorBuilder } from '@fixtures/http-errors.fixture';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  createMockAuthGet,
+  createMockAuthPost,
+} from '@/__fixtures__/auth-mock-helpers';
 import { Logger } from '@/adapters';
 import { type HttpClient } from '@/adapters/http';
-import { type HttpResponse, SessionStorage } from '@/application';
+import { SessionStorage } from '@/application';
 import { createCredentials } from '@/domain';
 
 import { createAuthRepository } from './auth-repository';
@@ -51,64 +54,24 @@ describe('AuthRepository - Integration Tests', () => {
     it('should handle complete login/logout cycle', async () => {
       const repository = createAuthRepository(dependencies);
 
-      // Setup successful login mocks
+      // Setup successful login mocks using shared helper
       vi.mocked(mockHttpClient.get).mockImplementation(
-        (url: string): Promise<HttpResponse<unknown>> => {
-          if (url.includes('login')) {
-            const loginResponse: HttpResponse<string> = {
-              success: true,
-              data: `<input name="__RequestVerificationToken" value="test-token" />`,
-            };
-            return Promise.resolve(loginResponse);
-          }
-          if (url.includes('token')) {
-            const tokenData = {
-              token: {
-                access_token: 'token',
-                token_type: 'Bearer',
-                expires_in: 3600,
-                expires: new Date(Date.now() + 3_600_000).toISOString(),
-                refresh_token: 'refresh',
-                scope: 'read',
-              },
-            };
-            const tokenResponse: HttpResponse<typeof tokenData> = {
-              success: true,
-              data: tokenData,
-            };
-            return Promise.resolve(tokenResponse);
-          }
-          if (url.includes('user')) {
-            const userData = {
-              user: {
-                userId: '123',
-                userName: 'testuser',
-                fullName: 'Test User',
-                firstName: 'Test',
-                lastName: 'User',
-              },
-            };
-            const userResponse: HttpResponse<typeof userData> = {
-              success: true,
-              data: userData,
-            };
-            return Promise.resolve(userResponse);
-          }
-          const errorResponse: HttpResponse<null> = {
-            success: false,
-            data: null,
-            error: notFoundErrorBuilder.build(),
-          };
-          return Promise.resolve(errorResponse);
-        }
+        createMockAuthGet({
+          user: {
+            user: {
+              userId: '123',
+              userName: 'testuser',
+              fullName: 'Test User',
+              firstName: 'Test',
+              lastName: 'User',
+            },
+          },
+        })
       );
 
-      const postResponse: HttpResponse<null> = {
-        success: true,
-        data: null,
-        cookies: ['Production_tpAuth=cookie; Path=/'],
-      };
-      vi.mocked(mockHttpClient.post).mockResolvedValue(postResponse);
+      vi.mocked(mockHttpClient.post).mockImplementation(() =>
+        createMockAuthPost()
+      );
 
       // Login
       const credentials = createCredentials('user', 'pass');

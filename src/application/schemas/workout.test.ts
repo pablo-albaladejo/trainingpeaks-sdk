@@ -10,7 +10,7 @@ import {
   workoutsListResponseBuilder,
   workoutStatsBuilder,
 } from '@fixtures';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
   type CreateWorkoutRequest,
@@ -31,11 +31,6 @@ describe('Application Workout Schemas', () => {
   beforeEach(() => {
     // Seed faker with a fixed seed for deterministic tests
     faker.seed(12345);
-  });
-
-  afterEach(() => {
-    // Reset faker to random seed
-    faker.seed();
   });
   describe('WorkoutResponseSchema', () => {
     it('should validate valid workout response', () => {

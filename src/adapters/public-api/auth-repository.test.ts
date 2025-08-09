@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 
 import {
+  createMockAuthGet,
+  createMockAuthPost,
+  defaultMockResponses,
   loginFailedErrorBuilder,
   networkErrorBuilder,
   notFoundErrorBuilder,
   tokenRequestFailedErrorBuilder,
-} from '@fixtures/http-errors.fixture';
+} from '@fixtures';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Logger } from '@/adapters';
@@ -82,79 +85,17 @@ describe('AuthRepository', () => {
   describe('login', () => {
     const validCredentials = createCredentials('testuser', 'password123');
 
-    const mockLoginPageResponse = `
-      <html>
-        <form>
-          <input name="__RequestVerificationToken" value="test-token-123" />
-        </form>
-      </html>
-    `;
-
-    const mockTokenResponse = {
-      token: {
-        access_token: 'access-token-123',
-        token_type: 'Bearer',
-        expires_in: 3600,
-        expires: new Date(Date.now() + 3600000).toISOString(),
-        refresh_token: 'refresh-token-123',
-        scope: 'read write',
-      },
-    };
-
-    const mockUserResponse = {
-      user: {
-        userId: '123',
-        userName: 'testuser',
-        fullName: 'Test User',
-        firstName: 'Test',
-        lastName: 'User',
-        personPhotoUrl: 'https://example.com/photo.jpg',
-        preferences: { theme: 'light' },
-      },
-    };
+    // Using shared mock responses
+    const mockLoginPageResponse = defaultMockResponses.loginPage;
+    const mockTokenResponse = defaultMockResponses.token;
 
     beforeEach(() => {
-      // Mock successful login flow by default
+      // Mock successful login flow using shared helper
       const mockedGet = vi.mocked(mockHttpClient.get);
-      mockedGet.mockImplementation(
-        (url: string): Promise<HttpResponse<unknown>> => {
-          if (url.includes('login')) {
-            const loginResponse: HttpResponse<string> = {
-              success: true,
-              data: mockLoginPageResponse,
-            };
-            return Promise.resolve(loginResponse);
-          }
-          if (url.includes('token')) {
-            const tokenResponse: HttpResponse<typeof mockTokenResponse> = {
-              success: true,
-              data: mockTokenResponse,
-            };
-            return Promise.resolve(tokenResponse);
-          }
-          if (url.includes('user')) {
-            const userResponse: HttpResponse<typeof mockUserResponse> = {
-              success: true,
-              data: mockUserResponse,
-            };
-            return Promise.resolve(userResponse);
-          }
-          const notFoundResponse: HttpResponse<null> = {
-            success: false,
-            data: null,
-            error: notFoundErrorBuilder.build(),
-          };
-          return Promise.resolve(notFoundResponse);
-        }
-      );
+      mockedGet.mockImplementation(createMockAuthGet());
 
       const mockedPost = vi.mocked(mockHttpClient.post);
-      const postResponse: HttpResponse<null> = {
-        success: true,
-        data: null,
-        cookies: ['Production_tpAuth=test-cookie-value; Path=/'],
-      };
-      mockedPost.mockResolvedValue(postResponse);
+      mockedPost.mockImplementation(() => createMockAuthPost());
     });
 
     it('should successfully login with valid credentials', async () => {
