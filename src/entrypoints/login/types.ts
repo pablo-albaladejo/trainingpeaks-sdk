@@ -21,26 +21,19 @@ export type LoginEntrypointCommand = {
 
 /**
  * Login Entrypoint Response
- * Response object for login entrypoint
+ * Returns the session data directly or throws an error
  */
 export type LoginEntrypointResponse = {
-  success: boolean;
-  data?: {
-    token: {
-      accessToken: string;
-      tokenType: string;
-      expiresAt: string;
-      refreshToken?: string;
-    };
-    user: {
-      id: string;
-      name: string;
-      username: string;
-      avatar?: string;
-    };
+  token: {
+    accessToken: string;
+    tokenType: string;
+    expiresAt: string;
+    refreshToken?: string;
   };
-  error?: {
-    code: string;
-    message: string;
+  user: {
+    id: string;
+    name: string;
+    username: string;
+    avatar?: string;
   };
 };

@@ -22,15 +22,17 @@ describe('User Entity', () => {
       // Arrange
       const id = 'user123';
       const name = 'John Doe';
+      const username = 'johndoe';
       const avatar = 'https://example.com/avatar.jpg';
       const preferences = { timezone: 'UTC', language: 'en' };
 
       // Act
-      const user = createUser(id, name, avatar, preferences);
+      const user = createUser(id, name, username, avatar, preferences);
 
       // Assert
       expect(user.id).toBe('user123');
       expect(user.name).toBe('John Doe');
+      expect(user.username).toBe('johndoe');
       expect(user.avatar).toBe('https://example.com/avatar.jpg');
       expect(user.preferences).toEqual({ timezone: 'UTC', language: 'en' });
     });
@@ -39,13 +41,15 @@ describe('User Entity', () => {
       // Arrange
       const id = 'user456';
       const name = 'Jane Smith';
+      const username = 'janesmith';
 
       // Act
-      const user = createUser(id, name);
+      const user = createUser(id, name, username);
 
       // Assert
       expect(user.id).toBe('user456');
       expect(user.name).toBe('Jane Smith');
+      expect(user.username).toBe('janesmith');
       expect(user.avatar).toBeUndefined();
       expect(user.preferences).toBeUndefined();
     });
@@ -54,9 +58,10 @@ describe('User Entity', () => {
       // Arrange
       const id = '  user789  ';
       const name = '  Bob Wilson  ';
+      const username = 'bobwilson';
 
       // Act
-      const user = createUser(id, name);
+      const user = createUser(id, name, username);
 
       // Assert
       expect(user.id).toBe('user789');
@@ -67,9 +72,10 @@ describe('User Entity', () => {
       // Arrange
       const id = 'user123';
       const name = 'a'.repeat(100);
+      const username = 'user123';
 
       // Act
-      const user = createUser(id, name);
+      const user = createUser(id, name, username);
 
       // Assert
       expect(user.name).toBe(name);
@@ -133,11 +139,14 @@ describe('User Entity', () => {
         // Arrange
         const id = 'user123';
         const name = 'John Doe';
+        const username = 'johndoe';
         const avatar = 'not-a-valid-url';
 
         // Act & Assert
-        expect(() => createUser(id, name, avatar)).toThrow(ValidationError);
-        expect(() => createUser(id, name, avatar)).toThrow(
+        expect(() => createUser(id, name, username, avatar)).toThrow(
+          ValidationError
+        );
+        expect(() => createUser(id, name, username, avatar)).toThrow(
           'Avatar must be a valid URL'
         );
       });
@@ -145,28 +154,28 @@ describe('User Entity', () => {
       it('should include field context in validation errors', () => {
         // Arrange & Act & Assert
         try {
-          createUser('', 'John Doe');
+          createUser('', 'John Doe', 'johndoe');
         } catch (error) {
           expect(error).toBeInstanceOf(ValidationError);
           expect((error as ValidationError).field).toBe('id');
         }
 
         try {
-          createUser('user123', '');
+          createUser('user123', '', 'username');
         } catch (error) {
           expect(error).toBeInstanceOf(ValidationError);
           expect((error as ValidationError).field).toBe('name');
         }
 
         try {
-          createUser('user123', 'a'.repeat(101));
+          createUser('user123', 'a'.repeat(101), 'username');
         } catch (error) {
           expect(error).toBeInstanceOf(ValidationError);
           expect((error as ValidationError).field).toBe('name');
         }
 
         try {
-          createUser('user123', 'John Doe', 'invalid-url');
+          createUser('user123', 'John Doe', 'johndoe', 'invalid-url');
         } catch (error) {
           expect(error).toBeInstanceOf(ValidationError);
           expect((error as ValidationError).field).toBe('avatar');
@@ -182,7 +191,7 @@ describe('User Entity', () => {
         const avatar = 'http://example.com/avatar.jpg';
 
         // Act
-        const user = createUser(id, name, avatar);
+        const user = createUser(id, name, 'johndoe', avatar);
 
         // Assert
         expect(user.avatar).toBe('http://example.com/avatar.jpg');
@@ -195,7 +204,7 @@ describe('User Entity', () => {
         const avatar = 'https://secure.example.com/avatar.png';
 
         // Act
-        const user = createUser(id, name, avatar);
+        const user = createUser(id, name, 'johndoe', avatar);
 
         // Assert
         expect(user.avatar).toBe('https://secure.example.com/avatar.png');
@@ -209,7 +218,7 @@ describe('User Entity', () => {
           'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
 
         // Act
-        const user = createUser(id, name, avatar);
+        const user = createUser(id, name, 'johndoe', avatar);
 
         // Assert
         expect(user.avatar).toBe(avatar);
@@ -223,7 +232,7 @@ describe('User Entity', () => {
           'https://api.example.com/avatar?user=123&size=large&format=jpg';
 
         // Act
-        const user = createUser(id, name, avatar);
+        const user = createUser(id, name, 'johndoe', avatar);
 
         // Assert
         expect(user.avatar).toBe(avatar);
@@ -234,7 +243,7 @@ describe('User Entity', () => {
   describe('updateUserName', () => {
     it('should update user name successfully', () => {
       // Arrange
-      const originalUser = createUser('user123', 'John Doe');
+      const originalUser = createUser('user123', 'John Doe', 'johndoe');
       const newName = 'John Smith';
 
       // Act
@@ -249,7 +258,7 @@ describe('User Entity', () => {
 
     it('should trim whitespace from new name', () => {
       // Arrange
-      const originalUser = createUser('user123', 'John Doe');
+      const originalUser = createUser('user123', 'John Doe', 'johndoe');
       const newName = '  Jane Smith  ';
 
       // Act
@@ -261,7 +270,7 @@ describe('User Entity', () => {
 
     it('should not mutate original user object', () => {
       // Arrange
-      const originalUser = createUser('user123', 'John Doe');
+      const originalUser = createUser('user123', 'John Doe', 'johndoe');
       const newName = 'John Smith';
 
       // Act
@@ -278,6 +287,7 @@ describe('User Entity', () => {
       const originalUser = createUser(
         'user123',
         'John Doe',
+        'johndoe',
         'https://example.com/avatar.jpg',
         { timezone: 'UTC' }
       );
@@ -295,7 +305,7 @@ describe('User Entity', () => {
     describe('Validation Errors', () => {
       it('should throw ValidationError for empty name', () => {
         // Arrange
-        const user = createUser('user123', 'John Doe');
+        const user = createUser('user123', 'John Doe', 'johndoe');
 
         // Act & Assert
         expect(() => updateUserName(user, '')).toThrow(ValidationError);
@@ -306,7 +316,7 @@ describe('User Entity', () => {
 
       it('should throw ValidationError for whitespace-only name', () => {
         // Arrange
-        const user = createUser('user123', 'John Doe');
+        const user = createUser('user123', 'John Doe', 'johndoe');
 
         // Act & Assert
         expect(() => updateUserName(user, '   ')).toThrow(ValidationError);
@@ -317,7 +327,7 @@ describe('User Entity', () => {
 
       it('should throw ValidationError for name exceeding 100 characters', () => {
         // Arrange
-        const user = createUser('user123', 'John Doe');
+        const user = createUser('user123', 'John Doe', 'johndoe');
         const longName = 'a'.repeat(101);
 
         // Act & Assert
@@ -332,7 +342,7 @@ describe('User Entity', () => {
   describe('updateUserPreferences', () => {
     it('should update user preferences successfully', () => {
       // Arrange
-      const originalUser = createUser('user123', 'John Doe');
+      const originalUser = createUser('user123', 'John Doe', 'johndoe');
       const newPreferences = {
         timezone: 'America/New_York',
         language: 'en-US',
@@ -351,10 +361,16 @@ describe('User Entity', () => {
 
     it('should replace existing preferences completely', () => {
       // Arrange
-      const originalUser = createUser('user123', 'John Doe', undefined, {
-        timezone: 'UTC',
-        language: 'en',
-      });
+      const originalUser = createUser(
+        'user123',
+        'John Doe',
+        'johndoe',
+        undefined,
+        {
+          timezone: 'UTC',
+          language: 'en',
+        }
+      );
       const newPreferences = { theme: 'dark', notifications: true };
 
       // Act
@@ -375,6 +391,7 @@ describe('User Entity', () => {
       const originalUser = createUser(
         'user123',
         'John Doe',
+        'johndoe',
         undefined,
         originalPreferences
       );
@@ -391,9 +408,15 @@ describe('User Entity', () => {
 
     it('should handle empty preferences object', () => {
       // Arrange
-      const originalUser = createUser('user123', 'John Doe', undefined, {
-        timezone: 'UTC',
-      });
+      const originalUser = createUser(
+        'user123',
+        'John Doe',
+        'johndoe',
+        undefined,
+        {
+          timezone: 'UTC',
+        }
+      );
       const newPreferences = {};
 
       // Act
@@ -405,7 +428,7 @@ describe('User Entity', () => {
 
     it('should handle complex nested preferences', () => {
       // Arrange
-      const originalUser = createUser('user123', 'John Doe');
+      const originalUser = createUser('user123', 'John Doe', 'johndoe');
       const newPreferences = {
         ui: { theme: 'dark', sidebarCollapsed: true },
         notifications: { email: true, push: false, sms: true },
@@ -423,7 +446,7 @@ describe('User Entity', () => {
   describe('updateUserAvatar', () => {
     it('should update user avatar successfully', () => {
       // Arrange
-      const originalUser = createUser('user123', 'John Doe');
+      const originalUser = createUser('user123', 'John Doe', 'johndoe');
       const newAvatar = 'https://example.com/new-avatar.jpg';
 
       // Act
@@ -456,6 +479,7 @@ describe('User Entity', () => {
       const originalUser = createUser(
         'user123',
         'John Doe',
+        'johndoe',
         'https://example.com/old-avatar.jpg'
       );
       const newAvatar = 'https://example.com/new-avatar.jpg';
@@ -472,7 +496,7 @@ describe('User Entity', () => {
     describe('Validation Errors', () => {
       it('should throw ValidationError for invalid avatar URL', () => {
         // Arrange
-        const user = createUser('user123', 'John Doe');
+        const user = createUser('user123', 'John Doe', 'johndoe');
         const invalidUrl = 'not-a-valid-url';
 
         // Act & Assert
@@ -486,7 +510,7 @@ describe('User Entity', () => {
 
       it('should include field context in validation error', () => {
         // Arrange
-        const user = createUser('user123', 'John Doe');
+        const user = createUser('user123', 'John Doe', 'johndoe');
 
         // Act & Assert
         try {
@@ -500,7 +524,7 @@ describe('User Entity', () => {
 
     it('should accept valid URLs', () => {
       // Arrange
-      const user = createUser('user123', 'John Doe');
+      const user = createUser('user123', 'John Doe', 'johndoe');
       const validUrls = [
         'https://example.com/avatar.jpg',
         'http://example.com/avatar.png',
@@ -518,7 +542,7 @@ describe('User Entity', () => {
   describe('hasUserPreference', () => {
     it('should return true when preference exists', () => {
       // Arrange
-      const user = createUser('user123', 'John Doe', undefined, {
+      const user = createUser('user123', 'John Doe', 'johndoe', undefined, {
         timezone: 'UTC',
         language: 'en',
       });
@@ -530,7 +554,7 @@ describe('User Entity', () => {
 
     it('should return false when preference does not exist', () => {
       // Arrange
-      const user = createUser('user123', 'John Doe', undefined, {
+      const user = createUser('user123', 'John Doe', 'johndoe', undefined, {
         timezone: 'UTC',
       });
 
@@ -541,7 +565,7 @@ describe('User Entity', () => {
 
     it('should return false when user has no preferences', () => {
       // Arrange
-      const user = createUser('user123', 'John Doe');
+      const user = createUser('user123', 'John Doe', 'johndoe');
 
       // Act & Assert
       expect(hasUserPreference(user, 'timezone')).toBe(false);
@@ -550,7 +574,13 @@ describe('User Entity', () => {
 
     it('should return false when preferences is undefined', () => {
       // Arrange
-      const user = createUser('user123', 'John Doe', undefined, undefined);
+      const user = createUser(
+        'user123',
+        'John Doe',
+        'johndoe',
+        undefined,
+        undefined
+      );
 
       // Act & Assert
       expect(hasUserPreference(user, 'timezone')).toBe(false);
@@ -558,7 +588,7 @@ describe('User Entity', () => {
 
     it('should handle empty preferences object', () => {
       // Arrange
-      const user = createUser('user123', 'John Doe', undefined, {});
+      const user = createUser('user123', 'John Doe', 'johndoe', undefined, {});
 
       // Act & Assert
       expect(hasUserPreference(user, 'timezone')).toBe(false);
@@ -566,7 +596,7 @@ describe('User Entity', () => {
 
     it('should check for exact key match', () => {
       // Arrange
-      const user = createUser('user123', 'John Doe', undefined, {
+      const user = createUser('user123', 'John Doe', 'johndoe', undefined, {
         timezone: 'UTC',
         Timezone: 'America/New_York',
       });
@@ -581,7 +611,7 @@ describe('User Entity', () => {
   describe('getUserPreference', () => {
     it('should return preference value when it exists', () => {
       // Arrange
-      const user = createUser('user123', 'John Doe', undefined, {
+      const user = createUser('user123', 'John Doe', 'johndoe', undefined, {
         timezone: 'UTC',
         language: 'en',
         notifications: true,
@@ -597,7 +627,7 @@ describe('User Entity', () => {
 
     it('should return undefined when preference does not exist', () => {
       // Arrange
-      const user = createUser('user123', 'John Doe', undefined, {
+      const user = createUser('user123', 'John Doe', 'johndoe', undefined, {
         timezone: 'UTC',
       });
 
@@ -608,7 +638,7 @@ describe('User Entity', () => {
 
     it('should return default value when preference does not exist', () => {
       // Arrange
-      const user = createUser('user123', 'John Doe', undefined, {
+      const user = createUser('user123', 'John Doe', 'johndoe', undefined, {
         timezone: 'UTC',
       });
 
@@ -620,7 +650,7 @@ describe('User Entity', () => {
 
     it('should return undefined when user has no preferences', () => {
       // Arrange
-      const user = createUser('user123', 'John Doe');
+      const user = createUser('user123', 'John Doe', 'johndoe');
 
       // Act & Assert
       expect(getUserPreference(user, 'timezone')).toBeUndefined();
@@ -628,7 +658,7 @@ describe('User Entity', () => {
 
     it('should return default value when user has no preferences', () => {
       // Arrange
-      const user = createUser('user123', 'John Doe');
+      const user = createUser('user123', 'John Doe', 'johndoe');
 
       // Act & Assert
       expect(getUserPreference(user, 'timezone', 'UTC')).toBe('UTC');
@@ -636,7 +666,7 @@ describe('User Entity', () => {
 
     it('should handle typed return values correctly', () => {
       // Arrange
-      const user = createUser('user123', 'John Doe', undefined, {
+      const user = createUser('user123', 'John Doe', 'johndoe', undefined, {
         stringValue: 'text',
         numberValue: 42,
         booleanValue: true,
@@ -658,7 +688,7 @@ describe('User Entity', () => {
 
     it('should prefer existing value over default value', () => {
       // Arrange
-      const user = createUser('user123', 'John Doe', undefined, {
+      const user = createUser('user123', 'John Doe', 'johndoe', undefined, {
         timezone: 'America/New_York',
       });
 
@@ -670,7 +700,7 @@ describe('User Entity', () => {
 
     it('should handle null and undefined values in preferences', () => {
       // Arrange
-      const user = createUser('user123', 'John Doe', undefined, {
+      const user = createUser('user123', 'John Doe', 'johndoe', undefined, {
         nullValue: null,
         undefinedValue: undefined,
         falseValue: false,
@@ -696,7 +726,13 @@ describe('User Entity', () => {
       const initialPreferences = { timezone: 'UTC', units: 'metric' };
 
       // Act - Create user
-      const user = createUser(id, initialName, avatar, initialPreferences);
+      const user = createUser(
+        id,
+        initialName,
+        'johndoe',
+        avatar,
+        initialPreferences
+      );
 
       // Act - Update name
       const userWithNewName = updateUserName(user, 'John Pro Athlete');
@@ -737,7 +773,7 @@ describe('User Entity', () => {
 
     it('should handle user without preferences throughout lifecycle', () => {
       // Arrange & Act
-      let user = createUser('user123', 'John Doe');
+      let user = createUser('user123', 'John Doe', 'johndoe');
 
       // Act - Update name
       user = updateUserName(user, 'Jane Doe');
@@ -761,6 +797,7 @@ describe('User Entity', () => {
       const originalUser = createUser(
         'user123',
         'John Doe',
+        'johndoe',
         'https://example.com/avatar.jpg',
         { timezone: 'UTC' }
       );

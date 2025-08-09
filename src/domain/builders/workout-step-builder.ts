@@ -1,6 +1,5 @@
 import { ValidationError } from '@/domain/errors/domain-errors';
-import type { WorkoutStructureStep } from '@/types';
-import { IntensityClass, LengthUnit } from '@/types';
+import { IntensityClass, LengthUnit, type WorkoutStructureStep } from '@/types';
 
 /**
  * Builder for workout structure steps

@@ -1,6 +1,5 @@
 import { WorkoutStepBuilder } from '@/domain/builders/workout-step-builder';
-import type { WorkoutStructureStep } from '@/types';
-import { IntensityClass } from '@/types';
+import { IntensityClass, type WorkoutStructureStep } from '@/types';
 
 /**
  * Create a warmup step

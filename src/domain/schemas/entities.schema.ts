@@ -10,8 +10,14 @@ import { WorkoutStructureSchema } from './workout-structure.schema';
 // User Entity Schema
 export const UserSchema = z.object({
   id: z.string().min(1),
-  name: z.string().min(1).max(100),
-  avatar: z.string().url().optional(),
+  name: z.string().trim().min(1).max(100),
+  username: z.string().trim().min(1).max(100),
+  avatar: z
+    .string()
+    .url()
+    .or(z.literal(''))
+    .transform((val) => (val === '' ? undefined : val))
+    .optional(),
   preferences: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -55,7 +61,13 @@ export const TrainingPeaksAthleteSchema = z.object({
   userType: z.number(),
   lastPlannedWorkout: z.string().nullable().optional(),
   settings: z.unknown().optional(),
-  personPhotoUrl: z.string().url().nullable().optional(),
+  personPhotoUrl: z
+    .string()
+    .url()
+    .or(z.literal(''))
+    .nullable()
+    .optional()
+    .transform((val) => (val === '' ? null : val)),
   coachedBy: z.number().nullable().optional(),
   userName: z.string().min(1),
   lastUpgradeOn: z.string().nullable().optional(),

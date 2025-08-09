@@ -16,16 +16,6 @@ export type LogoutCommand = {
 };
 
 /**
- * Logout result indicating success or failure
- */
-export type LogoutResult = {
-  success: boolean;
-  message: string;
-  userId?: string;
-  sessionCleared: boolean;
-};
-
-/**
  * Dependencies required for logout entrypoint
  */
 export type LogoutEntrypointDependencies = {
@@ -39,7 +29,7 @@ export type LogoutEntrypointDependencies = {
 const entrypoint = (dependencies: LogoutEntrypointDependencies) => {
   const { tpRepository, logger } = dependencies;
 
-  return async (command: LogoutCommand = {}): Promise<LogoutResult> => {
+  return async (command: LogoutCommand = {}): Promise<void> => {
     try {
       logger.info('Starting logout process', {
         userId: command.userId,
@@ -50,13 +40,6 @@ const entrypoint = (dependencies: LogoutEntrypointDependencies) => {
       await tpRepository.logout();
 
       logger.info('Logout completed successfully', { userId: command.userId });
-
-      return {
-        success: true,
-        message: 'Logout completed successfully',
-        userId: command.userId,
-        sessionCleared: true,
-      };
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown logout error';
@@ -70,20 +53,11 @@ const entrypoint = (dependencies: LogoutEntrypointDependencies) => {
         logger.warn(
           'Force logout requested, proceeding despite repository error'
         );
-        return {
-          success: true,
-          message: 'Force logout completed (repository error ignored)',
-          userId: command.userId,
-          sessionCleared: true,
-        };
+        return; // Return void on force success
       }
 
-      return {
-        success: false,
-        message: `Logout failed: ${errorMessage}`,
-        userId: command.userId,
-        sessionCleared: false,
-      };
+      // Throw error instead of returning error object
+      throw error instanceof Error ? error : new Error(errorMessage);
     }
   };
 };

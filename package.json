@@ -72,7 +72,8 @@
     "check-imports": "bash scripts/check-imports.sh",
     "pre-release": "npm run clean && npm run format:check && npm run lint && npm run check-imports && npm run build && npm run test:coverage",
     "release": "semantic-release",
-    "release:dry-run": "semantic-release --dry-run"
+    "release:dry-run": "semantic-release --dry-run",
+    "prepare": "husky"
   },
   "keywords": [
     "trainingpeaks",
@@ -111,8 +112,6 @@
     "@semantic-release/github": "^11.0.3",
     "@semantic-release/npm": "^12.0.2",
     "@types/node": "^22.10.1",
-    "@typescript-eslint/eslint-plugin": "^8.39.0",
-    "@typescript-eslint/parser": "^8.39.0",
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/eslint-plugin": "^1.3.4",
     "dotenv": "^16.4.7",
@@ -122,10 +121,12 @@
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-unused-imports": "^4.1.4",
     "globals": "^16.3.0",
+    "husky": "^9.1.7",
     "prettier": "^3.6.2",
     "semantic-release": "^24.2.7",
     "tsc-alias": "^1.8.16",
     "typescript": "^5.7.2",
+    "typescript-eslint": "^8.39.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4"
   },

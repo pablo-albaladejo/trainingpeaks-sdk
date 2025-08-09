@@ -1,8 +1,12 @@
-import { createCategoryLogger, LogCategory } from '@/adapters/logging/logger';
+import { createLogger } from '@/adapters/logging/logger';
 import { TrainingPeaksConfig } from '@/types';
 
 // Create a test logger using the existing logging infrastructure
-const testLogger = createCategoryLogger(LogCategory.GENERAL);
+const testLogger = createLogger({
+  level: 'info',
+  enabled: true,
+  prefix: 'TEST',
+});
 
 // Simple test logger that uses the existing infrastructure
 const createTestLogger = () => ({

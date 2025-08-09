@@ -1,13 +1,11 @@
-import type {
-  WorkoutLength,
-  WorkoutStructure,
-  WorkoutStructureElement,
-} from '@/types';
 import {
   IntensityMetric,
   IntensityTargetType,
   LengthMetric,
   LengthUnit,
+  type WorkoutLength,
+  type WorkoutStructure,
+  type WorkoutStructureElement,
 } from '@/types';
 
 /**
