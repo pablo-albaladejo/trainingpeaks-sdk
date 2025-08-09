@@ -16,8 +16,8 @@ export const UserSchema = z.object({
     .string()
     .url()
     .or(z.literal(''))
-    .optional()
-    .transform((val) => (val === '' ? undefined : val)),
+    .transform((val) => (val === '' ? undefined : val))
+    .optional(),
   preferences: z.record(z.string(), z.unknown()).optional(),
 });
 

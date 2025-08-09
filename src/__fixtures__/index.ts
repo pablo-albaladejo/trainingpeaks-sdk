@@ -3,6 +3,7 @@
  * Exports all test fixtures for easy importing
  */
 
+export * from './api-responses.fixture';
 export * from './auth.fixture';
 export * from './client-responses.fixture';
 export * from './credentials.fixture';

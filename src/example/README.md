@@ -98,7 +98,7 @@ npx tsx src/example/get-workouts-list.ts
 **Example Output:**
 ```
 Using credentials for user: your_username
-Getting workouts for athlete ID: 3120341
+Getting workouts for athlete ID: [REDACTED]
 
 🔐 Logging in to TrainingPeaks...
 ✅ Login successful
@@ -108,7 +108,7 @@ Getting workouts for athlete ID: 3120341
 📊 Found 1 workouts
 
 🏋️  Workout 1:
-   ID: 3095965562
+   ID: [REDACTED]
    Title: Strength
    Date: 2025-04-07T00:00:00
    Start Time: 2025-04-07T19:43:44
@@ -139,7 +139,10 @@ const endDate = '2025-01-31';   // Your end date
 Set the `TRAININGPEAKS_TEST_ATHLETE_ID` environment variable, or modify the default in the code:
 
 ```typescript
-const athleteId = process.env.TRAININGPEAKS_TEST_ATHLETE_ID || 'your_athlete_id';
+const athleteId = process.env.TRAININGPEAKS_TEST_ATHLETE_ID;
+if (!athleteId) {
+  throw new Error('TRAININGPEAKS_TEST_ATHLETE_ID environment variable is required');
+}
 ```
 
 ### Enabling/Disabling Debug Logging
@@ -154,6 +157,8 @@ const sdk = createTrainingPeaksSdk({
   },
 });
 ```
+
+**Security Note:** Debug logs in this example have been sanitized to redact sensitive headers like `Authorization` and `Set-Cookie`. In production environments, ensure that debug logging is disabled or properly configured to avoid exposing sensitive information.
 
 ## Error Handling
 
