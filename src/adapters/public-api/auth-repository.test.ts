@@ -116,36 +116,45 @@ describe('AuthRepository', () => {
     beforeEach(() => {
       // Mock successful login flow by default
       const mockedGet = vi.mocked(mockHttpClient.get);
-      mockedGet.mockImplementation((url) => {
-        if (url.includes('login')) {
-          return Promise.resolve({
-            success: true,
-            data: mockLoginPageResponse,
-          } as HttpResponse<string>);
+      mockedGet.mockImplementation(
+        (url: string): Promise<HttpResponse<unknown>> => {
+          if (url.includes('login')) {
+            const loginResponse: HttpResponse<string> = {
+              success: true,
+              data: mockLoginPageResponse,
+            };
+            return Promise.resolve(loginResponse);
+          }
+          if (url.includes('token')) {
+            const tokenResponse: HttpResponse<typeof mockTokenResponse> = {
+              success: true,
+              data: mockTokenResponse,
+            };
+            return Promise.resolve(tokenResponse);
+          }
+          if (url.includes('user')) {
+            const userResponse: HttpResponse<typeof mockUserResponse> = {
+              success: true,
+              data: mockUserResponse,
+            };
+            return Promise.resolve(userResponse);
+          }
+          const notFoundResponse: HttpResponse<null> = {
+            success: false,
+            data: null,
+            error: notFoundErrorBuilder.build(),
+          };
+          return Promise.resolve(notFoundResponse);
         }
-        if (url.includes('token')) {
-          return Promise.resolve({
-            success: true,
-            data: mockTokenResponse,
-          } as HttpResponse<typeof mockTokenResponse>);
-        }
-        if (url.includes('user')) {
-          return Promise.resolve({
-            success: true,
-            data: mockUserResponse,
-          } as HttpResponse<typeof mockUserResponse>);
-        }
-        return Promise.resolve({
-          success: false,
-          error: notFoundErrorBuilder.build(),
-        } as HttpResponse<unknown>);
-      });
+      );
 
       const mockedPost = vi.mocked(mockHttpClient.post);
-      mockedPost.mockResolvedValue({
+      const postResponse: HttpResponse<null> = {
         success: true,
+        data: null,
         cookies: ['Production_tpAuth=test-cookie-value; Path=/'],
-      } as HttpResponse<unknown>);
+      };
+      mockedPost.mockResolvedValue(postResponse);
     });
 
     it('should successfully login with valid credentials', async () => {

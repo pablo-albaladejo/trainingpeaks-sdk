@@ -52,17 +52,17 @@ describe('AuthRepository - Integration Tests', () => {
       const repository = createAuthRepository(dependencies);
 
       // Setup successful login mocks
-      vi.mocked(mockHttpClient.get).mockImplementation((url) => {
-        if (url.includes('login')) {
-          return Promise.resolve({
-            success: true,
-            data: `<input name="__RequestVerificationToken" value="test-token" />`,
-          } as HttpResponse<string>);
-        }
-        if (url.includes('token')) {
-          return Promise.resolve({
-            success: true,
-            data: {
+      vi.mocked(mockHttpClient.get).mockImplementation(
+        (url: string): Promise<HttpResponse<unknown>> => {
+          if (url.includes('login')) {
+            const loginResponse: HttpResponse<string> = {
+              success: true,
+              data: `<input name="__RequestVerificationToken" value="test-token" />`,
+            };
+            return Promise.resolve(loginResponse);
+          }
+          if (url.includes('token')) {
+            const tokenData = {
               token: {
                 access_token: 'token',
                 token_type: 'Bearer',
@@ -71,13 +71,15 @@ describe('AuthRepository - Integration Tests', () => {
                 refresh_token: 'refresh',
                 scope: 'read',
               },
-            },
-          } as HttpResponse<unknown>);
-        }
-        if (url.includes('user')) {
-          return Promise.resolve({
-            success: true,
-            data: {
+            };
+            const tokenResponse: HttpResponse<typeof tokenData> = {
+              success: true,
+              data: tokenData,
+            };
+            return Promise.resolve(tokenResponse);
+          }
+          if (url.includes('user')) {
+            const userData = {
               user: {
                 userId: '123',
                 userName: 'testuser',
@@ -85,19 +87,28 @@ describe('AuthRepository - Integration Tests', () => {
                 firstName: 'Test',
                 lastName: 'User',
               },
-            },
-          } as HttpResponse<unknown>);
+            };
+            const userResponse: HttpResponse<typeof userData> = {
+              success: true,
+              data: userData,
+            };
+            return Promise.resolve(userResponse);
+          }
+          const errorResponse: HttpResponse<null> = {
+            success: false,
+            data: null,
+            error: notFoundErrorBuilder.build(),
+          };
+          return Promise.resolve(errorResponse);
         }
-        return Promise.resolve({
-          success: false,
-          error: notFoundErrorBuilder.build(),
-        } as HttpResponse<unknown>);
-      });
+      );
 
-      vi.mocked(mockHttpClient.post).mockResolvedValue({
+      const postResponse: HttpResponse<null> = {
         success: true,
+        data: null,
         cookies: ['Production_tpAuth=cookie; Path=/'],
-      } as HttpResponse<unknown>);
+      };
+      vi.mocked(mockHttpClient.post).mockResolvedValue(postResponse);
 
       // Login
       const credentials = createCredentials('user', 'pass');

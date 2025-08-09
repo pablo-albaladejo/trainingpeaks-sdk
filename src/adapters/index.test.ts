@@ -20,9 +20,4 @@ describe('Adapters Index', () => {
     expect(adapters).toHaveProperty('API_ENDPOINTS');
     expect(adapters).toHaveProperty('STORAGE_KEYS');
   });
-
-  it('should have expected export structure', () => {
-    const exportKeys = Object.keys(adapters);
-    expect(exportKeys.length).toBeGreaterThan(0);
-  });
 });

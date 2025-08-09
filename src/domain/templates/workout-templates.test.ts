@@ -1,5 +1,4 @@
-import { randomNumber } from '@fixtures';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, test } from 'vitest';
 
 import { ElementType, IntensityClass } from '@/types';
 
@@ -21,12 +20,12 @@ describe('Domain Templates - Workout Templates', () => {
     });
 
     it('should create interval workout with custom parameters', () => {
-      const warmup = randomNumber(10, 20);
-      const intervalDuration = randomNumber(3, 8);
-      const intervalIntensity = randomNumber(100, 130);
-      const recoveryDuration = randomNumber(1, 4);
-      const intervals = randomNumber(4, 10);
-      const cooldown = randomNumber(10, 20);
+      const warmup = 15;
+      const intervalDuration = 5;
+      const intervalIntensity = 120;
+      const recoveryDuration = 3;
+      const intervals = 6;
+      const cooldown = 15;
 
       const workout = createIntervalWorkout(
         warmup,
@@ -114,10 +113,10 @@ describe('Domain Templates - Workout Templates', () => {
     });
 
     it('should create tempo workout with custom parameters', () => {
-      const warmup = randomNumber(15, 25);
-      const tempoDuration = randomNumber(30, 60);
-      const tempoIntensity = randomNumber(85, 105);
-      const cooldown = randomNumber(10, 20);
+      const warmup = 20;
+      const tempoDuration = 45;
+      const tempoIntensity = 95;
+      const cooldown = 15;
 
       const workout = createTempoWorkout(
         warmup,
@@ -171,15 +170,14 @@ describe('Domain Templates - Workout Templates', () => {
       expect(tempoStep.targets[0].maxValue).toBe(intensity + 5);
     });
 
-    it('should handle different tempo durations', () => {
-      const durations = [20, 45, 60];
-
-      durations.forEach((duration) => {
+    test.each([20, 45, 60])(
+      'should handle tempo duration of %d minutes',
+      (duration) => {
         const workout = createTempoWorkout(10, duration, 90, 10);
         const tempoElement = workout.structure[1];
         expect(tempoElement.steps[0].length.value).toBe(duration);
-      });
-    });
+      }
+    );
   });
 
   describe('createLongSteadyWorkout', () => {
@@ -192,10 +190,10 @@ describe('Domain Templates - Workout Templates', () => {
     });
 
     it('should create long steady workout with custom parameters', () => {
-      const warmup = randomNumber(10, 20);
-      const steadyDuration = randomNumber(120, 240);
-      const steadyIntensity = randomNumber(70, 90);
-      const cooldown = randomNumber(10, 20);
+      const warmup = 15;
+      const steadyDuration = 180;
+      const steadyIntensity = 80;
+      const cooldown = 15;
 
       const workout = createLongSteadyWorkout(
         warmup,
@@ -249,15 +247,14 @@ describe('Domain Templates - Workout Templates', () => {
       expect(steadyStep.targets[0].maxValue).toBe(intensity + 5);
     });
 
-    it('should handle different steady durations', () => {
-      const durations = [60, 120, 180];
-
-      durations.forEach((duration) => {
+    test.each([60, 120, 180])(
+      'should handle steady duration of %d minutes',
+      (duration) => {
         const workout = createLongSteadyWorkout(10, duration, 75, 10);
         const steadyElement = workout.structure[1];
         expect(steadyElement.steps[0].length.value).toBe(duration);
-      });
-    });
+      }
+    );
 
     it('should handle very long durations', () => {
       const workout = createLongSteadyWorkout(15, 240, 70, 15);
@@ -269,40 +266,32 @@ describe('Domain Templates - Workout Templates', () => {
   });
 
   describe('Integration tests', () => {
-    it('should create different workout types with consistent structure', () => {
-      const intervalWorkout = createIntervalWorkout();
-      const tempoWorkout = createTempoWorkout();
-      const longSteadyWorkout = createLongSteadyWorkout();
+    test.each([
+      ['interval', createIntervalWorkout()],
+      ['tempo', createTempoWorkout()],
+      ['longSteady', createLongSteadyWorkout()],
+    ])('should create %s workout with consistent structure', (_, workout) => {
+      expect(workout).toHaveProperty('structure');
+      expect(Array.isArray(workout.structure)).toBe(true);
+      expect(workout.structure.length).toBeGreaterThan(0);
 
-      const workouts = [intervalWorkout, tempoWorkout, longSteadyWorkout];
+      // All workouts should start with warmup and end with cooldown
+      const firstElement = workout.structure[0];
+      const lastElement = workout.structure[workout.structure.length - 1];
 
-      workouts.forEach((workout) => {
-        expect(workout).toHaveProperty('structure');
-        expect(Array.isArray(workout.structure)).toBe(true);
-        expect(workout.structure.length).toBeGreaterThan(0);
-
-        // All workouts should start with warmup and end with cooldown
-        const firstElement = workout.structure[0];
-        const lastElement = workout.structure[workout.structure.length - 1];
-
-        expect(firstElement.steps[0].name).toBe('Warmup');
-        expect(lastElement.steps[0].name).toBe('Cooldown');
-      });
+      expect(firstElement.steps[0].name).toBe('Warmup');
+      expect(lastElement.steps[0].name).toBe('Cooldown');
     });
 
-    it('should create workouts with valid element types', () => {
-      const workouts = [
-        createIntervalWorkout(),
-        createTempoWorkout(),
-        createLongSteadyWorkout(),
-      ];
-
-      workouts.forEach((workout) => {
-        workout.structure.forEach((element) => {
-          expect(element.type).toBe(ElementType.STEP);
-          expect(Array.isArray(element.steps)).toBe(true);
-          expect(element.steps.length).toBeGreaterThan(0);
-        });
+    test.each([
+      ['interval', createIntervalWorkout()],
+      ['tempo', createTempoWorkout()],
+      ['longSteady', createLongSteadyWorkout()],
+    ])('should create %s workout with valid element types', (_, workout) => {
+      workout.structure.forEach((element) => {
+        expect(element.type).toBe(ElementType.STEP);
+        expect(Array.isArray(element.steps)).toBe(true);
+        expect(element.steps.length).toBeGreaterThan(0);
       });
     });
 

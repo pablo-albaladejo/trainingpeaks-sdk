@@ -18,9 +18,6 @@ describe('Domain Templates Index', () => {
   });
 
   it('should have expected export structure', () => {
-    const exportKeys = Object.keys(templates);
-    expect(exportKeys.length).toBeGreaterThanOrEqual(8);
-
     // Verify all expected functions are exported
     const expectedExports = [
       'createWarmupStep',
@@ -32,6 +29,9 @@ describe('Domain Templates Index', () => {
       'createLongSteadyWorkout',
       'createTempoWorkout',
     ];
+
+    const exportKeys = Object.keys(templates);
+    expect(exportKeys.length).toBeGreaterThanOrEqual(expectedExports.length);
 
     expectedExports.forEach((exportName) => {
       expect(exportKeys).toContain(exportName);

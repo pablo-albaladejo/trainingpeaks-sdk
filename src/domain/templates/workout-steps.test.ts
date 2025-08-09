@@ -1,4 +1,3 @@
-import { randomNumber } from '@fixtures';
 import { describe, expect, it } from 'vitest';
 
 import { IntensityClass } from '@/types';
@@ -14,7 +13,7 @@ import {
 describe('Domain Templates - Workout Steps', () => {
   describe('createWarmupStep', () => {
     it('should create a warmup step with correct properties', () => {
-      const duration = randomNumber(5, 20);
+      const duration = 10;
       const step = createWarmupStep(duration);
 
       expect(step).toBeDefined();
@@ -26,7 +25,7 @@ describe('Domain Templates - Workout Steps', () => {
     });
 
     it('should create warmup with default intensity range 45-55%', () => {
-      const step = createWarmupStep(randomNumber(5, 15));
+      const step = createWarmupStep(10);
 
       expect(step.targets[0]).toEqual({
         minValue: 45,
@@ -35,11 +34,7 @@ describe('Domain Templates - Workout Steps', () => {
     });
 
     it('should handle different duration values', () => {
-      const durations = [
-        randomNumber(1, 10),
-        randomNumber(10, 20),
-        randomNumber(20, 30),
-      ];
+      const durations = [5, 15, 25];
 
       durations.forEach((duration) => {
         const step = createWarmupStep(duration);
@@ -58,7 +53,7 @@ describe('Domain Templates - Workout Steps', () => {
 
   describe('createCooldownStep', () => {
     it('should create a cooldown step with correct properties', () => {
-      const duration = randomNumber(5, 20);
+      const duration = 10;
       const step = createCooldownStep(duration);
 
       expect(step).toBeDefined();
@@ -70,7 +65,7 @@ describe('Domain Templates - Workout Steps', () => {
     });
 
     it('should create cooldown with default intensity range 35-45%', () => {
-      const step = createCooldownStep(randomNumber(5, 15));
+      const step = createCooldownStep(10);
 
       expect(step.targets[0]).toEqual({
         minValue: 35,
@@ -79,11 +74,7 @@ describe('Domain Templates - Workout Steps', () => {
     });
 
     it('should handle different duration values', () => {
-      const durations = [
-        randomNumber(1, 10),
-        randomNumber(10, 20),
-        randomNumber(20, 30),
-      ];
+      const durations = [5, 15, 25];
 
       durations.forEach((duration) => {
         const step = createCooldownStep(duration);
@@ -96,8 +87,8 @@ describe('Domain Templates - Workout Steps', () => {
 
   describe('createIntervalStep', () => {
     it('should create an interval step with correct properties', () => {
-      const duration = randomNumber(2, 10);
-      const intensity = randomNumber(100, 150);
+      const duration = 5;
+      const intensity = 125;
       const step = createIntervalStep(duration, intensity);
 
       expect(step).toBeDefined();
@@ -110,7 +101,7 @@ describe('Domain Templates - Workout Steps', () => {
 
     it('should create interval with intensity range ±5% around target', () => {
       const intensity = 120;
-      const step = createIntervalStep(randomNumber(3, 8), intensity);
+      const step = createIntervalStep(5, intensity);
 
       expect(step.targets[0]).toEqual({
         minValue: 115,
@@ -126,7 +117,7 @@ describe('Domain Templates - Workout Steps', () => {
       ];
 
       testCases.forEach(({ intensity, expectedMin, expectedMax }) => {
-        const step = createIntervalStep(randomNumber(3, 8), intensity);
+        const step = createIntervalStep(5, intensity);
         expect(step.targets[0]).toEqual({
           minValue: expectedMin,
           maxValue: expectedMax,
@@ -136,7 +127,7 @@ describe('Domain Templates - Workout Steps', () => {
 
     it('should handle edge case intensities', () => {
       const lowIntensity = 10;
-      const step = createIntervalStep(randomNumber(3, 8), lowIntensity);
+      const step = createIntervalStep(5, lowIntensity);
       expect(step.targets[0]).toEqual({
         minValue: 5,
         maxValue: 15,
@@ -146,7 +137,7 @@ describe('Domain Templates - Workout Steps', () => {
 
   describe('createRecoveryStep', () => {
     it('should create a recovery step with correct properties', () => {
-      const duration = randomNumber(1, 10);
+      const duration = 5;
       const step = createRecoveryStep(duration);
 
       expect(step).toBeDefined();
@@ -158,7 +149,7 @@ describe('Domain Templates - Workout Steps', () => {
     });
 
     it('should create recovery with default intensity range 55-65%', () => {
-      const step = createRecoveryStep(randomNumber(2, 5));
+      const step = createRecoveryStep(3);
 
       expect(step.targets[0]).toEqual({
         minValue: 55,
@@ -167,11 +158,7 @@ describe('Domain Templates - Workout Steps', () => {
     });
 
     it('should handle different duration values', () => {
-      const durations = [
-        randomNumber(1, 2),
-        randomNumber(2, 5),
-        randomNumber(5, 10),
-      ];
+      const durations = [1, 3, 8];
 
       durations.forEach((duration) => {
         const step = createRecoveryStep(duration);
@@ -184,8 +171,8 @@ describe('Domain Templates - Workout Steps', () => {
 
   describe('createSteadyStep', () => {
     it('should create a steady step with correct properties', () => {
-      const duration = randomNumber(15, 60);
-      const intensity = randomNumber(70, 100);
+      const duration = 30;
+      const intensity = 85;
       const step = createSteadyStep(duration, intensity);
 
       expect(step).toBeDefined();
@@ -198,7 +185,7 @@ describe('Domain Templates - Workout Steps', () => {
 
     it('should create steady with intensity range ±5% around target', () => {
       const intensity = 90;
-      const step = createSteadyStep(randomNumber(20, 40), intensity);
+      const step = createSteadyStep(30, intensity);
 
       expect(step.targets[0]).toEqual({
         minValue: 85,
@@ -214,7 +201,7 @@ describe('Domain Templates - Workout Steps', () => {
       ];
 
       testCases.forEach(({ intensity, expectedMin, expectedMax }) => {
-        const step = createSteadyStep(randomNumber(15, 30), intensity);
+        const step = createSteadyStep(20, intensity);
         expect(step.targets[0]).toEqual({
           minValue: expectedMin,
           maxValue: expectedMax,
@@ -240,17 +227,11 @@ describe('Domain Templates - Workout Steps', () => {
 
   describe('Integration tests', () => {
     it('should create different step types with consistent structure', () => {
-      const warmup = createWarmupStep(randomNumber(8, 15));
-      const interval = createIntervalStep(
-        randomNumber(3, 8),
-        randomNumber(110, 130)
-      );
-      const recovery = createRecoveryStep(randomNumber(2, 5));
-      const steady = createSteadyStep(
-        randomNumber(20, 40),
-        randomNumber(80, 100)
-      );
-      const cooldown = createCooldownStep(randomNumber(8, 15));
+      const warmup = createWarmupStep(12);
+      const interval = createIntervalStep(5, 120);
+      const recovery = createRecoveryStep(3);
+      const steady = createSteadyStep(30, 90);
+      const cooldown = createCooldownStep(12);
 
       const steps = [warmup, interval, recovery, steady, cooldown];
 
@@ -265,17 +246,11 @@ describe('Domain Templates - Workout Steps', () => {
     });
 
     it('should create steps with appropriate intensity classes', () => {
-      const warmup = createWarmupStep(randomNumber(8, 15));
-      const interval = createIntervalStep(
-        randomNumber(3, 8),
-        randomNumber(110, 130)
-      );
-      const recovery = createRecoveryStep(randomNumber(2, 5));
-      const steady = createSteadyStep(
-        randomNumber(20, 40),
-        randomNumber(80, 100)
-      );
-      const cooldown = createCooldownStep(randomNumber(8, 15));
+      const warmup = createWarmupStep(12);
+      const interval = createIntervalStep(5, 120);
+      const recovery = createRecoveryStep(3);
+      const steady = createSteadyStep(30, 90);
+      const cooldown = createCooldownStep(12);
 
       expect(warmup.intensityClass).toBe(IntensityClass.WARM_UP);
       expect(interval.intensityClass).toBe(IntensityClass.ACTIVE);

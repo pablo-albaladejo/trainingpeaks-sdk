@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import {
   createWorkoutRequestBuilder,
   emptyWorkoutsListBuilder,
@@ -9,7 +10,7 @@ import {
   workoutsListResponseBuilder,
   workoutStatsBuilder,
 } from '@fixtures';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
   type CreateWorkoutRequest,
@@ -27,6 +28,15 @@ import {
 } from './workout';
 
 describe('Application Workout Schemas', () => {
+  beforeEach(() => {
+    // Seed faker with a fixed seed for deterministic tests
+    faker.seed(12345);
+  });
+
+  afterEach(() => {
+    // Reset faker to random seed
+    faker.seed();
+  });
   describe('WorkoutResponseSchema', () => {
     it('should validate valid workout response', () => {
       const validWorkout = workoutResponseBuilder.build();
@@ -69,8 +79,7 @@ describe('Application Workout Schemas', () => {
   describe('WorkoutsListResponseSchema', () => {
     it('should validate valid workouts list response', () => {
       const validResponse = workoutsListResponseBuilder.build({
-        totalCount: 2,
-        workoutCount: 2,
+        total: 2,
       });
 
       expect(() =>

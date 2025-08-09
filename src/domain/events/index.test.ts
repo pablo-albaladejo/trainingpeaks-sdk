@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, test, vi } from 'vitest';
 
 import { LoginMethod } from '@/types';
+
+// UUID regex pattern for testing event IDs
+const uuidRegex =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 import {
   type AllDomainEvents,
@@ -38,9 +42,7 @@ describe('Domain Events', () => {
 
         expect(event.eventId).toBeDefined();
         expect(typeof event.eventId).toBe('string');
-        expect(event.eventId).toMatch(
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-        );
+        expect(event.eventId).toMatch(uuidRegex);
 
         expect(event.occurredAt).toBeInstanceOf(Date);
         expect(event.occurredAt.getTime()).toBeLessThanOrEqual(Date.now());
@@ -69,15 +71,18 @@ describe('Domain Events', () => {
       });
 
       it('should create events with recent timestamps', () => {
-        const before = Date.now();
+        vi.useFakeTimers();
+        const fixedTime = new Date('2024-01-01T12:00:00.000Z');
+        vi.setSystemTime(fixedTime);
+
         const event = createUserLoggedInEvent(
           'user123',
           LoginMethod.USERNAME_PASSWORD
         );
-        const after = Date.now();
 
-        expect(event.occurredAt.getTime()).toBeGreaterThanOrEqual(before);
-        expect(event.occurredAt.getTime()).toBeLessThanOrEqual(after);
+        expect(event.occurredAt.getTime()).toBe(fixedTime.getTime());
+
+        vi.useRealTimers();
       });
     });
 
@@ -114,14 +119,13 @@ describe('Domain Events', () => {
         expect(event.occurredAt).toBeInstanceOf(Date);
       });
 
-      it('should handle different file types and sizes', () => {
-        const testCases = [
-          { fileName: 'ride.tcx', fileSize: 2048, type: 'cycling' },
-          { fileName: 'swim.fit', fileSize: 512, type: 'swimming' },
-          { fileName: 'workout.gpx', fileSize: 4096, type: 'running' },
-        ];
-
-        testCases.forEach(({ fileName, fileSize, type }) => {
+      test.each([
+        { fileName: 'ride.tcx', fileSize: 2048, type: 'cycling' },
+        { fileName: 'swim.fit', fileSize: 512, type: 'swimming' },
+        { fileName: 'workout.gpx', fileSize: 4096, type: 'running' },
+      ])(
+        'should handle file type $type with size $fileSize',
+        ({ fileName, fileSize, type }) => {
           const event = createWorkoutUploadedEvent(
             'workout123',
             type,
@@ -133,8 +137,8 @@ describe('Domain Events', () => {
           expect(event.fileName).toBe(fileName);
           expect(event.fileSize).toBe(fileSize);
           expect(event.workoutType).toBe(type);
-        });
-      });
+        }
+      );
 
       it('should handle zero and large file sizes', () => {
         const zeroSizeEvent = createWorkoutUploadedEvent(
@@ -188,14 +192,13 @@ describe('Domain Events', () => {
         expect(event.occurredAt).toBeInstanceOf(Date);
       });
 
-      it('should handle different workout structures', () => {
-        const testCases = [
-          { name: 'Easy Run', type: 'steady', steps: 3 },
-          { name: 'Tempo Workout', type: 'tempo', steps: 3 },
-          { name: 'Complex Intervals', type: 'interval', steps: 15 },
-        ];
-
-        testCases.forEach(({ name, type, steps }) => {
+      test.each([
+        { name: 'Easy Run', type: 'steady', steps: 3 },
+        { name: 'Tempo Workout', type: 'tempo', steps: 3 },
+        { name: 'Complex Intervals', type: 'interval', steps: 15 },
+      ])(
+        'should handle $type workout "$name" with $steps steps',
+        ({ name, type, steps }) => {
           const event = createStructuredWorkoutCreatedEvent(
             'workout123',
             name,
@@ -206,8 +209,8 @@ describe('Domain Events', () => {
           expect(event.workoutName).toBe(name);
           expect(event.structureType).toBe(type);
           expect(event.totalSteps).toBe(steps);
-        });
-      });
+        }
+      );
 
       it('should handle edge cases for step counts', () => {
         const singleStepEvent = createStructuredWorkoutCreatedEvent(
@@ -467,9 +470,6 @@ describe('Domain Events', () => {
         createWorkoutUploadedEvent('w123', 'running', 'run.gpx', 1024, 5000),
         createStructuredWorkoutCreatedEvent('s123', 'Intervals', 'interval', 5),
       ];
-
-      const uuidRegex =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
       events.forEach((event) => {
         expect(event.eventId).toMatch(uuidRegex);

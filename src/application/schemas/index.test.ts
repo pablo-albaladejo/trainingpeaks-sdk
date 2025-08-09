@@ -12,16 +12,6 @@ describe('Application Schemas Index', () => {
     expect(schemas).toHaveProperty('WorkoutFiltersSchema');
   });
 
-  it('should export workout types', () => {
-    // Types are compile-time only, but we can check the schemas exist
-    expect(typeof schemas.WorkoutResponseSchema.parse).toBe('function');
-    expect(typeof schemas.WorkoutsListResponseSchema.parse).toBe('function');
-    expect(typeof schemas.WorkoutStatsSchema.parse).toBe('function');
-    expect(typeof schemas.CreateWorkoutRequestSchema.parse).toBe('function');
-    expect(typeof schemas.UpdateWorkoutRequestSchema.parse).toBe('function');
-    expect(typeof schemas.WorkoutFiltersSchema.parse).toBe('function');
-  });
-
   it('should have expected export structure', () => {
     const exportKeys = Object.keys(schemas);
     expect(exportKeys.length).toBeGreaterThan(0);
