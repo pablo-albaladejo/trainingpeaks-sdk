@@ -147,6 +147,7 @@ As a {user type}, I want to {goal} so that {benefit}.
 - [ ] Documentation updated
 - [ ] Technical changelog entry added
 - [ ] All quality gates pass
+- [ ] **MANDATORY**: `npm run validate:all` passes with zero errors
 
 ## Additional Context
 {Any additional technical context, dependencies, or considerations}

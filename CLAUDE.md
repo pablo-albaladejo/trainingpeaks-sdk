@@ -92,6 +92,7 @@ export type UserValidationService = {
 - **TypeScript**: Strict mode enabled
 - **Import validation**: `npm run check-imports`
 - **Dual package**: ESM + CommonJS support
+- **MANDATORY VALIDATION**: All implementations MUST pass `npm run validate:all` and resolve ALL errors
 
 ## Key Dependencies
 **Runtime**: axios, axios-cookiejar-support, playwright-core, zod, rosie
@@ -120,7 +121,7 @@ Automated workflow where Claude analyzes GitHub issues, creates implementation p
 - `test/issue-{number}-{brief-description}` - Test improvements
 
 ### Quality Gates
-✅ ESLint (zero warnings) ✅ TypeScript compilation ✅ Unit test coverage ✅ Integration tests ✅ Contract tests ✅ Import validation ✅ ESM/CJS builds
+✅ ESLint (zero warnings) ✅ TypeScript compilation ✅ Unit test coverage ✅ Integration tests ✅ Contract tests ✅ Import validation ✅ ESM/CJS builds ✅ **MANDATORY**: `npm run validate:all` passes with zero errors
 
 ## Issue Creation Workflow
 
@@ -202,7 +203,7 @@ Automatic documentation synchronization analyzing codebase against existing docs
 - **Code Documentation**: JSDoc/TSDoc comments, inline documentation
 
 ### Quality Gates
-- ✅ API examples compile successfully ✅ Documentation matches interfaces ✅ Changelogs updated per PR ✅ Breaking changes documented
+- ✅ API examples compile successfully ✅ Documentation matches interfaces ✅ Changelogs updated per PR ✅ Breaking changes documented ✅ **MANDATORY**: `npm run validate:all` passes with zero errors
 
 ## ⚠️ CRITICAL SCOPE LIMITATION RULE
 **MANDATORY**: Only modify the EXACT feature/component explicitly requested.

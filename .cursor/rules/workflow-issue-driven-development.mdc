@@ -121,6 +121,7 @@ All implementations must pass:
 - `npm run test` - Unit test coverage
 - `npx tsc` - TypeScript compilation
 - `npm run build` - Both ESM and CJS builds
+- **MANDATORY**: `npm run validate:all` - Comprehensive validation pipeline with zero errors
 
 ## Branch Naming Conventions
 - `feat/issue-{number}-{description}` - New features
@@ -179,3 +180,4 @@ git status && git branch
 - Comprehensive test coverage achieved
 - Pull request created with complete documentation
 - All quality gates pass
+- **MANDATORY**: `npm run validate:all` passes with zero errors

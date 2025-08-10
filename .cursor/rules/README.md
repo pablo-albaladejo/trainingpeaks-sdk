@@ -300,6 +300,14 @@ fi
 - Error handling patterns
 - Performance optimization
 
+#### `validation-requirements.mdc` 🚨 **MANDATORY**
+
+- **MANDATORY** validation pipeline enforcement
+- Comprehensive `npm run validate:all` requirement
+- Zero-error quality gate policy
+- Pre-commit validation requirements
+- Error resolution workflow and priorities
+
 ## How to Use These Rules
 
 ### 1. Apply to Your Project

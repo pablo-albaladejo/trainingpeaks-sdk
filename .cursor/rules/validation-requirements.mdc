@@ -1,0 +1,168 @@
+# Validation Requirements - Cursor Rule
+
+## Purpose
+Ensures all code implementations pass comprehensive validation pipeline before completion, maintaining code quality and preventing integration issues.
+
+## Core Validation Rule
+
+### 🚨 MANDATORY VALIDATION PIPELINE
+**ALL implementations MUST run and pass `npm run validate:all` with ZERO errors before marking work complete.**
+
+```bash
+npm run validate:all
+```
+
+**Pipeline Components:**
+- `npm run format:check` - Code formatting validation
+- `npm run lint` - ESLint rules (zero warnings policy)
+- `npm run type-check` - TypeScript compilation
+- `npm run check-imports` - Import path validation
+- `npm run test` - Full test suite execution
+- `npm run build` - ESM/CJS build verification
+
+### Validation Workflow
+
+1. **After ANY code change**, immediately run validation:
+   ```bash
+   npm run validate:all
+   ```
+
+2. **If validation fails:**
+   - Fix ALL reported errors
+   - Re-run validation until ZERO errors
+   - Do NOT proceed until clean validation
+
+3. **Only mark tasks complete** when validation passes cleanly
+
+### Error Resolution Priority
+
+```typescript
+interface ValidationErrorHandling {
+  formatting: 'Fix with npm run format, then revalidate';
+  linting: 'Address ESLint warnings/errors, zero tolerance';
+  typeErrors: 'Resolve TypeScript compilation issues';
+  importErrors: 'Fix path alias and import violations';
+  testFailures: 'Ensure all tests pass before completion';
+  buildFailures: 'Resolve ESM/CJS build issues';
+}
+```
+
+### Quality Gate Integration
+
+**Before marking ANY todo as completed:**
+- ✅ Run `npm run validate:all`
+- ✅ Verify ZERO errors in output
+- ✅ Address any failures immediately
+- ✅ Re-run until clean validation
+
+**Before creating commits:**
+- ✅ `npm run validate:all` passes cleanly
+- ✅ No outstanding validation errors
+- ✅ Build artifacts generated successfully
+
+**Before creating pull requests:**
+- ✅ Full validation pipeline success
+- ✅ All quality gates passed
+- ✅ Ready for code review
+
+### Implementation Guidelines
+
+```typescript
+// Validation checkpoint pattern
+const implementationWorkflow = {
+  1: 'Write/modify code',
+  2: 'Run npm run validate:all',
+  3: 'Fix any errors found',
+  4: 'Repeat steps 2-3 until clean',
+  5: 'Only then mark task complete'
+};
+
+// Error tolerance
+const validationStandard = {
+  eslintWarnings: 0,     // Zero tolerance
+  typeErrors: 0,         // Zero tolerance  
+  testFailures: 0,       // Zero tolerance
+  buildErrors: 0,        // Zero tolerance
+  importErrors: 0,       // Zero tolerance
+  formatErrors: 0        // Zero tolerance
+};
+```
+
+### Integration with Other Workflows
+
+**Issue-Driven Development:**
+- Run validation before marking implementation complete
+- Include validation success in PR description
+
+**Technical Debt Analysis:**
+- Validation failures count as technical debt
+- Address validation issues before other improvements
+
+**Pull Request Reviews:**
+- Validation pipeline must pass before review request
+- Failed validation blocks PR approval
+
+### Automation Integration
+
+```bash
+# Pre-commit validation (recommended)
+#!/bin/bash
+echo "Running validation pipeline..."
+npm run validate:all
+
+if [ $? -ne 0 ]; then
+    echo "❌ Validation failed - commit blocked"
+    exit 1
+else
+    echo "✅ Validation passed - commit allowed"
+    exit 0
+fi
+```
+
+## Success Criteria
+
+- **Zero errors** in validation pipeline output
+- **All quality gates** pass successfully  
+- **Clean builds** for both ESM and CJS formats
+- **Full test coverage** with passing tests
+- **Lint-free code** with zero warnings
+- **Valid imports** and path aliases
+- **Proper formatting** according to project standards
+
+## Failure Handling
+
+**When validation fails:**
+1. **Stop current work** - Do not proceed with other tasks
+2. **Address errors systematically** - Fix one category at a time
+3. **Re-run validation** after each fix attempt
+4. **Document persistent issues** - Create issues for complex problems
+5. **Seek help if blocked** - Escalate unresolvable validation errors
+
+**Never:**
+- Skip validation to "save time"
+- Mark tasks complete with failing validation
+- Commit code with validation errors
+- Ignore validation warnings
+
+## Integration Commands
+
+```bash
+# Quick validation check
+npm run validate:all
+
+# Individual pipeline components  
+npm run format:check
+npm run lint
+npm run type-check
+npm run check-imports
+npm run test
+npm run build
+
+# Fix formatting issues
+npm run format
+
+# Fix linting issues  
+npm run lint:fix
+```
+
+This rule ensures consistent code quality and prevents integration issues by enforcing comprehensive validation at every implementation checkpoint.
