@@ -73,7 +73,7 @@ The SDK uses structured error codes for consistent error handling:
 import { ERROR_CODES } from 'trainingpeaks-sdk/errors';
 
 // Authentication (1000-1999)
-ERROR_CODES.AUTH_FAILED                 // 'AUTH_1001'
+ERROR_CODES.AUTH_INVALID_CREDENTIALS     // 'AUTH_1001'
 ERROR_CODES.AUTH_TOKEN_EXPIRED          // 'AUTH_1002'
 ERROR_CODES.AUTH_TOKEN_INVALID          // 'AUTH_1003'
 
@@ -87,7 +87,7 @@ ERROR_CODES.USER_NOT_FOUND              // 'USER_3002'
 
 // Network (4000-4999)
 ERROR_CODES.NETWORK_TIMEOUT             // 'NETWORK_4001'
-ERROR_CODES.NETWORK_SERVER_ERROR        // 'NETWORK_4006'
+ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE // 'NETWORK_4006'
 
 // Validation (5000-5999)
 ERROR_CODES.VALIDATION_FAILED           // 'VALIDATION_5001'
@@ -110,7 +110,7 @@ const sdk = new TrainingPeaksSDK({
 ### Retryable Errors
 
 The SDK automatically retries these error conditions:
-- **Server errors (5xx)**: 500, 502, 503, 504
+- **Server errors (5xx)**: 500, 502, 503
 - **Timeout errors**: 408
 - **Rate limiting**: 429
 
@@ -118,6 +118,7 @@ The SDK automatically retries these error conditions:
 
 These errors are **not** retried:
 - **Client errors (4xx)**: 400, 401, 403, 404, 422
+- **Gateway timeout (504)**: Gateway timeout errors
 - **Authentication failures**: Invalid credentials (Note: 401 due to token expiration may trigger automatic token refresh and retry)
 - **Validation errors**: Malformed requests, missing required fields
 

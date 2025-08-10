@@ -73,9 +73,9 @@ For comprehensive product context and business objectives, see [PRODUCT.md](../.
 
 #### [`changelog-management.mdc`](./changelog-management.mdc)
 
-- Dual changelog system (root + [technical changelogs](../docs/technical-changelogs/README.md))
+- Dual changelog system (root + [technical changelogs](../../docs/technical-changelogs/README.md))
 - Changelog generation rules and formats
-- Pre-commit validation hooks with concrete implementations
+- Pre-commit validation hooks with [concrete implementations](./changelog-management.mdc#validation-script)
 - Technical decision documentation
 - User-facing change tracking
 
@@ -104,10 +104,62 @@ This project uses **Husky** for Git hook management. To enable the changelog val
    .husky/pre-push
    ```
 
-4. **CI Environment Setup**:
+4. **CI Environment Setup and Verification**:
+   
+   In CI environments, verify that Husky is properly configured:
+   
    ```bash
-   # In CI, Husky hooks are automatically available after npm install
-   # No additional setup required for GitHub Actions or similar CI systems
+   # 1. Ensure Husky files exist and are executable
+   test -f .husky/pre-commit && echo "✅ pre-commit exists" || echo "❌ pre-commit missing"
+   test -x .husky/pre-commit && echo "✅ pre-commit executable" || echo "❌ pre-commit not executable"
+   test -f .husky/pre-push && echo "✅ pre-push exists" || echo "❌ pre-push missing"
+   test -x .husky/pre-push && echo "✅ pre-push executable" || echo "❌ pre-push not executable"
+   
+   # 2. Confirm package.json contains prepare script
+   grep -q '"prepare".*"husky"' package.json && echo "✅ prepare script found" || echo "❌ prepare script missing"
+   
+   # 3. Check that CI environment doesn't disable Husky
+   [ "$HUSKY" = "0" ] && echo "⚠️  HUSKY is disabled" || echo "✅ HUSKY is enabled"
+   
+   # 4. Complete verification script
+   bash -c '
+     echo "=== Husky CI Verification ==="
+     all_good=true
+     
+     # Check hook files
+     for hook in pre-commit pre-push; do
+       if [[ -f .husky/$hook && -x .husky/$hook ]]; then
+         echo "✅ $hook: exists and executable"
+       else
+         echo "❌ $hook: missing or not executable"
+         all_good=false
+       fi
+     done
+     
+     # Check prepare script
+     if grep -q "\"prepare\".*\"husky\"" package.json; then
+       echo "✅ package.json: prepare script configured"
+     else
+       echo "❌ package.json: prepare script missing"
+       all_good=false
+     fi
+     
+     # Check environment
+     if [[ "$HUSKY" == "0" ]]; then
+       echo "⚠️  Environment: HUSKY is disabled"
+       all_good=false
+     else
+       echo "✅ Environment: HUSKY is enabled"
+     fi
+     
+     if $all_good; then
+       echo "🎉 Husky setup verified successfully"
+       exit 0
+     else
+       echo "💥 Husky setup has issues"
+       exit 1
+     fi
+   '
    ```
 
 ##### Technical Changelog Files
@@ -118,9 +170,17 @@ Verify all referenced changelog files exist:
 find docs/technical-changelogs/ -name "*.md" | sort
 
 # Verify all expected files are present
+if [ ! -f "docs/technical-changelogs/README.md" ]; then
+  echo "❌ Missing: docs/technical-changelogs/README.md (main documentation file)"
+else
+  echo "✅ Found: docs/technical-changelogs/README.md"
+fi
+
 for component in adapters application domain infrastructure shared; do
   if [ ! -f "docs/technical-changelogs/$component.md" ]; then
-    echo "Missing: docs/technical-changelogs/$component.md"
+    echo "❌ Missing: docs/technical-changelogs/$component.md"
+  else
+    echo "✅ Found: docs/technical-changelogs/$component.md"
   fi
 done
 ```

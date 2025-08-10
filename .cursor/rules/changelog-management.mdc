@@ -1,6 +1,6 @@
 ---
 description: Changelog management and documentation rules for tracking code evolution and architectural decisions
-globs: **/*.ts,**/*.tsx,**/*.js,**/*.jsx,**/*.mjs,**/*.mts,**/*.cts,**/*.cjs,**/CHANGELOG.md,docs/technical-changelogs/*.md
+globs: **/*.ts,**/*.tsx,**/*.js,**/*.jsx,**/*.mjs,**/*.mts,**/*.cts,**/*.cjs,**/CHANGELOG.md,docs/technical-changelogs/adapters.md,docs/technical-changelogs/application.md,docs/technical-changelogs/domain.md,docs/technical-changelogs/infrastructure.md,docs/technical-changelogs/shared.md
 alwaysApply: true
 ---
 
@@ -254,8 +254,10 @@ fi
 
 # Validate changelog entry format
 {
-  find . -name "CHANGELOG.md" -exec grep -l "## \[$(date +%Y-%m-%d)\]" {} \;
-  find docs/technical-changelogs/ -name "*.md" -exec grep -l "## \[$(date +%Y-%m-%d)\]" {} \;
+  find . -name "CHANGELOG.md" -exec grep -l "## \[$(date +%Y-%m-%d)\]" {} \; 2>/dev/null
+  if [ -d "docs/technical-changelogs" ]; then
+    find docs/technical-changelogs/ -name "*.md" -exec grep -l "## \[$(date +%Y-%m-%d)\]" {} \; 2>/dev/null
+  fi
 } > /dev/null || {
   echo "Warning: No changelog entry found for today's date"
 }
@@ -274,9 +276,11 @@ fi
 #!/bin/sh
 # Validate changelog consistency across all changelogs
 {
-  find . -name "CHANGELOG.md"
-  find docs/technical-changelogs/ -name "*.md" ! -name "README.md"
-} | while read changelog; do
+  find . -type f -name "CHANGELOG.md" 2>/dev/null
+  if [ -d "docs/technical-changelogs" ]; then
+    find docs/technical-changelogs/ -type f -name "*.md" ! -name "README.md" 2>/dev/null
+  fi
+} | while IFS= read -r changelog; do
   if ! grep -q "^## \[" "$changelog"; then
     echo "Error: Invalid changelog format in $changelog"
     exit 1

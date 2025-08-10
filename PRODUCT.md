@@ -8,7 +8,7 @@ The TrainingPeaks SDK is a comprehensive, enterprise-grade TypeScript SDK that p
 
 ### Runtime Requirements
 
-- **Node.js**: ≥ 18.0.0 (supports current LTS versions: 18.x, 20.x, 22.x)
+- **Node.js**: ≥ 20.0.0 (supports current LTS versions: 20.x, 22.x, 24.x with support windows through October 2026, October 2027, and October 2029 respectively)
 - **TypeScript**: ≥ 4.8.0 (strict mode supported)
 - **Browser Support**: Modern browsers with ES2020 support (Chrome ≥ 80, Firefox ≥ 72, Safari ≥ 13.1, Edge ≥ 80)  
   - *Note: Browser support assumes usage of browser-targeted HTTP adapter without Node-specific modules*

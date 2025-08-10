@@ -97,6 +97,10 @@ describe('TrainingPeaks Integration Tests', () => {
       dataHttpClient: proxyAxios,     // Data requests (workouts, etc.)
       debug: { enabled: true },
     });
+    
+    // 🔒 SECURITY NOTE: When using debug logging, ensure logs do not contain
+    // sensitive information such as tokens, passwords, or personally identifiable
+    // information (PII) when using separate axios instances
   });
 
   it('should login successfully via direct connection', async () => {

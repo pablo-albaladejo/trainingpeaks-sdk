@@ -2,25 +2,24 @@
 
 ## Overview
 
-The client architecture has been reorganized to follow Clean Architecture and Hexagonal Architecture (Ports & Adapters) principles. The new client is located in `src/adapters/client` and serves as the main external contact point for the library.
+The SDK architecture has been reorganized to follow Clean Architecture and Hexagonal Architecture (Ports & Adapters) principles. The main SDK implementation is located in `src/sdk/training-peaks-sdk.ts` and serves as the main external contact point for the library.
 
 ## Structure
 
 ```
 src/
 ├── adapters/
-│   ├── client/                    # 🎯 MAIN CONTACT POINT
-│   │   ├── index.ts              # Client exports
-│   │   └── training-peaks-client.ts # Client implementation
 │   ├── http/                     # HTTP adapters
 │   ├── storage/                  # Storage adapters
 │   ├── services/                 # Service implementations
-│   └── repositories/             # Repository implementations
+│   └── public-api/               # Repository implementations
 ├── application/
 │   ├── use-cases/               # Application use cases
 │   └── services/                # Service contracts
 ├── domain/                      # Domain logic
-└── training-peaks-client.ts     # Re-export for compatibility
+├── entrypoints/                 # Feature entrypoints
+└── sdk/
+    └── training-peaks-sdk.ts    # 🎯 MAIN SDK IMPLEMENTATION
 ```
 
 ## Design Principles
@@ -30,8 +29,8 @@ src/
 The client handles all dependency injection internally:
 
 ```typescript
-// El cliente crea y configura todas las dependencias
-const client = createTrainingPeaksClient(config);
+// The SDK creates and configures all dependencies
+const sdk = createTrainingPeaksSdk(config);
 
 // Los use cases reciben sus dependencias inyectadas
 const loginUseCase = executeLoginUseCase(
@@ -45,29 +44,29 @@ const loginUseCase = executeLoginUseCase(
 Cada use case se expone como una función pública en el cliente:
 
 ```typescript
-export interface TrainingPeaksClient {
+export interface TrainingPeaksSdk {
   login: (username: string, password: string) => Promise<LoginResult>;
-  getUser: () => Promise<GetUserResult>;
-  isAuthenticated: () => boolean;
-  getUserId: () => string | null;
+  logout: () => Promise<LogoutResult>;
+  getWorkoutsList: (filters: WorkoutFilters) => Promise<WorkoutsListResult>;
+  logger: Logger;
 }
 ```
 
 ### 3. Separation of Responsibilities
 
-- **Adapters/Client**: Contact point, dependency injection
+- **SDK**: Main contact point, dependency injection, and public interface
 - **Application/Use Cases**: Application logic, orchestration
 - **Domain**: Pure business logic
-- **Infrastructure**: Concrete implementations
+- **Adapters**: Concrete implementations that interface with external systems
 
 ## Using the New Client
 
 ### Client Creation
 
 ```typescript
-import { createTrainingPeaksClient } from '@trainingpeaks/sdk';
+import { createTrainingPeaksSdk } from '@trainingpeaks/sdk';
 
-const client = createTrainingPeaksClient({
+const client = createTrainingPeaksSdk({
   apiKey: process.env.TRAINING_PEAKS_API_KEY,
   baseUrl: process.env.TRAINING_PEAKS_BASE_URL,
 });
@@ -118,9 +117,9 @@ const authService = createAuthService({
 
 ### 3. Clear Layer Separation
 
-- **Client**: Orchestrates dependency injection
+- **SDK**: Orchestrates dependency injection and provides public interface
 - **Use Cases**: Contains application logic
-- **Services**: Implements business logic
+- **Services**: Orchestrates and integrates with repositories and adapters
 - **Repositories**: Handle data access
 
 ### 4. Easy to Add New Use Cases
@@ -128,37 +127,39 @@ const authService = createAuthService({
 To add a new use case:
 
 1. Create the use case in `src/application/use-cases/`
-2. Add the function to the client in `src/adapters/client/training-peaks-client.ts`
-3. Export from `src/adapters/client/index.ts`
+2. Create an entrypoint in `src/entrypoints/`
+3. Add the function to the SDK in `src/sdk/training-peaks-sdk.ts`
+4. Export from `src/index.ts`
+5. Add unit and integration tests for the new use case and SDK surface to ensure proper coverage and functionality
 
 ## Migration from Previous Version
 
 ### Before (Class)
 
 ```typescript
-import { TrainingPeaksClient } from '@trainingpeaks/sdk';
+import { TrainingPeaksSdk } from '@trainingpeaks/sdk';
 
-const client = new TrainingPeaksClient(config);
+const client = new TrainingPeaksSdk(config);
 await client.login('username', 'password');
 ```
 
 ### Now (Function)
 
 ```typescript
-import { createTrainingPeaksClient } from '@trainingpeaks/sdk';
+import { createTrainingPeaksSdk } from '@trainingpeaks/sdk';
 
-const client = createTrainingPeaksClient(config);
+const client = createTrainingPeaksSdk(config);
 await client.login('username', 'password');
 ```
 
 ## Backward Compatibility
 
-The original `TrainingPeaksClient` class remains available as `TrainingPeaksClientClass` for compatibility:
+The original `TrainingPeaksSdk` class remains available as `TrainingPeaksSdkClass` for compatibility:
 
 ```typescript
-import { TrainingPeaksClientClass } from '@trainingpeaks/sdk';
+import { TrainingPeaksSdkClass } from '@trainingpeaks/sdk';
 
-const client = new TrainingPeaksClientClass(config);
+const client = new TrainingPeaksSdkClass(config);
 ```
 
 **Nota**: Se recomienda migrar al nuevo cliente funcional para aprovechar las mejoras en la arquitectura.
