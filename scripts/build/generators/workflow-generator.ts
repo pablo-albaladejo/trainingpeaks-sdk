@@ -146,7 +146,10 @@ jobs:
               const dependencies = Array.isArray(bundleStats.dependencies) ? bundleStats.dependencies : [];
               const recommendations = Array.isArray(bundleStats.recommendations) ? bundleStats.recommendations : [];
               
-              const comment = \`## 📦 Bundle Analysis
+              // Validate comment size (GitHub comment limit is 65536 characters)
+              const MAX_COMMENT_SIZE = 60000; // Leave buffer for safety
+              
+              let comment = \`## 📦 Bundle Analysis
               
               ### Bundle Size
               - **Total size**: \${totalSize ? (totalSize / 1024).toFixed(2) + ' KB' : 'N/A'}
@@ -162,6 +165,11 @@ jobs:
               
               ### Recommendations
               \${recommendations.length > 0 ? recommendations.join('\\n') : 'No recommendations available'}\`;
+              
+              // Truncate if comment is too long
+              if (comment.length > MAX_COMMENT_SIZE) {
+                comment = comment.substring(0, MAX_COMMENT_SIZE - 100) + '\\n\\n... (comment truncated due to size limits)';
+              }
               
               await github.rest.issues.createComment({
                 issue_number: context.issue.number,
@@ -207,17 +215,23 @@ jobs:
 
       - name: Validate changelogs
         run: |
-          # Check if source files changed
-          if git diff --name-only \${{ github.event.before }} \${{ github.sha }} | grep -q '^src/'; then
+          # Check if source files changed (handle case where before is undefined on first commit)
+          BEFORE="\${{ github.event.before }}"
+          if [ "\$BEFORE" = "" ] || [ "\$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "First commit or no before reference, skipping changelog validation"
+            exit 0
+          fi
+          
+          if git diff --name-only "\$BEFORE" \${{ github.sha }} | grep -q '^src/'; then
             echo "Source files changed, checking changelog updates..."
             
             # Check folder changelogs
-            for file in \$(git diff --name-only \${{ github.event.before }} \${{ github.sha }} | grep '^src/'); do
+            for file in \$(git diff --name-only "\$BEFORE" \${{ github.sha }} | grep '^src/'); do
               folder=\$(dirname "\$file")
               changelog="\$folder/CHANGELOG.md"
               
               if [ -f "\$changelog" ]; then
-                if ! git diff --name-only \${{ github.event.before }} \${{ github.sha }} | grep -q "\$changelog"; then
+                if ! git diff --name-only "\$BEFORE" \${{ github.sha }} | grep -q "\$changelog"; then
                   echo "❌ Missing changelog update for \$folder"
                   exit 1
                 fi

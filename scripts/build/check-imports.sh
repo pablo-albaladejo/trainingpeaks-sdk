@@ -3,7 +3,7 @@
 # Script to validate import structure following clean architecture principles
 # This script ensures proper dependency flow: adapters -> application -> domain
 
-set -e
+set -eo pipefail
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -54,11 +54,11 @@ check_forbidden_imports() {
         return
     fi
     
-    local violations=$(grep -rn "$pattern" src/$layer/ --include="*.ts" --exclude="*.test.ts" --exclude="*.integ-test.ts" 2>/dev/null || true)
+    local violations=$(grep -rn "$pattern" src/$layer/ --include="*.ts" --exclude="*.test.ts" --exclude="*.integ-test.ts" --exclude="*.contract-test.ts" --exclude="*.e2e-test.ts" 2>/dev/null || true)
     
     if [ ! -z "$violations" ]; then
         print_error "Found forbidden imports in $layer layer:"
-        echo "$violations" | while read line; do
+        echo "$violations" | while IFS= read -r line; do
             echo "  $line"
         done
         VIOLATIONS=$((VIOLATIONS + 1))
@@ -68,7 +68,7 @@ check_forbidden_imports() {
 }
 
 # Check domain layer - should not import from application or adapters
-check_forbidden_imports "domain" "from ['\"]@/(adapters|application|infrastructure)" "Domain layer independence"
+check_forbidden_imports "domain" "from ['\"]@/(adapters|application)" "Domain layer independence"
 
 # Check application layer - should not import from adapters  
 check_forbidden_imports "application" "from ['\"]@/adapters" "Application layer independence from adapters"
@@ -76,38 +76,36 @@ check_forbidden_imports "application" "from ['\"]@/adapters" "Application layer 
 # Check for circular dependencies
 print_info "Checking for actual circular dependencies..."
 
-# Check if domain imports from application (should never happen)
-domain_to_app=$(find src/domain -name "*.ts" -not -name "*.test.ts" -not -name "*.integ-test.ts" -exec grep -l "from.*@/application" {} \; 2>/dev/null || true)
-if [ ! -z "$domain_to_app" ]; then
-    print_error "Found circular dependency: Domain importing from Application"
-    echo "$domain_to_app" | while read file; do
-        echo "  $file"
-        grep -n "from.*@/application" "$file" 2>/dev/null
-    done
-    VIOLATIONS=$((VIOLATIONS + 1))
-fi
+# Check for circular dependency violations (domain importing upward)
+check_circular_dependency() {
+    local from_layer="$1"
+    local to_layer="$2"
+    local description="$3"
+    
+    local violations=$(find "src/$from_layer" -name "*.ts" -not -name "*.test.ts" -not -name "*.integ-test.ts" -not -name "*.contract-test.ts" -not -name "*.e2e-test.ts" -exec grep -l "from.*@/$to_layer" {} \; 2>/dev/null || true)
+    if [ ! -z "$violations" ]; then
+        print_error "Found circular dependency: $description"
+        echo "$violations" | while IFS= read -r file; do
+            echo "  $file"
+            grep -n "from.*@/$to_layer" "$file" 2>/dev/null
+        done
+        VIOLATIONS=$((VIOLATIONS + 1))
+    fi
+}
 
-# Check if domain imports from adapters (should never happen)  
-domain_to_adapters=$(find src/domain -name "*.ts" -not -name "*.test.ts" -not -name "*.integ-test.ts" -exec grep -l "from.*@/adapters" {} \; 2>/dev/null || true)
-if [ ! -z "$domain_to_adapters" ]; then
-    print_error "Found circular dependency: Domain importing from Adapters"
-    echo "$domain_to_adapters" | while read file; do
-        echo "  $file"
-        grep -n "from.*@/adapters" "$file" 2>/dev/null
-    done
-    VIOLATIONS=$((VIOLATIONS + 1))
-fi
+check_circular_dependency "domain" "application" "Domain importing from Application"
+check_circular_dependency "domain" "adapters" "Domain importing from Adapters"
 
 # Check for correct usage of path aliases
 print_info "Checking path alias usage..."
 
 # Find imports that should use aliases but don't
-relative_imports=$(find src -name "*.ts" -exec grep -l "from ['\"][.][.]/" {} \; 2>/dev/null || true)
+relative_imports=$(find src -name "*.ts" -exec grep -l "from ['\"]\\.\\..*/" {} \; 2>/dev/null || true)
 
 if [ ! -z "$relative_imports" ]; then
     print_warning "Found relative imports that could use path aliases:"
-    echo "$relative_imports" | while read file; do
-        grep -n "from ['\"][.][.]/" "$file" 2>/dev/null || true
+    echo "$relative_imports" | while IFS= read -r file; do
+        grep -n "from ['\"]\\.\\..*/" "$file" 2>/dev/null || true
     done
     print_info "Consider using @/* aliases instead of relative imports"
 fi
@@ -115,7 +113,8 @@ fi
 # Check for proper layer exports
 print_info "Checking layer exports..."
 
-layers=("adapters" "application" "domain" "infrastructure" "shared")
+# Configurable layers - update based on actual project structure
+layers=("adapters" "application" "domain" "shared")
 
 for layer in "${layers[@]}"; do
     if [ -d "src/$layer" ] && [ ! -f "src/$layer/index.ts" ]; then

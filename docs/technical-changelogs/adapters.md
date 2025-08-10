@@ -24,6 +24,13 @@
 - **Alias Updates**: Path aliases `@infrastructure/*` now map to `@adapters/*`
 - **Documentation**: All references to "Infrastructure layer" are now "Adapters layer"
 
+**Migration Codemod**: Automated migration script available to convert existing codebases:
+```bash
+# Run the migration codemod to update imports automatically
+npx @trainingpeaks-sdk/migrate-infrastructure-to-adapters src/
+# Options: --dry-run (preview changes), --ignore-patterns (exclude files)
+```
+
 ### Impact
 - Clearer mental model for developers
 - Documentation now matches implementation reality

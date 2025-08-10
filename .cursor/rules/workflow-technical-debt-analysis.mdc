@@ -62,21 +62,29 @@ const architectureViolations = {
     astAnalysis: {
       checkInterfaceServices: (sourceFile) => {
         // Use TypeScript AST to detect grouped service interfaces
-        return ts.forEachChild(sourceFile, (node) => {
+        const violations: any[] = [];
+        function visit(node: any) {
           if (ts.isInterfaceDeclaration(node) && 
               node.name?.text?.endsWith('Service')) {
-            return { violation: 'grouped-interface-service', node };
+            violations.push({ violation: 'grouped-interface-service', node });
           }
-        });
+          ts.forEachChild(node, visit);
+        }
+        visit(sourceFile);
+        return violations;
       },
       checkClassServices: (sourceFile) => {
         // Use TypeScript AST to detect class-based services
-        return ts.forEachChild(sourceFile, (node) => {
+        const violations: any[] = [];
+        function visit(node: any) {
           if (ts.isClassDeclaration(node) && 
               node.name?.text?.endsWith('Service')) {
-            return { violation: 'class-based-service', node };
+            violations.push({ violation: 'class-based-service', node });
           }
-        });
+          ts.forEachChild(node, visit);
+        }
+        visit(sourceFile);
+        return violations;
       }
     },
     severity: 'major'
@@ -101,9 +109,16 @@ const typeScriptDebt = {
     severity: 'minor'
   },
   
-  // Unused imports
+  // Unused imports detection
   unusedImports: {
-    command: 'npx tsc --noEmit --listFiles | grep -v node_modules',  # Check for unused exports
+    tsConfigOptions: {
+      noUnusedLocals: true,
+      noUnusedParameters: true
+    },
+    eslintRules: [
+      'no-unused-vars',
+      'import/no-unused-modules'
+    ],
     severity: 'minor'
   },
   
@@ -170,14 +185,33 @@ const organizationDebt = {
   // Dynamic path alias validation
   pathAliasValidation: {
     dynamicPatterns: () => {
-      // Read tsconfig.json to get actual path aliases
-      const tsConfig = require('../../tsconfig.json');
-      const paths = tsConfig.compilerOptions?.paths || {};
-      return Object.keys(paths).map(alias => new RegExp(alias.replace('*', '')));
+      try {
+        // Read tsconfig.json to get actual path aliases
+        const tsConfig = require('../../tsconfig.json');
+        const baseUrl = tsConfig.compilerOptions?.baseUrl || '';
+        const paths = tsConfig.compilerOptions?.paths || {};
+        
+        return Object.keys(paths).map(alias => {
+          // Escape regex metacharacters and anchor to start
+          const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace('\\*', '.*');
+          return new RegExp(`^${escaped}$`);
+        });
+      } catch (error) {
+        return [];
+      }
     },
     violations: [
       /\.\.\/\.\.\//g,  // Relative imports beyond parent
-      /from ['"]src\//g  // Direct src imports instead of aliases
+      // Conditional violation based on baseUrl
+      ...((() => {
+        try {
+          const tsConfig = require('../../tsconfig.json');
+          const baseUrl = tsConfig.compilerOptions?.baseUrl;
+          return baseUrl === 'src' ? [] : [/from ['"]src\//g];
+        } catch {
+          return [/from ['"]src\//g];
+        }
+      })())
     ],
     severity: 'minor'
   },

@@ -555,15 +555,20 @@ async function validateTypeScriptSyntax(code: string): Promise<{valid: boolean, 
 }
 
 // Validate import statements in examples
-function validateImportStatements(): {valid: boolean, issues: string[]} {
+async function validateImportStatements(): Promise<{valid: boolean, issues: string[]}> {
   // Extract imports from documentation examples
   const issues: string[] = [];
   
-  // Check for common import issues
-  const packageJson = require('../../package.json');
-  const validPackages = [packageJson.name, ...Object.keys(packageJson.dependencies || {})];
-  
-  return { valid: issues.length === 0, issues };
+  try {
+    // Check for common import issues using dynamic import
+    const packageJson = await import('../../package.json', { assert: { type: 'json' } });
+    const validPackages = [packageJson.default.name, ...Object.keys(packageJson.default.dependencies || {})];
+    
+    return { valid: issues.length === 0, issues };
+  } catch (error) {
+    issues.push(`Failed to load package.json: ${error.message}`);
+    return { valid: false, issues };
+  }
 }
 
 // Validate type usage in examples

@@ -29,6 +29,42 @@ This includes:
 - **Command**: `npm run test:contract` must pass for all endpoint modifications
 - **CI Integration**: Contract tests MUST be integrated into GitHub Actions CI workflows to prevent merges when API contracts fail validation
 
+#### **GitHub Actions Workflow Example**
+```yaml
+# .github/workflows/contract-tests.yml
+name: Contract Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  contract-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run contract tests
+      run: npm run test:contract
+```
+
+**Branch Protection**: Add this workflow as a required check in branch protection rules.
+
+**Script to verify existing workflows run contract tests**:
+```bash
+# Check if contract tests are already integrated
+grep -r "test:contract" .github/workflows/ || echo "Contract tests not found in workflows"
+```
+
 **Exceptions** (must be justified):
 - Simple getters/setters with no logic
 - Basic constructors that only assign parameters

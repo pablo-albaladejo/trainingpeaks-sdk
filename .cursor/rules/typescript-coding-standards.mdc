@@ -27,9 +27,9 @@ type CreateUserInput = {
   readonly name: string;
 };
 
-// Function types: camelCase (preferred over classes)
-type createUser = (input: CreateUserInput) => Promise<User>;
-type validateEmail = (email: string) => void;
+// Function types: PascalCase (preferred over classes)
+type CreateUser = (input: CreateUserInput) => Promise<User>;
+type ValidateEmail = (email: string) => void;
 
 // Constants: UPPER_SNAKE_CASE
 const MAX_RETRY_ATTEMPTS = 3;
@@ -171,30 +171,25 @@ export const updateUserName = (user: User, newName: string): User => ({
 ### Function Composition and Dependency Injection
 
 ```typescript
-// Use function factories for dependency injection
-export type UserRepository = {
-  readonly find: (id: string) => Promise<User | null>;
-  readonly save: (user: User) => Promise<void>;
-};
-
-export type UserValidator = {
-  readonly validateEmail: (email: string) => void;
-  readonly validateName: (name: string) => void;
-};
-
-// Function type definitions
+// Individual function types (preferred over grouped objects)
+export type FindUser = (id: string) => Promise<User | null>;
+export type SaveUser = (user: User) => Promise<void>;
+export type ValidateEmail = (email: string) => void;
+export type ValidateName = (name: string) => void;
 export type CreateUserService = (input: CreateUserInput) => Promise<User>;
 
-// Factory function that injects dependencies
+// Factory function that injects individual functions
 export const createUserService = (
-  userRepository: UserRepository,
-  validator: UserValidator
+  findUser: FindUser,
+  saveUser: SaveUser,
+  validateEmail: ValidateEmail,
+  validateName: ValidateName
 ): CreateUserService =>
   async (input: CreateUserInput): Promise<User> => {
-    validator.validateEmail(input.email);
-    validator.validateName(input.name);
+    validateEmail(input.email);
+    validateName(input.name);
     const user = createUser(generateId(), input.email, input.name);
-    await userRepository.save(user);
+    await saveUser(user);
     return user;
   };
 ```

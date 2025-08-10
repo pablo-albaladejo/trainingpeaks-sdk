@@ -39,10 +39,11 @@ export const createLogger = (config: LoggerConfig): Logger => {
     return config.enabled && logLevels[level] >= currentLevel;
   };
 
-  const formatMessage = (level: LogLevel, message: string): string => {
+  const formatMessage = (level: LogLevel, message: string | Error): string => {
     const timestamp = new Date().toISOString();
     const prefix = config.prefix ? `[${config.prefix}]` : '[TrainingPeaks SDK]';
-    return `${timestamp} ${prefix} [${level.toUpperCase()}] ${message}`;
+    const messageText = message instanceof Error ? message.message : message;
+    return `${timestamp} ${prefix} [${level.toUpperCase()}] ${messageText}`;
   };
 
   return {
@@ -64,7 +65,7 @@ export const createLogger = (config: LoggerConfig): Logger => {
       }
     },
 
-    error: (message: string, ...args: unknown[]) => {
+    error: (message: string | Error, ...args: unknown[]) => {
       if (shouldLog('error')) {
         console.error(formatMessage('error', message), ...args);
       }

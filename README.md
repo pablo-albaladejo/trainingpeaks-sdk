@@ -304,7 +304,10 @@ gh auth login --web
 
 # For GitHub Enterprise Server users, specify your hostname
 # gh auth login --web --hostname your-enterprise-hostname.com
-# Or set GH_HOST environment variable: export GH_HOST=your-enterprise-hostname.com
+# Or set GH_HOST environment variable: 
+# Linux/macOS: export GH_HOST=your-enterprise-hostname.com
+# Windows CMD: set GH_HOST=your-enterprise-hostname.com
+# Windows PowerShell: $env:GH_HOST="your-enterprise-hostname.com"
 
 # Verify authentication
 gh auth status
@@ -387,7 +390,7 @@ This SDK follows Clean Architecture principles with a hexagonal architecture app
 
 - **Domain Layer**: Core business entities and rules
 - **Application Layer**: Business logic orchestration and contracts
-- **Adapters Layer**: External integrations and concrete implementations (formerly Infrastructure)
+- **Adapters Layer**: External integrations and concrete implementations (formerly Infrastructure) - see [migration guide](docs/technical-changelogs/adapters.md) for infrastructure → adapters transition details
 
 **Key Benefits:**
 

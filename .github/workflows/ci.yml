@@ -119,9 +119,21 @@ jobs:
               
               const bundleStats = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
               
-              // Check if values are finite first, then set defaults if needed  
-              const totalSize = Number.isFinite(Number(bundleStats.totalSize)) ? Number(bundleStats.totalSize) : 0;
-              const gzippedSize = Number.isFinite(Number(bundleStats.gzippedSize)) ? Number(bundleStats.gzippedSize) : 0;
+              // Validate and parse bundle size data with proper error handling
+              const totalSize = bundleStats?.totalSize && Number.isFinite(Number(bundleStats.totalSize)) ? Number(bundleStats.totalSize) : 0;
+              const gzippedSize = bundleStats?.gzippedSize && Number.isFinite(Number(bundleStats.gzippedSize)) ? Number(bundleStats.gzippedSize) : 0;
+              
+              // Bundle size thresholds for validation (in bytes)
+              const MAX_BUNDLE_SIZE = 500 * 1024; // 500KB
+              const MAX_GZIPPED_SIZE = 150 * 1024; // 150KB
+              
+              // Validate against size thresholds
+              if (totalSize > MAX_BUNDLE_SIZE) {
+                console.warn(`Warning: Bundle size ${(totalSize / 1024).toFixed(2)}KB exceeds threshold ${(MAX_BUNDLE_SIZE / 1024)}KB`);
+              }
+              if (gzippedSize > MAX_GZIPPED_SIZE) {
+                console.warn(`Warning: Gzipped size ${(gzippedSize / 1024).toFixed(2)}KB exceeds threshold ${(MAX_GZIPPED_SIZE / 1024)}KB`);
+              }
               
               // Ensure dependencies is an array
               const dependencies = Array.isArray(bundleStats.dependencies) ? bundleStats.dependencies : [];

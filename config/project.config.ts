@@ -126,11 +126,25 @@ function parseCustomColors(): Record<string, string> {
 
   try {
     const parsed = JSON.parse(process.env.CUSTOM_COLORS);
-    // Normalize colors by removing leading # if present
+    // Validate that parsed is an object
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      console.warn('CUSTOM_COLORS must be a valid JSON object');
+      return {};
+    }
+    
+    // Normalize colors by removing leading # if present and validate format
     const normalized: Record<string, string> = {};
     for (const [key, value] of Object.entries(parsed)) {
       if (typeof value === 'string') {
-        normalized[key] = value.startsWith('#') ? value.slice(1) : value;
+        const cleanValue = value.startsWith('#') ? value.slice(1) : value;
+        // Basic hex color validation (3 or 6 character hex)
+        if (/^[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/.test(cleanValue)) {
+          normalized[key] = cleanValue;
+        } else {
+          console.warn(`Invalid color format for key "${key}": "${value}". Expected hex format (e.g., #FF0000 or FF0000)`);
+        }
+      } else {
+        console.warn(`Invalid color value for key "${key}": must be a string`);
       }
     }
     return normalized;

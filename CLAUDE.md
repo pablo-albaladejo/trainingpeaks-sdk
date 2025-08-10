@@ -29,7 +29,7 @@ src/
 
 ### Key Patterns
 - **Ports & Adapters**: Application layer contains only contracts, adapters contain implementations
-- **Repository Pattern**: Domain defines function types, adapters implement
+- **Repository Pattern**: Domain defines interfaces, adapters implement concrete repositories
 - **Function-Based Services**: Use individual function types, NOT grouped interfaces
 
 ```typescript

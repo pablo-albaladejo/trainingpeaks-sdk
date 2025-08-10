@@ -132,14 +132,20 @@ All implementations must pass:
 ### Branch Name Sanitization
 ```typescript
 // Sanitize branch names to be Git-compatible
+const MAX_BRANCH_NAME_LENGTH = 50;
+
 function sanitizeBranchName(title: string): string {
-  return title
+  const sanitized = title
+    .normalize('NFD') // Decompose diacritics
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '') // Remove non-alphanumeric except spaces and hyphens
     .replace(/\s+/g, '-')         // Replace spaces with hyphens
     .replace(/-+/g, '-')          // Collapse multiple hyphens
     .replace(/^-|-$/g, '')        // Remove leading/trailing hyphens
-    .substring(0, 50);            // Limit length for readability
+    .substring(0, MAX_BRANCH_NAME_LENGTH); // Limit length for readability
+    
+  return sanitized || 'feature-branch'; // Fallback if empty
 }
 
 // Example: "Add user authentication feature" → "add-user-authentication-feature"
@@ -156,7 +162,7 @@ function sanitizeBranchName(title: string): string {
 @implement-plan
 
 # Check implementation status (use git status and branch info)
-git status && git branch
+git status --short && git branch --show-current
 ```
 
 ## Integration Commands

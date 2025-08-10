@@ -76,9 +76,15 @@ EOF
 sync_issues() {
     print_header "Synchronizing Repository Issues"
     
-    # Check script existence before execution
+    # Check script existence and dependencies before execution
     if [[ ! -f "./scripts/github/sync-issues-to-project.sh" ]]; then
         print_error "Script not found: ./scripts/github/sync-issues-to-project.sh"
+        return 1
+    fi
+    
+    # Check if GitHub CLI is installed and authenticated
+    if ! command -v gh &> /dev/null; then
+        print_error "GitHub CLI (gh) is required but not installed"
         return 1
     fi
     
@@ -94,13 +100,20 @@ sync_issues() {
 verify_views() {
     print_header "Verifying Project View Configuration"
     
-    # Check script existence before execution
+    # Check script existence and dependencies before execution
     if [[ ! -f "./scripts/github/verify-views.sh" ]]; then
         print_error "Script not found: ./scripts/github/verify-views.sh"
         return 1
     fi
     
-    if ./scripts/github/verify-views.sh; then
+    # Check if GitHub CLI is installed and authenticated
+    if ! command -v gh &> /dev/null; then
+        print_error "GitHub CLI (gh) is required but not installed"
+        return 1
+    fi
+    
+    # Pass repository information as parameters to verify-views.sh
+    if ./scripts/github/verify-views.sh --repo="pablo-albaladejo/trainingpeaks-sdk" --project="TrainingPeaks SDK Development"; then
         print_success "View verification completed"
     else
         print_warning "View configuration needs attention"

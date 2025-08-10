@@ -9,6 +9,7 @@ import type { ProjectConfig } from '../../../config/project.config.js';
  * Generate semantic-release configuration
  */
 export function generateReleaseConfig(config: ProjectConfig): string {
+  const projectName = config.project.name;
   return `/**
  * Semantic Release Configuration
  * Automates versioning and package publishing
@@ -100,19 +101,19 @@ module.exports = {
           // Main bundle with version in name
           {
             path: 'dist/index.js',
-            name: '${config.project.name}-\${nextRelease.version}.js',
+            name: '${projectName}-\${nextRelease.version}.js',
             label: 'Main Bundle (v\${nextRelease.version})',
           },
           // TypeScript declarations with version
           {
             path: 'dist/index.d.ts',
-            name: '${config.project.name}-\${nextRelease.version}.d.ts',
+            name: '${projectName}-\${nextRelease.version}.d.ts',
             label: 'TypeScript Declarations (v\${nextRelease.version})',
           },
           // Source map with version (optional)
           {
             path: 'dist/index.js.map',
-            name: '${config.project.name}-\${nextRelease.version}.js.map',
+            name: '${projectName}-\${nextRelease.version}.js.map',
             label: 'Source Map (v\${nextRelease.version})',
           },
         ],
@@ -127,7 +128,12 @@ module.exports = {
     [
       '@semantic-release/git',
       {
-        assets: ['package.json', 'package-lock.json', 'CHANGELOG.md'],
+        assets: [
+          'package.json', 
+          'package-lock.json', 
+          'CHANGELOG.md',
+          'docs/technical-changelogs/**/*.md'
+        ],
         message:
           'chore(release): \${nextRelease.version} [skip ci]\\n\\n\${nextRelease.notes}',
       },

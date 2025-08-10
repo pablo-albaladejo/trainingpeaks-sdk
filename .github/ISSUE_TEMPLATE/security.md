@@ -24,7 +24,7 @@ assignees: ''
 - **Data exposure**: [Risk of data exposure]
 
 ### 🏗️ Technical Requirements
-- **Architecture layer**: [Domain/Application/Adapters] (see [architecture docs](https://github.com/pablo-albaladejo/trainingpeaks-sdk/blob/main/docs/clean-architecture.md))
+- **Architecture layer**: [Domain/Application/Adapters] - Choose one (see [architecture docs](https://github.com/pablo-albaladejo/trainingpeaks-sdk/blob/main/docs/clean-architecture.md))
 - **Files to secure**: [Specific files and functions]
 - **Dependencies**: [Security-related dependencies needed]
 - **Breaking changes**: [Yes/No - if yes, describe]

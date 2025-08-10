@@ -49,7 +49,7 @@ src/
 
 #### **🚨 CRITICAL: Strict Ports & Adapters Separation**
 
-The application layer MUST contain orchestration logic implemented as pure functions, contracts, types, and interfaces, but no external or side-effecting implementations. The adapters layer MUST contain all external and side-effecting implementations.
+The application layer MUST contain orchestration logic implemented as pure functions, contracts, and types, but no external or side-effecting implementations. The adapters layer MUST contain all external and side-effecting implementations.
 
 #### **📋 Application Layer: ONLY Definitions & Contracts**
 
@@ -172,15 +172,13 @@ export const createUserUseCase =
   (
     findUserById: FindUserById, // ← PORT (function type)
     saveUser: SaveUser, // ← PORT (function type)
-    validateUserId: validateUserId, // ← PORT (function type)
-    validateEmail: validateEmail, // ← PORT (function type)
-    generateUserId: generateUserId // ← PORT (function type)
+    ValidateEmail: ValidateEmail, // ← PORT (function type)
+    GenerateUserId: GenerateUserId // ← PORT (function type)
   ) =>
   async (input: CreateUserInput): Promise<CreateUserResponse> => {
     // 🎯 ORCHESTRATE USING FUNCTION CONTRACTS ONLY
-    validateUserId(input.id);
-    validateEmail(input.email);
-    const userId = generateUserId();
+    ValidateEmail(input.email);
+    const userId = GenerateUserId();
     const user = createUser(userId, input.email, input.name);
     await saveUser(user);
     return { user };
@@ -250,7 +248,11 @@ export const createSaveUser = (httpClient: HttpClient): SaveUser =>
 
 // Helper functions for data transformation
 const createUserFromResponse = (response: ApiResponse): User =>
-  createUser(response.id, response.email, response.name);
+  createUser(
+    createUserId(response.id),
+    createEmail(response.email), 
+    response.name
+  );
 
 const userToApiFormat = (user: User) => ({
   id: user.id.value,
