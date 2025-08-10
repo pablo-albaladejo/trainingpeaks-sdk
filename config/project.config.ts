@@ -49,10 +49,10 @@ export interface ProjectConfig {
  */
 const DEFAULT_COLORS = {
   // Priority colors
-  critical: 'd73a4a',
-  high: 'f85149', 
-  medium: 'fbca04',
-  low: '0e8a16',
+  priority_critical: 'd73a4a',
+  priority_high: 'f85149', 
+  priority_medium: 'fbca04',
+  priority_low: '0e8a16',
   
   // Type colors
   bug: 'd73a4a',
@@ -82,10 +82,10 @@ const DEFAULT_COLORS = {
   component: '1d76db',
   
   // Effort colors
-  small: '0e8a16',
+  effort_small: '0e8a16',
   effort_medium: 'fbca04',
-  large: 'ff8c00',
-  epic: 'd93f0b',
+  effort_large: 'ff8c00',
+  effort_epic: 'd93f0b',
   
   // Other colors
   breakingChange: 'd93f0b',
@@ -117,6 +117,30 @@ const DEFAULT_COMMIT_TYPES = [
 ] as const;
 
 /**
+ * Parse custom colors from environment variable with error handling and normalization
+ */
+function parseCustomColors(): Record<string, string> {
+  if (!process.env.CUSTOM_COLORS) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(process.env.CUSTOM_COLORS);
+    // Normalize colors by removing leading # if present
+    const normalized: Record<string, string> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      if (typeof value === 'string') {
+        normalized[key] = value.startsWith('#') ? value.slice(1) : value;
+      }
+    }
+    return normalized;
+  } catch (error) {
+    console.warn('Failed to parse CUSTOM_COLORS environment variable:', error);
+    return {};
+  }
+}
+
+/**
  * Get project configuration from environment variables with fallback to defaults
  */
 export function getProjectConfig(): ProjectConfig {
@@ -131,9 +155,9 @@ export function getProjectConfig(): ProjectConfig {
     },
     
     author: {
-      name: process.env.AUTHOR_NAME || 'Pablo Albaladejo',
-      email: process.env.AUTHOR_EMAIL || 'pablo@example.com',
-      githubUsername: process.env.GITHUB_USERNAME || 'pablo-albaladejo',
+      name: process.env.AUTHOR_NAME || 'Your Name',
+      email: process.env.AUTHOR_EMAIL || 'you@example.com',
+      githubUsername: process.env.GITHUB_USERNAME || 'your-handle',
     },
     
     repository: {
@@ -150,25 +174,25 @@ export function getProjectConfig(): ProjectConfig {
         develop: process.env.DEVELOP_BRANCH || 'develop',
         alpha: process.env.ALPHA_BRANCH || 'alpha',
       },
-      nodeVersions: process.env.NODE_VERSIONS?.split(',') || ['18.x', '20.x'],
+      nodeVersions: process.env.NODE_VERSIONS?.split(',').map(s => s.trim()).filter(Boolean) || ['18.x', '20.x'],
       coveragePath: process.env.COVERAGE_PATH || './coverage/lcov.info',
     },
     
     colors: {
       ...DEFAULT_COLORS,
-      // Allow overrides from environment
-      ...(process.env.CUSTOM_COLORS ? JSON.parse(process.env.CUSTOM_COLORS) : {}),
+      // Allow overrides from environment with error handling
+      ...parseCustomColors(),
     },
     
     github: {
-      codeowners: process.env.CODEOWNERS?.split(',') || ['pablo', 'pablo-albaladejo'],
+      codeowners: process.env.CODEOWNERS?.split(',').map(s => s.trim()).filter(Boolean) || ['your-handle'],
       dependabot: {
-        reviewers: process.env.DEPENDABOT_REVIEWERS?.split(',') || ['pablo-albaladejo'],
-        assignees: process.env.DEPENDABOT_ASSIGNEES?.split(',') || ['pablo-albaladejo'],
+        reviewers: process.env.DEPENDABOT_REVIEWERS?.split(',').map(s => s.trim()).filter(Boolean) || ['your-handle'],
+        assignees: process.env.DEPENDABOT_ASSIGNEES?.split(',').map(s => s.trim()).filter(Boolean) || ['your-handle'],
       },
     },
     
-    commitTypes: process.env.COMMIT_TYPES?.split(',') || [...DEFAULT_COMMIT_TYPES],
+    commitTypes: process.env.COMMIT_TYPES?.split(',').map(s => s.trim()).filter(Boolean) || [...DEFAULT_COMMIT_TYPES],
   };
 }
 
@@ -191,7 +215,7 @@ export function validateProjectConfig(config: ProjectConfig): void {
   
   // Validate colors are valid hex
   Object.entries(config.colors).forEach(([key, color]) => {
-    if (!/^[0-9a-fA-F]{6}$/.test(color)) {
+    if (!/^#?[0-9a-fA-F]{6}$/.test(color)) {
       throw new Error(`Invalid hex color for ${key}: ${color}`);
     }
   });

@@ -13,7 +13,7 @@ import { CookieJar } from 'tough-cookie';
 
 import {
   createHttpError,
-  HttpError,
+  type HttpError,
   type HttpErrorResponse,
 } from '@/adapters/errors/http-errors';
 import type { Logger } from '@/adapters/logging/logger';

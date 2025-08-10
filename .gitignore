@@ -7,7 +7,7 @@ yarn-error.log*
 # Build outputs
 dist/
 dist-cjs/
-build/
+/build/
 coverage/
 
 # Test reports

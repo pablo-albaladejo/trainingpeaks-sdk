@@ -64,8 +64,9 @@
 
 Before running these scripts, ensure you have:
 
-- GitHub CLI installed and authenticated: `gh --version && gh auth status`
-- Script execution permissions: `chmod +x scripts/github/setup/*.sh`
+- **GitHub CLI** installed and authenticated: `gh --version && gh auth status`  
+- **jq** for JSON processing: `jq --version`
+- **Script permissions**: `chmod +x scripts/github/setup/*.sh`
 
 ### Usage Examples
 

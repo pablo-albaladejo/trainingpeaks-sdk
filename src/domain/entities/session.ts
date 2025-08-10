@@ -10,6 +10,6 @@ import type { User } from './user';
  * User session containing authentication token and user data
  */
 export type Session = {
-  token: AuthToken;
-  user: User;
+  readonly token: AuthToken;
+  readonly user: User;
 };

@@ -12,6 +12,18 @@
 - Simplified architecture reflects actual implementation structure
 - Reduces confusion between documented vs actual architecture
 
+### Migration
+- **Import Path Changes**: Update any imports that referenced "infrastructure" to use "adapters"
+  ```typescript
+  // Before
+  import { createHttpClient } from '@infrastructure/http';
+  
+  // After  
+  import { createHttpClient } from '@adapters/http';
+  ```
+- **Alias Updates**: Path aliases `@infrastructure/*` now map to `@adapters/*`
+- **Documentation**: All references to "Infrastructure layer" are now "Adapters layer"
+
 ### Impact
 - Clearer mental model for developers
 - Documentation now matches implementation reality

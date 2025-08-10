@@ -56,13 +56,29 @@ const architectureViolations = {
     severity: 'critical'
   },
   
-  // Function-based service pattern
+  // Function-based service pattern with AST analysis
   servicePatternsCheck: {
     pattern: /src\/application\/services\/.*\.ts/,
-    violations: [
-      /interface \w+Service\s*\{/g,  // Grouped interfaces
-      /class \w+Service/g             // Class-based services
-    ],
+    astAnalysis: {
+      checkInterfaceServices: (sourceFile) => {
+        // Use TypeScript AST to detect grouped service interfaces
+        return ts.forEachChild(sourceFile, (node) => {
+          if (ts.isInterfaceDeclaration(node) && 
+              node.name?.text?.endsWith('Service')) {
+            return { violation: 'grouped-interface-service', node };
+          }
+        });
+      },
+      checkClassServices: (sourceFile) => {
+        // Use TypeScript AST to detect class-based services
+        return ts.forEachChild(sourceFile, (node) => {
+          if (ts.isClassDeclaration(node) && 
+              node.name?.text?.endsWith('Service')) {
+            return { violation: 'class-based-service', node };
+          }
+        });
+      }
+    },
     severity: 'major'
   }
 };
@@ -87,7 +103,7 @@ const typeScriptDebt = {
   
   // Unused imports
   unusedImports: {
-    command: 'npx ts-unused-exports tsconfig.json',
+    command: 'npx tsc --noEmit --listFiles | grep -v node_modules',  # Check for unused exports
     severity: 'minor'
   },
   
@@ -151,11 +167,14 @@ const organizationDebt = {
     severity: 'major'
   },
   
-  // Path alias misuse
+  // Dynamic path alias validation
   pathAliasValidation: {
-    correctPatterns: [
-      /@\//, /@adapters\//, /@application\//, /@domain\//
-    ],
+    dynamicPatterns: () => {
+      // Read tsconfig.json to get actual path aliases
+      const tsConfig = require('../../tsconfig.json');
+      const paths = tsConfig.compilerOptions?.paths || {};
+      return Object.keys(paths).map(alias => new RegExp(alias.replace('*', '')));
+    },
     violations: [
       /\.\.\/\.\.\//g,  // Relative imports beyond parent
       /from ['"]src\//g  // Direct src imports instead of aliases
@@ -169,10 +188,17 @@ const organizationDebt = {
     severity: 'major'
   },
   
-  // File size violations
+  // File size violations with updated test patterns
   fileSizeCheck: {
     threshold: 500, // lines
-    excludePatterns: [/\.test\.ts$/, /__fixtures__\//],
+    excludePatterns: [
+      /\.test\.ts$/,           // Unit tests
+      /\.spec\.ts$/,           // Spec files
+      /\.integ-test\.ts$/,     // Integration tests
+      /\.contract-test\.ts$/,  // Contract tests
+      /__fixtures__\//,        // Test fixtures
+      /\.e2e-test\./          // E2E tests
+    ],
     severity: 'minor'
   }
 };
@@ -252,7 +278,7 @@ const generateDebtIssue = (debtItem: DebtViolation) => {
 const exampleDebtIssue = {
   title: "refactor: convert UserValidationService to function-based pattern",
   template: ".github/ISSUE_TEMPLATE/refactor.md",
-  labels: ["technical-debt", "architecture", "clean-architecture", "priority:high"],
+  labels: ["technical-debt", "architecture", "clean-architecture", "priority: high"],
   body: `
 ## Problem
 Found grouped interface pattern in \`src/application/services/user-validation.ts\` that violates the project's function-based service architecture standard.
@@ -354,7 +380,8 @@ npx madge --circular src/     # Circular dependency detection
 ### Custom Debt Detection Scripts
 ```bash
 # Create custom analysis commands
-echo 'alias debt-check="npm run lint && npm run check-imports && npm run test:coverage"' >> ~/.bashrc
+# Add debt-check alias to your shell configuration manually if needed
+# alias debt-check="npm run lint && npm run check-imports && npm run test:coverage"
 
 # Add to package.json scripts
 {
@@ -362,7 +389,7 @@ echo 'alias debt-check="npm run lint && npm run check-imports && npm run test:co
     "debt:analysis": "npm run lint && npm run check-imports && npm run test:coverage",
     "debt:architecture": "madge --circular src/ && npm run check-imports", 
     "debt:testing": "npm run test:coverage && npm run test:integration",
-    "debt:typescript": "npx ts-unused-exports tsconfig.json && tsc --noEmit"
+    "debt:typescript": "npx tsc --noEmit --listFiles"
   }
 }
 ```

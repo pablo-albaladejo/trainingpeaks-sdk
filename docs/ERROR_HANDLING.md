@@ -87,7 +87,7 @@ ERROR_CODES.USER_NOT_FOUND              // 'USER_3002'
 
 // Network (4000-4999)
 ERROR_CODES.NETWORK_TIMEOUT             // 'NETWORK_4001'
-ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE // 'NETWORK_4006' (HTTP 503 Service Unavailable - retryable only for idempotent methods, Retry-After header takes precedence over backoff strategy when present, supports both HTTP-date and delay-seconds formats, retry delay capped by retryMaxDelay)
+ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE // 'NETWORK_4006' (HTTP 503 Service Unavailable - retryable only for idempotent methods, Retry-After header takes precedence over backoff strategy when present, supports both HTTP-date and delay-seconds formats, retry delay capped by retryMaxDelay with minimum delay of retryDelay and jitter applied when enabled)
 
 // Validation (5000-5999)
 ERROR_CODES.VALIDATION_FAILED           // 'VALIDATION_5001'
@@ -121,7 +121,7 @@ The SDK automatically retries these error conditions:
 
 These errors are **not** retried:
 - **Client errors (4xx)**: 400, 401, 403, 404, 422
-- **Gateway timeout (504)**: Gateway timeout errors are non-retryable by default to prevent retry storms when upstream services are overloaded. Safe opt-in retry patterns include: a single retry with exponential backoff for idempotent requests, or when a Retry-After header is present. This behavior can be configured via constructor options: `new TrainingPeaksSDK({ retryOn504: true, retryAttempts: 1 })`. Default handling: log the error and alert users.
+- **Gateway timeout (504)**: Gateway timeout errors are non-retryable by default to prevent retry storms when upstream services are overloaded. When retryOn504 is enabled, the same backoff, jitter, and maxDelay settings apply as for other retries, and Retry-After headers take precedence over these settings. This behavior can be configured via constructor options: `new TrainingPeaksSDK({ retryOn504: true, retryAttempts: 1 })`. Default handling: log the error and alert users.
 - **Authentication failures**: Invalid credentials (Note: 401 due to token expiration may trigger automatic token refresh and retry)
 - **Validation errors**: Malformed requests, missing required fields
 

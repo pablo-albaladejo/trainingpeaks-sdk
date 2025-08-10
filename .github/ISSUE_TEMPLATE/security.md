@@ -24,7 +24,7 @@ assignees: ''
 - **Data exposure**: [Risk of data exposure]
 
 ### 🏗️ Technical Requirements
-- **Architecture layer**: [Domain/Application/Adapters]
+- **Architecture layer**: [Domain/Application/Adapters] (see [architecture docs](https://github.com/pablo-albaladejo/trainingpeaks-sdk/blob/main/docs/clean-architecture.md))
 - **Files to secure**: [Specific files and functions]
 - **Dependencies**: [Security-related dependencies needed]
 - **Breaking changes**: [Yes/No - if yes, describe]
@@ -40,7 +40,7 @@ assignees: ''
 - **Security libraries**: [Security libraries to use]
 - **Encryption**: [Encryption requirements]
 - **Hashing**: [Hashing requirements]
-- **Secure coding**: Follow [OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/) and [OWASP ASVS Level 2 (L2)](https://owasp.org/www-project-application-security-verification-standard/) standards for implementation and validation
+- **Secure coding**: Follow [OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/) and [OWASP ASVS Level 1 (L1)](https://owasp.org/www-project-application-security-verification-standard/) standards for implementation and validation
 
 ### 🧪 Testing Requirements
 - **Security tests**: [Security test scenarios]

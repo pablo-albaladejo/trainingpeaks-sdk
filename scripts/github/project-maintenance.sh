@@ -76,6 +76,12 @@ EOF
 sync_issues() {
     print_header "Synchronizing Repository Issues"
     
+    # Check script existence before execution
+    if [[ ! -f "./scripts/github/sync-issues-to-project.sh" ]]; then
+        print_error "Script not found: ./scripts/github/sync-issues-to-project.sh"
+        return 1
+    fi
+    
     if ./scripts/github/sync-issues-to-project.sh --force; then
         print_success "Issue synchronization completed"
     else
@@ -87,6 +93,12 @@ sync_issues() {
 # Function to verify project views
 verify_views() {
     print_header "Verifying Project View Configuration"
+    
+    # Check script existence before execution
+    if [[ ! -f "./scripts/github/verify-views.sh" ]]; then
+        print_error "Script not found: ./scripts/github/verify-views.sh"
+        return 1
+    fi
     
     if ./scripts/github/verify-views.sh; then
         print_success "View verification completed"

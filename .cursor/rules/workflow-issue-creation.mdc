@@ -28,6 +28,23 @@ interface InitialRequirement {
 // "We need better error messages for invalid API responses"
 ```
 
+```typescript
+// Complete requirements interface
+interface Requirements {
+  type: 'feature' | 'bug' | 'refactor' | 'documentation' | 'performance' | 'security' | 'testing';
+  description: string;
+  priority?: 'critical' | 'high' | 'medium' | 'low';
+  complexity?: 'simple' | 'medium' | 'complex' | 'epic';
+  affects?: string[];
+  breaking?: boolean;
+  needsDiscussion?: boolean;
+  isGoodFirstIssue?: boolean;
+  userStories?: string[];
+  acceptanceCriteria?: string[];
+  technicalRequirements?: string[];
+}
+```
+
 ### 2. Iterative Refinement Process
 
 #### For Feature Requests
@@ -80,7 +97,17 @@ const detectIssueType = (description: string) => {
     testing: ['test', 'coverage', 'spec', 'validation'],
     documentation: ['docs', 'documentation', 'readme', 'guide']
   };
-  // Implementation logic...
+  
+  const lowercaseDesc = description.toLowerCase();
+  
+  for (const [type, words] of Object.entries(keywords)) {
+    if (words.some(word => lowercaseDesc.includes(word))) {
+      return type as keyof typeof keywords;
+    }
+  }
+  
+  // Default to feature if no keywords match
+  return 'feature';
 };
 ```
 
@@ -161,7 +188,6 @@ const generateLabels = (requirements: Requirements) => {
     'performance': 'type: performance',
     'security': 'type: security',
     'testing': 'type: testing',
-    'infrastructure': 'type: infrastructure'
   };
   labels.push(typeLabels[requirements.type]);
   
@@ -187,7 +213,7 @@ const generateLabels = (requirements: Requirements) => {
   if (requirements.affects?.includes('domain')) labels.push('architecture: domain');
   if (requirements.affects?.includes('application')) labels.push('architecture: application');
   if (requirements.affects?.includes('adapters')) labels.push('architecture: adapters');
-  if (requirements.affects?.includes('infrastructure')) labels.push('architecture: infrastructure');
+  // Infrastructure layer removed - using Adapters instead
   
   // Component labels for specific areas
   if (requirements.affects?.includes('authentication')) labels.push('component: auth');

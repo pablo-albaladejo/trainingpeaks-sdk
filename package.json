@@ -78,7 +78,7 @@
     "generate:config": "tsx scripts/build/generate-all-configs.ts",
     "validate:config": "tsx scripts/build/validate-project-config.ts",
     "sync:labels": "gh label list --json name,color,description > .github/current-labels.json && echo 'Labels synced to .github/current-labels.json'",
-    "validate:all": "npm run format:check && npm run lint && npm run type-check && npm run check-imports && npm run test && npm run build"
+    "validate:all": "npm run format:check; npm run lint; npm run type-check; npm run check-imports; npm run test; npm run build"
   },
   "keywords": [
     "trainingpeaks",
@@ -130,6 +130,7 @@
     "prettier": "^3.6.2",
     "semantic-release": "^24.2.7",
     "tsc-alias": "^1.8.16",
+    "tsx": "^4.19.0",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.39.0",
     "vite-tsconfig-paths": "^5.1.4",

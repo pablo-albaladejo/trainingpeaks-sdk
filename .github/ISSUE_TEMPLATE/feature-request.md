@@ -19,7 +19,7 @@ assignees: ''
   - As a [user type], I want [capability] so that [benefit]
 
 ### 🏗️ Technical Requirements
-- **Architecture layer**: [Domain/Application/Adapters]
+- **Architecture layer**: [Domain/Application/Adapters] (see [architecture docs](https://github.com/pablo-albaladejo/trainingpeaks-sdk/blob/main/docs/clean-architecture.md))
 - **Files to create/modify**: [List of files]
 - **Dependencies**: [Any new dependencies needed]
 - **Breaking changes**: [Yes/No - if yes, describe]

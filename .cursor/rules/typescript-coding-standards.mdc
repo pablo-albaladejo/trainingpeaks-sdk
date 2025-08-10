@@ -18,25 +18,26 @@ alwaysApply: false
 ### Naming Conventions
 
 ```typescript
-// Interfaces: PascalCase with descriptive names
-interface UserRepository {}
-interface CreateUserInput {}
+// Types: PascalCase with descriptive names (preferred over interfaces)
+type UserRepository = {
+  readonly findById: (id: string) => Promise<User | null>;
+};
+type CreateUserInput = {
+  readonly email: string;
+  readonly name: string;
+};
 
-// Classes: PascalCase
-class UserService {}
-class ValidationError {}
-
-// Functions: camelCase
-function createUser() {}
-function validateEmail() {}
+// Function types: camelCase (preferred over classes)
+type createUser = (input: CreateUserInput) => Promise<User>;
+type validateEmail = (email: string) => void;
 
 // Constants: UPPER_SNAKE_CASE
 const MAX_RETRY_ATTEMPTS = 3;
 const DEFAULT_TIMEOUT = 5000;
 
-// Private members: prefix with underscore
-private _internalMethod() {}
-private _privateProperty: string;
+// Functions: camelCase
+function createUserImpl() {}
+function validateEmailImpl() {}
 ```
 
 ### Type Definitions
@@ -44,32 +45,36 @@ private _privateProperty: string;
 #### Public API Types
 
 ```typescript
-// Export public types from dedicated files
+// Export public types from dedicated files (prefer types over interfaces)
 // types.ts
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-}
+export type User = {
+  readonly id: string;
+  readonly email: string;
+  readonly name: string;
+};
 
-export interface CreateUserOptions {
-  email: string;
-  name: string;
-  validateEmail?: boolean;
-}
+export type CreateUserOptions = {
+  readonly email: string;
+  readonly name: string;
+  readonly validateEmail?: boolean;
+};
+
+// Function types for services
+export type CreateUser = (options: CreateUserOptions) => Promise<User>;
+export type FindUser = (id: string) => Promise<User | null>;
 ```
 
 #### Internal Types
 
 ```typescript
 // Use internal types for implementation details
-interface InternalUserData {
-  id: string;
-  email: string;
-  name: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+type InternalUserData = {
+  readonly id: string;
+  readonly email: string;
+  readonly name: string;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+};
 ```
 
 ## Function Design
@@ -94,18 +99,20 @@ export function processData(input: string | number): string | number {
 
 ```typescript
 // Use options objects for functions with many parameters
-interface ProcessOptions {
-  timeout?: number;
-  retries?: number;
-  validate?: boolean;
-}
+type ProcessOptions = {
+  readonly timeout?: number;
+  readonly retries?: number;
+  readonly validate?: boolean;
+};
 
-export function processWithOptions(
-  options: ProcessOptions = {}
-): Promise<void> {
+// Function type definition
+export type ProcessWithOptions = (options?: ProcessOptions) => Promise<void>;
+
+// Implementation
+export const processWithOptions: ProcessWithOptions = async (options = {}) => {
   const { timeout = 5000, retries = 3, validate = true } = options;
   // implementation
-}
+};
 ```
 
 ### Error Handling
@@ -136,51 +143,60 @@ export function safeOperation(): Result<string, ValidationError> {
 }
 ```
 
-## Class Design
+## Functional Design (Preferred over Classes)
 
-### Immutability
+### Immutable Data Structures
 
 ```typescript
-// Prefer immutable classes for domain entities
-export class User {
-  constructor(
-    private readonly _id: string,
-    private readonly _email: string,
-    private readonly _name: string
-  ) {}
+// Prefer immutable data types for domain entities
+export type User = {
+  readonly id: string;
+  readonly email: string;
+  readonly name: string;
+};
 
-  // Getters for readonly properties
-  get id(): string {
-    return this._id;
-  }
-  get email(): string {
-    return this._email;
-  }
-  get name(): string {
-    return this._name;
-  }
+// Pure functions for entity operations
+export const createUser = (id: string, email: string, name: string): User => ({
+  id,
+  email,
+  name,
+});
 
-  // Return new instances for modifications
-  withName(newName: string): User {
-    return new User(this._id, this._email, newName);
-  }
-}
+export const updateUserName = (user: User, newName: string): User => ({
+  ...user,
+  name: newName,
+});
 ```
 
-### Dependency Injection
+### Function Composition and Dependency Injection
 
 ```typescript
-// Use constructor injection for dependencies
-export class UserService {
-  constructor(
-    private readonly userRepository: UserRepository,
-    private readonly validator: UserValidator
-  ) {}
+// Use function factories for dependency injection
+export type UserRepository = {
+  readonly find: (id: string) => Promise<User | null>;
+  readonly save: (user: User) => Promise<void>;
+};
 
-  async createUser(input: CreateUserInput): Promise<User> {
-    // implementation
-  }
-}
+export type UserValidator = {
+  readonly validateEmail: (email: string) => void;
+  readonly validateName: (name: string) => void;
+};
+
+// Function type definitions
+export type CreateUserService = (input: CreateUserInput) => Promise<User>;
+
+// Factory function that injects dependencies
+export const createUserService = (
+  userRepository: UserRepository,
+  validator: UserValidator
+): CreateUserService =>
+  async (input: CreateUserInput): Promise<User> => {
+    validator.validateEmail(input.email);
+    validator.validateName(input.name);
+    const user = createUser(generateId(), input.email, input.name);
+    await userRepository.save(user);
+    return user;
+  };
 ```
 
 ## Module Organization
@@ -281,26 +297,35 @@ export type RequiredFields<T, K extends keyof T> = T & Required<Pick<T, K>>;
 ### Configuration Objects
 
 ```typescript
-// Use configuration objects for library setup
-export interface LibraryConfig {
-  apiKey?: string;
-  baseUrl?: string;
-  timeout?: number;
-  retries?: number;
-}
+// Use configuration types for library setup
+export type LibraryConfig = {
+  readonly apiKey?: string;
+  readonly baseUrl?: string;
+  readonly timeout?: number;
+  readonly retries?: number;
+};
 
-export class LibraryClient {
-  private config: Required<LibraryConfig>;
+type ResolvedConfig = {
+  readonly apiKey: string;
+  readonly baseUrl: string;
+  readonly timeout: number;
+  readonly retries: number;
+};
 
-  constructor(config: LibraryConfig = {}) {
-    this.config = {
-      apiKey: config.apiKey ?? process.env.API_KEY ?? '',
-      baseUrl: config.baseUrl ?? 'https://api.example.com',
-      timeout: config.timeout ?? 5000,
-      retries: config.retries ?? 3,
-    };
-  }
-}
+// Factory function instead of class
+export const createLibraryClient = (config: LibraryConfig = {}) => {
+  const resolvedConfig: ResolvedConfig = {
+    apiKey: config.apiKey ?? process.env.API_KEY ?? '',
+    baseUrl: config.baseUrl ?? 'https://api.example.com',
+    timeout: config.timeout ?? 5000,
+    retries: config.retries ?? 3,
+  };
+
+  return {
+    config: resolvedConfig,
+    // Client methods as functions
+  };
+};
 ```
 
 ## Testing Patterns
@@ -308,13 +333,21 @@ export class LibraryClient {
 ### Mocking
 
 ```typescript
-// Use interfaces for easy mocking
-export interface HttpClient {
-  get<T>(url: string): Promise<T>;
-  post<T>(url: string, data: unknown): Promise<T>;
-}
+// Use types for easy mocking
+export type HttpClient = {
+  readonly get: <T>(url: string) => Promise<T>;
+  readonly post: <T>(url: string, data: unknown) => Promise<T>;
+};
 
-// In tests
+// Individual function type definitions (preferred)
+export type HttpGet = <T>(url: string) => Promise<T>;
+export type HttpPost = <T>(url: string, data: unknown) => Promise<T>;
+
+// In tests - mock individual functions
+const mockHttpGet: HttpGet = vi.fn();
+const mockHttpPost: HttpPost = vi.fn();
+
+// Or mock the grouped type if needed
 const mockHttpClient: HttpClient = {
   get: vi.fn(),
   post: vi.fn(),

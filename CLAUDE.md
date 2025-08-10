@@ -29,7 +29,7 @@ src/
 
 ### Key Patterns
 - **Ports & Adapters**: Application layer contains only contracts, adapters contain implementations
-- **Repository Pattern**: Domain defines interfaces, adapters implement
+- **Repository Pattern**: Domain defines function types, adapters implement
 - **Function-Based Services**: Use individual function types, NOT grouped interfaces
 
 ```typescript
@@ -135,12 +135,12 @@ Collaborative issue creation with requirement refinement and automatic GitHub is
 **ALL ISSUES MUST BE CREATED WITH PROPER LABELS** - No unlabeled issues allowed.
 
 **Required Labels (3 minimum):**
-- **Type**: `type: enhancement`, `type: bug`, `type: refactor`, `type: documentation`, `type: testing`, `type: performance`, `type: security`, `type: infrastructure`
+- **Type**: `type: enhancement`, `type: bug`, `type: refactor`, `type: documentation`, `type: testing`, `type: performance`, `type: security`
 - **Priority**: `priority: critical`, `priority: high`, `priority: medium`, `priority: low`  
 - **Effort**: `effort: small` (<1 day), `effort: medium` (1-3 days), `effort: large` (3-7 days), `effort: epic` (>1 week)
 
 **Optional Labels:**
-- **Architecture**: `architecture: domain`, `architecture: application`, `architecture: adapters`, `architecture: infrastructure`
+- **Architecture**: `architecture: domain`, `architecture: application`, `architecture: adapters`
 - **Component**: `component: auth`, `component: api`, `component: client`, `component: testing`
 
 ### Available Templates

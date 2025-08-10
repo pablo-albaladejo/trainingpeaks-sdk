@@ -143,6 +143,8 @@ npm run check-imports          # Import structure validation
 npm run test:coverage          # Vitest coverage requirements
 npx tsc --noEmit              # TypeScript strict mode
 npm run build                  # ESM and CJS build validation
+npm run generate:config        # Generate project configuration
+npm run validate:config        # Validate project setup
 ```
 
 ### Clean Architecture Validation

@@ -127,16 +127,16 @@ jobs:
         if: github.event_name == 'issues'
         uses: actions/github-script@v7
         with:
-          script: |
+          script: >
             const labels = context.payload.issue.labels.map(l => l.name);
             const requiredTypes = ['type: enhancement', 'type: bug', 'type: refactor', 'type: documentation', 'type: testing', 'type: performance', 'type: security', 'type: infrastructure'];
             const requiredPriorities = ['priority: critical', 'priority: high', 'priority: medium', 'priority: low'];
             const requiredEffort = ['effort: small', 'effort: medium', 'effort: large', 'effort: epic'];
-            
+
             const hasType = requiredTypes.some(type => labels.includes(type));
             const hasPriority = requiredPriorities.some(priority => labels.includes(priority));
             const hasEffort = requiredEffort.some(effort => labels.includes(effort));
-            
+
             if (!hasType || !hasPriority || !hasEffort) {
               await github.rest.issues.createComment({
                 issue_number: context.issue.number,
@@ -148,8 +148,7 @@ jobs:
                      (!hasEffort ? '- Effort label (effort: small, effort: medium, etc.)\n' : '') +
                      '\nPlease add the missing labels for proper issue categorization.'
               });
-              
-              // Add needs-triage label
+
               await github.rest.issues.addLabels({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
@@ -216,11 +215,23 @@ echo "🔍 Checking issue labels..."
 
 # Get all open issues without proper labels
 unlabeled_issues=$(gh issue list --json number,labels,title --jq '
-  .[] | select(
-    (.labels | map(.name) | contains(["type: enhancement", "type: bug", "type: refactor", "type: documentation", "type: testing", "type: performance", "type: security", "type: infrastructure"]) | not) or
-    (.labels | map(.name) | contains(["priority: critical", "priority: high", "priority: medium", "priority: low"]) | not) or
-    (.labels | map(.name) | contains(["effort: small", "effort: medium", "effort: large", "effort: epic"]) | not)
-  ) | "\(.number): \(.title)"
+  # Define label arrays
+  def typeLabels: ["type: enhancement", "type: bug", "type: refactor", "type: documentation", "type: testing", "type: performance", "type: security", "type: infrastructure"];
+  def priorityLabels: ["priority: critical", "priority: high", "priority: medium", "priority: low"];
+  def effortLabels: ["effort: small", "effort: medium", "effort: large", "effort: epic"];
+  
+  # Extract label names for easier filtering
+  . as $issues | .[] | 
+  (.labels | map(.name)) as $labelNames |
+  
+  # Check each category individually
+  (($labelNames | map(select(. as $label | typeLabels | contains([$label]))) | length) == 0) as $missingType |
+  (($labelNames | map(select(. as $label | priorityLabels | contains([$label]))) | length) == 0) as $missingPriority |
+  (($labelNames | map(select(. as $label | effortLabels | contains([$label]))) | length) == 0) as $missingEffort |
+  
+  # Select issues missing any required label
+  select($missingType or $missingPriority or $missingEffort) |
+  "\(.number): \(.title)"
 ')
 
 if [[ -n "$unlabeled_issues" ]]; then

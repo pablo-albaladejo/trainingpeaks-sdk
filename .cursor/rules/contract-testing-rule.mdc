@@ -162,10 +162,8 @@ it('should detect new fields in API response', async () => {
   
   if (response.length > 0) {
     const workout = response[0];
-    const knownFields = Object.keys(workoutSchema.shape);
-    const responseFields = Object.keys(workout);
-    
-    const newFields = responseFields.filter(field => !knownFields.includes(field));
+    const schemaFields = extractSchemaFields(workoutSchema);
+    const newFields = findNewFields(workout, schemaFields);
     
     if (newFields.length > 0) {
       console.warn(`⚠️  New fields detected in workout response: ${newFields.join(', ')}`);
@@ -173,6 +171,63 @@ it('should detect new fields in API response', async () => {
     }
   }
 });
+
+// Helper function to recursively extract all field paths from a Zod schema
+function extractSchemaFields(schema: any, prefix: string = ''): string[] {
+  const fields: string[] = [];
+  
+  if (schema.shape) {
+    // ZodObject
+    for (const [key, value] of Object.entries(schema.shape)) {
+      const fieldPath = prefix ? `${prefix}.${key}` : key;
+      fields.push(fieldPath);
+      
+      // Recursively process nested objects
+      if (value && typeof value === 'object') {
+        fields.push(...extractSchemaFields(value, fieldPath));
+      }
+    }
+  } else if (schema.element) {
+    // ZodArray - check the element type
+    fields.push(...extractSchemaFields(schema.element, `${prefix}[]`));
+  } else if (schema.options) {
+    // ZodUnion - check all options
+    for (const option of schema.options) {
+      fields.push(...extractSchemaFields(option, prefix));
+    }
+  }
+  
+  return fields;
+}
+
+// Helper function to recursively find new fields in response object
+function findNewFields(obj: any, knownFields: string[], prefix: string = ''): string[] {
+  const newFields: string[] = [];
+  
+  if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+    for (const [key, value] of Object.entries(obj)) {
+      const fieldPath = prefix ? `${prefix}.${key}` : key;
+      
+      if (!knownFields.includes(fieldPath)) {
+        newFields.push(fieldPath);
+      }
+      
+      // Recursively check nested objects
+      if (value && typeof value === 'object') {
+        if (Array.isArray(value)) {
+          // Handle arrays by checking first element if it exists
+          if (value.length > 0) {
+            newFields.push(...findNewFields(value[0], knownFields, `${fieldPath}[]`));
+          }
+        } else {
+          newFields.push(...findNewFields(value, knownFields, fieldPath));
+        }
+      }
+    }
+  }
+  
+  return newFields;
+}
 ```
 
 ## API Change Detection

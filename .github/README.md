@@ -14,7 +14,6 @@ This directory contains all the GitHub-specific configuration files for the Trai
 │   ├── testing.md           # Testing template
 │   ├── performance.md       # Performance template
 │   ├── security.md          # Security template
-│   ├── infrastructure.md    # Infrastructure template
 │   └── config.yml           # Template configuration
 ├── workflows/                # GitHub Actions workflows
 │   └── ci.yml              # Continuous Integration workflow

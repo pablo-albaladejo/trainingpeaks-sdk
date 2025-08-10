@@ -24,7 +24,7 @@ assignees: ''
 - **Benchmarks**: [Current vs. expected performance]
 
 ### 🏗️ Technical Requirements
-- **Architecture layer**: [Domain/Application/Adapters]
+- **Architecture layer**: [Domain/Application/Adapters] (see [architecture docs](https://github.com/pablo-albaladejo/trainingpeaks-sdk/blob/main/docs/clean-architecture.md))
 - **Files to optimize**: [Specific files and functions]
 - **Dependencies**: [Any new dependencies needed]
 - **Breaking changes**: [Yes/No - if yes, describe]

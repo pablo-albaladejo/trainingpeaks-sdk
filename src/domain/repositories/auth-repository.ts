@@ -1,4 +1,4 @@
-import { Credentials, Session } from '@/domain';
+import type { Credentials, Session } from '@/domain';
 
 export type AuthRepositoryLogin = (
   credentials: Credentials

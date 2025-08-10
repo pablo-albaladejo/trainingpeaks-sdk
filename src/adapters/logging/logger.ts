@@ -18,7 +18,7 @@ export type LoggerConfig = {
 };
 
 /**
- * Re-export logger interface from domain
+ * Re-export logger type from domain
  */
 export type { Logger } from '@/domain/types/logger';
 import type { Logger } from '@/domain/types/logger';

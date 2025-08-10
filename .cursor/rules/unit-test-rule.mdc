@@ -27,6 +27,7 @@ This includes:
 - **Response structure verification** - All fields, types, and nested objects must be verified
 - **Update contract tests** when API contracts change - failing tests indicate API changes that need SDK updates
 - **Command**: `npm run test:contract` must pass for all endpoint modifications
+- **CI Integration**: Contract tests MUST be integrated into GitHub Actions CI workflows to prevent merges when API contracts fail validation
 
 **Exceptions** (must be justified):
 - Simple getters/setters with no logic

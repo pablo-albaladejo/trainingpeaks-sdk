@@ -128,6 +128,23 @@ All implementations must pass:
 - `refactor/issue-{number}-{description}` - Code refactoring
 - `docs/issue-{number}-{description}` - Documentation updates
 
+### Branch Name Sanitization
+```typescript
+// Sanitize branch names to be Git-compatible
+function sanitizeBranchName(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove non-alphanumeric except spaces and hyphens
+    .replace(/\s+/g, '-')         // Replace spaces with hyphens
+    .replace(/-+/g, '-')          // Collapse multiple hyphens
+    .replace(/^-|-$/g, '')        // Remove leading/trailing hyphens
+    .substring(0, 50);            // Limit length for readability
+}
+
+// Example: "Add user authentication feature" → "add-user-authentication-feature"
+// Example: "Fix: API timeout issues" → "fix-api-timeout-issues"
+```
+
 ## Usage Examples
 
 ```bash
@@ -137,8 +154,8 @@ All implementations must pass:
 # After plan approval
 @implement-plan
 
-# Check implementation status
-@workflow-status
+# Check implementation status (use git status and branch info)
+git status && git branch
 ```
 
 ## Integration Commands

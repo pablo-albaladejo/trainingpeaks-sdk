@@ -15,5 +15,6 @@ export type Logger = {
   debug: (message: string, ...args: unknown[]) => void;
   info: (message: string, ...args: unknown[]) => void;
   warn: (message: string, ...args: unknown[]) => void;
-  error: (message: string, ...args: unknown[]) => void;
+  error: (message: string | Error, ...args: unknown[]) => void;
+  log?: (level: LogLevel, message: string, ...args: unknown[]) => void;
 };

@@ -45,10 +45,10 @@ Select the appropriate contributor label for this PR:
 - **Branches**: [Current %] → [New %] (Δ [+/-]%)
 - **Functions**: [Current %] → [New %] (Δ [+/-]%)
 
-**Coverage Reports** (please provide reviewer-accessible links):
-- [ ] Codecov report: [Public link to Codecov PR comment or dashboard - ensure reviewers can access]
-- [ ] CI artifacts: [Link to CI coverage report artifacts if available - verify reviewer access]
-- [ ] Coverage gate status: [PASS/FAIL - indicate if coverage thresholds are met]
+**Coverage Reports** (sources and reviewer access):
+- [ ] Codecov report: [Link to Codecov PR comment/dashboard - generated from coverage files uploaded during CI]
+- [ ] CI artifacts: [Link to CI coverage report artifacts - HTML reports from npm run test:coverage, verify reviewer access]
+- [ ] Coverage gate status: [PASS/FAIL - indicate if coverage thresholds are met per project configuration]
 
 ### 📚 Documentation
 
