@@ -87,7 +87,7 @@ ERROR_CODES.USER_NOT_FOUND              // 'USER_3002'
 
 // Network (4000-4999)
 ERROR_CODES.NETWORK_TIMEOUT             // 'NETWORK_4001'
-ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE // 'NETWORK_4006'
+ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE // 'NETWORK_4006' (HTTP 503 Service Unavailable - retryable)
 
 // Validation (5000-5999)
 ERROR_CODES.VALIDATION_FAILED           // 'VALIDATION_5001'
@@ -114,11 +114,13 @@ The SDK automatically retries these error conditions:
 - **Timeout errors**: 408
 - **Rate limiting**: 429
 
+**Note**: Automatic retries are applied only to idempotent or safe operations (such as GET requests) to avoid potential duplicate side effects on non-idempotent operations like POST requests without idempotency keys.
+
 ### Non-retryable Errors
 
 These errors are **not** retried:
 - **Client errors (4xx)**: 400, 401, 403, 404, 422
-- **Gateway timeout (504)**: Gateway timeout errors
+- **Gateway timeout (504)**: Gateway timeout errors are non-retryable to prevent retry storms when upstream services are overloaded. Recommended handling: log the error and alert users rather than retrying automatically.
 - **Authentication failures**: Invalid credentials (Note: 401 due to token expiration may trigger automatic token refresh and retry)
 - **Validation errors**: Malformed requests, missing required fields
 

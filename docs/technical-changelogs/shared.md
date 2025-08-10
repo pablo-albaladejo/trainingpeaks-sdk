@@ -1,15 +1,20 @@
+---
+pr: "N/A (Initial setup)"
+author: "System Setup"
+related_issues: "Technical documentation standardization"
+breaking_change: false
+migration_guide: "N/A"
+scope: "shared"
+component: "utilities"
+links:
+  - "https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/documentation"
+---
+
 # Shared Utilities Technical Changelog
 
 This changelog tracks shared utilities and cross-cutting concerns. **Cross-cutting concerns** include logging, validation, error handling, request ID generation, session utilities, and other functionality that spans multiple architectural layers.
 
 ## [2024-08-10] - Initial Structure
-
-**Metadata**:
-- **PR**: N/A (Initial setup)
-- **Author**: System Setup
-- **Related Issues**: Technical documentation standardization
-- **Breaking Change**: No
-- **Migration Guide**: N/A
 
 ### Added
 - Created technical changelog for shared utilities and cross-cutting concerns

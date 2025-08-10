@@ -1,4 +1,4 @@
-# TrainingPeaks Client New Architecture
+# TrainingPeaks SDK New Architecture
 
 ## Overview
 
@@ -32,7 +32,7 @@ The client handles all dependency injection internally:
 // The SDK creates and configures all dependencies
 const sdk = createTrainingPeaksSdk(config);
 
-// Los use cases reciben sus dependencias inyectadas
+// Use cases receive their dependencies injected
 const loginUseCase = executeLoginUseCase(
   loginServiceWrapper,
   authService.getCurrentUser
@@ -59,9 +59,9 @@ export interface TrainingPeaksSdk {
 - **Domain**: Pure business logic
 - **Adapters**: Concrete implementations that interface with external systems
 
-## Using the New Client
+## Using the New SDK
 
-### Client Creation
+### SDK Creation
 
 ```typescript
 import { createTrainingPeaksSdk } from '@trainingpeaks/sdk';
@@ -127,10 +127,13 @@ const authService = createAuthService({
 To add a new use case:
 
 1. Create the use case in `src/application/use-cases/`
-2. Create an entrypoint in `src/entrypoints/`
+2. Create an entrypoint in `src/entrypoints/` ([sample entrypoint file](src/entrypoints/login/entrypoint.ts))
 3. Add the function to the SDK in `src/sdk/training-peaks-sdk.ts`
-4. Export from `src/index.ts`
-5. Add unit and integration tests for the new use case and SDK surface to ensure proper coverage and functionality
+4. Export from `src/index.ts` using tree-shakeable named exports to maintain public API consistency
+5. Add comprehensive tests:
+   - Unit tests at the use-case level
+   - Integration tests covering the entrypoint and SDK layers
+   - Ensure proper coverage and functionality across all architectural layers
 
 ## Migration from Previous Version
 
@@ -162,12 +165,12 @@ import { TrainingPeaksSdkClass } from '@trainingpeaks/sdk';
 const client = new TrainingPeaksSdkClass(config);
 ```
 
-**Nota**: Se recomienda migrar al nuevo cliente funcional para aprovechar las mejoras en la arquitectura.
+**Note**: It's recommended to migrate to the new functional SDK to benefit from architectural improvements.
 
-## Próximos Pasos
+## Next Steps
 
-1. **Agregar más use cases**: Implementar casos de uso adicionales como gestión de workouts
-2. **Mejorar manejo de errores**: Implementar tipos de error más específicos
-3. **Agregar validación**: Implementar validación de entrada con Zod
-4. **Mejorar testing**: Agregar tests de integración para el cliente
-5. **Documentación**: Expandir la documentación de la API
+1. **Add more use cases**: Implement additional use cases such as workout management
+2. **Improve error handling**: Implement more specific error types
+3. **Add validation**: Implement input validation with Zod
+4. **Improve testing**: Add integration tests for the SDK
+5. **Documentation**: Expand the API documentation

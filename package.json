@@ -100,7 +100,7 @@
   },
   "homepage": "https://github.com/pablo-albaladejo/trainingpeaks-sdk#readme",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",

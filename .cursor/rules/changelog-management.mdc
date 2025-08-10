@@ -1,6 +1,6 @@
 ---
 description: Changelog management and documentation rules for tracking code evolution and architectural decisions
-globs: **/*.ts,**/*.tsx,**/*.js,**/*.jsx,**/*.mjs,**/*.mts,**/*.cts,**/*.cjs,**/CHANGELOG.md,docs/technical-changelogs/adapters.md,docs/technical-changelogs/application.md,docs/technical-changelogs/domain.md,docs/technical-changelogs/infrastructure.md,docs/technical-changelogs/shared.md
+globs: **/*.ts,**/*.tsx,**/*.js,**/*.jsx,**/*.mjs,**/*.mts,**/*.cts,**/*.cjs,**/CHANGELOG.md,docs/technical-changelogs/README.md,docs/technical-changelogs/adapters.md,docs/technical-changelogs/application.md,docs/technical-changelogs/domain.md,docs/technical-changelogs/infrastructure.md,docs/technical-changelogs/shared.md
 alwaysApply: true
 ---
 

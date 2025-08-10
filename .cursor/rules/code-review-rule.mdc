@@ -83,10 +83,14 @@ alwaysApply: false
 
 ### 🧪 Testing
 
-#### [ ] Test Coverage
+#### [ ] Test Coverage ⚠️ CRITICAL
 
+- [ ] **MANDATORY**: Every line of code implementing logic has corresponding unit tests
+- [ ] All conditional branches (if/else, switch, ternary) are tested
+- [ ] All loops and iterations are covered
+- [ ] All error handling paths are tested
+- [ ] All edge cases and boundary conditions are covered
 - [ ] Public API has comprehensive test coverage
-- [ ] Edge cases and error scenarios are tested
 - [ ] Mocking is used appropriately
 - [ ] Test data is realistic and varied
 
@@ -247,9 +251,11 @@ alwaysApply: false
 - [ ] Missing type annotations
 - [ ] Code duplication
 
-#### [ ] Testing Gaps
+#### [ ] Testing Gaps ⚠️ CRITICAL
 
-- [ ] Missing test coverage
+- [ ] **MANDATORY**: Missing unit tests for logic implementation
+- [ ] Missing test coverage for conditional branches
+- [ ] Missing test coverage for error handling paths
 - [ ] Inadequate error scenario testing
 - [ ] Poor test organization
 - [ ] Unrealistic test data

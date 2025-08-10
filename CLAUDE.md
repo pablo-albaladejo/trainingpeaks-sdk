@@ -159,6 +159,9 @@ This project maintains TWO types of changelogs to track evolution and provide co
 
 ### Testing Strategy
 - **Unit tests**: Use `.test.ts` suffix, focus on individual functions/classes
+  - **MANDATORY**: Every line of code implementing logic MUST have corresponding unit tests
+  - Cover all conditional branches, loops, error paths, and edge cases
+  - Use comprehensive test fixtures and mock data
 - **Integration tests**: Use `.integ-test.ts` suffix, test feature workflows
 - **Test fixtures**: Located in `src/__fixtures__/` using Rosie factory pattern
 - **E2E tests**: Located in `e2e-test/` directory for testing built packages
@@ -195,6 +198,13 @@ This project maintains TWO types of changelogs to track evolution and provide co
 - **TypeScript**: Strict mode enabled with comprehensive type checking
 - **Coverage**: Automatic threshold updates, excludes fixtures and tests
 - **Import structure**: Validated via custom bash script
+- **Unit Testing Requirement**: Every line of code that implements logic MUST be accompanied by a unit test that covers it. This includes:
+  - All functions with business logic
+  - All conditional statements (if/else, switch, ternary operators)
+  - All loops and iterations
+  - All error handling paths
+  - All edge cases and boundary conditions
+  - Exception: Simple getters/setters, basic constructors, and trivial utility functions may be exempted on a case-by-case basis
 
 ## Key Dependencies
 - **Runtime**: axios, axios-cookiejar-support, playwright-core, zod, rosie

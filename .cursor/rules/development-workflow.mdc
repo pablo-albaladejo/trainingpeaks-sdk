@@ -6,8 +6,9 @@ alwaysApply: true
 
 # Development Workflow for NPM Libraries
 
-## 🚨 CRITICAL: Changelog Requirements
+## 🚨 CRITICAL: Development Requirements
 
+### Mandatory Changelog Updates
 **MANDATORY**: Every code change MUST update both changelog types:
 
 1. **Folder-Level Changelog**: Update `src/[folder]/CHANGELOG.md` with technical details
@@ -16,6 +17,20 @@ alwaysApply: true
 **Pre-Commit Validation**: All commits require changelog updates or commit will be rejected.
 
 See [changelog-management.mdc](./changelog-management.mdc) for complete guidelines.
+
+### Mandatory Unit Testing for Logic
+**MANDATORY**: Every line of code that implements logic MUST be accompanied by a unit test that covers it.
+
+This includes:
+- All functions with business logic or complex operations
+- All conditional statements (if/else, switch, ternary operators)  
+- All loops and iterations
+- All error handling paths and exception scenarios
+- All edge cases and boundary conditions
+
+**Pre-Commit Validation**: Code reviews MUST verify test coverage for all new logic.
+
+See [unit-test-rule.mdc](./unit-test-rule.mdc) for complete testing standards.
 
 ## Project Setup
 

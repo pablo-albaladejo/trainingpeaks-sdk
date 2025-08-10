@@ -75,7 +75,7 @@ For comprehensive product context and business objectives, see [PRODUCT.md](../.
 
 - Dual changelog system (root + [technical changelogs](../../docs/technical-changelogs/README.md))
 - Changelog generation rules and formats
-- Pre-commit validation hooks with [concrete implementations](./changelog-management.mdc#validation-script)
+- Pre-commit validation hooks with [concrete implementations](./changelog-management.mdc#git-hooks)
 - Technical decision documentation
 - User-facing change tracking
 
@@ -123,6 +123,7 @@ This project uses **Husky** for Git hook management. To enable the changelog val
    
    # 4. Complete verification script
    bash -c '
+     set -euo pipefail
      echo "=== Husky CI Verification ==="
      all_good=true
      
@@ -136,16 +137,28 @@ This project uses **Husky** for Git hook management. To enable the changelog val
        fi
      done
      
-     # Check prepare script
-     if grep -q "\"prepare\".*\"husky\"" package.json; then
-       echo "✅ package.json: prepare script configured"
+     # Check prepare script with robust JSON parsing
+     if command -v jq >/dev/null 2>&1; then
+       # Use jq for JSON-safe parsing
+       if jq -e ".scripts.prepare | contains(\"husky\")" package.json >/dev/null 2>&1; then
+         echo "✅ package.json: prepare script configured (verified with jq)"
+       else
+         echo "❌ package.json: prepare script missing or invalid (verified with jq)"
+         all_good=false
+       fi
      else
-       echo "❌ package.json: prepare script missing"
-       all_good=false
+       # Fallback to grep if jq is not available
+       echo "ℹ️  jq not available, falling back to grep"
+       if grep -q "\"prepare\".*\"husky\"" package.json 2>/dev/null; then
+         echo "✅ package.json: prepare script configured (grep fallback)"
+       else
+         echo "❌ package.json: prepare script missing (grep fallback)"
+         all_good=false
+       fi
      fi
      
      # Check environment
-     if [[ "$HUSKY" == "0" ]]; then
+     if [[ "${HUSKY:-}" == "0" ]]; then
        echo "⚠️  Environment: HUSKY is disabled"
        all_good=false
      else
@@ -170,8 +183,11 @@ Verify all referenced changelog files exist:
 find docs/technical-changelogs/ -name "*.md" | sort
 
 # Verify all expected files are present
+missing_files=false
+
 if [ ! -f "docs/technical-changelogs/README.md" ]; then
   echo "❌ Missing: docs/technical-changelogs/README.md (main documentation file)"
+  missing_files=true
 else
   echo "✅ Found: docs/technical-changelogs/README.md"
 fi
@@ -179,10 +195,19 @@ fi
 for component in adapters application domain infrastructure shared; do
   if [ ! -f "docs/technical-changelogs/$component.md" ]; then
     echo "❌ Missing: docs/technical-changelogs/$component.md"
+    missing_files=true
   else
     echo "✅ Found: docs/technical-changelogs/$component.md"
   fi
 done
+
+# Exit with error if any files are missing
+if [ "$missing_files" = "true" ]; then
+  echo "💥 CI FAILURE: Required documentation files are missing"
+  exit 1
+else
+  echo "🎉 All required documentation files are present"
+fi
 ```
 
 ### 🔌 External Integrations

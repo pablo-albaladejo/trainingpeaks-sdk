@@ -6,6 +6,26 @@ alwaysApply: false
 
 # Unit Testing Standards for NPM Libraries
 
+## 🚨 MANDATORY TESTING REQUIREMENT
+
+**Every line of code that implements logic MUST be accompanied by a unit test that covers it.**
+
+This includes:
+- All functions with business logic or complex operations
+- All conditional statements (if/else, switch, ternary operators)
+- All loops and iterations
+- All error handling paths and exception scenarios
+- All edge cases and boundary conditions
+- All public and private methods that contain logic
+
+**Exceptions** (must be justified):
+- Simple getters/setters with no logic
+- Basic constructors that only assign parameters
+- Trivial utility functions (e.g., simple string formatters)
+- Auto-generated code or boilerplate
+
+**Enforcement**: Code reviews MUST verify that all new logic is covered by tests. Coverage reports should reflect this requirement.
+
 ## Testing Framework Setup
 
 ### Vitest Configuration
