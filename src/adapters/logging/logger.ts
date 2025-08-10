@@ -18,14 +18,10 @@ export type LoggerConfig = {
 };
 
 /**
- * Logger interface
+ * Re-export logger interface from domain
  */
-export type Logger = {
-  debug: (message: string, ...args: unknown[]) => void;
-  info: (message: string, ...args: unknown[]) => void;
-  warn: (message: string, ...args: unknown[]) => void;
-  error: (message: string, ...args: unknown[]) => void;
-};
+export type { Logger } from '@/domain/types/logger';
+import type { Logger } from '@/domain/types/logger';
 
 /**
  * Create logger instance

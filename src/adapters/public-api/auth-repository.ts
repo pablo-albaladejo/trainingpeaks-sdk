@@ -9,13 +9,14 @@ import {
 } from '@/adapters/errors/http-errors';
 import { type HttpClient } from '@/adapters/http';
 import { mapTPTokenToAuthToken, mapTPUserToUser } from '@/adapters/mappers';
-import { type HttpMethod, Session, SessionStorage } from '@/application';
+import { type HttpMethod, SessionStorage } from '@/application';
 import {
   AuthRepository,
   AuthRepositoryLogin,
   AuthRepositoryLogout,
   Credentials,
   isTokenExpired,
+  Session,
   validateCredentials,
 } from '@/domain';
 

@@ -59,19 +59,24 @@ export type getCurrentUser = (
 ) => (token: AuthToken) => Promise<User>;
 ```
 
-### 3. Infrastructure Layer (`src/infrastructure/`)
+### 3. Adapters Layer (`src/adapters/`)
 
-Contains **implementations** of application service contracts, containing business logic and depending on domain interfaces.
+The **outermost layer** containing external integrations, concrete implementations of application service contracts, and implementations of domain interfaces.
 
 #### Key Components:
 
-- **Services** (`src/infrastructure/services/`): **Implementations** of application service contracts
+- **Services** (`src/adapters/services/`): Concrete implementations of application service contracts
+- **Public API** (`src/adapters/public-api/`): TrainingPeaks API client implementations
+- **HTTP Adapters** (`src/adapters/http/`): HTTP communication and authentication
+- **Storage Adapters** (`src/adapters/storage/`): Data persistence implementations
+- **Constants** (`src/adapters/constants/`): API endpoints and configuration
+- **Errors** (`src/adapters/errors/`): HTTP and integration error types
 
 #### Example Service Implementation:
 
 ```typescript
-// src/infrastructure/services/user-service.ts
-export const authenticateUser: authenticateUser =
+// src/adapters/services/authenticate-user.ts
+export const authenticateUser: AuthenticateUser =
   (userRepository: UserRepository) =>
   async (
     credentials: Credentials
@@ -100,39 +105,6 @@ export const authenticateUser: authenticateUser =
   };
 ```
 
-### 4. Adapters Layer (`src/adapters/`)
-
-The **outermost layer** containing external integrations and implementations of domain interfaces.
-
-#### Key Components:
-
-- **API Clients** (`src/adapters/api/`): HTTP client implementations
-- **HTTP Adapters** (`src/adapters/http/`): HTTP communication and authentication
-- **Storage Adapters** (`src/adapters/storage/`): Data persistence implementations
-- **Serialization** (`src/adapters/serialization/`): Data transformation utilities
-- **Services** (`src/adapters/services/`): Legacy service implementations
-
-#### Example API Client Implementation:
-
-```typescript
-// src/adapters/api/modules/users-api-client.ts
-export class UsersApiClient extends BaseApiClient implements UserRepository {
-  async authenticate(
-    credentials: Credentials
-  ): Promise<{ token: AuthToken; user: User }> {
-    const response = await this.httpClient.post('/users/v3/token', credentials);
-    return response.data; // Returns raw API data
-  }
-
-  async getUserInfo(token: AuthToken): Promise<User> {
-    const response = await this.httpClient.get('/users/v3/me', {
-      headers: { Authorization: `Bearer ${token.accessToken}` },
-    });
-    return response.data; // Returns raw API data
-  }
-}
-```
-
 ## Dependency Flow
 
 ```
@@ -140,9 +112,7 @@ Domain Layer (no dependencies)
     ↓
 Application Layer (depends on domain interfaces)
     ↓
-Infrastructure Layer (implements domain interfaces)
-    ↓
-Adapters Layer (implements domain interfaces)
+Adapters Layer (implements domain interfaces and application contracts)
 ```
 
 ## Key Principles
@@ -151,12 +121,12 @@ Adapters Layer (implements domain interfaces)
 
 - **Domain layer** defines interfaces (repositories)
 - **Adapters layer** implements those interfaces
-- **Infrastructure layer** depends on interfaces, not implementations
+- **Adapters layer** depends on interfaces, not implementations
 
 ### 2. Separation of Concerns
 
 - **API Clients**: Only handle HTTP communication, return raw data
-- **Infrastructure Services**: Contain business logic, create domain objects
+- **Adapter Services**: Contain business logic, create domain objects
 - **Application Services**: Define contracts, orchestrate operations
 - **Domain**: Pure business logic, no external dependencies
 
@@ -215,7 +185,7 @@ export type getActivities = (
 4. **Implement Service**:
 
 ```typescript
-// src/infrastructure/services/activity-service.ts
+// src/adapters/services/activity-service.ts
 export const getActivities: getActivities =
   (activityRepository: ActivityRepository) =>
   async (
@@ -326,7 +296,7 @@ const result = await client.users.authenticate(credentials);
 ## Best Practices
 
 1. **Always use interfaces** from the domain layer
-2. **Keep business logic** in the infrastructure layer
+2. **Keep business logic** in the adapters layer
 3. **Return raw data** from API clients
 4. **Create domain objects** in service implementations
 5. **Test each layer independently**
@@ -339,7 +309,7 @@ const result = await client.users.authenticate(credentials);
 ### Unit Tests
 
 - **Domain**: Test entities, value objects, and business rules
-- **Infrastructure Services**: Test business logic with mocked repositories
+- **Adapter Services**: Test business logic with mocked repositories
 - **Adapters**: Test HTTP communication and data transformation
 
 ### Integration Tests

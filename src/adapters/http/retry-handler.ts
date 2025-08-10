@@ -3,9 +3,8 @@
  * Implements exponential backoff with jitter to prevent thundering herd
  */
 
+import { isRetryableError } from '@/adapters/errors/http-errors';
 import type { Logger } from '@/adapters/logging/logger';
-
-import { isRetryableError } from '../errors/http-errors';
 
 export interface RetryConfig {
   attempts: number;

@@ -1,0 +1,321 @@
+---
+description: GitHub label management and mandatory labeling requirements for issues and PRs
+globs: **/*.md,**/.github/**
+alwaysApply: true
+---
+
+# GitHub Label Management Rule
+
+## 🚨 MANDATORY LABELING REQUIREMENT
+
+**ALL ISSUES AND PULL REQUESTS MUST BE PROPERLY LABELED** - No issue or PR should exist without appropriate categorization.
+
+This is enforced to ensure:
+- Clear project organization and filtering
+- Accurate effort estimation and sprint planning  
+- Proper issue triage and priority management
+- Automated workflow triggers and routing
+- Consistent project metrics and reporting
+
+## Required Label Categories
+
+### 1. Type Labels (MANDATORY - 1 required)
+Every issue/PR MUST have exactly one type label:
+
+- `type: enhancement` - New features or enhancements
+- `type: bug` - Bug fixes and error corrections
+- `type: refactor` - Code refactoring without feature changes
+- `type: documentation` - Documentation only changes
+- `type: testing` - Test additions or improvements
+- `type: performance` - Performance improvements
+- `type: security` - Security fixes or improvements  
+- `type: infrastructure` - DevOps, CI/CD, or infrastructure changes
+
+### 2. Priority Labels (MANDATORY - 1 required)
+Every issue/PR MUST have exactly one priority label:
+
+- `priority: critical` - Blocks development or production, immediate attention
+- `priority: high` - Important issue, should be addressed soon
+- `priority: medium` - Standard priority (default if not specified)
+- `priority: low` - Nice to have, can be scheduled later
+
+### 3. Effort Labels (MANDATORY - 1 required) 
+Every issue MUST have exactly one effort estimation label:
+
+- `effort: small` - Less than 1 day of work
+- `effort: medium` - 1-3 days of work  
+- `effort: large` - 3-7 days of work
+- `effort: epic` - More than 1 week of work, should be broken down
+
+### 4. Architecture Labels (OPTIONAL - 0 or more)
+For issues affecting specific architectural layers:
+
+- `architecture: domain` - Changes to domain layer (entities, value objects)
+- `architecture: application` - Changes to application layer (use cases, services)
+- `architecture: adapters` - Changes to adapters layer (repositories, clients)
+- `architecture: infrastructure` - Changes to infrastructure concerns
+
+### 5. Component Labels (OPTIONAL - 0 or more)
+For issues affecting specific components:
+
+- `component: auth` - Authentication and authorization
+- `component: api` - API integration and client code
+- `component: client` - HTTP client and request handling
+- `component: testing` - Testing infrastructure and test utilities
+- `component: build` - Build tools and configuration
+- `component: docs` - Documentation and examples
+
+### 6. Status Labels (AUTOMATIC - managed by workflows)
+Managed automatically by GitHub Actions and project workflows:
+
+- `status: needs-triage` - New issues requiring review and categorization
+- `status: ready` - Issue is ready to be worked on
+- `status: in-progress` - Issue is currently being worked on
+- `status: blocked` - Issue is blocked by external dependencies
+- `status: review` - PR is ready for review
+
+## Label Application Rules
+
+### For Issues
+```typescript
+// Minimum required labels for any issue
+const validateIssueLabels = (labels: string[]) => {
+  const required = [
+    { category: 'type:', count: 1, labels: ['type: enhancement', 'type: bug', 'type: refactor', 'type: documentation', 'type: testing', 'type: performance', 'type: security', 'type: infrastructure'] },
+    { category: 'priority:', count: 1, labels: ['priority: critical', 'priority: high', 'priority: medium', 'priority: low'] },
+    { category: 'effort:', count: 1, labels: ['effort: small', 'effort: medium', 'effort: large', 'effort: epic'] }
+  ];
+  
+  required.forEach(req => {
+    const matchingLabels = labels.filter(label => req.labels.includes(label));
+    if (matchingLabels.length !== req.count) {
+      throw new Error(`Issue MUST have exactly ${req.count} ${req.category} label`);
+    }
+  });
+};
+```
+
+### For Pull Requests
+```typescript
+// Minimum required labels for PRs
+const validatePRLabels = (labels: string[]) => {
+  const required = [
+    { category: 'type:', count: 1 },
+    { category: 'priority:', count: 1 }
+  ];
+  // Effort labels not required for PRs as they inherit from linked issue
+};
+```
+
+## GitHub Actions Integration
+
+### Automatic Label Validation
+```yaml
+# .github/workflows/label-validation.yml
+name: Label Validation
+on:
+  issues:
+    types: [opened, labeled, unlabeled]
+  pull_request:
+    types: [opened, labeled, unlabeled]
+
+jobs:
+  validate-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate Issue Labels
+        if: github.event_name == 'issues'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.issue.labels.map(l => l.name);
+            const requiredTypes = ['type: enhancement', 'type: bug', 'type: refactor', 'type: documentation', 'type: testing', 'type: performance', 'type: security', 'type: infrastructure'];
+            const requiredPriorities = ['priority: critical', 'priority: high', 'priority: medium', 'priority: low'];
+            const requiredEffort = ['effort: small', 'effort: medium', 'effort: large', 'effort: epic'];
+            
+            const hasType = requiredTypes.some(type => labels.includes(type));
+            const hasPriority = requiredPriorities.some(priority => labels.includes(priority));
+            const hasEffort = requiredEffort.some(effort => labels.includes(effort));
+            
+            if (!hasType || !hasPriority || !hasEffort) {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: '🚨 **Missing Required Labels**\n\nThis issue is missing required labels:\n' +
+                     (!hasType ? '- Type label (type: enhancement, type: bug, etc.)\n' : '') +
+                     (!hasPriority ? '- Priority label (priority: high, priority: medium, etc.)\n' : '') +
+                     (!hasEffort ? '- Effort label (effort: small, effort: medium, etc.)\n' : '') +
+                     '\nPlease add the missing labels for proper issue categorization.'
+              });
+              
+              // Add needs-triage label
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: ['status: needs-triage']
+              });
+            }
+```
+
+### Automatic Label Assignment
+```yaml
+# Auto-assign default labels for new issues
+- name: Auto-assign Default Labels
+  if: github.event.action == 'opened'
+  uses: actions/github-script@v7
+  with:
+    script: |
+      const defaultLabels = ['status: needs-triage'];
+      
+      // Add medium priority if no priority specified
+      const labels = context.payload.issue.labels.map(l => l.name);
+      const hasPriority = ['priority: critical', 'priority: high', 'priority: medium', 'priority: low']
+        .some(priority => labels.includes(priority));
+      
+      if (!hasPriority) {
+        defaultLabels.push('priority: medium');
+      }
+      
+      await github.rest.issues.addLabels({
+        issue_number: context.issue.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        labels: defaultLabels
+      });
+```
+
+## Label Management Commands
+
+### GitHub CLI Commands
+```bash
+# Create issue with proper labels
+gh issue create --title "Add workout filtering" \
+  --body "Feature description..." \
+  --label "type: enhancement,priority: high,effort: medium,component: api"
+
+# Add missing labels to existing issue
+gh issue edit 123 --add-label "priority: high,effort: large"
+
+# List issues by label
+gh issue list --label "type: bug,priority: critical"
+
+# Bulk label management
+gh issue list --json number,labels --jq '.[] | select(.labels | length < 3) | .number' | \
+  xargs -I {} gh issue edit {} --add-label "status: needs-triage"
+```
+
+### Label Maintenance Scripts
+```bash
+#!/bin/bash
+# scripts/check-issue-labels.sh
+# Validate all issues have required labels
+
+echo "🔍 Checking issue labels..."
+
+# Get all open issues without proper labels
+unlabeled_issues=$(gh issue list --json number,labels,title --jq '
+  .[] | select(
+    (.labels | map(.name) | contains(["type: enhancement", "type: bug", "type: refactor", "type: documentation", "type: testing", "type: performance", "type: security", "type: infrastructure"]) | not) or
+    (.labels | map(.name) | contains(["priority: critical", "priority: high", "priority: medium", "priority: low"]) | not) or
+    (.labels | map(.name) | contains(["effort: small", "effort: medium", "effort: large", "effort: epic"]) | not)
+  ) | "\(.number): \(.title)"
+')
+
+if [[ -n "$unlabeled_issues" ]]; then
+  echo "❌ Issues missing required labels:"
+  echo "$unlabeled_issues"
+  exit 1
+else
+  echo "✅ All issues properly labeled"
+fi
+```
+
+## Issue Template Integration
+
+### Updated Issue Templates
+All issue templates MUST include label requirements:
+
+```yaml
+# .github/ISSUE_TEMPLATE/feature-request.yml
+body:
+  - type: checkboxes
+    attributes:
+      label: Labels Checklist
+      description: Ensure proper labels are applied
+      options:
+        - label: "Type label applied (type: enhancement)"
+          required: true
+        - label: "Priority label applied (priority: high/medium/low)"
+          required: true  
+        - label: "Effort label applied (effort: small/medium/large)"
+          required: true
+```
+
+## Project Board Integration
+
+### Automatic Board Assignment
+```yaml
+# Auto-add issues to project board based on labels
+- name: Add to Project Board
+  if: |
+    contains(github.event.issue.labels.*.name, 'priority: critical') ||
+    contains(github.event.issue.labels.*.name, 'priority: high')
+  uses: actions/add-to-project@v0.4.0
+  with:
+    project-url: ${{ vars.PROJECT_URL }}
+    github-token: ${{ secrets.PROJECT_TOKEN }}
+```
+
+## Label Lifecycle
+
+### Issue Lifecycle
+1. **Created** → `status: needs-triage` (automatic)
+2. **Triaged** → Remove `needs-triage`, add proper type/priority/effort labels
+3. **Ready** → `status: ready` (when requirements complete)
+4. **In Progress** → `status: in-progress` (when work begins)
+5. **Review** → `status: review` (for PR review)
+6. **Closed** → All status labels removed
+
+### Validation Gates
+- **Issue Creation**: Must have type, priority, effort labels
+- **PR Creation**: Must have type and priority labels
+- **Merge**: All related issues must be properly labeled
+- **Release**: Generate changelog based on type labels
+
+## Best Practices
+
+### For Issue Creators
+- Always include required labels when creating issues
+- Use template checklists to ensure proper labeling
+- Update labels as issue requirements change
+- Be specific with component and architecture labels
+
+### For Maintainers  
+- Regularly audit issues for missing labels
+- Use label-based filtering for sprint planning
+- Review labels during issue triage process
+- Ensure automation scripts maintain label consistency
+
+### For Contributors
+- Check labels before working on issues
+- Add relevant labels to pull requests
+- Reference related issue labels in PR descriptions
+- Update effort estimates if scope changes
+
+## Enforcement
+
+### Automated Checks
+- GitHub Actions validate labels on issue/PR creation
+- CI pipelines fail if required labels missing
+- Bot comments remind about missing labels
+- Status checks block merges for unlabeled PRs
+
+### Manual Review
+- Issue triage process includes label validation
+- Code review includes label verification
+- Sprint planning requires properly labeled issues
+- Release notes generated from label-based filtering
+
+This labeling system ensures consistent project management, accurate reporting, and efficient issue tracking across the entire development lifecycle.

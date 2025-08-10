@@ -1,14 +1,14 @@
 import { createLogger } from '@/adapters/logging/logger';
 import { TrainingPeaksConfig } from '@/types';
 
-// Create a test logger using the existing logging infrastructure
+// Create a test logger using the existing logging adapters
 const testLogger = createLogger({
   level: 'info',
   enabled: true,
   prefix: 'TEST',
 });
 
-// Simple test logger that uses the existing infrastructure
+// Simple test logger that uses the existing logging adapters
 const createTestLogger = () => ({
   info: (message: string, context?: Record<string, unknown>) => {
     testLogger.info(message, context);

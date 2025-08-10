@@ -36,13 +36,13 @@ import { createTrainingPeaksSdk } from 'trainingpeaks-sdk';
 // Initialize the SDK
 const sdk = createTrainingPeaksSdk({
   debug: false, // Optional: enable debug logging
-  timeout: 30000 // Optional: request timeout in ms
+  timeout: 30000, // Optional: request timeout in ms
 });
 
 // Login with credentials
 const loginResult = await sdk.login({
   username: 'your-username',
-  password: 'your-password'
+  password: 'your-password',
 });
 
 console.log('Login successful:', loginResult);
@@ -55,7 +55,7 @@ console.log('Login successful:', loginResult);
 // Get user's workouts list
 const workouts = await sdk.getWorkoutsList({
   startDate: '2024-01-01',
-  endDate: '2024-12-31'
+  endDate: '2024-12-31',
   // athleteId is optional - uses current user if not provided
 });
 
@@ -79,7 +79,7 @@ console.log('Logged out successfully');
 try {
   const result = await sdk.login({
     username: 'invalid-user',
-    password: 'wrong-password'
+    password: 'wrong-password',
   });
 } catch (error) {
   console.error('Login failed:', error.message);
@@ -96,6 +96,7 @@ const sdk = createTrainingPeaksSdk(config?: TrainingPeaksClientConfig)
 ```
 
 **Config Options:**
+
 - `debug?: boolean` - Enable debug logging
 - `timeout?: number` - Request timeout in milliseconds
 - `baseUrl?: string` - Custom API base URL
@@ -159,6 +160,7 @@ type WorkoutListItem = {
 ## Current Features
 
 ✅ **Available Now:**
+
 - User authentication (login/logout)
 - Workout list retrieval with date filtering
 - Session management with automatic cookie handling
@@ -166,6 +168,7 @@ type WorkoutListItem = {
 - Clean Architecture implementation
 
 🚧 **Planned Features:**
+
 - Individual workout details retrieval
 - Workout file upload (TCX, GPX, FIT formats)
 - Workout creation and updates
@@ -177,15 +180,19 @@ type WorkoutListItem = {
 ### SDK Configuration
 
 ```typescript
-import { createTrainingPeaksSdk, type TrainingPeaksClientConfig } from 'trainingpeaks-sdk';
+import {
+  createTrainingPeaksSdk,
+  type TrainingPeaksClientConfig,
+} from 'trainingpeaks-sdk';
 
 const config: TrainingPeaksClientConfig = {
   baseUrl: 'https://tpapi.trainingpeaks.com', // Optional
   timeout: 30000, // Optional: request timeout in ms
   debug: true, // Optional: enable debug logging
-  headers: { // Optional: custom headers
-    'User-Agent': 'MyApp/1.0.0'
-  }
+  headers: {
+    // Optional: custom headers
+    'User-Agent': 'MyApp/1.0.0',
+  },
 };
 
 const sdk = createTrainingPeaksSdk(config);
@@ -234,27 +241,27 @@ The SDK is written in TypeScript and provides comprehensive type definitions:
 
 ```typescript
 import { createTrainingPeaksSdk } from 'trainingpeaks-sdk';
-import type { 
+import type {
   TrainingPeaksClientConfig,
   LoginCredentials,
   GetWorkoutsListCommand,
-  WorkoutListItem
+  WorkoutListItem,
 } from 'trainingpeaks-sdk';
 
 // All types are fully typed
 const config: TrainingPeaksClientConfig = {
   debug: true,
-  timeout: 30000
+  timeout: 30000,
 };
 
 const credentials: LoginCredentials = {
   username: 'myuser',
-  password: 'mypass'
+  password: 'mypass',
 };
 
 const workoutsQuery: GetWorkoutsListCommand = {
   startDate: '2024-01-01',
-  endDate: '2024-12-31'
+  endDate: '2024-12-31',
 };
 ```
 
@@ -267,11 +274,11 @@ The SDK supports multiple import patterns for different use cases:
 import { createTrainingPeaksSdk } from 'trainingpeaks-sdk';
 
 // Type imports
-import type { 
+import type {
   TrainingPeaksClientConfig,
   LoginCredentials,
   GetWorkoutsListCommand,
-  WorkoutListItem
+  WorkoutListItem,
 } from 'trainingpeaks-sdk';
 
 // ⚠️ UNSTABLE: Internal modules - No SemVer guarantees
@@ -288,6 +295,44 @@ import type { WorkoutType } from 'trainingpeaks-sdk/types';
 
 - Node.js >= 18.0.0
 - npm >= 8.0.0
+- GitHub CLI (gh) - for project setup automation
+
+**GitHub CLI Authentication:**
+```bash
+# Authenticate with GitHub using web browser (recommended for security)
+gh auth login --web
+
+# For GitHub Enterprise Server users, specify your hostname
+# gh auth login --web --hostname your-enterprise-hostname.com
+
+# Verify authentication
+gh auth status
+```
+
+### Project Setup
+
+This repository includes automated setup scripts for GitHub project management:
+
+```bash
+# Run the automated GitHub project setup
+./scripts/github/setup/setup-github-project.sh
+
+# Test the setup script functionality
+./scripts/github/setup/test-setup.sh
+
+# Get help and options
+./scripts/github/setup/setup-github-project.sh --help
+```
+
+The setup script automatically creates:
+
+- 🎯 GitHub project board with views and columns
+- 🏷️ Comprehensive label system for issue categorization
+- 📋 Issue templates for different types of requests
+- 🔧 Initial project setup issues and epics
+- ⚡ Dependabot and security automation
+
+For detailed setup instructions, see [scripts/github/setup/README.md](scripts/github/setup/README.md).
 
 ### Building
 
@@ -341,16 +386,17 @@ This SDK follows Clean Architecture principles with a hexagonal architecture app
 
 - **Domain Layer**: Core business entities and rules
 - **Application Layer**: Business logic orchestration and contracts
-- **Infrastructure Layer**: Concrete implementations of application service contracts
-- **Adapters Layer**: External integrations (HTTP, storage, serialization)
+- **Adapters Layer**: External integrations and concrete implementations
 
 **Key Benefits:**
+
 - 🧪 **Highly Testable**: Each layer can be tested independently
 - 🔄 **Maintainable**: Clear separation of concerns and dependencies
 - 🔧 **Extensible**: Easy to add new features or swap implementations
 - 📦 **Modular**: Use individual components or the complete SDK
 
 **Documentation:**
+
 - [Clean Architecture Guide](docs/clean-architecture.md) - Detailed implementation patterns
 - [PRODUCT.md](PRODUCT.md) - Product vision and business context
 

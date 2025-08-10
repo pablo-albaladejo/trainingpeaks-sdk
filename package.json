@@ -53,7 +53,7 @@
   "scripts": {
     "build": "npm run type-check && npm run build:esm && npm run build:cjs",
     "build:esm": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json --resolve-full-paths",
-    "build:cjs": "tsc -p tsconfig.build.json --module commonjs --outDir dist-cjs && tsc-alias -p tsconfig.build.json --outDir dist-cjs --resolve-full-paths && node scripts/make-cjs.js",
+    "build:cjs": "tsc -p tsconfig.build.json --module commonjs --outDir dist-cjs && tsc-alias -p tsconfig.build.json --outDir dist-cjs --resolve-full-paths && node scripts/build/make-cjs.js",
     "clean": "rm -rf dist dist-cjs",
     "dev": "tsc -p tsconfig.build.json --watch",
     "test": "npm run test:unit",
@@ -69,11 +69,16 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
-    "check-imports": "bash scripts/check-imports.sh",
+    "check-imports": "bash scripts/build/check-imports.sh",
     "pre-release": "npm run clean && npm run format:check && npm run lint && npm run check-imports && npm run build && npm run test:coverage",
     "release": "semantic-release",
     "release:dry-run": "semantic-release --dry-run",
-    "prepare": "husky"
+    "prepare": "husky",
+    "setup:project": "bash scripts/setup/configure-project.sh",
+    "generate:config": "tsx scripts/build/generate-all-configs.ts",
+    "validate:config": "tsx scripts/build/validate-project-config.ts",
+    "sync:labels": "gh label list --json name,color,description > .github/current-labels.json && echo 'Labels synced to .github/current-labels.json'",
+    "validate:all": "npm run format:check && npm run lint && npm run type-check && npm run check-imports && npm run test && npm run build"
   },
   "keywords": [
     "trainingpeaks",

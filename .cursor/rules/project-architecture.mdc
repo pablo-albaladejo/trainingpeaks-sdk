@@ -49,7 +49,7 @@ src/
 
 #### **🚨 CRITICAL: Strict Ports & Adapters Separation**
 
-The application layer MUST ONLY contain **contracts, types, and interfaces**. The infrastructure layer MUST contain
+The application layer MUST ONLY contain **contracts, types, and interfaces**. The adapters layer MUST contain
 **all implementations**.
 
 #### **📋 Application Layer: ONLY Definitions & Contracts**
@@ -73,13 +73,13 @@ export type UserValidationService = {
 };
 ```
 
-#### **⚙️ Infrastructure Layer: ONLY Implementations**
+#### **⚙️ Adapters Layer: ONLY Implementations**
 
-All implementations in `src/infrastructure/services/` MUST be factory functions that receive dependencies as parameters
+All implementations in `src/adapters/services/` MUST be factory functions that receive dependencies as parameters
 and return the exact implementation of the individual function type.
 
 ```typescript
-// ✅ CORRECT: src/infrastructure/services/user-validation.ts
+// ✅ CORRECT: src/adapters/services/user-validation.ts
 import type {
   validateUserId,
   validateEmail,
@@ -109,7 +109,7 @@ export const createUserValidationService = (dependencies) => ({
 #### **🔧 For Functions That Need Dependencies**
 
 ```typescript
-// ✅ CORRECT: src/infrastructure/services/user-validation.ts
+// ✅ CORRECT: src/adapters/services/user-validation.ts
 export const validateUserId =
   (logger: Logger): validateUserId =>
   (userId: string): void => {

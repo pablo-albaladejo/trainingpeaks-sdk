@@ -87,7 +87,7 @@ ERROR_CODES.USER_NOT_FOUND              // 'USER_3002'
 
 // Network (4000-4999)
 ERROR_CODES.NETWORK_TIMEOUT             // 'NETWORK_4001'
-ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE // 'NETWORK_4006' (HTTP 503 Service Unavailable - retryable)
+ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE // 'NETWORK_4006' (HTTP 503 Service Unavailable - retryable only for idempotent methods, Retry-After header takes precedence over backoff strategy when present, supports both HTTP-date and delay-seconds formats, retry delay capped by retryMaxDelay)
 
 // Validation (5000-5999)
 ERROR_CODES.VALIDATION_FAILED           // 'VALIDATION_5001'
@@ -104,6 +104,7 @@ const sdk = new TrainingPeaksSDK({
   retryBackoff: 2,         // Backoff multiplier (default: 2)
   retryMaxDelay: 10000,    // Maximum delay in ms (default: 10000)
   retryJitter: true,       // Add jitter to prevent thundering herd (default: true)
+  retryOn504: false,       // Enable retries for 504 Gateway Timeout (default: false)
 });
 ```
 
@@ -114,13 +115,13 @@ The SDK automatically retries these error conditions:
 - **Timeout errors**: 408
 - **Rate limiting**: 429
 
-**Note**: Automatic retries are applied only to idempotent or safe operations (such as GET requests) to avoid potential duplicate side effects on non-idempotent operations like POST requests without idempotency keys.
+**Note**: Automatic retries are applied only to idempotent or safe operations. Idempotent HTTP methods include: GET, PUT, DELETE, HEAD, OPTIONS. The SDK treats POST requests with an `Idempotency-Key` header as retryable and automatically de-duplicates retries to prevent duplicate side effects. See [Idempotency Keys](#idempotency-keys) section for details.
 
 ### Non-retryable Errors
 
 These errors are **not** retried:
 - **Client errors (4xx)**: 400, 401, 403, 404, 422
-- **Gateway timeout (504)**: Gateway timeout errors are non-retryable to prevent retry storms when upstream services are overloaded. Recommended handling: log the error and alert users rather than retrying automatically.
+- **Gateway timeout (504)**: Gateway timeout errors are non-retryable by default to prevent retry storms when upstream services are overloaded. Safe opt-in retry patterns include: a single retry with exponential backoff for idempotent requests, or when a Retry-After header is present. This behavior can be configured via constructor options: `new TrainingPeaksSDK({ retryOn504: true, retryAttempts: 1 })`. Default handling: log the error and alert users.
 - **Authentication failures**: Invalid credentials (Note: 401 due to token expiration may trigger automatic token refresh and retry)
 - **Validation errors**: Malformed requests, missing required fields
 
@@ -321,3 +322,38 @@ try {
 ```
 
 This structured approach provides better error handling, improved debugging, and more resilient applications.
+
+## Idempotency Keys
+
+The SDK supports idempotency keys to make POST requests safely retryable. When an `Idempotency-Key` header is present, the SDK:
+
+1. **Treats the request as retryable** - POST requests with idempotency keys are eligible for automatic retry
+2. **Server-enforced idempotence** - Server enforces idempotence based on identical requests (method, path, and body) while SDK handles safe retries
+3. **Preserves the key** - The same idempotency key is used across all retry attempts
+4. **Server-side de-duplication** - TrainingPeaks API ensures requests with the same idempotency key within a 24-hour window return the same response
+
+### Usage Example
+
+```typescript
+const response = await sdk.workouts.createWorkout(workoutData, {
+  headers: {
+    'Idempotency-Key': crypto.randomUUID()
+  }
+});
+```
+
+### Key Management and Lifecycle
+
+- **Key TTL**: Idempotency keys are valid for 24 hours in server-side storage
+- **Response caching**: Only successful responses are cached and returned for duplicate keys
+- **Error handling**: Only transient errors can be safely retried with the same idempotency key
+- **Collision handling**: Use cryptographically strong UUIDs to prevent key collisions
+
+### Best Practices
+
+- Generate unique keys per logical operation (not per retry)
+- Use UUIDv4 or similar collision-resistant identifiers with at least 122 bits of entropy (e.g., `crypto.randomUUID()`)
+- Keep keys opaque - store business context separately in your datastore or logs rather than encoding it into the key
+- Store operation context alongside the key for debugging without embedding PII or business identifiers directly in the key
+- Implement secure key persistence at rest for critical operations spanning multiple client sessions
+- If human-readable keys are needed, ensure they contain no PII and maintain at least 122 bits of entropy

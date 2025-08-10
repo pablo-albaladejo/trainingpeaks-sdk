@@ -12,7 +12,7 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'rosie';
 
-import type { Session } from '@/application/ports/session-storage';
+import type { Session } from '@/domain';
 import type { WorkoutListItem } from '@/domain/repositories/workout-repository';
 import type {
   GetWorkoutsListCommand,

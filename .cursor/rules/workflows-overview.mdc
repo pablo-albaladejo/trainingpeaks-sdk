@@ -1,0 +1,321 @@
+# Development Workflows Overview - Cursor Rule
+
+## Purpose
+Comprehensive overview of all available development workflows with trigger commands, integration patterns, and usage examples for the TrainingPeaks SDK project.
+
+## Available Workflows
+
+### 1. Issue-Driven Development Workflow
+**File**: `workflow-issue-driven-development.mdc`
+**Purpose**: Complete lifecycle from GitHub issue analysis to implementation and PR creation
+
+**Trigger Commands:**
+- `@issue-dev [URL]` - Analyze GitHub issue and create implementation plan
+- `@analyze-issue [URL]` - Direct issue analysis with URL
+- `@implement-plan` - Execute approved implementation plan
+
+**Best For:**
+- Implementing features from existing GitHub issues
+- Following structured development process
+- Ensuring requirements traceability
+
+### 2. Issue Creation Workflow  
+**File**: `workflow-issue-creation.mdc`
+**Purpose**: Collaborative issue creation through iterative requirement refinement
+
+**Trigger Commands:**
+- `@create-issue` - Start collaborative issue creation process
+- `@refine-requirements` - Continue requirement iteration  
+- `@generate-issue` - Create GitHub issue after approval
+
+**Best For:**
+- Converting ideas into well-defined GitHub issues
+- Gathering comprehensive requirements
+- Creating properly templated issues
+
+### 3. Pull Request Review Workflow
+**File**: `workflow-pr-review.mdc` 
+**Purpose**: Comprehensive PR reviews validating against issue requirements and code quality
+
+**Trigger Commands:**
+- `@review-pr [URL]` - Comprehensive PR review with issue validation
+- `@pr-review [URL]` - Direct PR review with URL
+- `@check-requirements` - Validate PR against linked issue requirements
+- `@architecture-review` - Focus on Clean Architecture compliance
+
+**Best For:**
+- Thorough code review process
+- Validating implementation against requirements
+- Ensuring code quality and architecture compliance
+
+### 4. Technical Debt Analysis Workflow
+**File**: `workflow-technical-debt-analysis.mdc`
+**Purpose**: Comprehensive technical debt identification and improvement planning
+
+**Trigger Commands:**
+- `@analyze-debt` - Full codebase technical debt analysis
+- `@debt-module [path]` - Module-specific debt analysis
+- `@architecture-debt` - Focus on Clean Architecture violations
+- `@test-debt` - Focus on testing gaps and issues
+- `@debt-report` - Generate comprehensive debt report with roadmap
+
+**Best For:**
+- Maintaining code quality over time
+- Identifying architecture violations
+- Planning technical improvements
+- Generating improvement roadmaps
+
+### 5. Documentation Sync Workflow
+**File**: `workflow-documentation-sync.mdc`
+**Purpose**: Automatic documentation synchronization and accuracy validation
+
+**Trigger Commands:**
+- `@sync-docs` - Complete documentation synchronization
+- `@check-docs [path]` - Validate specific documentation file
+- `@update-api-docs` - Focus on API documentation accuracy
+- `@sync-changelogs` - Validate technical changelog completeness  
+- `@docs-health` - Generate documentation health report
+
+**Best For:**
+- Keeping documentation accurate and up-to-date
+- Validating code examples and API docs
+- Maintaining technical changelogs
+
+## Workflow Integration Patterns
+
+### End-to-End Development Flow
+```mermaid
+graph TD
+    A[Idea/Concept] --> B[@create-issue]
+    B --> C[Issue Refinement]
+    C --> D[@generate-issue]  
+    D --> E[GitHub Issue Created]
+    E --> F[@issue-dev URL]
+    F --> G[Implementation Plan]
+    G --> H[@implement-plan]
+    H --> I[Feature Branch + Implementation]
+    I --> J[Pull Request Created]
+    J --> K[@review-pr URL]
+    K --> L[Code Review & Validation]
+    L --> M[Merge to Main]
+```
+
+### Quality Assurance Flow
+```mermaid
+graph TD
+    A[Codebase] --> B[@analyze-debt]
+    B --> C[Technical Debt Report]
+    C --> D[@create-issue for critical items]
+    D --> E[Improvement Issues]
+    E --> F[@issue-dev URL]
+    F --> G[Debt Reduction Implementation]
+    
+    A --> H[@sync-docs]
+    H --> I[Documentation Analysis]
+    I --> J[Updated Documentation]
+```
+
+### Continuous Improvement Cycle
+```mermaid
+graph LR
+    A[Weekly] --> B[@analyze-debt]
+    B --> C[Debt Assessment]
+    C --> D[Improvement Planning]
+    
+    E[Per Release] --> F[@sync-docs]
+    F --> G[Doc Validation]
+    G --> H[Updated Documentation]
+    
+    I[Per Feature] --> J[@create-issue]
+    J --> K[@issue-dev]
+    K --> L[@review-pr]
+```
+
+## Project-Specific Configurations
+
+### Quality Gates Integration
+All workflows integrate with project quality standards:
+
+```bash
+# Mandatory quality checks
+npm run lint                    # ESLint zero-warnings policy
+npm run check-imports          # Import structure validation  
+npm run test:coverage          # Vitest coverage requirements
+npx tsc --noEmit              # TypeScript strict mode
+npm run build                  # ESM and CJS build validation
+```
+
+### Clean Architecture Validation
+All workflows validate against Clean Architecture patterns:
+- Domain layer purity (no external dependencies)
+- Application layer contracts only
+- Function-based service patterns
+- Proper ports and adapters implementation
+- Layered dependency direction
+
+### Testing Requirements
+All workflows enforce comprehensive testing:
+- **Unit tests**: Every line of business logic
+- **Integration tests**: Feature workflows  
+- **Test fixtures**: Rosie factory patterns
+- **Edge case coverage**: Error paths and boundaries
+- **Mock patterns**: Proper isolation
+
+### Documentation Standards
+All workflows maintain documentation quality:
+- **README.md**: API examples and setup instructions
+- **Technical Changelogs**: Implementation decisions and rationale
+- **Code Comments**: Complex business logic explanation
+- **Type Definitions**: Comprehensive TypeScript documentation
+
+## Common Usage Patterns
+
+### Feature Development Pattern
+```bash
+# 1. Create well-defined issue
+@create-issue "Add workout filtering by date range"
+# [Collaborative refinement process]
+@generate-issue
+
+# 2. Implement feature  
+@issue-dev "https://github.com/user/repo/issues/123"
+# [Plan approval and implementation]
+
+# 3. Review implementation
+@review-pr "https://github.com/user/repo/pull/156"
+```
+
+### Maintenance Pattern
+```bash
+# 1. Analyze technical debt
+@analyze-debt
+
+# 2. Create improvement issues for critical items
+@create-issue "Fix architecture violations in auth module"
+
+# 3. Sync documentation  
+@sync-docs
+
+# 4. Generate health reports
+@debt-report
+@docs-health
+```
+
+### Quality Assurance Pattern
+```bash
+# Before each release
+@analyze-debt             # Check code quality
+@sync-docs               # Validate documentation
+@check-requirements      # Verify feature completeness
+
+# For each PR
+@review-pr [URL]         # Comprehensive review
+@architecture-review     # Architecture compliance
+```
+
+## Command Quick Reference
+
+| Workflow | Primary Command | Secondary Commands | Purpose |
+|----------|----------------|-------------------|---------|
+| Issue Creation | `@create-issue` | `@refine-requirements`, `@generate-issue` | Create structured GitHub issues |
+| Issue Development | `@issue-dev [URL]` | `@analyze-issue`, `@implement-plan` | Implement from GitHub issues |  
+| PR Review | `@review-pr [URL]` | `@check-requirements`, `@architecture-review` | Comprehensive code review |
+| Technical Debt | `@analyze-debt` | `@debt-module`, `@debt-report` | Code quality analysis |
+| Documentation | `@sync-docs` | `@check-docs`, `@update-api-docs` | Documentation maintenance |
+
+## Integration Benefits
+
+### Traceability
+- Every change linked to specific GitHub issue
+- Requirements validation throughout development
+- Implementation decisions documented in changelogs
+
+### Consistency  
+- Standardized development process across team
+- Uniform code review criteria
+- Consistent documentation standards
+
+### Quality
+- Automated architecture compliance checks
+- Comprehensive testing requirements
+- Continuous technical debt monitoring
+
+### Efficiency
+- Automated issue creation and PR management
+- Structured requirement gathering
+- Integrated quality validation
+
+### Collaboration
+- Clear development workflow
+- Structured code review process  
+- Comprehensive documentation maintenance
+
+## Best Practices
+
+### When to Use Each Workflow
+
+**Use Issue Creation** when:
+- You have an idea but need to refine requirements
+- Creating new features or improvements
+- Need structured requirement gathering
+
+**Use Issue Development** when:
+- You have a well-defined GitHub issue
+- Following structured development process
+- Need requirements traceability
+
+**Use PR Review** when:
+- Code changes are ready for review
+- Need comprehensive quality validation
+- Validating against original requirements
+
+**Use Technical Debt Analysis** when:
+- Planning code quality improvements  
+- Assessing architecture compliance
+- Creating improvement roadmaps
+- Regular maintenance cycles
+
+**Use Documentation Sync** when:
+- API or implementation changes made
+- Documentation seems outdated
+- Preparing for releases
+- Regular documentation maintenance
+
+### Workflow Combinations
+
+**Complete Feature Development:**
+```
+@create-issue → @issue-dev → @review-pr
+```
+
+**Quality Improvement Cycle:**
+```  
+@analyze-debt → @create-issue → @issue-dev → @review-pr
+```
+
+**Release Preparation:**
+```
+@sync-docs → @analyze-debt → @docs-health → @debt-report
+```
+
+## Success Metrics
+
+### Development Velocity
+- Time from issue creation to implementation
+- Requirements clarity and completeness
+- Code review cycle time
+
+### Code Quality
+- Architecture compliance percentage
+- Technical debt health score
+- Test coverage metrics
+
+### Documentation Quality  
+- API documentation accuracy
+- Example code compilation rate
+- Documentation completeness score
+
+### Process Adherence
+- Workflow usage consistency
+- Quality gates pass rate
+- Traceability maintenance

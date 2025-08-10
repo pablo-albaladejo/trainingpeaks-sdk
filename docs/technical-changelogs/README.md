@@ -4,10 +4,9 @@ This directory contains detailed technical changelogs for major SDK components. 
 
 ## Structure
 
-- [`adapters.md`](./adapters.md) - External integrations and HTTP client changes
+- [`adapters.md`](./adapters.md) - External integrations, concrete implementations, and HTTP client changes
 - [`application.md`](./application.md) - Business logic orchestration and service contracts
 - [`domain.md`](./domain.md) - Core entities, value objects, and business rules
-- [`infrastructure.md`](./infrastructure.md) - Concrete implementations and utilities
 - [`shared.md`](./shared.md) - Common utilities and cross-cutting concerns
 
 ## Purpose

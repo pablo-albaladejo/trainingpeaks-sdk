@@ -2,7 +2,10 @@
  * Shared constants for TrainingPeaks Users API v3
  */
 
-import { API_BASE_URLS, API_ORIGINS } from '../../../../constants/api-urls';
+import {
+  API_BASE_URLS,
+  API_ORIGINS,
+} from '@/adapters/public-api/constants/api-urls';
 
 // Shared API base URL for all users/v3 endpoints
 export const USERS_V3_API_BASE_URL = API_BASE_URLS.USERS;

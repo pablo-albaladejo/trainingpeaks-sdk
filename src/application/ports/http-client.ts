@@ -1,6 +1,6 @@
-import type { HttpError } from '@/adapters/errors/http-errors';
-import type { Logger } from '@/adapters/logging/logger';
 import { type HttpMethod } from '@/application';
+import type { HttpError } from '@/domain/types/http-error';
+import type { Logger } from '@/domain/types/logger';
 
 import type { SessionStorage } from './session-storage';
 

@@ -3,6 +3,8 @@
  * Manages automatic token refresh with concurrency control
  */
 
+import type { Logger } from '@/adapters/logging/logger';
+import { refreshAuthToken as refreshUserAuthToken } from '@/adapters/public-api/endpoints/users/v3/token';
 import type { HttpClient, SessionStorage } from '@/application';
 import {
   type AuthToken,
@@ -11,9 +13,6 @@ import {
   refreshAuthToken as updateAuthToken,
   shouldRefreshToken,
 } from '@/domain';
-
-import type { Logger } from '../logging/logger';
-import { refreshAuthToken as refreshUserAuthToken } from '../public-api/endpoints/users/v3/token';
 
 /**
  * Token refresh state interface

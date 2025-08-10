@@ -1,0 +1,281 @@
+# Issue Creation Workflow - Cursor Rule
+
+## Purpose
+Collaborative issue creation through iterative requirement refinement, automatically generating well-structured GitHub issues using project templates.
+
+## Trigger Commands
+- **@create-issue** - Start collaborative issue creation process
+- **@refine-requirements** - Continue requirement iteration
+- **@generate-issue** - Create GitHub issue after approval
+
+## Workflow Steps
+
+### 1. Requirements Gathering
+When user provides initial concept:
+
+```typescript
+// Capture initial requirements
+interface InitialRequirement {
+  type: 'feature' | 'bug' | 'refactor' | 'documentation' | 'performance' | 'security' | 'testing';
+  description: string;
+  context?: string;
+  urgency?: 'low' | 'medium' | 'high' | 'critical';
+}
+
+// Examples:
+// "I want to add workout filtering by date range"
+// "There's a bug with authentication timeout handling"
+// "We need better error messages for invalid API responses"
+```
+
+### 2. Iterative Refinement Process
+
+#### For Feature Requests
+Ask clarifying questions:
+- **User Stories**: Who will use this feature and why?
+- **Acceptance Criteria**: What defines "done"?
+- **API Design**: What should the interface look like?
+- **Performance**: Are there scalability considerations?
+- **Dependencies**: What existing code does this interact with?
+- **Edge Cases**: What unusual scenarios need handling?
+
+#### For Bug Reports  
+Gather comprehensive details:
+- **Steps to Reproduce**: Exact sequence to trigger bug
+- **Expected Behavior**: What should happen?
+- **Actual Behavior**: What actually happens?
+- **Environment**: OS, Node version, package versions
+- **Impact Assessment**: How many users affected?
+- **Error Messages**: Full stack traces or error output
+
+#### For Technical Tasks
+Define scope and approach:
+- **Objectives**: What technical debt or improvement?
+- **Architecture Impact**: Does this affect system design?
+- **Breaking Changes**: Will this break existing code?
+- **Migration Path**: How do users adapt to changes?
+- **Testing Strategy**: How to validate the changes?
+
+### 3. Template Selection Logic
+
+```typescript
+const templateSelection = {
+  'feature': '.github/ISSUE_TEMPLATE/feature-request.md',
+  'bug': '.github/ISSUE_TEMPLATE/bug-fix.md', 
+  'refactor': '.github/ISSUE_TEMPLATE/refactor.md',
+  'documentation': '.github/ISSUE_TEMPLATE/documentation.md',
+  'performance': '.github/ISSUE_TEMPLATE/performance.md',
+  'security': '.github/ISSUE_TEMPLATE/security.md',
+  'testing': '.github/ISSUE_TEMPLATE/testing.md',
+};
+
+// Auto-detect type based on keywords
+const detectIssueType = (description: string) => {
+  const keywords = {
+    feature: ['add', 'implement', 'create', 'support', 'new'],
+    bug: ['bug', 'error', 'broken', 'fail', 'issue', 'problem'],
+    refactor: ['refactor', 'restructure', 'reorganize', 'cleanup'],
+    performance: ['slow', 'performance', 'optimize', 'speed', 'memory'],
+    security: ['security', 'vulnerability', 'auth', 'permission'],
+    testing: ['test', 'coverage', 'spec', 'validation'],
+    documentation: ['docs', 'documentation', 'readme', 'guide']
+  };
+  // Implementation logic...
+};
+```
+
+### 4. Requirements Validation
+
+Present complete requirements summary:
+
+```markdown
+# Proposed Issue: {Title}
+
+**Type**: {Feature Request|Bug Report|Technical Task}
+**Priority**: {Low|Medium|High|Critical}
+**Complexity**: {Simple|Medium|Complex}
+**Template**: {Selected template file}
+
+## User Story
+As a {user type}, I want to {goal} so that {benefit}.
+
+## Acceptance Criteria
+- [ ] Specific, testable requirement 1
+- [ ] Specific, testable requirement 2
+- [ ] Edge case handling requirement
+- [ ] Error handling requirement
+- [ ] Performance requirement (if applicable)
+
+## Technical Requirements  
+- [ ] Architecture compliance (Clean Architecture)
+- [ ] Function-based service patterns
+- [ ] Comprehensive unit test coverage
+- [ ] Integration test scenarios
+- [ ] Documentation updates
+- [ ] Breaking change considerations
+
+## Definition of Done
+- [ ] Implementation complete and tested
+- [ ] Code review passed
+- [ ] Documentation updated
+- [ ] Technical changelog entry added
+- [ ] All quality gates pass
+
+## Additional Context
+{Any additional technical context, dependencies, or considerations}
+```
+
+### 5. Automatic Issue Creation
+
+Upon user approval:
+
+```typescript
+// Create GitHub issue using template
+const issueCreation = {
+  title: generateSemanticTitle(requirements),
+  body: populateTemplate(selectedTemplate, requirements),
+  labels: generateLabels(requirements),
+  assignees: [], // Can be configured
+  milestone: detectMilestone(requirements),
+  projects: attachToProjects() // If configured
+};
+
+// Use GitHub CLI
+const result = await gh.issue.create(issueCreation);
+```
+
+## 🚨 MANDATORY Label Generation Logic
+
+**ALL ISSUES MUST BE CREATED WITH PROPER LABELS** - No issues should be created without appropriate categorization.
+
+```typescript
+const generateLabels = (requirements: Requirements) => {
+  const labels = [];
+  
+  // REQUIRED: Type labels (mandatory)
+  const typeLabels = {
+    'feature': 'type: enhancement',
+    'bug': 'type: bug', 
+    'refactor': 'type: refactor',
+    'documentation': 'type: documentation',
+    'performance': 'type: performance',
+    'security': 'type: security',
+    'testing': 'type: testing',
+    'infrastructure': 'type: infrastructure'
+  };
+  labels.push(typeLabels[requirements.type]);
+  
+  // REQUIRED: Priority labels (mandatory) 
+  const priorityLabels = {
+    'critical': 'priority: critical',
+    'high': 'priority: high', 
+    'medium': 'priority: medium',
+    'low': 'priority: low'
+  };
+  labels.push(priorityLabels[requirements.priority || 'medium']);
+  
+  // REQUIRED: Effort/Complexity labels (mandatory)
+  const effortLabels = {
+    'simple': 'effort: small',    // < 1 day
+    'medium': 'effort: medium',   // 1-3 days  
+    'complex': 'effort: large',   // 3-7 days
+    'epic': 'effort: epic'        // > 1 week
+  };
+  labels.push(effortLabels[requirements.complexity || 'medium']);
+  
+  // Architecture labels based on affected layers
+  if (requirements.affects?.includes('domain')) labels.push('architecture: domain');
+  if (requirements.affects?.includes('application')) labels.push('architecture: application');
+  if (requirements.affects?.includes('adapters')) labels.push('architecture: adapters');
+  if (requirements.affects?.includes('infrastructure')) labels.push('architecture: infrastructure');
+  
+  // Component labels for specific areas
+  if (requirements.affects?.includes('authentication')) labels.push('component: auth');
+  if (requirements.affects?.includes('api')) labels.push('component: api');
+  if (requirements.affects?.includes('client')) labels.push('component: client');
+  if (requirements.affects?.includes('testing')) labels.push('component: testing');
+  
+  // Special circumstance labels
+  if (requirements.breaking) labels.push('breaking-change');
+  if (requirements.needsDiscussion) labels.push('needs-discussion');
+  if (requirements.isGoodFirstIssue) labels.push('good first issue');
+  
+  // Status labels (default)
+  labels.push('status: needs-triage');
+  
+  return labels;
+};
+
+// VALIDATION: Ensure minimum required labels
+const validateIssueLabels = (labels: string[]) => {
+  const requiredLabelTypes = ['type:', 'priority:', 'effort:'];
+  const hasRequiredLabels = requiredLabelTypes.every(type => 
+    labels.some(label => label.includes(type))
+  );
+  
+  if (!hasRequiredLabels) {
+    throw new Error('Issues MUST have type, priority, and effort labels');
+  }
+};
+```
+
+## Project Integration
+
+### Metadata Enrichment
+```typescript
+// Add project-specific context
+const enrichWithProjectContext = (requirements) => {
+  return {
+    ...requirements,
+    affectedLayers: detectAffectedLayers(requirements.description),
+    testingStrategy: generateTestingStrategy(requirements.type),
+    architectureImpact: assessArchitectureImpact(requirements),
+    estimatedEffort: estimateEffort(requirements.complexity),
+    relatedIssues: findRelatedIssues(requirements.description)
+  };
+};
+```
+
+### Quality Assurance Checklist
+```markdown
+## Pre-Creation Validation
+- [ ] Requirements are specific and testable
+- [ ] Acceptance criteria are measurable  
+- [ ] Technical approach aligns with Clean Architecture
+- [ ] Testing strategy is comprehensive
+- [ ] Documentation needs identified
+- [ ] Breaking change impact assessed
+- [ ] Related issues and dependencies identified
+```
+
+## Usage Examples
+
+```bash
+# Start issue creation
+@create-issue "I want to add support for uploading workout files"
+
+# Continue refinement
+@refine-requirements "TCX and GPX formats, async with progress callbacks"
+
+# Generate final issue
+@generate-issue
+
+# Check created issue
+@issue-status
+```
+
+## Integration with Development Workflow
+
+Created issues automatically integrate with:
+- **Issue-Driven Development** workflow (@issue-dev)
+- **Technical Debt Analysis** for improvement issues  
+- **Documentation Sync** for documentation issues
+- **Pull Request Review** for validation
+
+## Success Criteria
+- Complete requirements gathered through structured questions
+- Appropriate GitHub issue template selected automatically
+- Issue created with proper labels, priority, and metadata
+- Clear acceptance criteria and definition of done
+- Integration with project boards and milestones
+- Traceability to future development work

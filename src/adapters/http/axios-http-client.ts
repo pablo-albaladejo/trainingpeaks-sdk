@@ -11,6 +11,11 @@ import axios, {
 import { wrapper } from 'axios-cookiejar-support';
 import { CookieJar } from 'tough-cookie';
 
+import {
+  createHttpError,
+  HttpError,
+  type HttpErrorResponse,
+} from '@/adapters/errors/http-errors';
 import type { Logger } from '@/adapters/logging/logger';
 import {
   HttpClient,
@@ -27,11 +32,6 @@ import {
 } from '@/shared/utils/curl-generator';
 import { generateRequestId } from '@/shared/utils/request-id';
 
-import {
-  createHttpError,
-  HttpError,
-  type HttpErrorResponse,
-} from '../errors/http-errors';
 import { executeRequestWithRefresh } from './request-with-refresh';
 import { DEFAULT_RETRY_CONFIG, RetryHandler } from './retry-handler';
 

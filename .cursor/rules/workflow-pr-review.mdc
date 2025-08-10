@@ -1,0 +1,318 @@
+# Pull Request Review Workflow - Cursor Rule
+
+## Purpose
+Comprehensive Pull Request reviews that validate implementation against original issue requirements, code quality standards, and project architecture patterns.
+
+## Trigger Commands
+- **@review-pr** - Comprehensive PR review with issue validation
+- **@pr-review [URL]** - Direct PR review with URL
+- **@check-requirements** - Validate PR against linked issue requirements
+- **@architecture-review** - Focus on Clean Architecture compliance
+
+## Workflow Steps
+
+### 1. PR Analysis Phase
+When user provides Pull Request URL:
+
+```typescript
+// Fetch PR details using GitHub CLI
+const prData = await gh.pr.view(prNumber, { json: true });
+const prFiles = await gh.pr.diff(prNumber);
+
+// Extract key information
+const prAnalysis = {
+  title: prData.title,
+  body: prData.body,
+  linkedIssues: extractLinkedIssues(prData.body),
+  changedFiles: prFiles.map(f => f.filename),
+  additions: prData.additions,
+  deletions: prData.deletions,
+  commits: prData.commits
+};
+```
+
+### 2. Issue Traceability Validation
+Compare PR implementation against linked issue requirements:
+
+```typescript
+// Fetch linked issue details
+const issueRequirements = await Promise.all(
+  linkedIssues.map(issueNum => gh.issue.view(issueNum, { json: true }))
+);
+
+// Extract acceptance criteria
+const acceptanceCriteria = issueRequirements.map(issue => 
+  extractAcceptanceCriteria(issue.body)
+).flat();
+
+// Validate implementation coverage
+const requirementsCoverage = validateRequirementsCoverage(
+  acceptanceCriteria,
+  prFiles,
+  prAnalysis
+);
+```
+
+### 3. Code Quality Assessment
+
+#### Clean Architecture Compliance
+```typescript
+const architectureValidation = {
+  // Layer separation validation
+  domainLayerPurity: validateDomainLayer(changedFiles),
+  applicationContractsOnly: validateApplicationLayer(changedFiles),
+  adapterImplementations: validateAdaptersLayer(changedFiles),
+  adapterIntegrations: validateAdaptersLayer(changedFiles),
+  
+  // Pattern compliance
+  functionBasedServices: validateFunctionBasedPattern(changedFiles),
+  portsAndAdapters: validatePortsAndAdapters(changedFiles),
+  dependencyDirection: validateDependencyDirection(changedFiles)
+};
+```
+
+#### TypeScript Quality Check
+```typescript
+const typeScriptQuality = {
+  strictModeCompliance: checkStrictMode(changedFiles),
+  anyTypeUsage: scanForAnyTypes(changedFiles),
+  typeDefinitions: validateTypeDefinitions(changedFiles),
+  importStructure: validateImportStructure(changedFiles),
+  pathAliases: validatePathAliases(changedFiles)
+};
+```
+
+#### Testing Validation
+```typescript
+const testingAssessment = {
+  unitTestCoverage: calculateUnitTestCoverage(changedFiles),
+  integrationTests: validateIntegrationTests(changedFiles),
+  testFixtures: validateTestFixtures(changedFiles),
+  mockUsage: validateMockPatterns(changedFiles),
+  edgeCaseTests: validateEdgeCases(changedFiles),
+  errorPathTests: validateErrorPaths(changedFiles)
+};
+```
+
+### 4. Quality Gates Verification
+
+Run project-specific quality checks:
+```bash
+# ESLint with zero warnings policy
+npm run lint
+
+# TypeScript compilation 
+npx tsc --noEmit
+
+# Import structure validation
+npm run check-imports
+
+# Unit test execution with coverage
+npm run test:coverage
+
+# Integration test validation
+npm run test:integration
+
+# Build verification (ESM and CJS)
+npm run build
+```
+
+### 5. Structured Review Report Generation
+
+```markdown
+# PR Review: {PR Title} (#{PR Number})
+
+## Issue Compliance Analysis {✅ MEETS REQUIREMENTS | ⚠️ PARTIAL | ❌ INCOMPLETE}
+
+**Linked Issue**: #{issue-number} - {issue-title}
+**Requirements Coverage**: {X}/{Y} acceptance criteria implemented
+
+### ✅ Fully Implemented Requirements
+- [x] Requirement 1: Description and validation
+- [x] Requirement 2: Description and validation
+
+### ❌ Missing or Incomplete Requirements
+- [ ] Requirement 3: What's missing and why
+- [ ] Requirement 4: Implementation gaps identified
+
+### 🔍 Additional Implementation Details
+- Implementation goes beyond requirements: {Yes/No}
+- Scope creep detected: {Yes/No with details}
+- Breaking changes introduced: {Yes/No with impact}
+
+## Code Quality Assessment
+
+### Architecture Compliance {✅ EXCELLENT | 🟡 GOOD | ⚠️ NEEDS ATTENTION | ❌ VIOLATIONS}
+
+**Clean Architecture Validation:**
+- Domain layer purity: {✅/❌} - {details}
+- Application contracts only: {✅/❌} - {details}  
+- Adapter implementations: {✅/❌} - {details}
+- Function-based services: {✅/❌} - {details}
+
+**Pattern Violations Found:**
+1. **File**: `src/path/to/file.ts:line`
+   - **Issue**: Description of violation
+   - **Fix**: Recommended solution
+   - **Impact**: Why this matters
+
+### TypeScript Quality {Score}/10
+
+**Compliance Metrics:**
+- Strict mode adherence: {percentage}%
+- Any type usage: {count} instances found
+- Type assertion usage: {count} instances
+- Import structure: {percentage}% compliant
+
+**Issues Requiring Attention:**
+- Location: `file:line` - Issue description and fix
+
+### Testing Assessment {✅ COMPREHENSIVE | 🟡 ADEQUATE | ⚠️ INSUFFICIENT | ❌ MISSING}
+
+**Coverage Analysis:**
+- Unit test coverage: {percentage}% (target: 95%+)
+- Integration test coverage: {percentage}% (target: 80%+)
+- New functionality tested: {Yes/No}
+- Edge cases covered: {Yes/No}
+- Error paths tested: {Yes/No}
+
+**Missing Tests:**
+- Function/method requiring tests
+- Edge case scenarios not covered
+- Error handling paths missing tests
+
+## Performance & Security Review
+
+**Performance Considerations:**
+- Memory usage patterns: {assessment}
+- Async/await usage: {assessment}
+- Database query efficiency: {assessment}
+
+**Security Assessment:**  
+- Input validation: {assessment}
+- Authentication/authorization: {assessment}
+- Sensitive data handling: {assessment}
+
+## Documentation Review
+
+**Required Documentation:**
+- Technical changelog updated: {✅/❌}
+- API documentation updated: {✅/❌}
+- Code comments adequate: {✅/❌}
+- README updates needed: {✅/❌}
+
+## Recommendations
+
+### Critical (Must Fix Before Merge)
+1. **Priority**: Issue description
+   - **Location**: File and line references
+   - **Fix**: Specific remediation steps
+   - **Impact**: Why this blocks merge
+
+### Important (Should Fix Before Merge)
+2. **Priority**: Issue description with fix guidance
+
+### Nice to Have (Follow-up Issues)
+3. **Improvement**: Suggestion for future enhancement
+
+## Quality Gates Status
+
+- [ ] ESLint passes with zero warnings
+- [ ] TypeScript compilation successful  
+- [ ] Import structure validation passes
+- [ ] Unit tests pass with adequate coverage
+- [ ] Integration tests validate workflows
+- [ ] Both ESM and CJS builds succeed
+
+## Overall Assessment: {✅ APPROVE | ⚠️ NEEDS WORK | ❌ REQUEST CHANGES}
+
+**Summary**: Brief overall assessment paragraph
+
+**Recommendation**: {Approve/Request Changes/Needs Work} with reasoning
+```
+
+### 6. Interactive Review Session
+Provide follow-up capabilities:
+- Answer questions about specific feedback
+- Suggest implementation alternatives  
+- Provide code examples for fixes
+- Validate proposed solutions
+- Re-review after changes
+
+## Project-Specific Validations
+
+### Function-Based Service Pattern
+```typescript
+// Detect violations of function-based pattern
+const detectServicePatterns = (fileContent: string) => {
+  // ❌ Grouped interface pattern (violation)
+  const groupedInterfacePattern = /interface \w+Service\s*{[\s\S]*?}/g;
+  
+  // ✅ Function-based pattern (correct)  
+  const functionTypePattern = /export type \w+ = \([^)]*\) => [^;]+;/g;
+  
+  return {
+    violations: fileContent.match(groupedInterfacePattern) || [],
+    compliant: fileContent.match(functionTypePattern) || []
+  };
+};
+```
+
+### Clean Architecture Layer Validation
+```typescript
+const validateLayerBoundaries = (importStatements: string[], currentLayer: string) => {
+  const layerRules = {
+    domain: { cannotImport: ['adapters', 'application'] },
+    application: { cannotImport: ['adapters'] },
+    adapters: { cannotImport: [] } // Can import from any layer
+  };
+  
+  const violations = importStatements.filter(imp => 
+    layerRules[currentLayer]?.cannotImport.some(forbidden => 
+      imp.includes(`/${forbidden}/`)
+    )
+  );
+  
+  return violations;
+};
+```
+
+## Integration Commands
+
+```bash
+# GitHub CLI commands for PR analysis
+gh pr view {number} --json title,body,additions,deletions,changedFiles
+gh pr diff {number}
+gh issue view {number} --json title,body,labels
+
+# Quality validation commands
+npm run lint                # ESLint validation
+npm run check-imports      # Import structure  
+npm run test:coverage     # Test coverage
+npm run build             # Build validation
+```
+
+## Usage Examples
+
+```bash
+# Comprehensive PR review
+@review-pr "https://github.com/user/repo/pull/156"
+
+# Focus on architecture compliance
+@architecture-review "PR #156"
+
+# Check against specific requirements
+@check-requirements "Validate date filtering implementation"
+
+# Re-review after changes  
+@re-review-pr
+```
+
+## Success Criteria
+- Issue requirements comprehensively validated
+- Code quality assessed against project standards
+- Architecture compliance verified
+- Testing adequacy confirmed
+- Documentation completeness checked  
+- Clear, actionable feedback provided
+- Integration with quality gates validated

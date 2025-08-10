@@ -23,6 +23,17 @@ For comprehensive product context and business objectives, see [PRODUCT.md](../.
 
 ## Available Rules
 
+### 🎯 Scope & Focus
+
+#### [`scope-limitation.mdc`](./scope-limitation.mdc) ⚠️ **CRITICAL PRIORITY**
+
+- **Mandatory scope limitation rule** - highest priority
+- Strictly limits modifications to only the specific feature requested in the prompt
+- Prevents unnecessary refactoring, improvements, or "while we're at it" changes
+- Enforces focused development on exact user requirements
+- Pre and post-modification checklists for compliance
+- Exception handling for legitimate scope expansions
+
 ### 🏗️ Architecture & Design
 
 #### `project-architecture.mdc`
@@ -52,12 +63,29 @@ For comprehensive product context and business objectives, see [PRODUCT.md](../.
 - E2E testing for npm packages
 - Rosie factory patterns for test data
 
+#### `contract-testing-rule.mdc` 🔗 **API VALIDATION**
+
+- **MANDATORY for API endpoint changes** - Contract tests must pass before merge
+- TrainingPeaks API endpoint validation against Zod schemas
+- HTTP status code and error response verification
+- API change detection and SDK adaptation protocols
+- Schema evolution tracking and backward compatibility
+- CI integration with automated issue creation on API changes
+
 #### `code-review-rule.mdc`
 
 - Code review checklist for libraries
 - API design review criteria
 - Backward compatibility checks
 - Performance considerations
+
+#### `github-labels-rule.mdc` 🏷️ **MANDATORY LABELING**
+
+- **REQUIRED for ALL issues/PRs** - No unlabeled issues allowed
+- Mandatory type, priority, and effort labels for issues
+- Automatic label validation via GitHub Actions
+- Label lifecycle management and project board integration
+- CLI commands and maintenance scripts for bulk operations
 
 ### 🔧 Development Workflow
 
@@ -70,6 +98,52 @@ For comprehensive product context and business objectives, see [PRODUCT.md](../.
 - GitHub project management (issues, PRs)
 - Integration testing patterns
 - **Mandatory changelog requirements and validation**
+
+#### **Development Workflows (NEW)** 📋
+
+**Comprehensive workflow automation for issue-driven development:**
+
+##### [`workflows-overview.mdc`](./workflows-overview.mdc) - **Master Reference**
+- Complete overview of all 5 development workflows  
+- Integration patterns and command reference
+- End-to-end development flow diagrams
+- Best practices and usage examples
+
+##### [`workflow-issue-driven-development.mdc`](./workflow-issue-driven-development.mdc)
+- **Trigger**: `@issue-dev [URL]`, `@analyze-issue`, `@implement-plan`
+- Complete lifecycle from GitHub issue analysis to PR creation
+- Clean Architecture compliance validation
+- Automatic branch creation and quality gates
+
+##### [`workflow-issue-creation.mdc`](./workflow-issue-creation.mdc)  
+- **Trigger**: `@create-issue`, `@refine-requirements`, `@generate-issue`
+- Collaborative issue creation through iterative refinement
+- Automatic template selection and GitHub issue generation
+- Requirements validation and acceptance criteria definition
+
+##### [`workflow-pr-review.mdc`](./workflow-pr-review.mdc)
+- **Trigger**: `@review-pr [URL]`, `@check-requirements`, `@architecture-review`
+- Comprehensive PR review against original issue requirements
+- Code quality, testing, and documentation validation
+- Structured feedback with actionable recommendations
+
+##### [`workflow-technical-debt-analysis.mdc`](./workflow-technical-debt-analysis.mdc)
+- **Trigger**: `@analyze-debt`, `@debt-module [path]`, `@debt-report`
+- Architecture violations and code smell detection
+- Health score calculation and improvement roadmaps
+- Automatic issue creation for critical debt items
+
+##### [`workflow-documentation-sync.mdc`](./workflow-documentation-sync.mdc)
+- **Trigger**: `@sync-docs`, `@check-docs [path]`, `@update-api-docs`
+- API documentation accuracy validation
+- Code example compilation and maintenance
+- Technical changelog completeness verification
+
+**Integration Features:**
+- **Quality Gates**: ESLint, TypeScript, tests, imports validation
+- **Architecture Validation**: Clean Architecture compliance checks
+- **Project Standards**: Function-based services, mandatory testing
+- **Traceability**: Issue → Development → PR → Review workflow
 
 #### [`changelog-management.mdc`](./changelog-management.mdc)
 
@@ -192,7 +266,7 @@ else
   echo "✅ Found: docs/technical-changelogs/README.md"
 fi
 
-for component in adapters application domain infrastructure shared; do
+for component in adapters application domain shared; do
   if [ ! -f "docs/technical-changelogs/$component.md" ]; then
     echo "❌ Missing: docs/technical-changelogs/$component.md"
     missing_files=true

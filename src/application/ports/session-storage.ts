@@ -1,9 +1,4 @@
-import type { AuthToken, User } from '@/domain';
-
-export type Session = {
-  token: AuthToken;
-  user: User;
-};
+import type { Session } from '@/domain';
 
 export type SessionStorage = {
   get: () => Promise<Session | null>;

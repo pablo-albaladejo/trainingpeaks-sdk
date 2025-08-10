@@ -1,0 +1,164 @@
+# Issue-Driven Development Workflow - Cursor Rule
+
+## Purpose
+Automates the complete issue-driven development lifecycle from GitHub issue analysis through implementation and pull request creation.
+
+## Trigger Commands
+- **@issue-dev** - Analyze GitHub issue and create implementation plan
+- **@analyze-issue [URL]** - Direct issue analysis with URL
+- **@implement-plan** - Execute approved implementation plan
+
+## Workflow Steps
+
+### 1. Issue Analysis Phase
+When user provides GitHub issue URL:
+
+```typescript
+// Use GitHub CLI to fetch issue details
+const issueData = await gh.api(`repos/{owner}/{repo}/issues/{number}`);
+
+// Extract key information
+const requirements = {
+  title: issueData.title,
+  body: issueData.body,
+  labels: issueData.labels,
+  acceptanceCriteria: extractAcceptanceCriteria(issueData.body),
+  technicalRequirements: extractTechnicalReqs(issueData.body)
+};
+```
+
+### 2. Codebase Research
+Research existing patterns and implementations:
+- Search for similar functionality using `rg` (ripgrep)
+- Analyze Clean Architecture layer organization
+- Identify existing patterns and utilities to reuse
+- Check test patterns and fixture availability
+
+### 3. Implementation Planning
+Create detailed plan following project standards:
+- Break down into specific tasks
+- Identify files to modify/create
+- Plan testing strategy (unit + integration)
+- Consider Clean Architecture compliance
+- Estimate effort and complexity
+
+### 4. Plan Approval
+Present plan to user with:
+- Task breakdown with file locations
+- Architecture considerations
+- Testing requirements
+- Potential risks and mitigations
+
+### 5. Implementation Execution
+Upon approval:
+- Create feature branch: `feat/issue-{number}-{brief-description}`
+- Implement solution following Clean Architecture
+- Use function-based service patterns
+- Create comprehensive unit tests
+- Update technical changelogs
+- Run quality checks (lint, format, type-check, tests)
+
+### 6. Pull Request Creation
+Create PR with:
+- Semantic commit title
+- Complete description using `.github/pull_request_template.md`
+- Link to original issue
+- Test plan and validation steps
+
+## Project-Specific Validations
+
+### Clean Architecture Compliance
+```typescript
+// Ensure proper layer separation
+const architectureRules = {
+  domain: {
+    canImportFrom: [],
+    cannotImportFrom: ['adapters', 'application']
+  },
+  application: {
+    canImportFrom: ['domain'],
+    cannotImportFrom: ['adapters']
+  },
+  adapters: {
+    canImportFrom: ['domain', 'application'],
+    cannotImportFrom: []
+  }
+};
+```
+
+### Function-Based Services
+```typescript
+// ✅ CORRECT: Individual function types
+export type ValidateUserId = (userId: string) => void;
+export type ValidateEmail = (email: string) => void;
+
+// ❌ AVOID: Grouped interface patterns  
+export interface UserValidationService {
+  validateUserId: (userId: string) => void;
+  validateEmail: (email: string) => void;
+}
+```
+
+### Mandatory Testing
+```typescript
+// Every line of business logic MUST have unit tests
+// Test all conditional branches, loops, error paths
+describe('workout validation', () => {
+  it('should validate date ranges correctly', () => {
+    // Test implementation
+  });
+  
+  it('should handle invalid date formats', () => {
+    // Error path testing
+  });
+});
+```
+
+## Quality Gates
+All implementations must pass:
+- `npm run lint` - Zero warnings policy
+- `npm run check-imports` - Import structure validation
+- `npm run test` - Unit test coverage
+- `npx tsc` - TypeScript compilation
+- `npm run build` - Both ESM and CJS builds
+
+## Branch Naming Conventions
+- `feat/issue-{number}-{description}` - New features
+- `fix/issue-{number}-{description}` - Bug fixes  
+- `refactor/issue-{number}-{description}` - Code refactoring
+- `docs/issue-{number}-{description}` - Documentation updates
+
+## Usage Examples
+
+```bash
+# Analyze issue and create plan
+@issue-dev "https://github.com/user/repo/issues/123"
+
+# After plan approval
+@implement-plan
+
+# Check implementation status
+@workflow-status
+```
+
+## Integration Commands
+- `gh issue view {number}` - Fetch issue details
+- `gh pr create` - Create pull request  
+- `git checkout -b feat/issue-{number}-{desc}` - Branch creation
+- Quality validation commands as defined above
+
+## Error Handling
+- Validate GitHub issue URL format
+- Check repository access permissions
+- Verify issue exists and is accessible
+- Handle network failures gracefully
+- Validate plan completeness before implementation
+
+## Success Criteria
+- Issue requirements fully understood and documented
+- Implementation plan approved by user
+- Feature branch created with proper naming
+- Code follows Clean Architecture patterns
+- Comprehensive test coverage achieved
+- Pull request created with complete documentation
+- All quality gates pass

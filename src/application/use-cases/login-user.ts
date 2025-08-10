@@ -3,10 +3,8 @@
  * Handles user authentication workflow
  */
 
-import type { Session } from '@/application/ports/session-storage';
-import { Credentials } from '@/domain';
-
-import { AuthenticateUser } from '../services';
+import { AuthenticateUser } from '@/application/services';
+import { Credentials, Session } from '@/domain';
 
 export type ExecuteLoginUserUseCase = (
   authenticateUser: AuthenticateUser

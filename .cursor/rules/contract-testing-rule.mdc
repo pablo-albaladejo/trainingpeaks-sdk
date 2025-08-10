@@ -1,0 +1,336 @@
+---
+description: Contract testing standards for API endpoint validation against TrainingPeaks API
+globs: **/*.contract-test.ts
+alwaysApply: true
+---
+
+# Contract Testing Standards for TrainingPeaks SDK
+
+## 🚨 MANDATORY CONTRACT TESTING REQUIREMENT
+
+**When adding or modifying ANY API endpoint integration, contract tests MUST pass before merge.**
+
+Contract tests validate that the SDK correctly integrates with the actual TrainingPeaks API by:
+- Validating actual API responses against Zod schemas
+- Verifying HTTP status codes and error responses
+- Ensuring response structure matches expected format
+- Detecting API changes that could break SDK functionality
+
+## Contract Testing Framework
+
+### Test File Naming
+- Use `.contract-test.ts` suffix for all contract tests
+- Group by repository or service (e.g., `workout-repository.contract-test.ts`)
+
+### Test File Structure
+```typescript
+// src/adapters/public-api/__tests__/workout-repository.contract-test.ts
+import { describe, it, expect, beforeAll } from 'vitest';
+import { workoutRepositoryBuilder } from '@fixtures/workout-repository.fixture';
+import { workoutListResponseSchema } from '@domain/schemas';
+import { TEST_USER_ID, testCredentials } from '../fixtures/contract-test-setup';
+
+describe('WorkoutRepository API Contract', () => {
+  let repository: WorkoutRepository;
+  
+  beforeAll(async () => {
+    repository = workoutRepositoryBuilder.build({
+      apiUrl: process.env.TP_SANDBOX_URL!,
+      credentials: testCredentials
+    });
+    await repository.authenticate();
+  });
+
+  describe('listWorkouts endpoint', () => {
+    it('should return valid workout list response structure', async () => {
+      const response = await repository.listWorkouts({ 
+        userId: TEST_USER_ID 
+      });
+      
+      // Validate response against Zod schema
+      expect(() => workoutListResponseSchema.parse(response)).not.toThrow();
+      
+      // Verify critical properties exist
+      if (response.length > 0) {
+        const workout = response[0];
+        expect(workout).toHaveProperty('id');
+        expect(workout).toHaveProperty('title');
+        expect(workout).toHaveProperty('workoutDate');
+        expect(typeof workout.totalTimePlanned).toBe('number');
+      }
+    });
+
+    it('should handle pagination parameters correctly', async () => {
+      const response = await repository.listWorkouts({
+        userId: TEST_USER_ID,
+        limit: 5,
+        offset: 0
+      });
+      
+      expect(response).toHaveLength(5);
+      expect(response).toSatisfy(workoutListResponseSchema);
+    });
+
+    it('should return structured error for invalid user', async () => {
+      await expect(
+        repository.listWorkouts({ userId: 'invalid-user-id' })
+      ).rejects.toMatchObject({
+        code: expect.stringMatching(/USER_NOT_FOUND|INVALID_USER/),
+        status: expect.oneOf([400, 404])
+      });
+    });
+  });
+});
+```
+
+## Contract Test Configuration
+
+### Vitest Configuration
+```typescript
+// vitest.contract.config.ts
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    include: ['**/*.contract-test.ts'],
+    environment: 'node',
+    timeout: 30000, // Longer timeout for real API calls
+    setupFiles: ['src/__fixtures__/contract-test-setup.ts'],
+    // Only run if sandbox credentials are available
+    onlyIf: () => Boolean(process.env.TP_SANDBOX_URL && process.env.TP_TEST_CREDENTIALS),
+    pool: 'forks', // Isolate tests for API calls
+    poolOptions: {
+      forks: {
+        singleFork: true // Sequential execution for API rate limiting
+      }
+    }
+  }
+});
+```
+
+### Environment Setup
+```typescript
+// src/__fixtures__/contract-test-setup.ts
+export const testCredentials = {
+  username: process.env.TP_TEST_USERNAME!,
+  password: process.env.TP_TEST_PASSWORD!,
+};
+
+export const TEST_USER_ID = process.env.TP_TEST_USER_ID!;
+export const TEST_WORKOUT_ID = process.env.TP_TEST_WORKOUT_ID!;
+
+// Validate required environment variables
+if (!testCredentials.username || !testCredentials.password) {
+  throw new Error('Contract tests require TP_TEST_USERNAME and TP_TEST_PASSWORD');
+}
+```
+
+## Schema Validation Patterns
+
+### Response Schema Validation
+```typescript
+import { workoutSchema } from '@domain/schemas';
+
+it('should match workout entity schema', async () => {
+  const workout = await repository.getWorkout(TEST_WORKOUT_ID);
+  
+  // Strict schema validation
+  const validatedWorkout = workoutSchema.parse(workout);
+  expect(validatedWorkout).toEqual(workout);
+});
+```
+
+### Error Response Validation
+```typescript
+it('should return consistent error structure', async () => {
+  try {
+    await repository.getWorkout('non-existent-id');
+  } catch (error) {
+    expect(error).toMatchObject({
+      code: expect.stringMatching(/NOT_FOUND|INVALID_ID/),
+      status: expect.oneOf([400, 404]),
+      message: expect.any(String)
+    });
+  }
+});
+```
+
+### New Field Detection
+```typescript
+it('should detect new fields in API response', async () => {
+  const response = await repository.listWorkouts({ userId: TEST_USER_ID });
+  
+  if (response.length > 0) {
+    const workout = response[0];
+    const knownFields = Object.keys(workoutSchema.shape);
+    const responseFields = Object.keys(workout);
+    
+    const newFields = responseFields.filter(field => !knownFields.includes(field));
+    
+    if (newFields.length > 0) {
+      console.warn(`⚠️  New fields detected in workout response: ${newFields.join(', ')}`);
+      // This could trigger automated issue creation in CI
+    }
+  }
+});
+```
+
+## API Change Detection
+
+### Backward Compatibility Validation
+```typescript
+import { workoutApiSchemaV1 } from '../schemas/api-schemas-v1';
+
+describe('API Backward Compatibility', () => {
+  it('should maintain v1 API contract compatibility', async () => {
+    const response = await repository.listWorkouts({ userId: TEST_USER_ID });
+    
+    // Ensure v1 schema still works
+    expect(() => workoutApiSchemaV1.parse(response)).not.toThrow();
+  });
+
+  it('should detect breaking changes in required fields', async () => {
+    const workout = await repository.getWorkout(TEST_WORKOUT_ID);
+    
+    const requiredFields = ['id', 'title', 'workoutDate', 'totalTimePlanned'];
+    requiredFields.forEach(field => {
+      expect(workout).toHaveProperty(field);
+      expect(workout[field]).not.toBeUndefined();
+    });
+  });
+});
+```
+
+### Schema Evolution Tracking
+```typescript
+// Keep versioned schemas for tracking changes
+// src/adapters/public-api/schemas/api-schemas-v1.ts
+export const workoutApiSchemaV1 = z.object({
+  id: z.string(),
+  title: z.string(),
+  workoutDate: z.string(),
+  totalTimePlanned: z.number(),
+  // Original fields only
+});
+
+// src/adapters/public-api/schemas/api-schemas-v2.ts  
+export const workoutApiSchemaV2 = workoutApiSchemaV1.extend({
+  tags: z.array(z.string()).optional(), // New optional field
+  difficulty: z.number().optional(),    // New optional field
+});
+```
+
+## CI Integration
+
+### Package.json Scripts
+```json
+{
+  "scripts": {
+    "test:contract": "vitest run --config vitest.contract.config.ts",
+    "test:contract:watch": "vitest --config vitest.contract.config.ts",
+    "test:api-changes": "npm run test:contract -- --reporter=json > contract-test-results.json"
+  }
+}
+```
+
+### GitHub Actions Integration
+```yaml
+# .github/workflows/contract-tests.yml
+name: Contract Tests
+on:
+  pull_request:
+    paths:
+      - 'src/adapters/public-api/**'
+      - 'src/domain/schemas/**'
+  schedule:
+    - cron: '0 2 * * *' # Nightly at 2 AM
+
+jobs:
+  contract-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - run: npm ci
+      
+      - name: Run Contract Tests
+        env:
+          TP_SANDBOX_URL: ${{ secrets.TP_SANDBOX_URL }}
+          TP_TEST_USERNAME: ${{ secrets.TP_TEST_USERNAME }}
+          TP_TEST_PASSWORD: ${{ secrets.TP_TEST_PASSWORD }}
+          TP_TEST_USER_ID: ${{ secrets.TP_TEST_USER_ID }}
+        run: npm run test:contract
+        
+      - name: Create Issue on API Changes
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'TrainingPeaks API Contract Changes Detected',
+              body: 'Contract tests failed, indicating potential API changes.',
+              labels: ['api-change', 'urgent']
+            });
+```
+
+## Quality Gates
+
+### Pre-Merge Requirements
+For any PR that modifies API endpoint integration:
+
+1. **Contract tests MUST pass**: `npm run test:contract` returns 0 exit code
+2. **Schema validation**: All API responses validate against current schemas  
+3. **Error handling**: Error responses follow expected structure
+4. **Documentation**: Update schemas and technical changelog if API changes detected
+
+### Failure Response Protocol
+When contract tests fail:
+
+1. **Investigate**: Determine if TrainingPeaks API changed or if SDK has bug
+2. **Update schemas**: If API legitimately changed, update Zod schemas accordingly
+3. **Update SDK code**: Modify SDK to handle API changes correctly
+4. **Update tests**: Ensure contract tests pass with new API behavior
+5. **Document changes**: Update technical changelog with API change details
+
+## Best Practices
+
+### Test Data Management
+- Use dedicated test accounts with known, stable data
+- Implement cleanup procedures for test data creation
+- Use test data that covers edge cases and boundary conditions
+
+### Rate Limiting Compliance  
+- Implement delays between API calls if needed
+- Use sequential test execution to avoid rate limits
+- Consider test data caching for frequently accessed endpoints
+
+### Error Scenario Coverage
+- Test authentication failures
+- Test invalid parameter combinations  
+- Test network timeout scenarios
+- Test malformed response handling
+
+### Schema Maintenance
+- Keep schemas versioned for backward compatibility tracking
+- Document when and why schemas change
+- Maintain migration paths between schema versions
+
+## Integration with SDK Development
+
+Contract tests serve as:
+- **Early warning system** for API changes
+- **Documentation** of expected API behavior  
+- **Validation tool** for SDK correctness
+- **Regression prevention** for API integration
+
+When contract tests fail, it indicates either:
+1. TrainingPeaks API has changed (requires SDK update)
+2. SDK has regression bug (requires bug fix)
+3. Test environment issue (requires investigation)
+
+All contract test failures must be investigated and resolved before merging any API-related changes.

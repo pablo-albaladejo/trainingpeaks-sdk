@@ -5,6 +5,7 @@
 
 // Entities
 export * from './entities/auth-token';
+export * from './entities/session';
 export * from './entities/training-peaks-athlete';
 export * from './entities/user';
 export * from './entities/workout';
@@ -41,3 +42,7 @@ export * from './templates';
 
 // Repositories
 export * from './repositories';
+
+// Types
+export * from './types/http-error';
+export * from './types/logger';

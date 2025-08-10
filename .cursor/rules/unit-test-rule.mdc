@@ -1,13 +1,14 @@
 ---
 description: Unit testing standards and patterns for npm libraries using Vitest
-globs: **/*.test.ts,**/*.spec.ts
+globs: **/*.test.ts,**/*.spec.ts,**/*.contract-test.ts
 alwaysApply: false
 ---
 
 # Unit Testing Standards for NPM Libraries
 
-## 🚨 MANDATORY TESTING REQUIREMENT
+## 🚨 MANDATORY TESTING REQUIREMENTS
 
+### Unit Testing Requirement
 **Every line of code that implements logic MUST be accompanied by a unit test that covers it.**
 
 This includes:
@@ -18,13 +19,22 @@ This includes:
 - All edge cases and boundary conditions
 - All public and private methods that contain logic
 
+### Contract Testing Requirement
+**MANDATORY for API endpoint changes**: When adding or modifying any API endpoint integration:
+- **Contract tests MUST pass** before merge - validates actual API responses against schemas
+- **Schema validation required** - Zod schemas must match real TrainingPeaks API responses  
+- **Error code validation** - HTTP status codes and error responses must be validated
+- **Response structure verification** - All fields, types, and nested objects must be verified
+- **Update contract tests** when API contracts change - failing tests indicate API changes that need SDK updates
+- **Command**: `npm run test:contract` must pass for all endpoint modifications
+
 **Exceptions** (must be justified):
 - Simple getters/setters with no logic
 - Basic constructors that only assign parameters
 - Trivial utility functions (e.g., simple string formatters)
 - Auto-generated code or boilerplate
 
-**Enforcement**: Code reviews MUST verify that all new logic is covered by tests. Coverage reports should reflect this requirement.
+**Enforcement**: Code reviews MUST verify that all new logic is covered by tests AND that contract tests pass for API changes. Coverage reports should reflect this requirement.
 
 ## Testing Framework Setup
 

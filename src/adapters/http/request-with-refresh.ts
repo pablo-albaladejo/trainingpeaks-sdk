@@ -5,13 +5,13 @@
 
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
+import type { Logger } from '@/adapters/logging/logger';
 import type {
   HttpResponse,
   InternalRequestConfig,
   SessionStorage,
 } from '@/application';
 
-import type { Logger } from '../logging/logger';
 import { createTokenRefreshHandler } from './token-refresh-handler';
 
 /**

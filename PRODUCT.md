@@ -11,7 +11,7 @@ The TrainingPeaks SDK is a comprehensive, enterprise-grade TypeScript SDK that p
 - **Node.js**: ≥ 20.0.0 (supports current LTS versions with codenames and official schedule):
   - **20.x "Iron"**: Active LTS (Oct 2023 - Oct 2024), Maintenance (Oct 2024 - Apr 2026), EOL: April 30, 2026
   - **22.x "Jod"**: Active LTS (Oct 2024 - Oct 2025), Maintenance (Oct 2025 - Apr 2027), EOL: April 30, 2027  
-  - **24.x "Next"**: Active LTS (Oct 2024 - Oct 2025), Maintenance (Oct 2025 - Apr 2027), EOL: April 30, 2027
+  - **24.x "Lambda"**: Upcoming LTS (Oct 2025 - Oct 2026), Maintenance (Oct 2026 - Apr 2028), EOL: April 30, 2028
   - See [Official Node.js Release Schedule](https://nodejs.org/en/about/releases/) for updates
 - **TypeScript**: ≥ 4.8.0 (strict mode supported)
 - **Browser Support**: Modern browsers with ES2020 support (Chrome ≥ 80, Firefox ≥ 72, Safari ≥ 13.1, Edge ≥ 80)  

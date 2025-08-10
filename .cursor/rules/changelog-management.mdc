@@ -1,6 +1,17 @@
 ---
 description: Changelog management and documentation rules for tracking code evolution and architectural decisions
-globs: **/*.ts,**/*.tsx,**/*.js,**/*.jsx,**/*.mjs,**/*.mts,**/*.cts,**/*.cjs,**/CHANGELOG.md,docs/technical-changelogs/README.md,docs/technical-changelogs/adapters.md,docs/technical-changelogs/application.md,docs/technical-changelogs/domain.md,docs/technical-changelogs/infrastructure.md,docs/technical-changelogs/shared.md
+globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.js"
+  - "**/*.jsx"
+  - "**/*.mjs"
+  - "**/*.mts"
+  - "**/*.cts"
+  - "**/*.cjs"
+  - "**/CHANGELOG.md"
+  - "docs/technical-changelogs/**/*.md"
+  - "!docs/technical-changelogs/**/README.md"
 alwaysApply: true
 ---
 
@@ -72,12 +83,11 @@ await sdk.getWorkoutsList({ startDate, endDate });
 
 ### 2. Folder-Level Changelogs (Git-Tracked)
 
-**Files**: `CHANGELOG.md` in each significant folder:
-- `src/adapters/CHANGELOG.md`
-- `src/application/CHANGELOG.md`
-- `src/domain/CHANGELOG.md`
-- `src/infrastructure/CHANGELOG.md`
-- `src/shared/CHANGELOG.md`
+**Files**: Technical changelogs in centralized documentation:
+- `docs/technical-changelogs/adapters.md`
+- `docs/technical-changelogs/application.md`
+- `docs/technical-changelogs/domain.md`
+- `docs/technical-changelogs/shared.md`
 
 **Purpose**: Document detailed technical changes, architectural decisions, and implementation rationale
 
@@ -162,8 +172,14 @@ await sdk.getWorkoutsList({ startDate, endDate });
 2. **Update Folder Changelog**:
    ```bash
    # Example: Changes to src/adapters/http/axios-http-client.ts
-   # Update: src/adapters/CHANGELOG.md
+   # Update: docs/technical-changelogs/adapters.md
    ```
+   
+   **Note**: The target file name is derived from the second path segment under `src/`. For example:
+   - `src/adapters/...` → `adapters.md`
+   - `src/domain/...` → `domain.md`
+   - `src/application/...` → `application.md`
+   - `src/shared/...` → `shared.md`
 
 3. **Update Root Changelog** (if applicable):
    - User-facing changes

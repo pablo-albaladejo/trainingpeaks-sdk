@@ -39,9 +39,9 @@ const loginUseCase = executeLoginUseCase(
 );
 ```
 
-### 2. Exposición de Use Cases
+### 2. Use Case Exposure
 
-Cada use case se expone como una función pública en el cliente:
+Each use case is exposed as a public function in the SDK:
 
 ```typescript
 export interface TrainingPeaksSdk {
@@ -127,13 +127,47 @@ const authService = createAuthService({
 To add a new use case:
 
 1. Create the use case in `src/application/use-cases/`
-2. Create an entrypoint in `src/entrypoints/` ([sample entrypoint file](src/entrypoints/login/entrypoint.ts))
+2. Create an entrypoint in `src/entrypoints/` ([sample entrypoint file](../src/entrypoints/login/entrypoint.ts))
 3. Add the function to the SDK in `src/sdk/training-peaks-sdk.ts`
-4. Export from `src/index.ts` using tree-shakeable named exports to maintain public API consistency
-5. Add comprehensive tests:
-   - Unit tests at the use-case level
-   - Integration tests covering the entrypoint and SDK layers
-   - Ensure proper coverage and functionality across all architectural layers
+4. Export from `src/index.ts` using tree-shakeable named exports (no default exports):
+   ```typescript
+   // ✅ Good: Tree-shakeable named exports
+   export { createTrainingPeaksSdk } from './sdk/training-peaks-sdk';
+   export type { LoginResult, WorkoutFilters } from './types';
+   export type { TrainingPeaksSdk } from './sdk/training-peaks-sdk';
+   
+   // ❌ Avoid: Default exports reduce tree-shaking effectiveness
+   export default { createTrainingPeaksSdk };
+   ```
+
+5. Add comprehensive tests with specific coverage expectations:
+   - **Unit tests** (use-case level): Cover all branches and error paths including negative-path tests
+   - **Integration tests** (entrypoint and SDK layers): Test complete workflows with mocked external adapters/services
+   - **Mock strategy**: Replace external adapters/services to verify orchestration only at the SDK layer
+   - **Coverage policy**: 
+     - Unit tests: ≥95% statement, branch, and function coverage for all new use cases
+     - Integration tests: 100% coverage of all public API methods and error scenarios
+     - Critical path testing: 100% coverage for authentication, core workflows, and error handling paths
+     - Regression protection: All bug fixes must include tests that would have caught the original issue
+   - **Coverage measurement**: 
+     - **Tooling**: Vitest with c8 coverage reporter configured in `vite.config.ts`
+     - **Per-file thresholds**: 95% statements, 90% branches, 95% functions
+     - **Exclusions**: `src/__fixtures__/`, `**/*.test.ts`, `**/*.integ-test.ts`, generated code
+     - **Waiver process**: Coverage exceptions require PR review with documented justification
+     - **CI enforcement**: Coverage gates in GitHub Actions with automatic threshold updates
+     - **Example configuration**:
+       ```typescript
+       // vite.config.ts coverage settings
+       coverage: {
+         thresholds: {
+           statements: 95,
+           branches: 90,
+           functions: 95,
+           lines: 95
+         },
+         exclude: ['src/__fixtures__/**', '**/*.test.ts', '**/*.integ-test.ts']
+       }
+       ```
 
 ## Migration from Previous Version
 
@@ -169,8 +203,26 @@ const client = new TrainingPeaksSdkClass(config);
 
 ## Next Steps
 
-1. **Add more use cases**: Implement additional use cases such as workout management
-2. **Improve error handling**: Implement more specific error types
-3. **Add validation**: Implement input validation with Zod
-4. **Improve testing**: Add integration tests for the SDK
-5. **Documentation**: Expand the API documentation
+- [ ] **Add more use cases**: Implement additional use cases such as workout management
+  - Add use cases in [`../src/application/use-cases/`](../src/application/use-cases/)
+  - Create corresponding entrypoints in [`../src/entrypoints/`](../src/entrypoints/)
+
+- [ ] **Improve error handling**: Implement more specific error types
+  - Enhance error definitions in [`../src/domain/errors/`](../src/domain/errors/)
+  - Add structured error codes and recovery strategies
+
+- [ ] **Add validation**: Implement input validation with Zod at boundaries
+  - Apply validation at entrypoints and adapters to keep domain/use cases framework-agnostic
+  - Update schemas in [`../src/domain/schemas/`](../src/domain/schemas/)
+
+- [ ] **Improve testing**: Add integration tests for the SDK
+  - Expand test coverage in SDK and entrypoint layers
+  - Focus on complete workflow testing with external service mocks
+
+- [ ] **Update API documentation**: Ensure documentation reflects renamed SDK methods
+  - Update method references from legacy client names to current SDK interface
+  - Synchronize documentation with actual SDK exports
+
+- [ ] **Documentation**: Expand the API documentation
+  - Add comprehensive API reference with examples
+  - Document all public SDK methods and their return types

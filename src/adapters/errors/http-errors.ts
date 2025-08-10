@@ -4,35 +4,29 @@
  */
 
 import { ERROR_CODES } from '@/domain/errors/error-codes';
-import { SDKError, type SDKErrorContext } from '@/domain/errors/sdk-error';
+import { SDKError } from '@/domain/errors/sdk-error';
+import type {
+  HttpError as IHttpError,
+  HttpErrorContext,
+  HttpErrorResponse,
+} from '@/domain/types/http-error';
 
-export interface HttpErrorResponse {
-  status: number;
-  statusText: string;
-  data?: unknown;
-  headers?: Record<string, string>;
-}
-
-export interface HttpErrorContext extends SDKErrorContext {
-  status: number;
-  statusText: string;
-  url?: string;
-  method?: string;
-  requestData?: unknown;
-  responseData?: unknown;
-  headers?: Record<string, string>;
-  requestId?: string;
-}
+// Re-export types from domain
+export type {
+  HttpErrorContext,
+  HttpErrorResponse,
+} from '@/domain/types/http-error';
 
 /**
  * HTTP Error with rich context for debugging and monitoring
  */
-export class HttpError extends SDKError {
+export class HttpError extends SDKError implements IHttpError {
   public readonly status: number;
   public readonly statusText: string;
   public readonly url?: string;
   public readonly method?: string;
   public readonly requestId?: string;
+  public override readonly code: string;
 
   constructor(
     message: string,
@@ -42,6 +36,7 @@ export class HttpError extends SDKError {
   ) {
     super(message, code, context, options);
     this.name = 'HttpError';
+    this.code = code;
     this.status = context.status;
     this.statusText = context.statusText;
     this.url = context.url;
@@ -270,7 +265,9 @@ export const throwHttpErrorFromResponse: <T>(
 
   // Create structured HttpError for non-HTTP errors
   const errorMessage = response.error
-    ? String(response.error)
+    ? response.error instanceof Error
+      ? response.error.message
+      : String(response.error)
     : `${operation} failed`;
 
   const httpErrorResponse: HttpErrorResponse = {

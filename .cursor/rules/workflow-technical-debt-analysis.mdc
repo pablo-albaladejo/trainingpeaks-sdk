@@ -1,0 +1,430 @@
+# Technical Debt Analysis Workflow - Cursor Rule
+
+## Purpose
+Comprehensive technical debt analysis identifying code smells, architecture violations, and improvement opportunities based on Clean Architecture patterns and project-specific standards.
+
+## Trigger Commands
+- **@analyze-debt** - Full codebase technical debt analysis
+- **@debt-module [path]** - Module-specific debt analysis
+- **@architecture-debt** - Focus on Clean Architecture violations
+- **@test-debt** - Focus on testing gaps and issues
+- **@debt-report** - Generate comprehensive debt report with roadmap
+
+## Workflow Steps
+
+### 1. Debt Analysis Initiation
+Scope definition and analysis target:
+
+```typescript
+interface DebtAnalysisScope {
+  target: 'full-codebase' | 'module' | 'layer' | 'file';
+  path?: string;
+  focus?: 'architecture' | 'testing' | 'typescript' | 'performance' | 'security' | 'all';
+  severity?: 'critical' | 'major' | 'minor' | 'all';
+}
+
+// Examples of scoped analysis
+const analysisScopes = {
+  fullCodebase: { target: 'full-codebase', focus: 'all' },
+  authModule: { target: 'module', path: 'src/adapters/http/auth-client.ts' },
+  architectureOnly: { target: 'full-codebase', focus: 'architecture' },
+  testingGaps: { target: 'full-codebase', focus: 'testing' }
+};
+```
+
+### 2. Automated Detection Patterns
+
+#### Clean Architecture Violations
+```typescript
+const architectureViolations = {
+  // Domain layer purity
+  domainImportsCheck: {
+    pattern: /src\/domain\/.*\.ts/,
+    forbiddenImports: [
+      /from ['"].*\/adapters\//,
+      /from ['"].*\/application\//
+    ],
+    severity: 'critical'
+  },
+  
+  // Application layer contracts only
+  applicationLayerCheck: {
+    pattern: /src\/application\/.*\.ts/,
+    forbiddenImports: [
+      /from ['"].*\/adapters\//,
+    ],
+    severity: 'critical'
+  },
+  
+  // Function-based service pattern
+  servicePatternsCheck: {
+    pattern: /src\/application\/services\/.*\.ts/,
+    violations: [
+      /interface \w+Service\s*\{/g,  // Grouped interfaces
+      /class \w+Service/g             // Class-based services
+    ],
+    severity: 'major'
+  }
+};
+```
+
+#### TypeScript Quality Issues
+```typescript
+const typeScriptDebt = {
+  // Any type usage violations
+  anyTypeUsage: {
+    pattern: /:\s*any\b/g,
+    severity: 'major',
+    exception: /\/\*\s*@ts-ignore\s*any\s*\*\//  // Documented exceptions
+  },
+  
+  // Type assertions overuse
+  typeAssertions: {
+    pattern: /as\s+\w+/g,
+    threshold: 3, // More than 3 in a file is problematic
+    severity: 'minor'
+  },
+  
+  // Unused imports
+  unusedImports: {
+    command: 'npx ts-unused-exports tsconfig.json',
+    severity: 'minor'
+  },
+  
+  // Missing return types on functions
+  missingReturnTypes: {
+    pattern: /function\s+\w+\([^)]*\)\s*\{/g,
+    excludePattern: /function\s+\w+\([^)]*\):\s*\w+/g,
+    severity: 'minor'
+  }
+};
+```
+
+#### Testing Debt Detection  
+```typescript
+const testingDebt = {
+  // Missing unit tests for business logic
+  missingUnitTests: {
+    sourcePattern: /src\/(domain|application)\/.*\.ts$/,
+    testPattern: /src\/.*\/__tests__\/.*\.test\.ts$/,
+    excludePatterns: [/\.d\.ts$/, /index\.ts$/],
+    severity: 'critical'
+  },
+  
+  // Test coverage gaps
+  coverageAnalysis: {
+    command: 'npm run test:coverage',
+    thresholds: {
+      statements: 95,
+      branches: 90, 
+      functions: 95,
+      lines: 95
+    },
+    severity: 'major'
+  },
+  
+  // Integration test gaps
+  integrationTestCoverage: {
+    pattern: /src\/.*\.integ-test\.ts$/,
+    requiredFor: [
+      /src\/adapters\/client\/.*\.ts$/,
+      /src\/application\/use-cases\/.*\.ts$/
+    ],
+    severity: 'major'
+  },
+  
+  // Test fixture duplication
+  fixtureDeduplication: {
+    pattern: /src\/__fixtures__\/.*\.ts$/,
+    duplicateThreshold: 0.8, // 80% similarity
+    severity: 'minor'
+  }
+};
+```
+
+#### Code Organization Issues
+```typescript
+const organizationDebt = {
+  // Import structure violations
+  importStructureCheck: {
+    command: 'npm run check-imports',
+    severity: 'major'
+  },
+  
+  // Path alias misuse
+  pathAliasValidation: {
+    correctPatterns: [
+      /@\//, /@adapters\//, /@application\//, /@domain\//
+    ],
+    violations: [
+      /\.\.\/\.\.\//g,  // Relative imports beyond parent
+      /from ['"]src\//g  // Direct src imports instead of aliases
+    ],
+    severity: 'minor'
+  },
+  
+  // Circular dependency detection
+  circularDependencies: {
+    command: 'npx madge --circular src/',
+    severity: 'major'
+  },
+  
+  // File size violations
+  fileSizeCheck: {
+    threshold: 500, // lines
+    excludePatterns: [/\.test\.ts$/, /__fixtures__\//],
+    severity: 'minor'
+  }
+};
+```
+
+### 3. Debt Classification and Scoring
+
+```typescript
+const debtClassification = {
+  critical: {
+    impact: 'HIGH',
+    effort: 'VARIES',
+    examples: [
+      'Architecture violations',
+      'Missing unit tests for business logic',
+      'Security vulnerabilities',
+      'Breaking changes without migration'
+    ],
+    scoreRange: [1, 4]
+  },
+  
+  major: {
+    impact: 'MEDIUM',
+    effort: 'VARIES', 
+    examples: [
+      'TypeScript any usage',
+      'Import structure violations',
+      'Test coverage gaps',
+      'Performance bottlenecks'
+    ],
+    scoreRange: [5, 7]
+  },
+  
+  minor: {
+    impact: 'LOW',
+    effort: 'LOW',
+    examples: [
+      'Code duplication',
+      'Missing documentation',
+      'Style inconsistencies',
+      'Unused code'
+    ],
+    scoreRange: [8, 10]
+  }
+};
+
+// Health score calculation
+const calculateHealthScore = (violations: DebtViolation[]) => {
+  const weights = { critical: 0.5, major: 0.3, minor: 0.2 };
+  const maxPossible = 10;
+  
+  const totalPenalty = violations.reduce((penalty, violation) => {
+    return penalty + (violation.count * weights[violation.severity]);
+  }, 0);
+  
+  return Math.max(0, maxPossible - totalPenalty);
+};
+```
+
+### 4. Automated Issue Generation
+
+For each significant debt item:
+
+```typescript
+const generateDebtIssue = (debtItem: DebtViolation) => {
+  const issueTemplate = {
+    title: generateIssueTitle(debtItem),
+    template: selectTemplate(debtItem.type), // refactor.md, testing.md, etc.
+    labels: generateLabels(debtItem),
+    body: populateIssueBody(debtItem)
+  };
+  
+  return issueTemplate;
+};
+
+// Example issue generation
+const exampleDebtIssue = {
+  title: "refactor: convert UserValidationService to function-based pattern",
+  template: ".github/ISSUE_TEMPLATE/refactor.md",
+  labels: ["technical-debt", "architecture", "clean-architecture", "priority:high"],
+  body: `
+## Problem
+Found grouped interface pattern in \`src/application/services/user-validation.ts\` that violates the project's function-based service architecture standard.
+
+## Current Implementation
+\`\`\`typescript
+export interface UserValidationService {
+  validateUserId: (id: string) => void;
+  validateEmail: (email: string) => void;
+}
+\`\`\`
+
+## Target Implementation  
+\`\`\`typescript
+export type ValidateUserId = (id: string) => void;
+export type ValidateEmail = (email: string) => void;
+\`\`\`
+
+## Benefits
+- Improved testability and composition
+- Better adherence to Clean Architecture principles
+- Easier mocking in unit tests
+- Functional programming alignment
+
+## Effort Estimate
+2 hours - Refactor interface to function types + update tests
+`
+};
+```
+
+### 5. Debt Reduction Roadmap
+
+Generate strategic improvement plan:
+
+```typescript
+interface DebtReductionRoadmap {
+  sprints: {
+    sprintNumber: number;
+    duration: string;
+    focus: string;
+    tasks: DebtTask[];
+    expectedImpact: string;
+  }[];
+  continuousImprovements: string[];
+  metrics: {
+    currentScore: number;
+    targetScore: number;
+    timeframe: string;
+  };
+}
+
+const generateRoadmap = (debtAnalysis: DebtAnalysis) => {
+  // Prioritize by impact/effort ratio
+  const sortedDebt = prioritizeDebt(debtAnalysis.violations);
+  
+  return {
+    sprints: [
+      {
+        sprintNumber: 1,
+        duration: "2 weeks",
+        focus: "Critical architecture violations and missing tests",
+        tasks: sortedDebt.filter(d => d.severity === 'critical').slice(0, 5),
+        expectedImpact: "Health Score 7.2 → 8.5"
+      },
+      {
+        sprintNumber: 2,
+        duration: "2 weeks", 
+        focus: "Code quality and consistency improvements",
+        tasks: sortedDebt.filter(d => d.severity === 'major').slice(0, 8),
+        expectedImpact: "Health Score 8.5 → 9.2"
+      }
+    ],
+    continuousImprovements: [
+      "Weekly: Run technical debt analysis",
+      "Pre-merge: Architecture compliance checks", 
+      "Monthly: Comprehensive debt review"
+    ],
+    metrics: {
+      currentScore: calculateHealthScore(debtAnalysis.violations),
+      targetScore: 9.0,
+      timeframe: "4 weeks"
+    }
+  };
+};
+```
+
+## Integration with Project Tools
+
+### Quality Gates Integration
+```bash
+# Automated debt detection in CI/CD
+npm run lint                    # ESLint zero-warnings policy
+npm run check-imports          # Import structure validation
+npm run test:coverage          # Test coverage thresholds
+npx tsc --noEmit              # TypeScript strict mode
+npx madge --circular src/     # Circular dependency detection
+```
+
+### Custom Debt Detection Scripts
+```bash
+# Create custom analysis commands
+echo 'alias debt-check="npm run lint && npm run check-imports && npm run test:coverage"' >> ~/.bashrc
+
+# Add to package.json scripts
+{
+  "scripts": {
+    "debt:analysis": "npm run lint && npm run check-imports && npm run test:coverage",
+    "debt:architecture": "madge --circular src/ && npm run check-imports", 
+    "debt:testing": "npm run test:coverage && npm run test:integration",
+    "debt:typescript": "npx ts-unused-exports tsconfig.json && tsc --noEmit"
+  }
+}
+```
+
+## Usage Examples
+
+```bash
+# Full codebase analysis  
+@analyze-debt
+
+# Module-specific analysis
+@debt-module "src/adapters/http/auth-client.ts"
+
+# Focus on architecture violations
+@architecture-debt
+
+# Generate improvement roadmap
+@debt-report
+
+# Create issues for critical items
+@create-debt-issues "critical,major"
+```
+
+## Report Format
+
+```markdown
+# Technical Debt Analysis Report
+
+## Executive Summary
+- **Overall Health Score**: 7.2/10 🟡 MODERATE DEBT
+- **Critical Issues**: 3 items requiring immediate attention
+- **Major Issues**: 8 items to address soon  
+- **Total Estimated Effort**: 32 hours over 4 sprints
+
+## Debt Categories
+
+### 🔴 Critical Debt (Score: 3.1/10)
+1. **Architecture Violations** 
+   - Files: `src/application/services/user-validation.ts`
+   - Impact: Violates Clean Architecture principles
+   - Effort: 2 hours
+
+### 🟡 Major Debt (Score: 6.8/10)  
+2. **TypeScript Strictness**
+   - Files: 8 files with `any` type usage
+   - Impact: Type safety compromised
+   - Effort: 8 hours
+
+### Quality Metrics
+- **Architecture Adherence**: 7.5/10
+- **Test Coverage**: 78% (target: 95%)
+- **TypeScript Compliance**: 85%
+- **Import Structure**: 92%
+
+## Recommendations & Roadmap
+[Detailed sprint planning and improvement strategy]
+```
+
+## Success Criteria
+- Comprehensive debt identification across all categories
+- Health score calculation with trend analysis
+- Prioritized roadmap for debt reduction
+- Automated issue creation for significant items
+- Integration with existing development workflow
+- Measurable improvement tracking

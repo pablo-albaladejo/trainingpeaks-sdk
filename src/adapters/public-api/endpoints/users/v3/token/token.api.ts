@@ -4,10 +4,10 @@
  */
 
 import type { HttpClient } from '@/adapters/http';
+import { API_ENDPOINTS } from '@/adapters/public-api/constants/api-urls';
+import { TRAININGPEAKS_API_HEADERS } from '@/adapters/public-api/endpoints/users/v3/shared/constants';
 import type { HttpResponse } from '@/application';
 
-import { API_ENDPOINTS } from '../../../../constants/api-urls';
-import { TRAININGPEAKS_API_HEADERS } from '../shared/constants';
 import type {
   RefreshTokenRequest,
   TrainingPeaksTokenResponse,
