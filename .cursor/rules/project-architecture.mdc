@@ -11,6 +11,8 @@ alwaysApply: false
 This project follows Clean Architecture principles adapted for npm libraries, with clear separation of concerns and
 dependency inversion.
 
+This is the TrainingPeaks SDK - a comprehensive TypeScript SDK for TrainingPeaks API integration. For complete product context, business objectives, target market, and feature overview, see [PRODUCT.md](../../PRODUCT.md).
+
 ## Project Structure
 
 ```

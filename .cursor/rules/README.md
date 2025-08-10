@@ -19,6 +19,8 @@ on:
 - **NPM Publishing**: Best practices for library distribution and versioning
 - **API Design**: Public API design and backward compatibility
 
+For comprehensive product context and business objectives, see [PRODUCT.md](../../PRODUCT.md).
+
 ## Available Rules
 
 ### 🏗️ Architecture & Design
@@ -67,6 +69,61 @@ on:
 - GitHub Actions CI/CD for libraries
 - GitHub project management (issues, PRs)
 - Integration testing patterns
+- **Mandatory changelog requirements and validation**
+
+#### [`changelog-management.mdc`](./changelog-management.mdc)
+
+- Dual changelog system (root + [technical changelogs](../docs/technical-changelogs/README.md))
+- Changelog generation rules and formats
+- Pre-commit validation hooks with concrete implementations
+- Technical decision documentation
+- User-facing change tracking
+
+##### Installing Git Hooks
+
+This project uses **Husky** for Git hook management. To enable the changelog validation hooks:
+
+1. **Install dependencies** (includes Husky setup):
+   ```bash
+   npm install
+   ```
+
+2. **Verify Husky installation**:
+   ```bash
+   # Check hooks are installed
+   ls -la .husky/
+   # Should show pre-commit and pre-push files
+   ```
+
+3. **Manual hook verification**:
+   ```bash
+   # Test pre-commit hook
+   .husky/pre-commit
+   
+   # Test pre-push hook  
+   .husky/pre-push
+   ```
+
+4. **CI Environment Setup**:
+   ```bash
+   # In CI, Husky hooks are automatically available after npm install
+   # No additional setup required for GitHub Actions or similar CI systems
+   ```
+
+##### Technical Changelog Files
+
+Verify all referenced changelog files exist:
+```bash
+# Check technical changelog structure
+find docs/technical-changelogs/ -name "*.md" | sort
+
+# Verify all expected files are present
+for component in adapters application domain infrastructure shared; do
+  if [ ! -f "docs/technical-changelogs/$component.md" ]; then
+    echo "Missing: docs/technical-changelogs/$component.md"
+  fi
+done
+```
 
 ### 🔌 External Integrations
 

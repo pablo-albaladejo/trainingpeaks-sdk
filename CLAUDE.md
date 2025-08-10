@@ -34,6 +34,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a TypeScript SDK for TrainingPeaks API integration following **Clean Architecture** principles with hexagonal architecture (ports & adapters). The project uses a **function-based approach** rather than traditional classes for better testability and functional composition.
 
+For comprehensive product context and objectives, see [PRODUCT.md](./PRODUCT.md).
+
 ### Core Architecture Layers
 
 ```
@@ -98,6 +100,63 @@ export type UserValidationService = {
 
 ## Development Guidelines
 
+### Changelog Management Strategy
+This project maintains TWO types of changelogs to track evolution and provide context:
+
+#### 1. Root-Level Changelog (Git-Tracked)
+- **File**: `CHANGELOG.md` in project root
+- **Purpose**: High-level project evolution, releases, and breaking changes
+- **Audience**: End users, library consumers, and maintainers
+- **Content**: Version releases, major features, breaking changes, migration notes
+- **Generation**: Automated via semantic-release or manual for major milestones
+- **Git Status**: Tracked and committed to repository
+
+#### 2. Technical Changelogs (Git-Tracked)
+- **Location**: `docs/technical-changelogs/` directory (moved from folder-level locations)
+- **Files**: Organized by major component (`adapters.md`, `domain.md`, `application.md`, etc.)
+- **Purpose**: Detailed technical changes, architectural decisions, and implementation rationale
+- **Audience**: Developers, architects, and code reviewers
+- **Content**: 
+  - Code changes and their justification
+  - Architectural decisions and trade-offs
+  - Technical debt and refactoring notes
+  - Implementation details and patterns
+- **Generation**: Created/updated when making changes to relevant components
+- **Git Status**: Tracked in repository, excluded from npm package via `.npmignore`
+
+> **Migration Note**: Technical changelogs have been moved from individual folder-level `CHANGELOG.md` files to the centralized `docs/technical-changelogs/` directory for better visibility and maintainability. The previous git-ignored approach limited collaboration and review.
+
+#### Changelog Generation Rules
+**ALWAYS create/update both changelog types when making changes:**
+
+1. **For ANY code change**:
+   - Update the relevant folder-level changelog with technical details
+   - Include reasoning, trade-offs, and implementation notes
+   - Document any architectural decisions or patterns introduced
+
+2. **For significant changes**:
+   - Update root-level CHANGELOG.md for user-facing changes
+   - Include version impact (MAJOR/MINOR/PATCH)
+   - Add migration notes for breaking changes
+
+3. **Changelog Entry Format**:
+```markdown
+## [Date] - [Change Type]
+
+### Changed
+- Brief description of what changed
+
+### Why
+- Reasoning behind the change
+- Problem it solves
+- Trade-offs considered
+
+### Impact
+- Who is affected
+- Migration steps (if breaking)
+- Performance implications
+```
+
 ### Testing Strategy
 - **Unit tests**: Use `.test.ts` suffix, focus on individual functions/classes
 - **Integration tests**: Use `.integ-test.ts` suffix, test feature workflows
@@ -154,3 +213,9 @@ The project includes comprehensive Cursor rules in `.cursor/rules/` covering:
 - Development workflow guidelines
 
 Refer to `.cursor/rules/README.md` for detailed rule descriptions and usage patterns.
+
+## Important Project Files
+- [`PRODUCT.md`](./PRODUCT.md) - Comprehensive product vision, target market, and feature overview
+- [`docs/clean-architecture.md`](./docs/clean-architecture.md) - Detailed Clean Architecture implementation guide
+- [`README.md`](./README.md) - Technical documentation and usage examples
+- [`CLAUDE.md`](./CLAUDE.md) - This file with development guidance for Claude Code

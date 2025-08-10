@@ -34,7 +34,7 @@ describe('AuthRepository - Integration Tests', () => {
       get: vi.fn(),
       set: vi.fn(),
       clear: vi.fn(),
-    };
+    } satisfies SessionStorage;
 
     mockLogger = {
       info: vi.fn(),
@@ -55,19 +55,7 @@ describe('AuthRepository - Integration Tests', () => {
       const repository = createAuthRepository(dependencies);
 
       // Setup successful login mocks using shared helper
-      vi.mocked(mockHttpClient.get).mockImplementation(
-        createMockAuthGet({
-          user: {
-            user: {
-              userId: '123',
-              userName: 'testuser',
-              fullName: 'Test User',
-              firstName: 'Test',
-              lastName: 'User',
-            },
-          },
-        })
-      );
+      vi.mocked(mockHttpClient.get).mockImplementation(createMockAuthGet());
 
       vi.mocked(mockHttpClient.post).mockImplementation(() =>
         createMockAuthPost()
@@ -78,6 +66,9 @@ describe('AuthRepository - Integration Tests', () => {
       const session = await repository.login(credentials);
 
       expect(session).toBeDefined();
+      expect(session.user).toBeDefined();
+      expect(session.user.id).toBe('123');
+      expect(session.user.name).toBe('Test User');
       expect(mockSessionStorage.set).toHaveBeenCalledWith(session);
 
       // Logout
