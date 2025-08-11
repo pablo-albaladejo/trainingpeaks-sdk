@@ -1,5 +1,9 @@
-import type { WorkoutStructureElement, WorkoutStructureStep } from '@/types';
-import { ElementType, LengthUnit } from '@/types';
+import {
+  ElementType,
+  LengthUnit,
+  type WorkoutStructureElement,
+  type WorkoutStructureStep,
+} from '@/types';
 
 /**
  * Builder for workout structure elements

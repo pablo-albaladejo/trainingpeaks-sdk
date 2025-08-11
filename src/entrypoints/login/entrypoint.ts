@@ -5,20 +5,32 @@
 
 import { authenticateUserService } from '@/adapters/services/authenticate-user';
 import { executeLoginUserUseCase } from '@/application/use-cases';
+import { createCredentials } from '@/domain';
 
-import { LoginEntrypointCommand, LoginEntrypointDependencies } from './types';
+import { mapLoginSuccessToEntrypoint } from './entrypoint-mappers';
+import {
+  LoginEntrypointCommand,
+  LoginEntrypointDependencies,
+  LoginEntrypointResponse,
+} from './types';
 
 const entrypoint = async (
   command: LoginEntrypointCommand,
   deps: LoginEntrypointDependencies
-) => {
+): Promise<LoginEntrypointResponse> => {
   deps.logger.info('Login entrypoint called');
+
+  // Create credentials from command
+  const credentials = createCredentials(command.username, command.password);
+
   const authenticateUser = authenticateUserService(deps.tpRepository);
+  const executeLogin = executeLoginUserUseCase(authenticateUser);
 
-  const executeLoginUserUseCaseResult =
-    executeLoginUserUseCase(authenticateUser);
+  // Execute login and get session
+  const session = await executeLogin(credentials);
 
-  return await executeLoginUserUseCaseResult(command);
+  // Map session to entrypoint response format
+  return mapLoginSuccessToEntrypoint(session.token, session.user);
 };
 
 export const loginEntrypoint =

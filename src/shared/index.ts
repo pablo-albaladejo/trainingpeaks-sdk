@@ -10,3 +10,9 @@ export {
   type CurlRequestData,
   generateCurlCommand,
 } from './utils/curl-generator';
+
+// Session utilities
+export {
+  getAthleteIdFromSession,
+  type SessionDependencies,
+} from './utils/session-utils';

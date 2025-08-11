@@ -1,0 +1,145 @@
+# Configuration Generators - Cursor Rule
+
+## Purpose
+This rule ensures that all configuration generator files remain generic and reusable across different projects, avoiding hardcoded values specific to the current project instance.
+
+## Rule: Keep Configuration Generators Generic
+
+**CRITICAL**: All files in the following directories MUST remain generic and template-based:
+
+### Protected Directories
+- `config/` - Project configuration definitions
+- `scripts/build/generators/` - Configuration file generators  
+- `scripts/setup/` - Project setup scripts
+
+### Key Principles
+
+#### ✅ ALWAYS DO:
+1. **Use Environment Variables**: All project-specific values MUST come from environment variables or the configuration system
+2. **Template-Based Generation**: Generate files using templates and variable substitution
+3. **Generic Function Names**: Use descriptive but generic function names
+4. **Fallback Defaults**: Provide reasonable defaults for all configuration options
+5. **Type Safety**: Use TypeScript interfaces to define configuration structure
+
+#### ❌ NEVER DO:
+1. **Hardcode Project Names**: Never put "trainingpeaks-sdk" or specific project names in generators
+2. **Hardcode Author Information**: Never put specific author names, emails, or GitHub usernames  
+3. **Hardcode Repository Information**: Never put specific repository owners or names
+4. **Hardcode Branch Names**: Never put specific branch names like "main" or "develop"
+5. **Hardcode Colors**: Never put specific hex colors for labels
+6. **Hardcode URLs**: Never put specific URLs or endpoints
+
+## Examples
+
+### ✅ CORRECT - Generic Generator
+```typescript
+export function generatePackageJson(config: ProjectConfig): string {
+  const packageJson = {
+    name: config.project.name,  // ✅ From configuration
+    author: `${config.author.name} <${config.author.email}>`, // ✅ Dynamic
+    repository: {
+      url: config.repository.url  // ✅ From configuration
+    }
+  };
+  return JSON.stringify(packageJson, null, 2);
+}
+```
+
+### ❌ INCORRECT - Hardcoded Values
+```typescript
+export function generatePackageJson(): string {
+  const packageJson = {
+    name: "trainingpeaks-sdk",  // ❌ Hardcoded project name
+    author: "Pablo Albaladejo <pablo@example.com>", // ❌ Hardcoded author
+    repository: {
+      url: "https://github.com/pablo-albaladejo/trainingpeaks-sdk.git" // ❌ Hardcoded URL
+    }
+  };
+  return JSON.stringify(packageJson, null, 2);
+}
+```
+
+### ✅ CORRECT - Environment-Based Configuration
+```typescript
+export function getProjectConfig(): ProjectConfig {
+  return {
+    project: {
+      name: process.env.PROJECT_NAME || 'my-project', // ✅ Environment variable with generic default
+      title: process.env.PROJECT_TITLE || 'My Project Title', // ✅ Generic fallback
+    },
+    author: {
+      name: process.env.AUTHOR_NAME || 'Your Name', // ✅ Generic placeholder
+      email: process.env.AUTHOR_EMAIL || 'your.email@example.com', // ✅ Generic placeholder
+    }
+  };
+}
+```
+
+### ❌ INCORRECT - Hardcoded Configuration
+```typescript
+export function getProjectConfig(): ProjectConfig {
+  return {
+    project: {
+      name: 'trainingpeaks-sdk', // ❌ Specific project name
+      title: 'TrainingPeaks SDK Development', // ❌ Specific project title
+    },
+    author: {
+      name: 'Pablo Albaladejo', // ❌ Specific author
+      email: 'pablo@example.com', // ❌ Specific email
+    }
+  };
+}
+```
+
+## Validation Checklist
+
+Before committing changes to configuration generators, verify:
+
+- [ ] No project-specific names in the code
+- [ ] No author information hardcoded
+- [ ] No repository URLs or names hardcoded
+- [ ] No specific branch names hardcoded
+- [ ] No specific colors or labels hardcoded
+- [ ] All values come from configuration or environment variables
+- [ ] Generic defaults are provided for all required fields
+- [ ] TypeScript types are used for configuration structure
+- [ ] Functions can be reused across different projects
+
+## Integration with Project Setup
+
+These generators are designed to work with:
+1. **Environment Configuration**: `.env.project` file with project-specific values
+2. **Dynamic Generation**: `npm run generate:config` command
+3. **Validation**: `npm run validate:config` command  
+4. **Project Setup**: `npm run setup:project` command
+
+## Benefits of This Approach
+
+1. **Reusability**: Same generators work for any project
+2. **Maintainability**: One codebase for all project configurations
+3. **Consistency**: Standard approach across all projects
+4. **Flexibility**: Easy customization through environment variables
+5. **Template Creation**: Project becomes a reusable template
+
+## When Adding New Generators
+
+1. **Follow the Pattern**: Use the existing generators as templates
+2. **Add Environment Variables**: Define new variables in `.env.project.example`
+3. **Update Configuration Interface**: Add new fields to `ProjectConfig` type
+4. **Add Validation**: Include validation in `validateProjectConfig()`
+5. **Update Documentation**: Document new configuration options
+
+## Enforcement
+
+This rule should be enforced through:
+- Code review guidelines
+- Automated validation in CI/CD
+- Pre-commit hooks checking for hardcoded values
+- Regular audits of generator files
+
+## Related Files
+
+- `config/project.config.ts` - Configuration type definitions and defaults
+- `.env.project.example` - Environment variable documentation
+- `scripts/build/generate-all-configs.ts` - Main generation script
+- `scripts/build/validate-project-config.ts` - Configuration validation

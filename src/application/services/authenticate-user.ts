@@ -1,5 +1,4 @@
-import type { Session } from '@/application/ports/session-storage';
-import type { Credentials } from '@/domain';
+import type { Credentials, Session } from '@/domain';
 
 export type AuthenticateUserResult = Session;
 

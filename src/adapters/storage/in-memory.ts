@@ -1,4 +1,5 @@
-import { Session, SessionStorage } from '@/application/ports/session-storage';
+import type { SessionStorage } from '@/application/ports/session-storage';
+import type { Session } from '@/domain';
 
 export const createInMemorySessionStorage = (): SessionStorage => {
   let session: Session | null = null;

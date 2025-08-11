@@ -4,10 +4,12 @@
  */
 
 import type { HttpClient } from '@/adapters/http';
+import {
+  API_BASE_URLS,
+  API_ENDPOINTS,
+} from '@/adapters/public-api/constants/api-urls';
 import type { HttpResponse } from '@/application';
 import type { Credentials } from '@/domain';
-
-import { API_BASE_URLS, API_ENDPOINTS } from '../../constants/api-urls';
 
 // Login-specific API constants
 export const LOGIN_API_BASE_URL = API_BASE_URLS.LOGIN;

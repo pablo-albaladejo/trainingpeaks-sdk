@@ -1,0 +1,102 @@
+name: TrainingPeaks SDK Development
+description: Development roadmap and issue tracking for TrainingPeaks SDK
+columns:
+  - name: 📋 Backlog
+    id: backlog
+    description: Issues that need to be triaged and prioritized
+  - name: 🎯 Ready for Development
+    id: ready
+    description: Issues that are ready to be worked on
+  - name: 🚧 In Progress
+    id: in-progress
+    description: Issues currently being worked on
+  - name: 🧪 In Review
+    id: review
+    description: Issues completed and waiting for review
+  - name: ✅ Done
+    id: done
+    description: Completed issues
+  - name: 🚫 Won't Do
+    id: wont-do
+    description: Issues that won't be implemented
+
+views:
+  - name: 📊 Project Overview
+    id: overview
+    layout: Board
+    group_by:
+      field: Labels
+      collapsed: true
+  - name: 🏗️ Architecture & Quality
+    id: architecture
+    layout: Board
+    group_by:
+      field: Labels
+      collapsed: true
+    filters:
+      - field: Labels
+        operator: Contains
+        value: "architecture"
+  - name: ⚡ Performance & Security
+    id: performance-security
+    layout: Board
+    group_by:
+      field: Labels
+      collapsed: true
+    filters:
+      - field: Labels
+        operator: Contains
+        value: "performance"
+      - field: Labels
+        operator: Contains
+        value: "security"
+  - name: 🧪 Testing & Quality
+    id: testing-quality
+    layout: Board
+    group_by:
+      field: Labels
+      collapsed: true
+    filters:
+      - field: Labels
+        operator: Contains
+        value: "testing"
+      - field: Labels
+        operator: Contains
+        value: "quality"
+
+workflows:
+  - name: Development Workflow
+    id: development
+    description: Standard development workflow
+    states:
+      - name: 📋 Backlog
+        id: backlog
+        description: Issues that need to be triaged
+      - name: 🎯 Ready for Development
+        id: ready
+        description: Issues ready to be worked on
+      - name: 🚧 In Progress
+        id: in-progress
+        description: Issues currently being worked on
+      - name: 🧪 In Review
+        id: review
+        description: Issues completed and waiting for review
+      - name: ✅ Done
+        id: done
+        description: Completed issues
+      - name: 🚫 Won't Do
+        id: wont-do
+        description: Issues that won't be implemented
+    transitions:
+      - from: ["backlog", "ready"]
+        to: "in-progress"
+        name: Start Development
+      - from: ["in-progress"]
+        to: "review"
+        name: Submit for Review
+      - from: ["review"]
+        to: ["done", "in-progress"]
+        name: Review Complete
+      - from: ["backlog", "ready", "in-progress", "review"]
+        to: "wont-do"
+        name: Won't Implement

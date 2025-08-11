@@ -1,18 +1,22 @@
 import { Logger } from '@/adapters';
 import {
-  createHttpError,
-  type HttpErrorResponse,
-  isHttpError,
+  type ErrorRequestContext,
+  throwCookieNotFoundError,
+  throwHttpErrorFromResponse,
+  throwMissingDataError,
+  throwTokenExpiredError,
+  throwValidationError,
 } from '@/adapters/errors/http-errors';
 import { type HttpClient } from '@/adapters/http';
 import { mapTPTokenToAuthToken, mapTPUserToUser } from '@/adapters/mappers';
-import { HttpResponse, Session, SessionStorage } from '@/application';
+import { type HttpMethod, SessionStorage } from '@/application';
 import {
   AuthRepository,
   AuthRepositoryLogin,
   AuthRepositoryLogout,
   Credentials,
   isTokenExpired,
+  Session,
   validateCredentials,
 } from '@/domain';
 
@@ -27,87 +31,59 @@ import {
 import type { TokenEndpointResponse } from './endpoints/users/v3/token';
 import type { UserProfileEndpointResponse } from './endpoints/users/v3/user';
 
-/**
- * Helper function to throw structured HttpError based on HttpResponse
- */
-const throwHttpError = <T>(
-  response: HttpResponse<T>,
-  operation: string
-): never => {
-  if (response.error && isHttpError(response.error)) {
-    // Re-throw the existing HttpError
-    throw response.error;
-  }
-
-  // Create structured HttpError for non-HTTP errors
-  const errorMessage = response.error
-    ? String(response.error)
-    : `${operation} failed`;
-  const httpErrorResponse: HttpErrorResponse = {
-    status: 0,
-    statusText: 'Unknown Error',
-    data: { message: errorMessage },
-  };
-
-  throw createHttpError(httpErrorResponse, {
-    url: 'unknown',
-    method: 'GET',
-  });
-};
-
 type AuthRepositoryDependencies = {
   httpClient: HttpClient;
   sessionStorage: SessionStorage;
   logger: Logger;
 };
 
+const createErrorContext = (
+  url: string,
+  method: HttpMethod,
+  requestData?: Record<string, unknown>
+): ErrorRequestContext => ({
+  url,
+  method,
+  ...(requestData && { requestData }),
+});
+
 const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
   return async (credentials: Credentials) => {
     // Validate credentials using domain logic
     if (!validateCredentials(credentials)) {
-      const httpErrorResponse: HttpErrorResponse = {
-        status: 400,
-        statusText: 'Bad Request',
-        data: { message: 'Invalid credentials provided' },
-      };
-      throw createHttpError(httpErrorResponse, {
-        url: API_ENDPOINTS.LOGIN_PAGE,
-        method: 'POST',
-        requestData: { username: credentials.username },
-      });
+      throwValidationError(
+        'Invalid credentials provided',
+        createErrorContext(API_ENDPOINTS.LOGIN_PAGE, 'POST', {
+          username: credentials.username,
+        })
+      );
     }
 
     // Get login page to extract request verification token
     const response = await getLoginPage(deps.httpClient);
 
     if (!response.success) {
-      throwHttpError(response, 'Get request verification token');
+      throwHttpErrorFromResponse(
+        response,
+        'Get request verification token',
+        createErrorContext(API_ENDPOINTS.LOGIN_PAGE, 'GET')
+      );
     }
 
     if (!response.data) {
-      const httpErrorResponse: HttpErrorResponse = {
-        status: 502,
-        statusText: 'Bad Gateway',
-        data: { message: 'No response data received from login page' },
-      };
-      throw createHttpError(httpErrorResponse, {
-        url: API_ENDPOINTS.LOGIN_PAGE,
-        method: 'GET',
-      });
+      throwMissingDataError(
+        'No response data received from login page',
+        createErrorContext(API_ENDPOINTS.LOGIN_PAGE, 'GET')
+      );
     }
 
     const requestVerificationToken = getRequestVerificationToken(response.data);
 
     if (!requestVerificationToken) {
-      const httpErrorResponse: HttpErrorResponse = {
-        status: 400,
-        statusText: 'Bad Request',
-        data: { message: 'Request verification token not found' },
-      };
-      throw createHttpError(httpErrorResponse, {
-        url: API_ENDPOINTS.LOGIN_PAGE,
-        method: 'GET',
-      });
+      throwValidationError(
+        'Request verification token not found',
+        createErrorContext(API_ENDPOINTS.LOGIN_PAGE, 'GET')
+      );
     }
 
     // Submit login form
@@ -118,7 +94,13 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
     );
 
     if (!submitLoginResponse.success) {
-      throwHttpError(submitLoginResponse, 'Submit login');
+      throwHttpErrorFromResponse(
+        submitLoginResponse,
+        'Submit login',
+        createErrorContext(API_ENDPOINTS.LOGIN_PAGE, 'POST', {
+          username: credentials.username,
+        })
+      );
     }
 
     const tpAuthCookie = submitLoginResponse.cookies?.find((cookie) =>
@@ -126,35 +108,33 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
     );
 
     if (!tpAuthCookie) {
-      const httpErrorResponse: HttpErrorResponse = {
-        status: 401,
-        statusText: 'Unauthorized',
-        data: { message: 'TP Auth cookie not found' },
-      };
-      throw createHttpError(httpErrorResponse, {
-        url: API_ENDPOINTS.LOGIN_PAGE,
-        method: 'POST',
-        requestData: { username: credentials.username },
-      });
+      throwCookieNotFoundError(
+        'Production_tpAuth',
+        createErrorContext(API_ENDPOINTS.LOGIN_PAGE, 'POST', {
+          username: credentials.username,
+        })
+      );
     }
 
-    // Get the auth token using the cookies
-    const authTokenResponse = await getAuthToken(deps.httpClient, tpAuthCookie);
+    // Get the auth token using all cookies from the login response
+    const authTokenResponse = await getAuthToken(
+      deps.httpClient,
+      submitLoginResponse.cookies || []
+    );
 
     if (!authTokenResponse.success) {
-      throwHttpError(authTokenResponse, 'Get auth token');
+      throwHttpErrorFromResponse(
+        authTokenResponse,
+        'Get auth token',
+        createErrorContext(API_ENDPOINTS.TOKEN, 'GET')
+      );
     }
 
     if (!authTokenResponse.data) {
-      const httpErrorResponse: HttpErrorResponse = {
-        status: 502,
-        statusText: 'Bad Gateway',
-        data: { message: 'No auth token data received' },
-      };
-      throw createHttpError(httpErrorResponse, {
-        url: API_ENDPOINTS.TOKEN,
-        method: 'GET',
-      });
+      throwMissingDataError(
+        'No auth token data received',
+        createErrorContext(API_ENDPOINTS.TOKEN, 'GET')
+      );
     }
 
     const authTokenData = authTokenResponse.data as TokenEndpointResponse;
@@ -171,19 +151,18 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
     });
 
     if (!userResponse.success) {
-      throwHttpError(userResponse, 'Get user information');
+      throwHttpErrorFromResponse(
+        userResponse,
+        'Get user information',
+        createErrorContext(API_ENDPOINTS.USER_PROFILE, 'GET')
+      );
     }
 
     if (!userResponse.data) {
-      const httpErrorResponse: HttpErrorResponse = {
-        status: 502,
-        statusText: 'Bad Gateway',
-        data: { message: 'No user data received' },
-      };
-      throw createHttpError(httpErrorResponse, {
-        url: API_ENDPOINTS.USER_PROFILE,
-        method: 'GET',
-      });
+      throwMissingDataError(
+        'No user data received',
+        createErrorContext(API_ENDPOINTS.USER_PROFILE, 'GET')
+      );
     }
 
     const userData = userResponse.data as UserProfileEndpointResponse;
@@ -194,15 +173,7 @@ const createLogin = (deps: AuthRepositoryDependencies): AuthRepositoryLogin => {
 
     // Validate token expiration using domain logic
     if (isTokenExpired(token)) {
-      const httpErrorResponse: HttpErrorResponse = {
-        status: 401,
-        statusText: 'Unauthorized',
-        data: { message: 'Received expired token from TrainingPeaks API' },
-      };
-      throw createHttpError(httpErrorResponse, {
-        url: API_ENDPOINTS.TOKEN,
-        method: 'GET',
-      });
+      throwTokenExpiredError(createErrorContext(API_ENDPOINTS.TOKEN, 'GET'));
     }
 
     const session: Session = {
@@ -220,7 +191,14 @@ const createLogout = (
   deps: AuthRepositoryDependencies
 ): AuthRepositoryLogout => {
   return async () => {
-    await deps.sessionStorage.clear();
+    try {
+      await deps.sessionStorage.clear();
+    } catch (error) {
+      // Log the error but don't throw - logout should always succeed
+      deps.logger.warn('Failed to clear session storage during logout', {
+        error,
+      });
+    }
   };
 };
 

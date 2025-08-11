@@ -4,39 +4,39 @@
  */
 
 import { ERROR_CODES } from '@/domain/errors/error-codes';
-import { SDKError, type SDKErrorContext } from '@/domain/errors/sdk-error';
+import { SDKError } from '@/domain/errors/sdk-error';
+import type {
+  HttpError as IHttpError,
+  HttpErrorContext,
+  HttpErrorResponse,
+} from '@/domain/types/http-error';
 
-export interface HttpErrorResponse {
-  status: number;
-  statusText: string;
-  data?: unknown;
-  headers?: Record<string, string>;
-}
-
-export interface HttpErrorContext extends SDKErrorContext {
-  status: number;
-  statusText: string;
-  url?: string;
-  method?: string;
-  requestData?: unknown;
-  responseData?: unknown;
-  headers?: Record<string, string>;
-  requestId?: string;
-}
+// Re-export types from domain
+export type {
+  HttpErrorContext,
+  HttpErrorResponse,
+} from '@/domain/types/http-error';
 
 /**
  * HTTP Error with rich context for debugging and monitoring
  */
-export class HttpError extends SDKError {
+export class HttpError extends SDKError implements IHttpError {
   public readonly status: number;
   public readonly statusText: string;
   public readonly url?: string;
   public readonly method?: string;
   public readonly requestId?: string;
+  public override readonly code: string;
 
-  constructor(message: string, code: string, context: HttpErrorContext) {
-    super(message, code, context);
+  constructor(
+    message: string,
+    code: string,
+    context: HttpErrorContext,
+    options?: { cause?: unknown }
+  ) {
+    super(message, code, context, options);
     this.name = 'HttpError';
+    this.code = code;
     this.status = context.status;
     this.statusText = context.statusText;
     this.url = context.url;
@@ -55,7 +55,8 @@ export const createHttpError = (
     method?: string;
     requestData?: unknown;
     requestId?: string;
-  } = {}
+  } = {},
+  cause?: unknown
 ): HttpError => {
   const { status, statusText, data } = response;
   const { url, method, requestData, requestId } = context;
@@ -77,28 +78,32 @@ export const createHttpError = (
       return new HttpError(
         `Bad Request: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.VALIDATION_FAILED,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 401:
       return new HttpError(
         `Authentication failed: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.AUTH_TOKEN_INVALID,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 403:
       return new HttpError(
         `Access forbidden: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.AUTH_FAILED,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 404:
       return new HttpError(
         `Resource not found: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.WORKOUT_NOT_FOUND, // or generic NOT_FOUND if we add it
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 408:
@@ -106,56 +111,64 @@ export const createHttpError = (
       return new HttpError(
         `Request timeout: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.NETWORK_TIMEOUT,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 409:
       return new HttpError(
         `Conflict: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.VALIDATION_FAILED,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 422:
       return new HttpError(
         `Validation error: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.VALIDATION_FAILED,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 429:
       return new HttpError(
         `Rate limit exceeded: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.NETWORK_RATE_LIMITED,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 500:
       return new HttpError(
         `Server error: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.NETWORK_SERVER_ERROR,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 502:
       return new HttpError(
         `Bad gateway: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.NETWORK_RESPONSE_INVALID,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     case 503:
       return new HttpError(
         `Service unavailable: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
 
     default:
       return new HttpError(
         `HTTP Error ${status}: ${getErrorMessage(data) || statusText}`,
         ERROR_CODES.NETWORK_REQUEST_FAILED,
-        errorContext
+        errorContext,
+        cause ? { cause } : undefined
       );
   }
 };
@@ -214,4 +227,184 @@ export const isRetryableError = (error: unknown): boolean => {
     error.status === 503 ||
     error.status === 504
   );
+};
+
+// =====================================
+// HIGH-LEVEL ERROR THROWING UTILITIES
+// =====================================
+
+import type { HttpResponse } from '@/application';
+
+/**
+ * Request context for better error reporting
+ */
+export type ErrorRequestContext = {
+  url: string;
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  requestData?: unknown;
+  requestId?: string;
+};
+
+/**
+ * Helper function to create and throw structured HttpError from response
+ * Handles both existing HttpErrors and generic errors
+ */
+export const throwHttpErrorFromResponse: <T>(
+  response: HttpResponse<T>,
+  operation: string,
+  context: ErrorRequestContext
+) => never = <T>(
+  response: HttpResponse<T>,
+  operation: string,
+  context: ErrorRequestContext
+): never => {
+  if (response.error && isHttpError(response.error)) {
+    // Re-throw the existing HttpError
+    throw response.error;
+  }
+
+  // Create structured HttpError for non-HTTP errors
+  const errorMessage = response.error
+    ? response.error instanceof Error
+      ? response.error.message
+      : String(response.error)
+    : `${operation} failed`;
+
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 500,
+    statusText: 'Unknown Error',
+    data: { message: errorMessage },
+  };
+
+  throw createHttpError(httpErrorResponse, context);
+};
+
+/**
+ * Helper function to create and throw validation error
+ */
+export const throwValidationError: (
+  message: string,
+  context: ErrorRequestContext
+) => never = (message: string, context: ErrorRequestContext): never => {
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 400,
+    statusText: 'Bad Request',
+    data: { message },
+  };
+
+  throw createHttpError(httpErrorResponse, context);
+};
+
+/**
+ * Helper function to create and throw missing data error
+ */
+export const throwMissingDataError: (
+  message: string,
+  context: ErrorRequestContext
+) => never = (message: string, context: ErrorRequestContext): never => {
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 502,
+    statusText: 'Bad Gateway',
+    data: { message },
+  };
+
+  throw createHttpError(httpErrorResponse, context);
+};
+
+/**
+ * Helper function to create and throw generic server error
+ */
+export const throwServerError: (
+  error: unknown,
+  fallbackMessage: string,
+  context: ErrorRequestContext
+) => never = (
+  error: unknown,
+  fallbackMessage: string,
+  context: ErrorRequestContext
+): never => {
+  // If it's already an HttpError, re-throw it
+  if (isHttpError(error)) {
+    throw error;
+  }
+
+  // Create structured HttpError for other errors
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 500,
+    statusText: 'Internal Server Error',
+    data: {
+      message: error instanceof Error ? error.message : fallbackMessage,
+    },
+  };
+
+  throw createHttpError(httpErrorResponse, context, error);
+};
+
+/**
+ * Helper function to create and throw authentication-specific errors
+ */
+export const throwAuthError: (
+  message: string,
+  context: ErrorRequestContext
+) => never = (message: string, context: ErrorRequestContext): never => {
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 401,
+    statusText: 'Unauthorized',
+    data: { message },
+  };
+
+  throw createHttpError(httpErrorResponse, context);
+};
+
+/**
+ * Helper function to create and throw cookie not found error
+ */
+export const throwCookieNotFoundError: (
+  cookieName: string,
+  context: ErrorRequestContext
+) => never = (cookieName: string, context: ErrorRequestContext): never => {
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 401,
+    statusText: 'Unauthorized',
+    data: { message: `${cookieName} cookie not found` },
+  };
+
+  throw createHttpError(httpErrorResponse, context);
+};
+
+/**
+ * Helper function to create and throw token expired error
+ */
+export const throwTokenExpiredError: (context: ErrorRequestContext) => never = (
+  context: ErrorRequestContext
+): never => {
+  const httpErrorResponse: HttpErrorResponse = {
+    status: 401,
+    statusText: 'Unauthorized',
+    data: { message: 'Received expired token from TrainingPeaks API' },
+  };
+
+  throw createHttpError(httpErrorResponse, context);
+};
+
+/**
+ * Helper function to handle repository operation errors with logging
+ * Logs the error and throws appropriate HttpError
+ */
+export const handleRepositoryError: (
+  error: unknown,
+  operation: string,
+  context: ErrorRequestContext,
+  logger: { error: (message: string, details?: unknown) => void },
+  params?: unknown
+) => never = (
+  error: unknown,
+  operation: string,
+  context: ErrorRequestContext,
+  logger: { error: (message: string, details?: unknown) => void },
+  params?: unknown
+): never => {
+  logger.error(`Failed to ${operation}`, { error, params });
+  if (isHttpError(error)) throw error;
+  throwServerError(error, `Failed to ${operation}`, context);
 };

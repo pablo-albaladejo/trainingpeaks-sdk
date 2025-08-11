@@ -8,6 +8,13 @@ scripts/
 .vscode/
 .github/
 
+# Technical changelogs (internal documentation)
+docs/technical-changelogs/
+
+# Generated documentation
+docs/coverage/
+docs/api/
+
 # Test files
 **/*.test.ts
 **/*.spec.ts

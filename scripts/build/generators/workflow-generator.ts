@@ -1,0 +1,296 @@
+/**
+ * GitHub Workflows Generator
+ * Generates GitHub Actions workflows with dynamic values
+ */
+
+import type { ProjectConfig } from '../../../config/project.config.js';
+
+/**
+ * Generate CI workflow content
+ */
+export function generateCIWorkflow(config: ProjectConfig): string {
+  const branches = `[${config.ci.branches.main}, ${config.ci.branches.develop}]`;
+  const nodeVersions = `[${config.ci.nodeVersions.join(', ')}]`;
+  
+  return `name: CI
+
+on:
+  push:
+    branches: ${branches}
+  pull_request:
+    branches: ${branches}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ${nodeVersions}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js \${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: \${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Check types
+        run: npm run type-check
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+      - name: Build package
+        run: npm run build
+
+      - name: Test built package
+        run: npm run test:e2e
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ${config.ci.coveragePath}
+          flags: unittests
+          name: codecov-umbrella
+
+  security:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: npm audit --audit-level=high
+
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@v3.77.0
+        with:
+          path: ./
+          base: \${{ github.event.pull_request.base.sha || 'HEAD~1' }}
+          head: \${{ github.event.pull_request.head.sha || 'HEAD' }}
+
+  bundle-analysis:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package
+        run: npm run build
+
+      - name: Analyze bundle
+        run: npm run build:analyze
+
+      - name: Comment bundle analysis
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            try {
+              const statsPath = 'dist/stats.json';
+              
+              // Check if bundle stats file exists
+              if (!fs.existsSync(statsPath)) {
+                console.log('Bundle stats file not found, skipping analysis');
+                return;
+              }
+              
+              const bundleStats = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
+              
+              // Coerce size values to numbers and validate
+              const totalSize = Number(bundleStats.totalSize) || 0;
+              const gzippedSize = Number(bundleStats.gzippedSize) || 0;
+              
+              if (!Number.isFinite(totalSize) || !Number.isFinite(gzippedSize)) {
+                console.log('Invalid bundle stats format, skipping analysis');
+                return;
+              }
+              
+              // Ensure dependencies is an array
+              const dependencies = Array.isArray(bundleStats.dependencies) ? bundleStats.dependencies : [];
+              const recommendations = Array.isArray(bundleStats.recommendations) ? bundleStats.recommendations : [];
+              
+              // Validate comment size (GitHub comment limit is 65536 characters)
+              const MAX_COMMENT_SIZE = 60000; // Leave buffer for safety
+              
+              let comment = \`## 📦 Bundle Analysis
+              
+              ### Bundle Size
+              - **Total size**: \${totalSize ? (totalSize / 1024).toFixed(2) + ' KB' : 'N/A'}
+              - **Gzipped size**: \${gzippedSize ? (gzippedSize / 1024).toFixed(2) + ' KB' : 'N/A'}
+              
+              ### Dependencies
+              \${dependencies.length > 0 ? dependencies.map(dep => {
+                const depName = dep.name || 'Unknown dependency';
+                const depSize = Number(dep.size);
+                const formattedSize = Number.isFinite(depSize) ? (depSize / 1024).toFixed(2) + ' KB' : 'N/A';
+                return \`- \${depName}: \${formattedSize}\`;
+              }).join('\\n') : 'No dependency analysis available'}
+              
+              ### Recommendations
+              \${recommendations.length > 0 ? recommendations.join('\\n') : 'No recommendations available'}\`;
+              
+              // Truncate if comment is too long
+              if (comment.length > MAX_COMMENT_SIZE) {
+                comment = comment.substring(0, MAX_COMMENT_SIZE - 100) + '\\n\\n... (comment truncated due to size limits)';
+              }
+              
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+              
+              // Add to GitHub Actions step summary
+              require('fs').appendFileSync(process.env.GITHUB_STEP_SUMMARY, comment);
+              
+              console.log('Bundle analysis comment posted successfully');
+              
+            } catch (error) {
+              console.error('Bundle analysis failed:', error.message);
+              
+              // Post error comment instead of failing the workflow
+              const errorComment = \`## 📦 Bundle Analysis
+              
+              ⚠️ Bundle analysis failed: \${error.message}
+              
+              Please check the build logs and ensure the bundle analysis script is working correctly.\`;
+              
+              try {
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: errorComment
+                });
+              } catch (commentError) {
+                console.error('Failed to post error comment:', commentError.message);
+              }
+            }
+
+  changelog-validation:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate changelogs
+        run: |
+          # Check if source files changed (handle case where before is undefined on first commit)
+          BEFORE="\${{ github.event.before }}"
+          if [ "\$BEFORE" = "" ] || [ "\$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "First commit or no before reference, skipping changelog validation"
+            exit 0
+          fi
+          
+          if git diff --name-only "\$BEFORE" \${{ github.sha }} | grep -q '^src/'; then
+            echo "Source files changed, checking changelog updates..."
+            
+            # Check folder changelogs
+            for file in \$(git diff --name-only "\$BEFORE" \${{ github.sha }} | grep '^src/'); do
+              folder=\$(dirname "\$file")
+              changelog="\$folder/CHANGELOG.md"
+              
+              if [ -f "\$changelog" ]; then
+                if ! git diff --name-only "\$BEFORE" \${{ github.sha }} | grep -q "\$changelog"; then
+                  echo "❌ Missing changelog update for \$folder"
+                  exit 1
+                fi
+              fi
+            done
+            
+            echo "✅ Changelog validation passed"
+          else
+            echo "No source files changed, skipping changelog validation"
+          fi
+`;
+}
+
+/**
+ * Generate Release workflow content
+ */
+export function generateReleaseWorkflow(config: ProjectConfig): string {
+  return `name: Release
+
+on:
+  push:
+    branches:
+      - ${config.ci.branches.main}
+      - ${config.ci.branches.develop}
+      - ${config.ci.branches.alpha}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify the integrity of provenance attestations and registry signatures for installed dependencies
+        run: npm audit signatures
+
+      - name: Run tests
+        run: npm run test:coverage
+
+      - name: Build
+        run: npm run build
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: \${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
+`;
+}

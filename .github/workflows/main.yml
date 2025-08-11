@@ -1,0 +1,349 @@
+name: Main Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Validation job - runs quickly to catch basic issues early
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache validation results
+        uses: actions/cache@v4
+        with:
+          path: |
+            .eslintcache
+            node_modules/.cache
+          key: validation-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.js', '**/*.json') }}
+
+      - name: Run validation suite
+        run: npm run validate:all
+
+  # Test matrix across Node versions and OS
+  test-matrix:
+    name: Test (Node ${{ matrix.node-version }}, ${{ matrix.os }})
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [20.x, 22.x]
+        exclude:
+          # Reduce matrix size - only test LTS versions on all OS
+          - os: windows-latest
+            node-version: 22.x
+          - os: macos-latest
+            node-version: 22.x
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache test artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            coverage/
+            dist/
+            node_modules/.cache
+          key: test-${{ matrix.os }}-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('src/**/*.ts') }}
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+      # Contract tests not implemented yet - using integration tests instead
+      # - name: Run contract tests
+      #   run: npm run test:contract
+      #   env:
+      #     CI: true
+
+      - name: Generate coverage report
+        if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
+        run: npm run test:coverage
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+  # Security and quality checks
+  security:
+    name: Security & Quality
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: npm audit --audit-level=moderate
+
+      - name: Verify dependency signatures
+        run: npm audit signatures
+
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@v3.82.13
+        with:
+          path: ./
+          base: ${{ github.event.pull_request.base.sha || 'HEAD~1' }}
+          head: ${{ github.event.pull_request.head.sha || 'HEAD' }}
+
+  # Build and analysis
+  build-analyze:
+    name: Build & Analyze
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            dist/
+            dist-cjs/
+            node_modules/.cache
+          key: build-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('src/**/*.ts', 'tsconfig*.json') }}
+
+      - name: Build package
+        run: npm run build
+
+      # - name: Run E2E tests
+      #   run: npm run test:e2e
+
+      - name: Analyze bundle (PR only)
+        if: github.event_name == 'pull_request'
+        run: |
+          # Create bundle analysis if script exists
+          if npm run build:analyze 2>/dev/null; then
+            echo "Bundle analysis completed"
+          else
+            echo "Bundle analysis script not available, skipping"
+          fi
+
+      - name: Comment bundle analysis (PR only)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            try {
+              const statsPath = 'dist/stats.json';
+              
+              if (!fs.existsSync(statsPath)) {
+                console.log('Bundle stats file not found, skipping analysis');
+                return;
+              }
+              
+              const bundleStats = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
+              
+              const totalSize = bundleStats?.totalSize !== undefined && Number.isFinite(Number(bundleStats.totalSize)) ? Number(bundleStats.totalSize) : null;
+              const gzippedSize = bundleStats?.gzippedSize !== undefined && Number.isFinite(Number(bundleStats.gzippedSize)) ? Number(bundleStats.gzippedSize) : null;
+              
+              const hasTotalSize = totalSize !== null;
+              const hasGzippedSize = gzippedSize !== null;
+              
+              const MAX_BUNDLE_SIZE = 500 * 1024; // 500KB
+              const MAX_GZIPPED_SIZE = 150 * 1024; // 150KB
+              
+              if (hasTotalSize && totalSize > MAX_BUNDLE_SIZE) {
+                console.warn(`Warning: Bundle size ${(totalSize / 1024).toFixed(2)}KB exceeds threshold ${(MAX_BUNDLE_SIZE / 1024)}KB`);
+              }
+              if (hasGzippedSize && gzippedSize > MAX_GZIPPED_SIZE) {
+                console.warn(`Warning: Gzipped size ${(gzippedSize / 1024).toFixed(2)}KB exceeds threshold ${(MAX_GZIPPED_SIZE / 1024)}KB`);
+              }
+              
+              const dependencies = Array.isArray(bundleStats.dependencies) ? bundleStats.dependencies : [];
+              const recommendations = Array.isArray(bundleStats.recommendations) ? bundleStats.recommendations : [];
+              
+              const comment = `## 📦 Bundle Analysis
+              
+              ### Bundle Size
+              - **Total size**: ${hasTotalSize ? (totalSize / 1024).toFixed(2) + ' KB' : 'N/A'}
+              - **Gzipped size**: ${hasGzippedSize ? (gzippedSize / 1024).toFixed(2) + ' KB' : 'N/A'}
+              
+              ### Dependencies
+              ${dependencies.length > 0 ? dependencies.map(dep => {
+                const depName = dep.name || 'Unknown dependency';
+                const depSize = Number(dep.size);
+                const formattedSize = Number.isFinite(depSize) ? (depSize / 1024).toFixed(2) + ' KB' : 'N/A';
+                return `- ${depName}: ${formattedSize}`;
+              }).join('\n') : 'No dependency analysis available'}
+              
+              ### Recommendations
+              ${recommendations.length > 0 ? recommendations.join('\n') : 'No recommendations available'}`;
+              
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+              
+              require('fs').appendFileSync(process.env.GITHUB_STEP_SUMMARY, comment);
+              console.log('Bundle analysis comment posted successfully');
+              
+            } catch (error) {
+              console.error('Bundle analysis failed:', error.message);
+              
+              const errorComment = `## 📦 Bundle Analysis
+              
+              ⚠️ Bundle analysis failed: ${error.message}
+              
+              Please check the build logs and ensure the bundle analysis script is working correctly.`;
+              
+              try {
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: errorComment
+                });
+              } catch (commentError) {
+                console.error('Failed to post error comment:', commentError.message);
+              }
+            }
+
+  # Changelog validation
+  changelog-validation:
+    name: Validate Changelogs
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate changelog updates
+        run: |
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q '^src/'; then
+            echo "Source files changed, checking changelog updates..."
+            
+            for file in $(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^src/'); do
+              folder=$(dirname "$file")
+              changelog="$folder/CHANGELOG.md"
+              
+              if [ -f "$changelog" ]; then
+                if ! git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "$changelog"; then
+                  echo "❌ Missing changelog update for $folder"
+                  exit 1
+                fi
+              fi
+            done
+            
+            echo "✅ Changelog validation passed"
+          else
+            echo "No source files changed, skipping changelog validation"
+          fi
+
+  # Release job - only runs on main branch after all checks pass
+  release:
+    name: Release
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip ci]')
+    needs: [test-matrix, security, build-analyze, changelog-validation]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Restore build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            dist/
+            dist-cjs/
+          key: build-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('src/**/*.ts', 'tsconfig*.json') }}
+
+      - name: Build package
+        run: npm run build
+
+      - name: Run final test suite
+        run: npm run test:coverage
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release

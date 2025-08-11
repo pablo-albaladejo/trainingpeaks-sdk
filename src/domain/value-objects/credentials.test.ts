@@ -55,9 +55,9 @@ describe('Credentials Value Object', () => {
       // Assert
       expect(Object.isFrozen(credentials)).toBe(true);
       expect(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-        (credentials as any).username = 'modified';
-      }).toThrow();
+        // Attempt to mutate the immutable credentials object
+        Object.assign(credentials, { username: 'modified' });
+      }).toThrow(TypeError);
     });
 
     describe('Validation Errors', () => {

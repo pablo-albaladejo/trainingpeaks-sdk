@@ -1,6 +1,4 @@
-import { AuthRepository } from '@/domain';
+import type { AuthRepository, WorkoutRepository } from '@/domain';
 
-export type TrainingPeaksRepository = {
-  login: AuthRepository['login'];
-  logout: AuthRepository['logout'];
-};
+export type TrainingPeaksRepository = Pick<AuthRepository, 'login' | 'logout'> &
+  Pick<WorkoutRepository, 'getWorkoutsList'>;

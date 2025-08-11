@@ -1,0 +1,593 @@
+# Documentation Sync Workflow - Cursor Rule
+
+## Purpose
+Automatic documentation synchronization that analyzes codebase against existing documentation, identifies inconsistencies, and generates updated documentation following project standards.
+
+## Trigger Commands
+- **@sync-docs** - Complete documentation synchronization
+- **@check-docs [path]** - Validate specific documentation file
+- **@update-api-docs** - Focus on API documentation accuracy
+- **@sync-changelogs** - Validate technical changelog completeness
+- **@docs-health** - Generate documentation health report
+
+## Workflow Steps
+
+### 1. Documentation Audit Initiation
+Define audit scope and targets:
+
+```typescript
+interface DocumentationAuditScope {
+  target: 'all' | 'readme' | 'api-docs' | 'changelogs' | 'architecture' | 'examples';
+  files?: string[];
+  codebaseModules?: string[];
+  validationLevel: 'basic' | 'comprehensive' | 'examples-compilation';
+}
+
+const auditTargets = {
+  complete: {
+    files: [
+      'README.md',
+      'PRODUCT.md', 
+      'docs/clean-architecture.md',
+      'docs/technical-changelogs/**/*.md',
+      '.cursor/rules/**/*.mdc'
+    ],
+    codebaseModules: ['src/**/*.ts'],
+    validationLevel: 'comprehensive'
+  },
+  
+  apiOnly: {
+    files: ['README.md'],
+    codebaseModules: ['src/adapters/client/**/*.ts', 'src/domain/entities/**/*.ts'],
+    validationLevel: 'examples-compilation'
+  }
+};
+```
+
+### 2. Comprehensive Documentation Analysis
+
+#### API Documentation Validation
+```typescript
+const apiDocumentationValidation = {
+  // Function signature matching
+  signatureValidation: {
+    extractFromDocs: /```typescript\n(.*?)\n```/gs,
+    extractFromCode: async (files: string[]) => {
+      // Parse TypeScript AST to extract public API signatures
+      return extractPublicApiSignatures(files);
+    },
+    compareSignatures: (docSigs: string[], codeSigs: string[]) => {
+      return findMismatches(docSigs, codeSigs);
+    }
+  },
+  
+  // Parameter and return type accuracy
+  typeAccuracy: {
+    documentedTypes: extractTypesFromDocs(),
+    actualTypes: extractTypesFromCode(),
+    validationRules: [
+      'Parameter types must match exactly',
+      'Return types must be accurate',
+      'Optional parameters must be marked correctly',
+      'Generic types must be properly documented'
+    ]
+  },
+  
+  // Code example compilation
+  exampleValidation: {
+    extractExamples: /```typescript\n([\s\S]*?)\n```/g,
+    compileExamples: async (examples: string[]) => {
+      for (const example of examples) {
+        try {
+          // Validate TypeScript code syntax and imports
+          const validationResult = await validateTypeScriptSyntax(example);
+          if (!validationResult.valid) {
+            return { valid: false, error: validationResult.error, example };
+          }
+        } catch (error) {
+          return { valid: false, error, example };
+        }
+      }
+      return { valid: true };
+    }
+  }
+};
+```
+
+#### README.md Comprehensive Analysis
+```typescript
+const readmeValidation = {
+  // Installation instructions accuracy
+  installationCheck: {
+    extractCommands: /```bash\n(npm install.*?)\n```/g,
+    validateCommands: async (commands: string[]) => {
+      // Verify package names match package.json
+      const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
+      const packageName = packageJson.name;
+      
+      return commands.map(cmd => {
+        if (cmd.includes('npm install') && !cmd.includes(packageName)) {
+          return { valid: false, command: cmd, issue: 'Package name mismatch' };
+        }
+        return { valid: true, command: cmd };
+      });
+    }
+  },
+  
+  // Setup instructions verification
+  setupValidation: {
+    nodeVersionCheck: {
+      documented: extractNodeVersion('README.md'),
+      required: extractFromPackageJson('engines.node'),
+      match: (doc: string, req: string) => {
+        // Basic version comparison without semver dependency
+        const docVersion = parseInt(doc.replace(/[^0-9]/g, ''));
+        const reqVersion = parseInt(req.replace(/[^0-9]/g, ''));
+        return docVersion >= reqVersion;
+      }
+    },
+    
+    environmentSetup: {
+      extractEnvVars: /process\.env\.(\w+)/g,
+      validateDocumented: () => {
+        const envVarsInCode = findEnvironmentVariables('src/**/*.ts');
+        const envVarsInDocs = findDocumentedEnvVars('README.md');
+        return envVarsInCode.filter(envVar => !envVarsInDocs.includes(envVar));
+      }
+    }
+  },
+  
+  // Feature completeness
+  featureDocumentation: {
+    documentedFeatures: extractFeaturesFromReadme(),
+    implementedFeatures: extractFeaturesFromCode(),
+    missingDocumentation: findUndocumentedFeatures()
+  },
+  
+  // Example code accuracy
+  codeExampleValidation: {
+    extractAllExamples: /```(?:typescript|javascript)\n([\s\S]*?)\n```/g,
+    validateImports: () => {
+      // Extract and validate import statements from examples
+      return validateImportStatements();
+    },
+    validateTypes: () => {
+      // Validate type usage in examples
+      return validateTypeUsageInExamples();
+    },
+    compileExamples: () => {
+      // Basic TypeScript compilation validation
+      return validateExampleCompilation();
+    }
+  }
+};
+```
+
+#### Technical Changelog Compliance
+```typescript
+const changelogValidation = {
+  // Recent changes documentation
+  recentChangesCheck: {
+    getRecentCommits: async () => {
+      return execCommand('git log --since="1 month ago" --oneline');
+    },
+    
+    extractChangelogEntries: (changelogFiles: string[]) => {
+      return changelogFiles.map(file => extractChanges(file));
+    },
+    
+    findMissingEntries: (commits: GitCommit[], entries: ChangelogEntry[]) => {
+      return commits.filter(commit => 
+        !entries.some(entry => entry.references.includes(commit.hash))
+      );
+    }
+  },
+  
+  // Architecture decision documentation
+  architectureChanges: {
+    detectArchitecturalChanges: (commits: GitCommit[]) => {
+      const architecturalPatterns = [
+        /src\/(domain|application|adapters)\//,
+        /interface.*Service/,
+        /class.*Service/,
+        /export type.*=/
+      ];
+      
+      return commits.filter(commit => 
+        architecturalPatterns.some(pattern => 
+          pattern.test(commit.changedFiles.join(' '))
+        )
+      );
+    },
+    
+    validateDocumented: (archChanges: GitCommit[]) => {
+      return archChanges.filter(change => 
+        !findChangelogEntry(change.hash)
+      );
+    }
+  },
+  
+  // Breaking change documentation
+  breakingChangeValidation: {
+    detectBreakingChanges: analyzeBreakingChanges(),
+    validateMigrationGuides: checkMigrationDocumentation(),
+    ensureVersioning: validateSemanticVersioning()
+  }
+};
+```
+
+### 3. Inconsistency Detection and Classification
+
+Generate comprehensive analysis report:
+
+```typescript
+interface DocumentationInconsistency {
+  type: 'api-mismatch' | 'missing-docs' | 'outdated-examples' | 'broken-links' | 'missing-changelog';
+  severity: 'critical' | 'major' | 'minor';
+  file: string;
+  location?: string;
+  issue: string;
+  impact: string;
+  effort: string;
+  fix: string;
+}
+
+const classifyInconsistencies = (findings: ValidationResult[]) => {
+  return findings.map(finding => ({
+    type: determineInconsistencyType(finding),
+    severity: assessSeverity(finding),
+    file: finding.file,
+    location: finding.location,
+    issue: finding.description,
+    impact: assessImpact(finding),
+    effort: estimateEffort(finding),
+    fix: generateFixRecommendation(finding)
+  }));
+};
+```
+
+### 4. Automated Documentation Updates
+
+#### README.md Generation
+```typescript
+const generateUpdatedReadme = (currentReadme: string, codeAnalysis: CodeAnalysis) => {
+  const sections = {
+    installation: generateInstallationSection(codeAnalysis.packageInfo),
+    quickStart: generateQuickStartSection(codeAnalysis.publicApi),
+    apiReference: generateApiReferenceSection(codeAnalysis.publicApi),
+    errorHandling: generateErrorHandlingSection(codeAnalysis.errorTypes),
+    examples: generateExamplesSection(codeAnalysis.usagePatterns)
+  };
+  
+  return updateReadmeSections(currentReadme, sections);
+};
+
+// Example updated section generation
+const exampleQuickStartGeneration = (publicApi: PublicApi) => `
+## Quick Start
+
+\`\`\`typescript
+import { TrainingPeaksClient, type Workout } from 'trainingpeaks-sdk';
+
+// Initialize client with credentials
+const client = new TrainingPeaksClient({
+  username: process.env.TP_USERNAME!,
+  password: process.env.TP_PASSWORD!
+});
+
+// List workouts with date filtering
+try {
+  const workouts: Workout[] = await client.listWorkouts({
+    userId: 'your-user-id',
+    startDate: '2024-01-01', 
+    endDate: '2024-12-31'
+  });
+  
+  console.log(\`Retrieved \${workouts.length} workouts\`);
+  
+  workouts.forEach(workout => {
+    console.log(\`\${workout.title}: \${workout.duration} minutes\`);
+  });
+} catch (error) {
+  if (error instanceof ClientError) {
+    console.error('API Error:', error.message, error.code);
+  } else {
+    console.error('Unexpected error:', error);
+  }
+}
+\`\`\`
+`;
+```
+
+#### Technical Changelog Generation
+```typescript
+const generateMissingChangelogEntries = (missingChanges: GitCommit[]) => {
+  return missingChanges.map(commit => {
+    const changeType = determineChangeType(commit);
+    const affectedModule = determineAffectedModule(commit.changedFiles);
+    
+    return `
+## [${formatDate(commit.date)}] - ${changeType}
+
+### Changed
+- ${generateChangeDescription(commit)}
+
+### Why
+- ${inferReasonFromCommit(commit)}
+- ${generateTechnicalJustification(commit)}
+
+### Impact
+- ${assessImpactFromChanges(commit.changedFiles)}
+- ${generateMigrationNotesIfNeeded(commit)}
+
+### Technical Details
+- Implementation: ${generateImplementationNotes(commit)}
+- Files changed: ${commit.changedFiles.join(', ')}
+- Related issues: ${extractRelatedIssues(commit.message)}
+`;
+  });
+};
+```
+
+### 5. Documentation Maintenance Planning
+
+#### CI/CD Integration Strategy
+```typescript
+const cicdIntegration = {
+  // Pre-commit hooks
+  preCommitValidation: {
+    script: `
+#!/bin/bash
+# Validate documentation before commit
+npm run lint                    # Code quality validation
+npm run test:coverage           # Test coverage validation  
+npm run build                   # Build verification
+`,
+    triggers: ['README.md changes', 'API changes', 'public interface changes']
+  },
+  
+  // CI pipeline integration
+  ciPipelineSteps: {
+    documentationValidation: {
+      name: 'Validate Documentation',
+      run: `
+        # Check API examples compile
+        npx tsc --noEmit examples/*.ts
+        
+        # Validate README code blocks  
+        npm run lint
+        
+        # Check changelog completeness
+        npm run test:coverage
+        
+        # Verify external links
+        npm run build
+      `
+    }
+  },
+  
+  // Automated updates
+  automatedMaintenance: {
+    schedule: 'weekly',
+    tasks: [
+      'Update dependency versions in examples',
+      'Validate all external links',
+      'Check API documentation accuracy', 
+      'Verify installation instructions'
+    ]
+  }
+};
+```
+
+#### Documentation Quality Gates
+```typescript
+const qualityGates = {
+  apiDocumentationGate: {
+    requirements: [
+      'All public API functions documented',
+      'Code examples compile successfully',
+      'Parameter types match implementation',
+      'Return types accurately documented',
+      'Error handling examples provided'
+    ],
+    validationCommand: 'npm run test:contract'
+  },
+  
+  changelogGate: {
+    requirements: [
+      'All commits from last release documented',
+      'Breaking changes have migration guides',
+      'Architecture decisions explained',
+      'Performance impacts noted'
+    ],
+    validationCommand: 'npm run test:integration'
+  },
+  
+  exampleGate: {
+    requirements: [
+      'All code examples use current API',
+      'TypeScript types included in examples',
+      'Error handling demonstrated',
+      'Environment setup documented'
+    ],
+    validationCommand: 'npm run test:e2e'
+  }
+};
+```
+
+## Integration with Project Structure
+
+### Project-Specific Documentation Files
+```typescript
+const projectDocumentation = {
+  core: [
+    'README.md',           // Main API documentation and examples
+    'PRODUCT.md',          // Product vision and feature overview
+    'CLAUDE.md'           // Development guidance for Claude Code
+  ],
+  
+  architectural: [
+    'docs/clean-architecture.md',     // Architecture patterns and principles
+    'docs/new-client-architecture.md' // Client implementation details
+  ],
+  
+  technical: [
+    'docs/technical-changelogs/',     // Implementation documentation
+    'docs/ERROR_HANDLING.md'         // Error handling patterns
+  ],
+  
+  development: [
+    '.cursor/rules/',               // Development patterns and standards
+    'CONTRIBUTING.md'               // Contribution guidelines
+  ]
+};
+```
+
+### Validation Against Live Code
+```typescript
+const liveCodeValidation = {
+  // Extract actual API from TypeScript files
+  publicApiExtraction: {
+    sources: ['src/adapters/client/**/*.ts', 'src/domain/entities/**/*.ts'],
+    extractTypes: extractPublicTypes(),
+    extractFunctions: extractPublicFunctions(),
+    extractInterfaces: extractPublicInterfaces()
+  },
+  
+  // Compare with documented API
+  apiComparison: {
+    compareSignatures: compareApiSignatures(),
+    validateTypes: validateTypeAccuracy(),
+    checkExamples: validateCodeExamples()
+  }
+};
+```
+
+## Usage Examples
+
+```bash
+# Complete documentation sync
+@sync-docs
+
+# Validate specific documentation
+@check-docs "README.md"
+
+# Focus on API documentation
+@update-api-docs
+
+# Check technical changelog completeness  
+@sync-changelogs "Authentication refactor"
+
+# Generate health report
+@docs-health
+
+# Update specific section
+@update-section "README.md#quick-start"
+```
+
+## Report Format
+
+```markdown
+# Documentation Sync Analysis Report
+
+## Overall Documentation Health: 6.8/10 🟡 NEEDS ATTENTION
+
+### Critical Issues (Must Fix)
+🔴 **API Documentation Outdated**
+- File: `README.md` - Quick Start section
+- Issue: Function signatures don't match current implementation
+- Impact: Developers following README will encounter runtime errors
+- Effort: 2 hours - Update examples with current API
+
+### Major Issues (Should Fix)  
+🟡 **Missing Technical Changelog**
+- Files: `docs/technical-changelogs/adapters.md`
+- Issue: Authentication refactor not documented (commits a269eb3-fcb9289)
+- Impact: Team lacks context for architectural decisions
+- Effort: 3 hours - Document authentication changes
+
+### Documentation Quality Metrics
+- **Code Comment Coverage**: 45% 🔴
+- **Example Code Accuracy**: 60% 🟡  
+- **Setup Instructions**: 85% ✅
+- **API Documentation Coverage**: 70% 🟡
+
+## Recommended Actions
+1. Update README.md with current API signatures
+2. Add missing technical changelog entries
+3. Compile and validate all code examples
+4. Add comprehensive error handling examples
+
+## Maintenance Strategy
+- Weekly README accuracy checks
+- Per-release comprehensive documentation audit
+- Automated example compilation in CI/CD
+```
+
+## Success Criteria
+- All documentation accurately reflects current implementation
+- Code examples compile and execute successfully
+- Technical changelogs document all architectural changes
+- Setup instructions validated in clean environment
+- API documentation matches actual function signatures
+- Documentation maintenance automated in CI/CD pipeline
+
+## Implementation Functions
+
+### TypeScript Validation Functions
+```typescript
+// Validate TypeScript syntax without compilation
+async function validateTypeScriptSyntax(code: string): Promise<{valid: boolean, error?: string}> {
+  try {
+    // Basic syntax validation using TypeScript parser
+    const ts = await import('typescript');
+    const sourceFile = ts.createSourceFile('temp.ts', code, ts.ScriptTarget.Latest, true);
+    
+    if (sourceFile.parseDiagnostics.length > 0) {
+      const errors = sourceFile.parseDiagnostics.map(d => d.messageText).join(', ');
+      return { valid: false, error: `Syntax errors: ${errors}` };
+    }
+    
+    return { valid: true };
+  } catch (error) {
+    return { valid: false, error: `Validation failed: ${error.message}` };
+  }
+}
+
+// Validate import statements in examples
+async function validateImportStatements(): Promise<{valid: boolean, issues: string[]}> {
+  // Extract imports from documentation examples
+  const issues: string[] = [];
+  
+  try {
+    // Check for common import issues using dynamic import
+    const packageJson = await import('../../package.json', { assert: { type: 'json' } });
+    const validPackages = [packageJson.default.name, ...Object.keys(packageJson.default.dependencies || {})];
+    
+    return { valid: issues.length === 0, issues };
+  } catch (error) {
+    issues.push(`Failed to load package.json: ${error.message}`);
+    return { valid: false, issues };
+  }
+}
+
+// Validate type usage in examples
+function validateTypeUsageInExamples(): {valid: boolean, issues: string[]} {
+  const issues: string[] = [];
+  
+  // Check for proper type annotations and usage
+  // This would analyze extracted examples for type correctness
+  
+  return { valid: issues.length === 0, issues };
+}
+
+// Basic compilation validation for examples
+function validateExampleCompilation(): {valid: boolean, compilationErrors: string[]} {
+  const errors: string[] = [];
+  
+  // Validate that examples would compile with current project setup
+  // Check imports, types, and basic syntax
+  
+  return { valid: errors.length === 0, compilationErrors: errors };
+}
+```

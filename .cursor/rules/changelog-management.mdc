@@ -1,0 +1,454 @@
+---
+description: Changelog management and documentation rules for tracking code evolution and architectural decisions
+globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.js"
+  - "**/*.jsx"
+  - "**/*.mjs"
+  - "**/*.mts"
+  - "**/*.cts"
+  - "**/*.cjs"
+  - "**/CHANGELOG.md"
+  - "docs/technical-changelogs/**/*.md"
+  - "!docs/technical-changelogs/**/README.md"
+alwaysApply: true
+---
+
+# Changelog Management Rules
+
+## Overview
+
+This project maintains a dual changelog system to provide both high-level project evolution tracking and detailed technical context for code changes.
+
+## Changelog Types
+
+### 1. Root-Level Changelog (Git-Tracked)
+
+**File**: `CHANGELOG.md` in project root
+
+**Purpose**: Track high-level project evolution, releases, and user-facing changes
+
+**Content Guidelines**:
+- Version releases and semantic versioning changes
+- Major features and enhancements
+- Breaking changes with migration guides
+- Bug fixes affecting end users
+- Performance improvements
+- Security updates
+
+**Format**:
+```markdown
+# Changelog
+
+## [1.2.0] - 2024-01-15
+
+### Added
+- New getWorkoutsList() method for retrieving user workouts
+- Support for date range filtering in workout queries
+
+### Changed
+- Updated authentication flow to use OAuth 2.0
+- Improved error handling with structured error responses
+
+### Breaking Changes
+- Removed deprecated `getWorkouts()` method (use `getWorkoutsList()`)
+- Changed authentication config structure
+
+### Migration Guide
+\```typescript
+// Before
+await sdk.getWorkouts({ startDate, endDate });
+
+// After
+await sdk.getWorkoutsList({ startDate, endDate });
+\```
+
+### Fixed
+- Fixed memory leak in HTTP client connection pooling
+- Resolved timeout issues with large workout file uploads
+
+## [1.1.3] - 2024-01-10
+
+### Fixed
+- Fixed TypeScript declaration file exports
+```
+
+**Generation Rules**:
+- Update for ALL user-facing changes
+- Use semantic versioning guidelines (MAJOR.MINOR.PATCH)
+- Include migration guides for breaking changes
+- Generated automatically via semantic-release for releases
+- Manual updates for interim significant changes
+
+### 2. Folder-Level Changelogs (Git-Tracked)
+
+**Files**: Technical changelogs in centralized documentation:
+- `docs/technical-changelogs/adapters.md`
+- `docs/technical-changelogs/application.md`
+- `docs/technical-changelogs/domain.md`
+- `docs/technical-changelogs/shared.md`
+
+**Purpose**: Document detailed technical changes, architectural decisions, and implementation rationale
+
+**Content Guidelines**:
+- Code changes and their technical justification
+- Architectural decisions and trade-offs
+- Refactoring rationale and impact
+- Implementation patterns and design choices
+- Technical debt notes
+- Performance optimizations
+- Internal API changes
+
+**Format**:
+```markdown
+# Adapters Layer Changelog
+
+## [2024-01-15] - HTTP Client Refactoring
+
+### Changed
+- Refactored AxiosHttpClient to use dependency injection for better testability
+- Extracted retry logic into separate RetryHandler class
+- Updated cookie management to use axios-cookiejar-support
+
+### Why
+- Previous implementation had tight coupling making unit testing difficult
+- Retry logic was scattered across multiple methods
+- Cookie handling was inconsistent across different authentication flows
+
+### Impact
+- **Developers**: Easier to mock HTTP client in tests
+- **Performance**: Reduced memory footprint by 15%
+- **Maintainability**: Retry logic centralized and configurable
+
+### Trade-offs Considered
+- **Complexity vs. Flexibility**: Added more classes but gained better separation
+- **Performance vs. Reliability**: Small overhead for retry logic but better resilience
+- **Bundle Size**: Increased by ~2KB but improved modularity
+
+### Implementation Notes
+- Used factory pattern for HTTP client creation
+- Implemented exponential backoff for retries
+- Added comprehensive error mapping for different HTTP status codes
+
+## [2024-01-10] - Authentication Repository Enhancement
+
+### Changed
+- Added token refresh mechanism to AuthRepository
+- Implemented automatic session restoration from cookies
+
+### Why
+- Users experienced frequent re-authentication requirements
+- Session management was not persistent across browser refreshes
+- Token expiration handling was reactive rather than proactive
+
+### Impact
+- **Users**: Seamless experience with automatic session restoration
+- **API Calls**: 30% reduction in authentication requests
+- **Security**: Improved token lifecycle management
+
+### Technical Details
+- Added TokenRefreshHandler with configurable refresh threshold
+- Implemented secure cookie storage for session tokens
+- Added background token refresh with retry mechanism
+```
+
+**Generation Rules**:
+- **MANDATORY** for ANY code change in the folder
+- Update BEFORE committing changes
+- Include both technical details and business rationale
+- Document architectural decisions and alternatives considered
+- Add performance impact notes when applicable
+
+## Required Changelog Actions
+
+### For Every Code Change
+
+1. **Identify Impact Level**:
+   - **File-level**: Updates to specific files → Folder changelog
+   - **Feature-level**: New features or major changes → Root changelog
+   - **Breaking**: API changes affecting users → Both changelogs
+
+2. **Update Folder Changelog**:
+   ```bash
+   # Example: Changes to src/adapters/http/axios-http-client.ts
+   # Update: docs/technical-changelogs/adapters.md
+   ```
+   
+   **Note**: The target file name is derived from the second path segment under `src/`. For example:
+   - `src/adapters/...` → `adapters.md`
+   - `src/domain/...` → `domain.md`
+   - `src/application/...` → `application.md`
+   - `src/shared/...` → `shared.md`
+
+3. **Update Root Changelog** (if applicable):
+   - User-facing changes
+   - API modifications
+   - Performance improvements >10%
+   - Security fixes
+   - Breaking changes
+
+### Changelog Entry Template
+
+#### Root-Level Entry
+```markdown
+## [Version] - YYYY-MM-DD
+
+### Added/Changed/Fixed/Breaking Changes
+- **Brief description** - Impact on users
+
+### Migration Guide (for breaking changes)
+\```typescript
+// Before
+oldCode();
+
+// After  
+newCode();
+\```
+```
+
+#### Folder-Level Entry
+```markdown
+## [YYYY-MM-DD] - Change Category
+
+### Changed
+- Specific technical changes made
+- Files modified and key changes
+
+### Why
+- Business/technical justification
+- Problem being solved
+- Requirements driving the change
+
+### Impact
+- **Performance**: Quantified improvements/degradation
+- **Maintainability**: How it affects code quality
+- **Testing**: Changes to test strategy/coverage
+- **Security**: Security implications
+- **Breaking Changes**: Internal API changes
+
+### Trade-offs Considered
+- Alternative approaches evaluated
+- Decisions made and reasoning
+- Future implications
+
+### Implementation Notes
+- Technical details for future reference
+- Patterns or conventions established
+- Dependencies added/removed
+```
+
+## Automation and Tools
+
+### IDE Integration
+
+When making changes, IDEs should prompt for changelog updates:
+
+1. **File Save Hook**: Detect changes to source files
+2. **Folder Detection**: Identify which folder changelog needs updating
+3. **Template Generation**: Pre-populate changelog entry template
+4. **Validation**: Ensure both changelogs updated for significant changes
+
+### Git Hooks
+
+**Pre-commit Hook**:
+```bash
+#!/bin/sh
+# Check if centralized changelogs are updated for source changes
+changed_files=$(git diff --cached --name-only | grep -E '\.(ts|tsx|js|jsx|mjs|mts|cts|cjs)$')
+if [ -n "$changed_files" ]; then
+  for file in $changed_files; do
+    # Extract top-level folder (src/adapters -> adapters)
+    top_folder=$(echo "$file" | cut -d'/' -f2)
+    changelog="docs/technical-changelogs/$top_folder.md"
+    if [ ! -f "$changelog" ] || [ "$file" -nt "$changelog" ]; then
+      echo "Error: Update $changelog for changes in $file"
+      exit 1
+    fi
+  done
+fi
+
+# Validate changelog entry format
+{
+  find . -name "CHANGELOG.md" -exec grep -l "## \[$(date +%Y-%m-%d)\]" {} \; 2>/dev/null
+  if [ -d "docs/technical-changelogs" ]; then
+    find docs/technical-changelogs/ -name "*.md" -exec grep -l "## \[$(date +%Y-%m-%d)\]" {} \; 2>/dev/null
+  fi
+} > /dev/null || {
+  echo "Warning: No changelog entry found for today's date"
+}
+
+# Check for breaking changes requiring root changelog update
+if git diff --cached | grep -q "BREAKING CHANGE\|!:"; then
+  if ! git diff --cached CHANGELOG.md | grep -q "+.*$(date +%Y-%m-%d)"; then
+    echo "Error: Root CHANGELOG.md must be updated for breaking changes"
+    exit 1
+  fi
+fi
+```
+
+**Pre-push Hook**:
+```bash
+#!/bin/sh
+# Validate changelog consistency across all changelogs
+{
+  find . -type f -name "CHANGELOG.md" 2>/dev/null
+  if [ -d "docs/technical-changelogs" ]; then
+    find docs/technical-changelogs/ -type f -name "*.md" ! -name "README.md" 2>/dev/null
+  fi
+} | while IFS= read -r changelog; do
+  if ! grep -q "^## \[" "$changelog"; then
+    echo "Error: Invalid changelog format in $changelog"
+    exit 1
+  fi
+done
+
+# Check for required migration guides on breaking changes
+if git log --oneline origin/$(git rev-parse --abbrev-ref HEAD)..HEAD | grep -q "BREAKING CHANGE\|!:"; then
+  if ! grep -q "Migration Guide\|Breaking Changes" CHANGELOG.md; then
+    echo "Error: Migration guide required for breaking changes"
+    exit 1
+  fi
+fi
+
+# Verify semantic versioning compliance in package.json
+current_version=$(node -p "require('./package.json').version")
+if ! echo "$current_version" | grep -qE "^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$"; then
+  echo "Error: Invalid semantic version format: $current_version"
+  exit 1
+fi
+```
+
+### Semantic Release Integration
+
+Root changelog automatically updated on release:
+- Aggregates conventional commits
+- Generates migration guides from breaking change commits
+- Updates version numbers
+- Creates release notes
+
+## Quality Standards
+
+### Changelog Quality Checklist
+
+**Root Changelog**:
+- [ ] Clear user impact description
+- [ ] Semantic versioning compliance
+- [ ] Migration guide for breaking changes
+- [ ] Performance impact quantified
+- [ ] Security implications noted
+
+**Folder Changelog**:
+- [ ] Technical justification provided
+- [ ] Trade-offs documented
+- [ ] Performance impact measured
+- [ ] Future implications considered
+- [ ] Implementation patterns explained
+
+### Review Requirements
+
+**Code Review Process**:
+1. **Source Code Review**: Standard code review process
+2. **Changelog Review**: Verify changelog entries are:
+   - Complete and accurate
+   - Properly categorized
+   - Include sufficient context
+   - Follow format guidelines
+
+**Changelog Review Criteria**:
+- **Completeness**: All changes documented
+- **Clarity**: Technical and business context clear
+- **Accuracy**: Changes match actual implementation
+- **Format**: Consistent with established patterns
+
+## Benefits
+
+### For Developers
+- **Context Preservation**: Understanding why changes were made
+- **Decision Tracking**: Record of architectural choices
+- **Learning Resource**: Patterns and approaches used
+- **Debugging Aid**: Historical context for issue investigation
+
+### For Users
+- **Clear Migration Path**: Understanding how to upgrade
+- **Feature Discovery**: Awareness of new capabilities
+- **Stability Confidence**: Transparent change process
+- **Integration Planning**: Impact assessment for upgrades
+
+### For Project Maintenance
+- **Technical Debt Tracking**: Accumulation and resolution patterns
+- **Performance Monitoring**: Historical performance trends
+- **Security Audit Trail**: Security-related changes and fixes
+- **Compliance Documentation**: Change management for compliance
+
+## Examples
+
+### Good Folder Changelog Entry
+```markdown
+## [2024-01-15] - HTTP Client Connection Pooling
+
+### Changed
+- Added connection pooling to AxiosHttpClient with configurable limits
+- Implemented connection reuse for same-host requests
+- Added connection timeout and cleanup mechanisms
+
+### Why
+- Application was creating new connections for each request
+- High-volume usage caused connection exhaustion
+- Users reported performance degradation with >100 concurrent requests
+
+### Impact
+- **Performance**: 40% faster response times for concurrent requests
+- **Resource Usage**: 60% reduction in connection overhead
+- **Scalability**: Support for 500+ concurrent requests
+- **Memory**: 25% reduction in HTTP client memory usage
+
+### Trade-offs Considered
+- **Memory vs. Performance**: Connection pools use more memory but much faster
+- **Configuration Complexity**: Added settings but defaulted for typical use cases
+- **HTTP/2 vs. HTTP/1.1**: Chose HTTP/1.1 for broader compatibility
+
+### Implementation Notes
+- Used axios default adapter with custom agent configuration
+- Set keepAlive: true with maxSockets: 100 per host
+- Added connection cleanup on process termination
+- Implemented graceful degradation for connection pool exhaustion
+```
+
+### Good Root Changelog Entry
+```markdown
+## [1.3.0] - 2024-01-15
+
+### Added
+- **Connection Pooling**: HTTP requests now use connection pooling for better performance
+- **Batch Operations**: New `uploadMultipleWorkouts()` method for bulk uploads
+
+### Changed
+- **Authentication**: Improved session management with automatic reconnection
+- **Error Handling**: More detailed error messages with suggested solutions
+
+### Performance Improvements
+- 40% faster API response times for concurrent requests
+- 60% reduction in connection overhead
+- 25% smaller memory footprint
+
+### Fixed
+- Fixed timeout issues with large file uploads
+- Resolved session persistence across browser refreshes
+
+### Migration Guide
+No breaking changes in this release. All existing code continues to work.
+Optional: Update to new batch upload method for better performance:
+
+\```typescript
+// Before - multiple single uploads
+for (const workout of workouts) {
+  await sdk.uploadWorkout(workout);
+}
+
+// After - single batch upload (recommended)
+await sdk.uploadMultipleWorkouts(workouts);
+\```
+```
+
+This dual changelog system ensures both user-facing documentation and detailed technical context are preserved, making the codebase more maintainable and user-friendly.

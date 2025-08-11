@@ -7,7 +7,7 @@ yarn-error.log*
 # Build outputs
 dist/
 dist-cjs/
-build/
+/build/
 coverage/
 
 # Test reports
@@ -39,8 +39,10 @@ Thumbs.db
 # TypeScript cache
 *.tsbuildinfo
 
-# Documentation
-docs/
+# Documentation (build artifacts)
+# Technical changelogs are now tracked in git but excluded from npm package
+docs/coverage/
+docs/api/
 
 # Logs
 logs/

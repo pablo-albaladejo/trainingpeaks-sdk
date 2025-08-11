@@ -1,0 +1,29 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔐 Security Reports
+    url: https://github.com/pablo-albaladejo/trainingpeaks-sdk/security/advisories/new
+    about: Report security vulnerabilities privately through GitHub Security Advisories.
+  - name: 📚 Documentation
+    url: https://github.com/pablo-albaladejo/trainingpeaks-sdk/tree/main/docs
+    about: Please check our documentation before creating an issue.
+  - name: 🐛 Bug Reports
+    url: https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/new?template=bug-fix.md
+    about: Report a bug that needs to be fixed.
+  - name: ✨ Feature Requests
+    url: https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/new?template=feature-request.md
+    about: Request a new feature or enhancement.
+  - name: 🔧 Refactor Requests
+    url: https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/new?template=refactor.md
+    about: Request code refactoring or architectural improvements.
+  - name: 📚 Documentation Updates
+    url: https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/new?template=documentation.md
+    about: Request documentation updates or improvements.
+  - name: 🧪 Testing Improvements
+    url: https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/new?template=testing.md
+    about: Request testing improvements or new test coverage.
+  - name: ⚡ Performance Improvements
+    url: https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/new?template=performance.md
+    about: Request performance improvements or optimizations.
+  - name: 🔒 Security Improvements
+    url: https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/new?template=security.md
+    about: Request security improvements or enhancements. Do NOT report vulnerabilities here - use Security Reports for private disclosure.

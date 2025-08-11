@@ -26,6 +26,7 @@ export const mapTPUserToUser = (
   return createUser(
     tpUser.userId.toString(),
     userName,
+    tpUser.userName || tpUser.fullName || 'User',
     tpUser.personPhotoUrl || undefined,
     preferences
   );

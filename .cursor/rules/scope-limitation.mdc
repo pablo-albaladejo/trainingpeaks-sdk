@@ -1,0 +1,166 @@
+---
+description: Strict feature scope limitation rule - only modify the specific feature requested
+priority: 1
+alwaysApply: true
+---
+
+# Feature Scope Limitation Rule
+
+## ⚠️ CRITICAL CONSTRAINT ⚠️
+
+**MANDATORY REQUIREMENT**: When working on ANY task, you MUST strictly limit your modifications to ONLY the specific feature, component, or functionality explicitly requested in the user's prompt.
+
+## Scope Limitation Principles
+
+### ✅ ALLOWED Actions
+- Modify ONLY the files directly related to the requested feature
+- Make ONLY the changes necessary to implement the specific functionality asked for
+- Add ONLY the tests required for the specific feature being implemented
+- Update ONLY the documentation files that directly relate to the feature
+
+### ❌ FORBIDDEN Actions
+- **NO** refactoring unrelated code or files
+- **NO** updating dependencies unless specifically requested
+- **NO** modifying configuration files unless required for the feature
+- **NO** changing code style or formatting in unrelated files
+- **NO** adding "improvements" not explicitly requested
+- **NO** updating unrelated tests or test files
+- **NO** modifying project structure unless essential for the feature
+- **NO** adding or updating documentation for unrelated features
+
+## Implementation Guidelines
+
+### 1. Feature Analysis
+Before making ANY changes:
+```markdown
+1. Identify EXACTLY what was requested in the prompt
+2. List ONLY the files that need modification for this specific feature
+3. Verify each planned change is directly necessary for the requested functionality
+4. Reject any "nice to have" or "while we're at it" modifications
+```
+
+### 2. Change Validation
+For EVERY file modification, ask:
+```markdown
+- Is this change DIRECTLY required for the requested feature?
+- Would the feature work without this change?
+- Am I modifying this file for convenience or necessity?
+- Does this change fall outside the scope of the user's request?
+```
+
+### 3. File Modification Rules
+```typescript
+// ✅ CORRECT: Only modify files directly related to the feature
+// If implementing "list workouts" feature:
+- src/adapters/client/workout-handlers.ts ✅ (directly needed)
+- src/domain/entities/workout.ts ✅ (if new fields required)
+- src/application/services/workout-service.ts ✅ (if needed)
+
+// ❌ INCORRECT: Don't modify unrelated files
+- src/adapters/auth/auth-handler.ts ❌ (not related to listing workouts)
+- src/infrastructure/config.ts ❌ (not needed for this feature)
+- package.json ❌ (unless new dependency is essential)
+```
+
+### 4. Test Scope Limitation
+```typescript
+// ✅ CORRECT: Only add/modify tests for the specific feature
+- tests/workout-handlers.test.ts ✅ (testing the new feature)
+- tests/fixtures/workout-fixtures.ts ✅ (if needed for new tests)
+
+// ❌ INCORRECT: Don't modify unrelated tests
+- tests/auth-handler.test.ts ❌ (not related to the feature)
+- tests/config.test.ts ❌ (not needed for this feature)
+```
+
+## Enforcement Checklist
+
+Before committing any changes, verify:
+
+### Pre-Modification Checklist
+- [ ] I have identified the EXACT scope of the requested feature
+- [ ] I have listed ONLY the files that must be modified
+- [ ] I have verified each planned change is essential
+- [ ] I have rejected all non-essential modifications
+
+### Post-Modification Checklist
+- [ ] Every modified file is directly related to the requested feature
+- [ ] No files were modified for convenience or "improvement"
+- [ ] No refactoring was performed on unrelated code
+- [ ] No dependencies were updated unless essential
+- [ ] All changes can be justified as necessary for the specific feature
+- [ ] Run `git diff` to review all changes and verify they are within scope
+
+## Exception Handling
+
+### When Scope Expansion is Allowed
+Scope expansion is ONLY allowed when:
+1. **Technical Dependency**: The feature absolutely cannot work without modifying additional files
+2. **Breaking Changes**: Existing interfaces must be updated to support the new feature
+3. **Security Requirements**: Critical security implications require additional changes
+
+### Exception Documentation
+If scope expansion is necessary:
+```markdown
+## Scope Expansion Justification
+
+**Requested Feature**: [Original request]
+**Additional Changes**: [List of extra modifications]
+**Justification**: [Explain why each additional change is absolutely necessary]
+**Impact Assessment**: [Describe the impact of not making these changes]
+```
+
+## Examples
+
+### ✅ CORRECT Implementation
+```
+User Request: "Add a method to list all workouts for a user"
+
+Changes Made:
+✅ Added listWorkouts() method to WorkoutHandler
+✅ Added corresponding tests for listWorkouts()
+✅ Updated WorkoutRepository interface if needed
+✅ Added fixtures for workout listing tests
+
+Changes NOT Made:
+✅ Didn't refactor existing authentication code
+✅ Didn't update unrelated configuration
+✅ Didn't modify user management features
+✅ Didn't "improve" existing workout creation logic
+```
+
+### ❌ INCORRECT Implementation
+```
+User Request: "Add a method to list all workouts for a user"
+
+Changes Made:
+❌ Added listWorkouts() method
+❌ Refactored authentication handler "while we're at it"
+❌ Updated all existing tests to use new patterns
+❌ Reformatted multiple unrelated files
+❌ Updated dependencies to latest versions
+❌ Added error handling to unrelated methods
+
+This violates the scope limitation rule!
+```
+
+## Enforcement
+
+This rule has **CRITICAL PRIORITY** and must be followed regardless of other considerations. Any violation of this rule should result in:
+
+1. **Immediate correction** of out-of-scope changes
+2. **Re-focusing** on only the requested feature
+3. **Rollback** of any modifications not directly related to the request
+
+## Integration with Development Workflow
+
+This rule integrates with:
+- Code review processes (reviewers must verify scope adherence)
+- Changelog management (only document changes for the specific feature)
+- Testing requirements (test only the requested feature)
+- Architecture patterns (don't modify unrelated architectural components)
+- **Pull request descriptions** (MANDATORY: Include a "Scope Adherence" section in every PR description explaining how the changes stay within the requested feature scope)
+
+---
+
+**Remember**: Your goal is to implement EXACTLY what was requested, nothing more, nothing less. Resist the temptation to "improve while you're there" - focus solely on the specific feature requested by the user.

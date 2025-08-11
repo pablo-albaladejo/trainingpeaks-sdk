@@ -31,7 +31,6 @@
       "@domain/*": ["domain/*"],
       "@entrypoints/*": ["entrypoints/*"],
       "@fixtures/*": ["__fixtures__/*"],
-      "@infrastructure/*": ["infrastructure/*"],
       "@sdk/*": ["sdk/*"],
       "@types/*": ["types/*"]
     }

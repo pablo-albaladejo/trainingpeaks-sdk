@@ -11,6 +11,8 @@ alwaysApply: false
 This project follows Clean Architecture principles adapted for npm libraries, with clear separation of concerns and
 dependency inversion.
 
+This is the TrainingPeaks SDK - a comprehensive TypeScript SDK for TrainingPeaks API integration. For complete product context, business objectives, target market, and feature overview, see [PRODUCT.md](../../PRODUCT.md).
+
 ## Project Structure
 
 ```
@@ -47,8 +49,99 @@ src/
 
 #### **🚨 CRITICAL: Strict Ports & Adapters Separation**
 
-The application layer MUST ONLY contain **contracts, types, and interfaces**. The infrastructure layer MUST contain
-**all implementations**.
+The application layer MUST contain orchestration logic implemented strictly as pure functions and function type aliases (contracts/ports). Ports are defined in the domain/application layer and implemented by adapters. **Rule: No direct infrastructure access — orchestrate via injected ports.**
+
+**Must move to adapters layer:** time/clocks, randomness/PRNG, network I/O, file I/O, databases, logging, OS/env access, process exit, user input, external services, global mutable state, system calls.
+
+**Allowed in application layer:** pure domain constructors, pure data transforms, validation, composition/orchestration functions, function type aliases/contracts, deterministic helpers.
+
+**✅ DO (Application Layer):**
+- Call injected port function types: `await saveUser(user)`
+- Return pure values: `return { success: true, user }`
+- Keep orchestration logic deterministic
+- Define ports: `export type SaveUser = (user: User) => Promise<void>`
+- Import from domain: `import type { User } from '@domain/entities/User'`
+
+**❌ DON'T (Application Layer):**
+- Import adapters: `import { HttpClient } from '@adapters/http'`
+- Call APIs directly: `axios.post('/users', userData)`
+- Perform side-effecting I/O inside application functions
+- Access filesystem: `fs.readFileSync('config.json')`
+- Direct database calls: `db.users.create(user)`
+
+**🔒 ESLint Enforcement:**
+Add to your ESLint config to block adapter imports in application layer:
+```json
+{
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/adapters/**", "@adapters/**"],
+            "importNames": ["*"],
+            "message": "Application layer cannot import from adapters. Use injected port interfaces."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/application/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["**/adapters/**", "@adapters/**"],
+            "message": "Application layer must use injected ports, not direct adapter imports"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+**Where to define:**
+- **Ports/Contracts**: `src/application/ports/` (canonical location)
+- **Implementations**: `src/adapters/**`
+
+**CI Integration:** Add this ESLint rule to your CI pipeline with a concrete lint step:
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run ESLint
+        run: npx eslint "src/**/*.{ts,tsx,js,mjs,cjs}" --max-warnings=0
+```
+
+Builds will fail on violations, forcing authors to use injected ports for all external interactions.
+
+**Dependency Injection Pattern:** Ports are owned and defined by the application layer. Adapters implement those ports and encapsulate effects. Application-layer functions remain pure and only orchestrate by invoking injected port interfaces, while adapters perform the actual effects such as network, filesystem, or database access.
 
 #### **📋 Application Layer: ONLY Definitions & Contracts**
 
@@ -71,13 +164,12 @@ export type UserValidationService = {
 };
 ```
 
-#### **⚙️ Infrastructure Layer: ONLY Implementations**
+#### **⚙️ Adapters Layer: ONLY Implementations**
 
-All implementations in `src/infrastructure/services/` MUST be factory functions that receive dependencies as parameters
-and return the exact implementation of the individual function type.
+Implementations in `src/adapters/services/` that require dependencies MUST be factory functions that receive dependencies as parameters and return the exact implementation of the individual function type. Functions with no dependencies can be implemented as plain functions.
 
 ```typescript
-// ✅ CORRECT: src/infrastructure/services/user-validation.ts
+// ✅ CORRECT: src/adapters/services/user-validation.ts
 import type {
   validateUserId,
   validateEmail,
@@ -107,7 +199,7 @@ export const createUserValidationService = (dependencies) => ({
 #### **🔧 For Functions That Need Dependencies**
 
 ```typescript
-// ✅ CORRECT: src/infrastructure/services/user-validation.ts
+// ✅ CORRECT: src/adapters/services/user-validation.ts
 export const validateUserId =
   (logger: Logger): validateUserId =>
   (userId: string): void => {
@@ -132,29 +224,32 @@ export const validateUserId =
 ### Entity Design
 
 ```typescript
-// Domain entities should be immutable and contain business logic
-export class User {
-  constructor(
-    private readonly id: UserId,
-    private readonly email: Email,
-    private readonly name: string
-  ) {}
+// Domain entities as immutable data structures with pure functions
+export type User = {
+  readonly id: UserId;
+  readonly email: Email;
+  readonly name: string;
+};
 
-  // Business methods
-  updateName(newName: string): User {
-    return new User(this.id, this.email, newName);
-  }
-}
+// Business logic as pure functions
+export const createUser = (id: UserId, email: Email, name: string): User => ({
+  id,
+  email,
+  name,
+});
+
+export const updateUserName = (user: User, newName: string): User => ({
+  ...user,
+  name: newName,
+});
 ```
 
-### Repository Interface
+### Repository Types
 
 ```typescript
-// Define in domain layer
-export interface UserRepository {
-  findById(id: UserId): Promise<User | null>;
-  save(user: User): Promise<void>;
-}
+// Define individual function types in domain layer
+export type FindUserById = (id: UserId) => Promise<User | null>;
+export type SaveUser = (user: User) => Promise<void>;
 ```
 
 ### Use Case Implementation
@@ -165,41 +260,45 @@ Use cases orchestrate contracts - never direct implementations:
 
 ```typescript
 // ✅ CORRECT: src/application/use-cases/create-user.ts
+import { createEmail } from '@domain/valueObjects/email';
+
 export const createUserUseCase =
   (
-    userRepository: UserRepository, // ← PORT (contract)
-    validationService: UserValidationService, // ← PORT (contract)
-    utilityService: UserUtilityService // ← PORT (contract)
+    saveUser: SaveUser, // ← PORT (function type)
+    validateEmail: ValidateEmail, // ← PORT (function type)
+    generateUserId: GenerateUserId // ← PORT (function type)
   ) =>
   async (input: CreateUserInput): Promise<CreateUserResponse> => {
-    // 🎯 ORCHESTRATE USING CONTRACTS ONLY
-    validationService.validateUserCreationRules(input);
-    const userId = utilityService.generateUserId();
-    return await userRepository.createUser({ ...input, id: userId });
+    // 🎯 ORCHESTRATE USING FUNCTION CONTRACTS ONLY
+    const email = createEmail(input.email); // Create Email VO from domain
+    const userId = generateUserId();
+    const user = createUser(userId, email, input.name);
+    await saveUser(user);
+    return { user };
   };
 ```
 
 #### **🧪 Testing with This Pattern**
 
 ```typescript
-// ✅ PERFECT TESTABILITY - Mock contracts easily
+// ✅ PERFECT TESTABILITY - Mock individual functions easily
 describe('createUserUseCase', () => {
-  const mockValidationService: UserValidationService = {
-    validateUserId: vi.fn(),
-    validateEmail: vi.fn(),
-    validateListUsersFilters: vi.fn(),
-    validateUserCreationRules: vi.fn(),
-    validateUserCanBeDeleted: vi.fn(),
-  };
+  const mockFindUserById: FindUserById = vi.fn();
+  const mockSaveUser: SaveUser = vi.fn();
+  const mockValidateUserId: validateUserId = vi.fn();
+  const mockValidateEmail: validateEmail = vi.fn();
+  const mockGenerateUserId: generateUserId = vi.fn();
 
   it('should create user successfully', async () => {
     const useCase = createUserUseCase(
-      mockRepository,
-      mockValidationService,
-      mockUtilityService
+      mockFindUserById,
+      mockSaveUser,
+      mockValidateUserId,
+      mockValidateEmail,
+      mockGenerateUserId
     );
     const result = await useCase(validInput);
-    expect(mockValidationService.validateUserCreationRules).toHaveBeenCalled();
+    expect(mockValidateUserId).toHaveBeenCalled();
   });
 });
 ```
@@ -207,7 +306,7 @@ describe('createUserUseCase', () => {
 #### **❌ INCORRECT: Traditional Class Pattern**
 
 ```typescript
-// ❌ WRONG: Application layer - orchestrates business logic
+// ❌ WRONG: Using classes and grouped interfaces
 export class CreateUserUseCase {
   constructor(private userRepository: UserRepository) {}
 
@@ -217,20 +316,41 @@ export class CreateUserUseCase {
     return user;
   }
 }
+
+// ❌ ALSO WRONG: Grouped interface pattern
+export type UserRepository = {
+  findById(id: UserId): Promise<User | null>;
+  save(user: User): Promise<void>;
+};
 ```
 
 ### Adapter Implementation
 
 ```typescript
-// Adapters layer - implements domain interfaces
-export class HttpUserRepository implements UserRepository {
-  constructor(private httpClient: HttpClient) {}
+// Adapters layer - implements domain function types as pure functions
+export const createFindUserById = (httpClient: HttpClient): FindUserById =>
+  async (id: UserId): Promise<User | null> => {
+    const response = await httpClient.get(`/users/${id.value}`);
+    return response ? createUserFromResponse(response) : null;
+  };
 
-  async findById(id: UserId): Promise<User | null> {
-    const response = await this.httpClient.get(`/users/${id.value}`);
-    return response ? User.fromResponse(response) : null;
-  }
-}
+export const createSaveUser = (httpClient: HttpClient): SaveUser =>
+  async (user: User): Promise<void> => {
+    await httpClient.post('/users', userToApiFormat(user));
+  };
+
+// Helper functions for data transformation
+const createUserFromResponse = (response: ApiResponse): User => {
+  const userId = createUserId(response.id);
+  const email = createEmail(response.email);
+  return createUser(userId, email, response.name);
+};
+
+const userToApiFormat = (user: User) => ({
+  id: user.id.value,
+  email: user.email.value,
+  name: user.name,
+});
 ```
 
 ## Library Export Structure

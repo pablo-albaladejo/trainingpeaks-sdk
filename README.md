@@ -6,6 +6,8 @@
 
 A comprehensive TypeScript SDK for TrainingPeaks API integration, built with Clean Architecture principles and designed for modern JavaScript/TypeScript applications.
 
+> **📋 Product Context**: For comprehensive business objectives, target market analysis, and feature roadmap, see [PRODUCT.md](PRODUCT.md).
+
 ## Features
 
 - 🏗️ **Clean Architecture**: Follows hexagonal architecture (ports & adapters) for maintainability
@@ -18,118 +20,198 @@ A comprehensive TypeScript SDK for TrainingPeaks API integration, built with Cle
 - 📁 **File Upload**: Support for TCX, GPX, and FIT file formats
 - 🚀 **Modern Stack**: Built with Axios, Zod validation, and Playwright
 
+## Requirements
+
+- **Node.js**: >=20.0.0
+- **npm**: >=9.0.0 (included with Node.js 20+)
+
 ## Installation
 
 ```bash
 npm install trainingpeaks-sdk
 ```
 
+> **⚠️ Node.js Version**: This SDK requires Node.js 20.0.0 or higher due to the use of modern APIs like `crypto.randomUUID()`. Node.js 18 and earlier are not supported.
+
 ## Quick Start
 
 ### Authentication & Basic Usage
 
 ```typescript
-import { TrainingPeaksSDK } from 'trainingpeaks-sdk';
+import { createTrainingPeaksSdk } from 'trainingpeaks-sdk';
 
 // Initialize the SDK
-const sdk = new TrainingPeaksSDK();
-
-// Login with credentials
-await sdk.login({
-  username: 'your-username',
-  password: 'your-password'
+const sdk = createTrainingPeaksSdk({
+  debug: false, // Optional: enable debug logging
+  timeout: 30000, // Optional: request timeout in ms
 });
 
-// Check authentication status
-const isAuthenticated = await sdk.isAuthenticated();
-console.log('Authenticated:', isAuthenticated);
+// Login with credentials
+const loginResult = await sdk.login({
+  username: 'your-username',
+  password: 'your-password',
+});
 
-// Get current user
-const user = await sdk.getCurrentUser();
-console.log('User:', user);
+console.log('Login successful:', loginResult);
+// Returns: { token: {...}, user: {...} }
 ```
 
 ### Workout Management
 
 ```typescript
-// Get user's workouts
-const workouts = await sdk.getWorkouts({
+// Get user's workouts list
+const workouts = await sdk.getWorkoutsList({
   startDate: '2024-01-01',
-  endDate: '2024-12-31'
+  endDate: '2024-12-31',
+  // athleteId is optional - uses current user if not provided
 });
 
-// Get specific workout
-const workout = await sdk.getWorkoutById('workout-id');
-
-// Upload a workout file
-const newWorkout = await sdk.createWorkout({
-  file: workoutFileBuffer,
-  filename: 'my-workout.tcx',
-  workoutType: 'cycling'
-});
-
-// Update workout details
-await sdk.updateWorkout('workout-id', {
-  title: 'Updated Workout Title',
-  description: 'New description'
-});
-
-// Delete a workout
-await sdk.deleteWorkout('workout-id');
+console.log('Workouts:', workouts);
+// Returns: WorkoutListItem[] with id, name, date, etc.
 ```
 
-### Advanced Usage
+> **⚠️ Current Limitations**: This SDK currently supports authentication and workout list retrieval. Additional features like workout creation, updates, and individual workout details are planned for future releases.
+
+### Logout
 
 ```typescript
-// Get workout statistics
-const stats = await sdk.getWorkoutStats('workout-id');
-
-// Get user ID
-const userId = await sdk.getUserId();
-
-// Logout
+// Clear authentication and logout
 await sdk.logout();
+console.log('Logged out successfully');
+```
+
+### Error Handling
+
+```typescript
+try {
+  const result = await sdk.login({
+    username: 'invalid-user',
+    password: 'wrong-password',
+  });
+} catch (error) {
+  console.error('Login failed:', error.message);
+  // Handle authentication errors
+}
 ```
 
 ## API Reference
 
+### SDK Creation
+
+```typescript
+const sdk = createTrainingPeaksSdk(config?: TrainingPeaksClientConfig)
+```
+
+**Config Options:**
+
+- `debug?: boolean` - Enable debug logging
+- `timeout?: number` - Request timeout in milliseconds
+- `baseUrl?: string` - Custom API base URL
+
 ### Authentication Methods
 
-- `login(credentials)` - Authenticate with username/password
-- `logout()` - End the current session
-- `isAuthenticated()` - Check authentication status
+#### `login(credentials: LoginCredentials)`
 
-### User Methods
+Authenticate with username and password.
 
-- `getCurrentUser()` - Get current user profile
-- `getUserId()` - Get current user ID
+```typescript
+type LoginCredentials = {
+  username: string;
+  password: string;
+};
+
+type LoginResponse = {
+  token: {
+    accessToken: string;
+    tokenType: string;
+    expiresAt: string;
+    refreshToken?: string;
+  };
+  user: {
+    id: string;
+    name: string;
+    username: string;
+    avatar?: string;
+  };
+};
+```
+
+#### `logout()`
+
+Clear authentication and end the current session.
 
 ### Workout Methods
 
-- `getWorkouts(filters?)` - Get user's workouts with optional filters
-- `getWorkoutById(id)` - Get specific workout details
-- `createWorkout(data)` - Upload and create a new workout
-- `updateWorkout(id, data)` - Update workout details
-- `deleteWorkout(id)` - Delete a workout
-- `getWorkoutStats(id)` - Get workout statistics
+#### `getWorkoutsList(command: GetWorkoutsListCommand)`
 
-## Supported File Formats
+Get user's workouts list with date filtering.
 
-The SDK supports uploading the following workout file formats:
+```typescript
+type GetWorkoutsListCommand = {
+  athleteId?: string; // Optional - uses current user if not provided
+  startDate: string; // YYYY-MM-DD format
+  endDate: string; // YYYY-MM-DD format
+};
 
-- **TCX** (Training Center XML)
-- **GPX** (GPS Exchange Format)
-- **FIT** (Flexible and Interoperable Data Transfer)
+type WorkoutListItem = {
+  id: string;
+  name: string;
+  date: string;
+  duration: number;
+  distance?: number;
+  activityType?: string;
+  // Additional workout metadata...
+};
+```
+
+## Current Features
+
+✅ **Available Now:**
+
+- User authentication (login/logout)
+- Workout list retrieval with date filtering
+- Session management with automatic cookie handling
+- TypeScript support with full type definitions
+- Clean Architecture implementation
+
+🚧 **Planned Features:**
+
+- Individual workout details retrieval
+- Workout file upload (TCX, GPX, FIT formats)
+- Workout creation and updates
+- User profile management
+- Workout statistics and analytics
 
 ## Configuration
 
+### SDK Configuration
+
+```typescript
+import {
+  createTrainingPeaksSdk,
+  type TrainingPeaksClientConfig,
+} from 'trainingpeaks-sdk';
+
+const config: TrainingPeaksClientConfig = {
+  baseUrl: 'https://tpapi.trainingpeaks.com', // Optional
+  timeout: 30000, // Optional: request timeout in ms
+  debug: true, // Optional: enable debug logging
+  headers: {
+    // Optional: custom headers
+    'User-Agent': 'MyApp/1.0.0',
+  },
+};
+
+const sdk = createTrainingPeaksSdk(config);
+```
+
 ### Environment Variables
 
-You can configure the SDK behavior using environment variables:
+You can also configure the SDK using environment variables:
 
 ```bash
 # API Base URL (optional)
-TRAININGPEAKS_API_URL=https://api.trainingpeaks.com
+TRAININGPEAKS_API_BASE_URL=https://tpapi.trainingpeaks.com
 
 # Request timeout in milliseconds (optional)
 TRAININGPEAKS_TIMEOUT=30000
@@ -138,33 +220,24 @@ TRAININGPEAKS_TIMEOUT=30000
 TRAININGPEAKS_DEBUG=true
 ```
 
-### Programmatic Configuration
-
-```typescript
-import { TrainingPeaksSDK } from 'trainingpeaks-sdk';
-
-const sdk = new TrainingPeaksSDK({
-  apiUrl: 'https://api.trainingpeaks.com',
-  timeout: 30000,
-  debug: false
-});
-```
-
 ## Error Handling
 
-The SDK provides structured error handling with specific error types:
+The SDK provides structured error handling with HTTP-specific error information:
 
 ```typescript
-import { TrainingPeaksSDK, TrainingPeaksError } from 'trainingpeaks-sdk';
+import { createTrainingPeaksSdk } from 'trainingpeaks-sdk';
+
+const sdk = createTrainingPeaksSdk();
 
 try {
   await sdk.login({ username: 'user', password: 'pass' });
 } catch (error) {
-  if (error instanceof TrainingPeaksError) {
-    console.error('SDK Error:', error.message);
-    console.error('Error Code:', error.code);
+  // HTTP errors include status, statusText, and response data
+  if (error.status) {
+    console.error(`HTTP ${error.status}: ${error.statusText}`);
+    console.error('Response:', error.data);
   } else {
-    console.error('Unexpected Error:', error);
+    console.error('Network or other error:', error.message);
   }
 }
 ```
@@ -174,35 +247,53 @@ try {
 The SDK is written in TypeScript and provides comprehensive type definitions:
 
 ```typescript
-import type { 
-  User, 
-  Workout, 
-  WorkoutFilters,
-  CreateWorkoutRequest,
-  UpdateWorkoutRequest 
+import { createTrainingPeaksSdk } from 'trainingpeaks-sdk';
+import type {
+  TrainingPeaksClientConfig,
+  LoginCredentials,
+  GetWorkoutsListCommand,
+  WorkoutListItem,
 } from 'trainingpeaks-sdk';
 
-// All types are available for import
-const filters: WorkoutFilters = {
+// All types are fully typed
+const config: TrainingPeaksClientConfig = {
+  debug: true,
+  timeout: 30000,
+};
+
+const credentials: LoginCredentials = {
+  username: 'myuser',
+  password: 'mypass',
+};
+
+const workoutsQuery: GetWorkoutsListCommand = {
   startDate: '2024-01-01',
   endDate: '2024-12-31',
-  workoutType: 'cycling'
 };
 ```
 
 ## Module Exports
 
-The SDK supports multiple import patterns:
+The SDK supports multiple import patterns for different use cases:
 
 ```typescript
-// Main SDK class
-import { TrainingPeaksSDK } from 'trainingpeaks-sdk';
+// Main SDK factory function
+import { createTrainingPeaksSdk } from 'trainingpeaks-sdk';
 
-// Specific modules
-import { AuthService } from 'trainingpeaks-sdk/adapters';
+// Type imports
+import type {
+  TrainingPeaksClientConfig,
+  LoginCredentials,
+  GetWorkoutsListCommand,
+  WorkoutListItem,
+} from 'trainingpeaks-sdk';
+
+// ⚠️ UNSTABLE: Internal modules - No SemVer guarantees
+// These imports may introduce breaking changes in any version
+// Use at your own risk - prefer [public API documentation](./docs/clean-architecture.md#public-api) when possible
 import { User } from 'trainingpeaks-sdk/domain';
-import { LoginUseCase } from 'trainingpeaks-sdk/application';
-import type { WorkoutFilters } from 'trainingpeaks-sdk/types';
+import { Logger } from 'trainingpeaks-sdk/adapters';
+import type { WorkoutType } from 'trainingpeaks-sdk/types';
 ```
 
 ## Development
@@ -211,6 +302,48 @@ import type { WorkoutFilters } from 'trainingpeaks-sdk/types';
 
 - Node.js >= 18.0.0
 - npm >= 8.0.0
+- GitHub CLI (gh) - for project setup automation
+
+**GitHub CLI Authentication:**
+```bash
+# Authenticate with GitHub using web browser (recommended for security)
+gh auth login --web
+
+# For GitHub Enterprise Server users, specify your hostname
+# gh auth login --web --hostname your-enterprise-hostname.com
+# Or set GH_HOST environment variable: 
+# Linux/macOS: export GH_HOST=your-enterprise-hostname.com
+# Windows CMD: set GH_HOST=your-enterprise-hostname.com
+# Windows PowerShell: $env:GH_HOST="your-enterprise-hostname.com"
+
+# Verify authentication
+gh auth status
+```
+
+### Project Setup
+
+This repository includes automated setup scripts for GitHub project management:
+
+```bash
+# Run the automated GitHub project setup
+./scripts/github/setup/setup-github-project.sh
+
+# Test the setup script functionality
+./scripts/github/setup/test-setup.sh
+
+# Get help and options
+./scripts/github/setup/setup-github-project.sh --help
+```
+
+The setup script automatically creates:
+
+- 🎯 GitHub project board with views and columns
+- 🏷️ Comprehensive label system for issue categorization
+- 📋 Issue templates for different types of requests
+- 🔧 Initial project setup issues and epics
+- ⚡ Dependabot and security automation
+
+For detailed setup instructions, see [scripts/github/setup/README.md](scripts/github/setup/README.md).
 
 ### Building
 
@@ -264,10 +397,19 @@ This SDK follows Clean Architecture principles with a hexagonal architecture app
 
 - **Domain Layer**: Core business entities and rules
 - **Application Layer**: Business logic orchestration and contracts
-- **Adapters Layer**: External integrations (HTTP, storage, serialization)
-- **Infrastructure Layer**: Concrete implementations
+- **Adapters Layer**: External integrations and concrete implementations (formerly Infrastructure) - see [migration guide](docs/technical-changelogs/adapters.md) for infrastructure → adapters transition details
 
-For detailed architecture documentation, see [docs/clean-architecture.md](docs/clean-architecture.md).
+**Key Benefits:**
+
+- 🧪 **Highly Testable**: Each layer can be tested independently
+- 🔄 **Maintainable**: Clear separation of concerns and dependencies
+- 🔧 **Extensible**: Easy to add new features or swap implementations
+- 📦 **Modular**: Use individual components or the complete SDK
+
+**Documentation:**
+
+- [Clean Architecture Guide](docs/clean-architecture.md) - Detailed implementation patterns
+- [PRODUCT.md](PRODUCT.md) - Product vision and business context
 
 ## Contributing
 

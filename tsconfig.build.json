@@ -18,7 +18,6 @@
       "@adapters/*": ["adapters/*"],
       "@application/*": ["application/*"],
       "@domain/*": ["domain/*"],
-      "@infrastructure/*": ["infrastructure/*"],
       "@fixtures/*": ["__fixtures__/*"],
       "@types/*": ["types/*"]
     }

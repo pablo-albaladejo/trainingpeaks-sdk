@@ -1,0 +1,7 @@
+# act configuration
+-P ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest
+-P ubuntu-22.04=ghcr.io/catthehacker/ubuntu:act-22.04
+-P ubuntu-20.04=ghcr.io/catthehacker/ubuntu:act-20.04
+-P windows-latest=ghcr.io/catthehacker/ubuntu:act-latest
+-P macos-latest=ghcr.io/catthehacker/ubuntu:act-latest
+--container-architecture linux/amd64

@@ -9,7 +9,8 @@ import {
 } from '@fixtures/utils.fixture';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { HttpError } from '../errors/http-errors';
+import { HttpError } from '@/adapters/errors/http-errors';
+
 import { DEFAULT_RETRY_CONFIG, RetryHandler } from './retry-handler';
 
 describe('RetryHandler', () => {

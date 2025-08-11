@@ -107,6 +107,8 @@ module.exports = {
         ],
         successComment: false,
         failComment: false,
+        releasedLabels: ['released'],
+        addReleases: 'top',
       },
     ],
 

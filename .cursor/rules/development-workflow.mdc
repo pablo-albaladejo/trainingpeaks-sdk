@@ -1,10 +1,36 @@
 ---
-description: Development workflow, build process, and publishing guidelines for npm libraries
-globs: **/*.ts,**/*.js,**/*.mjs,**/*.json
-alwaysApply: false
+description: Development workflow, build process, publishing guidelines, and mandatory changelog requirements for npm libraries
+globs: **/*.ts,**/*.js,**/*.mjs,**/*.json,**/CHANGELOG.md
+alwaysApply: true
 ---
 
 # Development Workflow for NPM Libraries
+
+## 🚨 CRITICAL: Development Requirements
+
+### Mandatory Changelog Updates
+**MANDATORY**: Every code change MUST update both changelog types:
+
+1. **Folder-Level Changelog**: Update `src/[folder]/CHANGELOG.md` with technical details
+2. **Root-Level Changelog**: Update `CHANGELOG.md` for user-facing changes
+
+**Pre-Commit Validation**: All commits require changelog updates or commit will be rejected.
+
+See [changelog-management.mdc](./changelog-management.mdc) for complete guidelines.
+
+### Mandatory Unit Testing for Logic
+**MANDATORY**: Every line of code that implements logic MUST be accompanied by a unit test that covers it.
+
+This includes:
+- All functions with business logic or complex operations
+- All conditional statements (if/else, switch, ternary operators)  
+- All loops and iterations
+- All error handling paths and exception scenarios
+- All edge cases and boundary conditions
+
+**Pre-Commit Validation**: Code reviews MUST verify test coverage for all new logic.
+
+See [unit-test-rule.mdc](./unit-test-rule.mdc) for complete testing standards.
 
 ## Project Setup
 
@@ -150,6 +176,67 @@ npx husky add .husky/pre-commit "npx lint-staged"
       "git add"
     ]
   }
+}
+```
+
+### Changelog Validation Hook
+
+**REQUIRED**: Add changelog validation to pre-commit hooks:
+
+```bash
+# .husky/pre-commit
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run standard linting
+npx lint-staged
+
+# Validate changelog requirements
+node scripts/validate-changelogs.js
+```
+
+```javascript
+// scripts/validate-changelogs.js
+const fs = require('fs');
+const path = require('path');
+
+// Get changed files from git
+const { execSync } = require('child_process');
+const changedFiles = execSync('git diff --cached --name-only', { encoding: 'utf8' })
+  .split('\n')
+  .filter(Boolean);
+
+// Check if source files changed
+const sourceFilesChanged = changedFiles.some(file => 
+  file.startsWith('src/') && (file.endsWith('.ts') || file.endsWith('.js'))
+);
+
+if (sourceFilesChanged) {
+  // Validate folder changelog updates
+  const foldersWithChanges = new Set();
+  changedFiles.forEach(file => {
+    if (file.startsWith('src/')) {
+      const folder = path.dirname(file);
+      foldersWithChanges.add(folder);
+    }
+  });
+
+  const missingChangelogs = [];
+  foldersWithChanges.forEach(folder => {
+    const changelogPath = path.join(folder, 'CHANGELOG.md');
+    if (!changedFiles.includes(changelogPath)) {
+      missingChangelogs.push(changelogPath);
+    }
+  });
+
+  if (missingChangelogs.length > 0) {
+    console.error('🚨 COMMIT BLOCKED: Missing changelog updates for:');
+    missingChangelogs.forEach(file => console.error(`  - ${file}`));
+    console.error('\nPlease update folder-level changelogs before committing.');
+    process.exit(1);
+  }
+
+  console.log('✅ Changelog validation passed');
 }
 ```
 

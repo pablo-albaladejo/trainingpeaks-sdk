@@ -11,6 +11,11 @@ import axios, {
 import { wrapper } from 'axios-cookiejar-support';
 import { CookieJar } from 'tough-cookie';
 
+import {
+  createHttpError,
+  type HttpError,
+  type HttpErrorResponse,
+} from '@/adapters/errors/http-errors';
 import type { Logger } from '@/adapters/logging/logger';
 import {
   HttpClient,
@@ -27,11 +32,7 @@ import {
 } from '@/shared/utils/curl-generator';
 import { generateRequestId } from '@/shared/utils/request-id';
 
-import {
-  createHttpError,
-  HttpError,
-  type HttpErrorResponse,
-} from '../errors/http-errors';
+import { executeRequestWithRefresh } from './request-with-refresh';
 import { DEFAULT_RETRY_CONFIG, RetryHandler } from './retry-handler';
 
 /**
@@ -62,6 +63,7 @@ const normalizeHttpClientConfig = (config: HttpClientConfig) => {
     retryMaxDelay: config.retryMaxDelay ?? DEFAULT_RETRY_CONFIG.maxDelay!,
     retryJitter: config.retryJitter ?? DEFAULT_RETRY_CONFIG.jitter!,
     logger: config.logger,
+    sessionStorage: config.sessionStorage,
   };
 };
 
@@ -135,14 +137,12 @@ const createAxiosInstance = (
 };
 
 /**
- * Internal method to handle HTTP requests with retry logic
+ * Helper function to create axios config with fresh tokens
  */
-const makeRequest = async <T>(
-  client: AxiosInstance,
-  jar: CookieJar | undefined,
+const createAxiosConfig = async (
   baseConfig: ReturnType<typeof normalizeHttpClientConfig>,
   config: InternalRequestConfig
-): Promise<HttpResponse<T>> => {
+): Promise<AxiosRequestConfig> => {
   const axiosConfig: AxiosRequestConfig = {
     method: config.method.toLowerCase() as HttpMethod,
     url: config.url,
@@ -155,6 +155,76 @@ const makeRequest = async <T>(
     timeout: config.options?.timeout ?? baseConfig.timeout,
     withCredentials: baseConfig.enableCookies ?? false,
   };
+
+  // Add Bearer token automatically if session storage is available
+  if (baseConfig.sessionStorage) {
+    try {
+      const session = await baseConfig.sessionStorage.get();
+      if (session?.token?.accessToken) {
+        const currentHeaders =
+          (axiosConfig.headers as Record<string, string>) || {};
+
+        // Check for existing Authorization header (case-insensitive)
+        const authHeaderExists = Object.keys(currentHeaders).some(
+          (key) => key.toLowerCase() === 'authorization'
+        );
+
+        axiosConfig.headers = {
+          ...currentHeaders,
+          ...(authHeaderExists
+            ? {}
+            : { Authorization: `Bearer ${session.token.accessToken}` }),
+        };
+      }
+    } catch (error) {
+      // Don't fail the request if session retrieval fails, just log it
+      if (baseConfig.logger) {
+        baseConfig.logger.warn('Failed to retrieve session for Bearer token', {
+          error,
+        });
+      }
+    }
+  }
+
+  // Add manual cookies if provided
+  if (config.options?.cookies && config.options.cookies.length > 0) {
+    const currentHeaders =
+      (axiosConfig.headers as Record<string, string>) || {};
+
+    // Find existing Cookie header (case-insensitive)
+    const existingCookieKey = Object.keys(currentHeaders).find(
+      (key) => key.toLowerCase() === 'cookie'
+    );
+    const existingCookies = existingCookieKey
+      ? currentHeaders[existingCookieKey]
+      : undefined;
+    const newCookies = config.options.cookies.join('; ');
+
+    // Merge existing cookies with new ones safely
+    const cookieValue = existingCookies
+      ? `${existingCookies}; ${newCookies}`
+      : newCookies;
+
+    axiosConfig.headers = {
+      ...currentHeaders,
+      Cookie: cookieValue,
+    };
+  }
+
+  return axiosConfig;
+};
+
+/**
+ * Internal method to handle HTTP requests with retry logic
+ */
+const makeRequest = async <T>(
+  client: AxiosInstance,
+  jar: CookieJar | undefined,
+  baseConfig: ReturnType<typeof normalizeHttpClientConfig>,
+  config: InternalRequestConfig
+): Promise<HttpResponse<T>> => {
+  // Create initial config for logging purposes
+  const initialAxiosConfig = await createAxiosConfig(baseConfig, config);
 
   // Create retry handler with config
   const retryHandler = new RetryHandler({
@@ -171,8 +241,8 @@ const makeRequest = async <T>(
       const curlData: CurlRequestData = {
         method: config.method,
         url: config.url,
-        headers: axiosConfig.headers as Record<string, string>,
-        data: axiosConfig.data,
+        headers: initialAxiosConfig.headers as Record<string, string>,
+        data: initialAxiosConfig.data,
       };
 
       // Add cookies to curl data if available
@@ -208,9 +278,25 @@ const makeRequest = async <T>(
   }
 
   try {
-    // Execute request with retry logic
+    // Execute request with retry logic and automatic token refresh
     const response: AxiosResponse<T> = await retryHandler.execute(
-      () => client.request(axiosConfig),
+      async () => {
+        // Create fresh axios config for each retry attempt to ensure updated tokens
+        const axiosConfig = await createAxiosConfig(baseConfig, config);
+
+        // Use refresh-enabled request if session storage is available
+        if (baseConfig.sessionStorage && baseConfig.logger) {
+          return executeRequestWithRefresh(axiosConfig, config, {
+            client,
+            sessionStorage: baseConfig.sessionStorage,
+            logger: baseConfig.logger,
+            maxRefreshRetries: 1,
+          });
+        } else {
+          // Fallback to normal request without refresh capability
+          return client.request(axiosConfig);
+        }
+      },
       {
         url: config.url,
         method: config.method,
@@ -271,7 +357,7 @@ const makeRequest = async <T>(
 /**
  * Handle and transform errors into standardized HttpError instances
  */
-const handleError = (
+export const handleError = (
   error: unknown,
   requestConfig: InternalRequestConfig,
   logger?: Logger,
