@@ -143,11 +143,14 @@ function clampDelay(delay, retryMaxDelay) {
 if (retryAfter.canParse()) {
   if (retryAfter.isSeconds()) {
     // RFC 7231: delta-seconds must be base-10 integer
+    const MAX_SECONDS = Math.floor(MAX_TIMEOUT / 1000); // Derive from timer bound
     const secondsStr = String(retryAfter.seconds).trim();
     let validSeconds = 0;
     if (/^\d+$/.test(secondsStr)) {
-      const parsed = parseInt(secondsStr, 10);
-      validSeconds = Number.isInteger(parsed) && parsed >= 0 ? parsed : 0;
+      const value = Number(secondsStr);
+      if (Number.isSafeInteger(value) && value >= 0) {
+        validSeconds = Math.min(value, MAX_SECONDS); // Clamp to timer maximum
+      }
     }
     delay = Math.max(0, validSeconds * 1000);
   } else if (retryAfter.isHttpDate()) {
