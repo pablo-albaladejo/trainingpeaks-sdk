@@ -33,6 +33,14 @@ if [ ! -f "package.json" ]; then
     exit 1
 fi
 
+# Check Node.js version (project requires 20+)
+NODE_MAJOR=$(node -v | cut -d. -f1 | sed 's/v//')
+if [ "$NODE_MAJOR" -lt 20 ]; then
+    print_error "This project requires Node.js 20+ but you're using $(node -v)"
+    print_error "Please upgrade: nvm use 20 (or install Node.js 20+)"
+    exit 1
+fi
+
 # Function to run validation job locally
 run_validate() {
     print_step "🔍 Running validation job locally..."

@@ -20,11 +20,18 @@ A comprehensive TypeScript SDK for TrainingPeaks API integration, built with Cle
 - 📁 **File Upload**: Support for TCX, GPX, and FIT file formats
 - 🚀 **Modern Stack**: Built with Axios, Zod validation, and Playwright
 
+## Requirements
+
+- **Node.js**: >=20.0.0
+- **npm**: >=9.0.0 (included with Node.js 20+)
+
 ## Installation
 
 ```bash
 npm install trainingpeaks-sdk
 ```
+
+> **⚠️ Node.js Version**: This SDK requires Node.js 20.0.0 or higher due to the use of modern APIs like `crypto.randomUUID()`. Node.js 18 and earlier are not supported.
 
 ## Quick Start
 

@@ -48,13 +48,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [20.x, 22.x]
         exclude:
           # Reduce matrix size - only test LTS versions on all OS
           - os: windows-latest
-            node-version: 18.x
+            node-version: 22.x
           - os: macos-latest
-            node-version: 18.x
+            node-version: 22.x
 
     runs-on: ${{ matrix.os }}
 

@@ -50,6 +50,7 @@ We provide two approaches for local testing:
 ### Limitations
 
 - No matrix testing across OS/Node versions (runs on current environment)
+- Requires Node.js 20+ (project minimum requirement)
 - No TruffleHog secret scanning (GitHub Action only)
 - Simplified changelog validation (no PR context)
 
@@ -101,6 +102,7 @@ act --dry-run --job test-matrix      # Dry run test job
 ### Limitations
 
 - Matrix jobs run only once (not across multiple OS/Node versions)
+- Simulates Node.js 20+ environment (project requirement)
 - Some secrets/environment variables may not be available
 - Windows/macOS runners simulated with Linux containers
 - Release job cannot run locally (requires GitHub context)
@@ -144,7 +146,7 @@ act --dry-run --job test-matrix      # Dry run test job
 # Dependency issues
 npm ci                              # Clean install
 
-# Node version mismatch  
+# Node version mismatch (project requires 20+)
 nvm use 20                         # Switch to Node 20
 
 # Permission denied
