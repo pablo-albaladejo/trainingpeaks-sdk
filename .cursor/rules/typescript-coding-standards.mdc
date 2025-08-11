@@ -438,12 +438,12 @@ export async function createUser(options: CreateUserOptions): Promise<User> {
 /**
  * Configuration options for the library client.
  */
-export interface LibraryConfig {
+export type LibraryConfig = {
   /** API key for authentication */
-  apiKey?: string;
+  readonly apiKey?: string;
   /** Base URL for API requests */
-  baseUrl?: string;
+  readonly baseUrl?: string;
   /** Request timeout in milliseconds */
-  timeout?: number;
-}
+  readonly timeout?: number;
+};
 ```

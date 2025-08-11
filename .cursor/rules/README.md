@@ -300,7 +300,7 @@ fi
 - Error handling patterns
 - Performance optimization
 
-#### `validation-requirements.mdc` 🚨 **MANDATORY**
+#### [`validation-requirements.mdc`](./validation-requirements.mdc) 🚨 **MANDATORY**
 
 - **MANDATORY** validation pipeline enforcement
 - Comprehensive `npm run validate:all` requirement

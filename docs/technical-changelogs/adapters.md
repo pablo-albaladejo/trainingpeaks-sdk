@@ -24,11 +24,27 @@
 - **Alias Updates**: Path aliases `@infrastructure/*` now map to `@adapters/*`
 - **Documentation**: All references to "Infrastructure layer" are now "Adapters layer"
 
-**Migration Codemod**: Automated migration script available to convert existing codebases:
+**Repository-wide Migration Codemod**: Use these commands to update all import paths:
 ```bash
-# Run the migration codemod to update imports automatically
-npx @trainingpeaks-sdk/migrate-infrastructure-to-adapters src/
-# Options: --dry-run (preview changes), --ignore-patterns (exclude files)
+# IMPORTANT: Commit or stash changes before running migration commands
+
+# 1. Verify available tools and options
+npm view @trainingpeaks-sdk/migrate-infrastructure-to-adapters versions --json
+npm view @trainingpeaks-sdk/migrate-infrastructure-to-adapters --json | grep -E "(bin|cli|flags)"
+
+# 2. Run with --dry-run first to preview changes
+npx -y @trainingpeaks-sdk/migrate-infrastructure-to-adapters@latest src/ --dry-run
+
+# 3. Apply the migration after reviewing changes
+npx -y @trainingpeaks-sdk/migrate-infrastructure-to-adapters@latest src/ --ignore-patterns="**/*.test.*,**/*.spec.*"
+
+# 4. Alternative: Use ripgrep and sed for direct file replacement
+rg -l "@infrastructure/" src/ | xargs sed -i 's/@infrastructure\//@adapters\//g'
+rg -l "from ['\"]@infrastructure/" src/ | xargs sed -i "s/from \(['\"]@\)infrastructure\//from \\1adapters\//g"
+
+# 5. Validation checklist after migration:
+grep -r "paths.*@infrastructure" tsconfig*.json vitest.config.ts  # Update path aliases
+find src/ -name "*.test.*" -exec grep -l "@infrastructure" {} \; # Check remaining test references
 ```
 
 ### Impact

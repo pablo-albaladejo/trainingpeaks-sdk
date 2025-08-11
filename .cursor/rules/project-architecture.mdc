@@ -49,7 +49,7 @@ src/
 
 #### **🚨 CRITICAL: Strict Ports & Adapters Separation**
 
-The application layer MUST contain orchestration logic implemented as pure functions, contracts, and types, but no external or side-effecting implementations. The adapters layer MUST contain all external and side-effecting implementations.
+The application layer MUST contain orchestration logic implemented strictly as pure functions and function type aliases (contracts), with no external or side-effecting implementations, which belong only in the adapters layer.
 
 #### **📋 Application Layer: ONLY Definitions & Contracts**
 
@@ -170,15 +170,14 @@ Use cases orchestrate contracts - never direct implementations:
 // ✅ CORRECT: src/application/use-cases/create-user.ts
 export const createUserUseCase =
   (
-    findUserById: FindUserById, // ← PORT (function type)
     saveUser: SaveUser, // ← PORT (function type)
-    ValidateEmail: ValidateEmail, // ← PORT (function type)
-    GenerateUserId: GenerateUserId // ← PORT (function type)
+    validateEmail: ValidateEmail, // ← PORT (function type)
+    generateUserId: GenerateUserId // ← PORT (function type)
   ) =>
   async (input: CreateUserInput): Promise<CreateUserResponse> => {
     // 🎯 ORCHESTRATE USING FUNCTION CONTRACTS ONLY
-    ValidateEmail(input.email);
-    const userId = GenerateUserId();
+    validateEmail(input.email);
+    const userId = generateUserId();
     const user = createUser(userId, input.email, input.name);
     await saveUser(user);
     return { user };
@@ -247,12 +246,11 @@ export const createSaveUser = (httpClient: HttpClient): SaveUser =>
   };
 
 // Helper functions for data transformation
-const createUserFromResponse = (response: ApiResponse): User =>
-  createUser(
-    createUserId(response.id),
-    createEmail(response.email), 
-    response.name
-  );
+const createUserFromResponse = (response: ApiResponse): User => {
+  const userId = createUserId(response.id);
+  const email = createEmail(response.email);
+  return createUser(userId, email, response.name);
+};
 
 const userToApiFormat = (user: User) => ({
   id: user.id.value,

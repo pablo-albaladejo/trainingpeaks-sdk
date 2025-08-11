@@ -48,8 +48,9 @@ Select the appropriate contributor label for this PR:
 **Coverage Reports** (sources and reviewer access):
 - [ ] Codecov report: [Link to Codecov PR comment/dashboard - generated from coverage files uploaded during CI]
 - [ ] CI artifacts: [Link to CI coverage report artifacts - HTML reports from npm run test:coverage, verify reviewer access]
-- [ ] Coverage gate status: [PASS/FAIL - indicate if coverage thresholds are met per project configuration]
-- [ ] Vitest coverage output: [Include command output from npm run test:coverage showing coverage percentages and uncovered lines]
+  - **Fallback**: If Codecov unavailable, attach HTML coverage report screenshots or artifacts
+- [ ] Coverage thresholds: **Statements ≥ X%**, **Branches ≥ Y%**, **Functions ≥ Z%**, **Lines ≥ W%** [PASS/FAIL - replace X,Y,Z,W with actual thresholds from vitest.config.ts]
+- [ ] Vitest coverage output: [Include text output from npm run test:coverage with "text" reporter - must show coverage summary and uncovered lines]
 
 ### 📚 Documentation
 

@@ -61,30 +61,58 @@ const architectureViolations = {
     pattern: /src\/application\/services\/.*\.ts/,
     astAnalysis: {
       checkInterfaceServices: (sourceFile) => {
-        // Use TypeScript AST to detect grouped service interfaces
+        // Import TypeScript compiler API
+        const ts = require('typescript');
         const violations: any[] = [];
-        function visit(node: any) {
+        
+        // Recursive traversal that accumulates violations
+        function visit(node: any): any[] {
+          const currentViolations: any[] = [];
+          
+          // Check for interface declarations ending with 'Service'
           if (ts.isInterfaceDeclaration(node) && 
               node.name?.text?.endsWith('Service')) {
-            violations.push({ violation: 'grouped-interface-service', node });
+            currentViolations.push({ violation: 'grouped-interface-service', node });
           }
-          ts.forEachChild(node, visit);
+          
+          // Check for type aliases with object literal types containing function properties
+          if (ts.isTypeAliasDeclaration(node) && 
+              node.name?.text?.endsWith('Service') &&
+              ts.isTypeLiteralNode(node.type)) {
+            currentViolations.push({ violation: 'grouped-type-service', node });
+          }
+          
+          // Recursively visit child nodes and collect their violations
+          ts.forEachChild(node, (child) => {
+            currentViolations.push(...visit(child));
+          });
+          
+          return currentViolations;
         }
-        visit(sourceFile);
-        return violations;
+        
+        return visit(sourceFile);
       },
       checkClassServices: (sourceFile) => {
-        // Use TypeScript AST to detect class-based services
+        const ts = require('typescript');
         const violations: any[] = [];
-        function visit(node: any) {
+        
+        function visit(node: any): any[] {
+          const currentViolations: any[] = [];
+          
           if (ts.isClassDeclaration(node) && 
               node.name?.text?.endsWith('Service')) {
-            violations.push({ violation: 'class-based-service', node });
+            currentViolations.push({ violation: 'class-based-service', node });
           }
-          ts.forEachChild(node, visit);
+          
+          // Recursively collect violations from children
+          ts.forEachChild(node, (child) => {
+            currentViolations.push(...visit(child));
+          });
+          
+          return currentViolations;
         }
-        visit(sourceFile);
-        return violations;
+        
+        return visit(sourceFile);
       }
     },
     severity: 'major'
@@ -192,9 +220,13 @@ const organizationDebt = {
         const paths = tsConfig.compilerOptions?.paths || {};
         
         return Object.keys(paths).map(alias => {
-          // Escape regex metacharacters and anchor to start
-          const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace('\\*', '.*');
-          return new RegExp(`^${escaped}$`);
+          // Escape all regex metacharacters first, then handle wildcard
+          let escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          // Convert TypeScript wildcard to regex wildcard after escaping
+          escaped = escaped.replace(/\\\*/g, '.*');
+          // Anchor to start of string and respect baseUrl
+          const basePrefix = baseUrl === 'src' ? '' : '^';
+          return new RegExp(`${basePrefix}${escaped}`);
         });
       } catch (error) {
         return [];
@@ -202,7 +234,7 @@ const organizationDebt = {
     },
     violations: [
       /\.\.\/\.\.\//g,  // Relative imports beyond parent
-      // Conditional violation based on baseUrl
+      // Conditional violation based on baseUrl - suppress false positives when baseUrl is 'src'
       ...((() => {
         try {
           const tsConfig = require('../../tsconfig.json');
@@ -423,7 +455,7 @@ npx madge --circular src/     # Circular dependency detection
     "debt:analysis": "npm run lint && npm run check-imports && npm run test:coverage",
     "debt:architecture": "madge --circular src/ && npm run check-imports", 
     "debt:testing": "npm run test:coverage && npm run test:integration",
-    "debt:typescript": "npx tsc --noEmit --listFiles"
+    "debt:typescript": "npx tsc --noEmit --strict && npx ts-unused-exports tsconfig.json && npx eslint src/ --ext .ts --rule 'no-unused-vars: error' --rule '@typescript-eslint/no-unused-vars: error'"
   }
 }
 ```

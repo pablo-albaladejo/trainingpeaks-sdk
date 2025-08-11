@@ -9,7 +9,20 @@ import type { ProjectConfig } from '../../../config/project.config.js';
  * Generate commitlint configuration
  */
 export function generateCommitlintConfig(config: ProjectConfig): string {
-  const commitTypes = config.commitTypes.map(type => typeof type === 'string' ? type : type.toString()).map(type => `        '${type}', // ${getCommitTypeDescription(type)}`).join('\n');
+  // Normalize and clean commit types
+  const normalizedTypes = config.commitTypes
+    .map(type => (typeof type === 'string' ? type : String(type)).trim()) // Normalize to string and trim
+    .filter(type => type.length > 0) // Filter out empty strings
+    .filter((type, index, array) => array.indexOf(type) === index) // Remove duplicates
+    .sort(); // Sort alphabetically for consistency
+  
+  const commitTypes = normalizedTypes
+    .map(type => {
+      // Escape any quotes or backslashes in the type string
+      const escaped = type.replace(/['"\\]/g, '\\$&');
+      return `        '${escaped}', // ${getCommitTypeDescription(type)}`;
+    })
+    .join('\n');
   
   return `module.exports = {
   extends: ['@commitlint/config-conventional'],
@@ -33,22 +46,25 @@ ${commitTypes}
 }
 
 /**
+ * Commit type descriptions mapping for documentation and tooling reuse
+ */
+export const COMMIT_TYPE_DESCRIPTIONS: Record<string, string> = {
+  feat: 'New feature',
+  fix: 'Bug fix',
+  docs: 'Documentation changes',
+  style: 'Code style changes (formatting, etc.)',
+  refactor: 'Code refactoring',
+  test: 'Adding or updating tests',
+  chore: 'Build process or auxiliary tool changes',
+  perf: 'Performance improvements',
+  ci: 'CI/CD changes',
+  build: 'Build system changes',
+  revert: 'Revert previous commit',
+};
+
+/**
  * Get description for commit type
  */
 export function getCommitTypeDescription(type: string): string {
-  const descriptions: Record<string, string> = {
-    feat: 'New feature',
-    fix: 'Bug fix',
-    docs: 'Documentation changes',
-    style: 'Code style changes (formatting, etc.)',
-    refactor: 'Code refactoring',
-    test: 'Adding or updating tests',
-    chore: 'Build process or auxiliary tool changes',
-    perf: 'Performance improvements',
-    ci: 'CI/CD changes',
-    build: 'Build system changes',
-    revert: 'Revert previous commit',
-  };
-  
-  return descriptions[type] || 'Custom commit type';
+  return COMMIT_TYPE_DESCRIPTIONS[type] || 'Custom commit type';
 }

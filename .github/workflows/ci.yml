@@ -120,18 +120,22 @@ jobs:
               const bundleStats = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
               
               // Validate and parse bundle size data with proper error handling
-              const totalSize = bundleStats?.totalSize && Number.isFinite(Number(bundleStats.totalSize)) ? Number(bundleStats.totalSize) : 0;
-              const gzippedSize = bundleStats?.gzippedSize && Number.isFinite(Number(bundleStats.gzippedSize)) ? Number(bundleStats.gzippedSize) : 0;
+              const totalSize = bundleStats?.totalSize !== undefined && Number.isFinite(Number(bundleStats.totalSize)) ? Number(bundleStats.totalSize) : null;
+              const gzippedSize = bundleStats?.gzippedSize !== undefined && Number.isFinite(Number(bundleStats.gzippedSize)) ? Number(bundleStats.gzippedSize) : null;
+              
+              // Track finite number flags for display logic
+              const hasTotalSize = totalSize !== null;
+              const hasGzippedSize = gzippedSize !== null;
               
               // Bundle size thresholds for validation (in bytes)
               const MAX_BUNDLE_SIZE = 500 * 1024; // 500KB
               const MAX_GZIPPED_SIZE = 150 * 1024; // 150KB
               
               // Validate against size thresholds
-              if (totalSize > MAX_BUNDLE_SIZE) {
+              if (hasTotalSize && totalSize > MAX_BUNDLE_SIZE) {
                 console.warn(`Warning: Bundle size ${(totalSize / 1024).toFixed(2)}KB exceeds threshold ${(MAX_BUNDLE_SIZE / 1024)}KB`);
               }
-              if (gzippedSize > MAX_GZIPPED_SIZE) {
+              if (hasGzippedSize && gzippedSize > MAX_GZIPPED_SIZE) {
                 console.warn(`Warning: Gzipped size ${(gzippedSize / 1024).toFixed(2)}KB exceeds threshold ${(MAX_GZIPPED_SIZE / 1024)}KB`);
               }
               
@@ -142,8 +146,8 @@ jobs:
               const comment = `## 📦 Bundle Analysis
               
               ### Bundle Size
-              - **Total size**: ${totalSize ? (totalSize / 1024).toFixed(2) + ' KB' : 'N/A'}
-              - **Gzipped size**: ${gzippedSize ? (gzippedSize / 1024).toFixed(2) + ' KB' : 'N/A'}
+              - **Total size**: ${hasTotalSize ? (totalSize / 1024).toFixed(2) + ' KB' : 'N/A'}
+              - **Gzipped size**: ${hasGzippedSize ? (gzippedSize / 1024).toFixed(2) + ' KB' : 'N/A'}
               
               ### Dependencies
               ${dependencies.length > 0 ? dependencies.map(dep => {

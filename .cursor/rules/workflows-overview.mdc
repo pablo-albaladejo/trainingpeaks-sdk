@@ -147,6 +147,18 @@ npm run generate:config        # Generate project configuration
 npm run validate:config        # Validate project setup
 ```
 
+**Verification Commands:**
+```bash
+# Check if required scripts exist in package.json
+grep -E "(generate:config|validate:config|test:coverage)" package.json
+
+# Verify CI workflows invoke these scripts
+find .github/workflows -name "*.yml" -exec grep -l "generate:config\|validate:config\|test:coverage" {} \;
+
+# Check for test:coverage script and Vitest coverage configuration
+grep -E "test:coverage.*vitest.*coverage" package.json && grep -A 5 "coverage" vitest.config.ts
+```
+
 ### Clean Architecture Validation
 All workflows validate against Clean Architecture patterns:
 - Domain layer purity (no external dependencies)

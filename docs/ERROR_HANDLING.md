@@ -87,7 +87,7 @@ ERROR_CODES.USER_NOT_FOUND              // 'USER_3002'
 
 // Network (4000-4999)
 ERROR_CODES.NETWORK_TIMEOUT             // 'NETWORK_4001'
-ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE // 'NETWORK_4006' (HTTP 503 Service Unavailable - retryable only for idempotent methods, Retry-After header interacts with backoff strategy: when present, overrides calculated delay but still respects retryMaxDelay cap, supports both HTTP-date and delay-seconds formats per RFC 7231, minimum delay of retryDelay still applied, jitter is applied on top of Retry-After delay when enabled)
+ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE // 'NETWORK_4006' (HTTP 503 Service Unavailable - retryable only for idempotent methods or POST with Idempotency-Key header, Retry-After header takes precedence over backoff strategy: when present, overrides calculated delay but retryMaxDelay still applies as a cap, supports both HTTP-date and delay-seconds formats per RFC 7231, retryJitter is NOT applied when Retry-After header is present)
 
 // Validation (5000-5999)
 ERROR_CODES.VALIDATION_FAILED           // 'VALIDATION_5001'
@@ -121,7 +121,7 @@ The SDK automatically retries these error conditions:
 
 These errors are **not** retried:
 - **Client errors (4xx)**: 400, 401, 403, 404, 422
-- **Gateway timeout (504)**: Gateway timeout errors are non-retryable by default to prevent retry storms when upstream services are overloaded. When retryOn504 is enabled, 504 retries use the same backoff, jitter, and maxDelay settings as other retry types, with Retry-After headers following the same interaction pattern as 503 responses (override calculated delay, respect retryMaxDelay cap, apply jitter on top). Configurable via constructor: `new TrainingPeaksSDK({ retryOn504: true, retryAttempts: 1 })`. Default handling: log the error and alert users.
+- **Gateway timeout (504)**: Gateway timeout errors are non-retryable by default to prevent retry storms when upstream services are overloaded. When retryOn504 is enabled, 504 retries are only allowed for idempotent HTTP methods or POST requests that include an Idempotency-Key header. Retry behavior uses the same backoff and retryMaxDelay settings as other retry types. When Retry-After header is present, it takes precedence over jitter and caps - meaning retryJitter and retryMaxDelay do NOT apply in this case. Configurable via constructor: `new TrainingPeaksSDK({ retryOn504: true, retryAttempts: 1 })`. Default handling: log the error and alert users.
 - **Authentication failures**: Invalid credentials (Note: 401 due to token expiration may trigger automatic token refresh and retry)
 - **Validation errors**: Malformed requests, missing required fields
 

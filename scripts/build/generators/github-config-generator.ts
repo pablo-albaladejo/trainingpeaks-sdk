@@ -11,7 +11,7 @@ import type { ProjectConfig } from '../../../config/project.config.js';
 export function generateCodeowners(config: ProjectConfig): string {
   // Ensure all owners have @ prefix, avoiding double prefixes
   const owners = config.github.codeowners.map(owner => owner.startsWith('@') ? owner : `@${owner}`).join(' ');
-  const primaryOwner = config.github.codeowners[0]?.startsWith('@') ? config.github.codeowners[0] : `@${config.github.codeowners[0]}`;
+  const primaryOwner = config.github.codeowners.length > 0 ? (config.github.codeowners[0]?.startsWith('@') ? config.github.codeowners[0] : `@${config.github.codeowners[0]}`) : '@undefined';
   
   return `# Global owners - all files assigned to multiple owners to reduce bus factor risk
 # Specific entries can be added here in the future if exceptions are needed
@@ -20,9 +20,9 @@ export function generateCodeowners(config: ProjectConfig): string {
 # Critical areas with specific ownership
 /.github/ ${owners}
 /docs/ ${owners}
-/src/domain/ ${primaryOwner}
-/src/adapters/ ${primaryOwner}
-/.cursor/rules/ ${primaryOwner}
+/src/domain/ ${owners}
+/src/adapters/ ${owners}
+/.cursor/rules/ ${owners}
 `;
 }
 
@@ -61,35 +61,35 @@ ${assignees}
  */
 export function generateLabelsYml(config: ProjectConfig): string {
   // Helper to strip color prefixes
-  const stripColorPrefix = (color: string) => color.replace(/^#+/, '');
+  const stripColorPrefix = (color: string | undefined) => color ? color.replace(/^#+/, '') : '';
   
   const labels = [
     // Priority Labels
     {
       name: 'priority: critical',
-      color: stripColorPrefix(config.colors.critical)),
+      color: stripColorPrefix(config.colors.priority_critical),
       description: 'Critical issue that blocks development or production'
     },
     {
       name: 'priority: high',
-      color: stripColorPrefix(config.colors.high)),
+      color: stripColorPrefix(config.colors.priority_high),
       description: 'High priority issue that should be addressed soon'
     },
     {
       name: 'priority: medium',
-      color: stripColorPrefix(config.colors.medium)),
+      color: stripColorPrefix(config.colors.priority_medium),
       description: 'Medium priority issue'
     },
     {
       name: 'priority: low',
-      color: stripColorPrefix(config.colors.low)),
+      color: stripColorPrefix(config.colors.priority_low),
       description: 'Low priority issue'
     },
     
     // Type Labels
     {
       name: 'type: bug',
-      color: stripColorPrefix(config.colors.bug)),
+      color: stripColorPrefix(config.colors.bug),
       description: 'Something isn\'t working'
     },
     {
@@ -222,7 +222,7 @@ export function generateLabelsYml(config: ProjectConfig): string {
     // Effort Labels
     {
       name: 'effort: small',
-      color: stripColorPrefix(config.colors.small),
+      color: stripColorPrefix(config.colors.effort_small),
       description: 'Small change, less than 1 day'
     },
     {
@@ -232,12 +232,12 @@ export function generateLabelsYml(config: ProjectConfig): string {
     },
     {
       name: 'effort: large',
-      color: stripColorPrefix(config.colors.large),
+      color: stripColorPrefix(config.colors.effort_large),
       description: 'Large change, 3-7 days'
     },
     {
       name: 'effort: epic',
-      color: stripColorPrefix(config.colors.epic),
+      color: stripColorPrefix(config.colors.effort_epic),
       description: 'Epic change, more than 1 week'
     },
     

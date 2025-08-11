@@ -119,6 +119,22 @@ else
 fi
 ```
 
+```bash
+# Pre-push validation (optional but recommended)
+#!/bin/bash
+echo "Running comprehensive validation before push..."
+npm run validate:all && npm run build && npm run test:integration
+
+if [ $? -ne 0 ]; then
+    echo "❌ Pre-push validation failed - push blocked"
+    echo "Run 'npm run validate:all' locally to identify and fix issues"
+    exit 1
+else
+    echo "✅ All validations passed - push allowed"
+    exit 0
+fi
+```
+
 ## Success Criteria
 
 - **Zero errors** in validation pipeline output
