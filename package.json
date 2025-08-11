@@ -78,7 +78,7 @@
     "generate:config": "tsx scripts/build/generate-all-configs.ts",
     "validate:config": "tsx scripts/build/validate-project-config.ts",
     "sync:labels": "gh label list --json name,color,description > .github/current-labels.json && echo 'Labels synced to .github/current-labels.json'",
-    "validate:all": "npm run format:check; npm run lint; npm run type-check; npm run check-imports; npm run test; npm run build"
+    "validate:all": "npm run format:check; npm run lint; npm run type-check; npm run check-imports; bash scripts/build/check-package-lock-sync.sh; npm run test; npm run build"
   },
   "keywords": [
     "trainingpeaks",
