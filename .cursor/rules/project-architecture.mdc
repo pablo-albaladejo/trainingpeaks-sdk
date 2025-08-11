@@ -60,7 +60,7 @@ The application layer MUST contain orchestration logic implemented strictly as p
 - Return pure values: `return { success: true, user }`
 - Keep orchestration logic deterministic
 - Define ports: `export type SaveUser = (user: User) => Promise<void>`
-- Import from domain: `import { User } from '@domain/entities/User'`
+- Import from domain: `import type { User } from '@domain/entities/User'`
 
 **❌ DON'T (Application Layer):**
 - Import adapters: `import { HttpClient } from '@adapters/http'`
@@ -105,10 +105,41 @@ Add to your ESLint config to block adapter imports in application layer:
 ```
 
 **Where to define:**
-- **Ports/Contracts**: `src/domain/` or `src/application/ports/`
+- **Ports/Contracts**: `src/application/ports/` (canonical location)
 - **Implementations**: `src/adapters/**`
 
-**CI Integration:** Add this ESLint rule to your CI pipeline. Builds will fail on violations, forcing authors to use injected ports for all external interactions.
+**CI Integration:** Add this ESLint rule to your CI pipeline with a concrete lint step:
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run ESLint
+        run: npx eslint "src/**/*.{ts,tsx,js,mjs,cjs}" --max-warnings=0
+```
+
+Builds will fail on violations, forcing authors to use injected ports for all external interactions.
 
 **Dependency Injection Pattern:** Ports are owned and defined by the application layer. Adapters implement those ports and encapsulate effects. Application-layer functions remain pure and only orchestrate by invoking injected port interfaces, while adapters perform the actual effects such as network, filesystem, or database access.
 

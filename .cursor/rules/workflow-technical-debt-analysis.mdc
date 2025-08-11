@@ -69,7 +69,7 @@ const architectureViolations = {
           if (ts.isInterfaceDeclaration(node) && 
               node.name?.text?.endsWith('Service')) {
             const name = node.name?.text ?? '<anonymous>';
-            const startPos = node.name?.getStart() ?? node.getStart();
+            const startPos = node.name?.getStart(sourceFile) ?? node.getStart(sourceFile);
             const loc = sourceFile.getLineAndCharacterOfPosition(startPos);
             acc.push({ 
               violation: 'grouped-interface-service', 
@@ -93,7 +93,7 @@ const architectureViolations = {
             
             if (hasFunctionMembers) {
               const name = node.name?.text ?? '<anonymous>';
-              const startPos = node.name?.getStart() ?? node.getStart();
+              const startPos = node.name?.getStart(sourceFile) ?? node.getStart(sourceFile);
               const loc = sourceFile.getLineAndCharacterOfPosition(startPos);
               acc.push({ 
                 violation: 'grouped-type-service', 
@@ -143,7 +143,7 @@ const architectureViolations = {
             }
             
             if (shouldFlag) {
-              const startPos = node.name?.getStart() ?? node.getStart();
+              const startPos = node.name?.getStart(sourceFile) ?? node.getStart(sourceFile);
               const loc = sourceFile.getLineAndCharacterOfPosition(startPos);
               acc.push({ 
                 violation: 'class-based-service', 

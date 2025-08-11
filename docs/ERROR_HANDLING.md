@@ -91,9 +91,8 @@ ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE // 'NETWORK_4007' (HTTP 503 Service Unav
 
 ```bash
 # request_verification
-# Verify NETWORK_4007 usage across the codebase
-rg "NETWORK_4007" src/ --type ts
-rg "SERVICE_UNAVAILABLE" src/ --type ts
+# Verify NETWORK_4007 usage across the codebase (both enum names and numeric codes)
+rg -n -e "NETWORK_4007" -e "SERVICE_UNAVAILABLE" -e "4007" src/ --type ts
 ```
 
 // Validation (5000-5999)
@@ -125,24 +124,46 @@ rg "retryMaxDelay|min\(|Math\.min\(" src/ --type ts -n -A 6 -B 6
 
 ```javascript
 // Pseudocode with unit conversion and clamping:
+const MAX_TIMEOUT = 2147483647; // setTimeout maximum to prevent clamping at 2^31-1 ms
+
+// Helper to clamp delay values, rejecting NaN/Infinity
+function clampDelay(delay, retryMaxDelay) {
+  // Coerce delay to finite number, default to 0 if not finite
+  delay = Number.isFinite(Number(delay)) ? Number(delay) : 0;
+  // Floor and clamp negative values to 0
+  delay = Math.max(0, Math.floor(delay));
+  
+  // Apply retryMaxDelay if it's a finite positive number
+  if (Number.isFinite(Number(retryMaxDelay)) && Number(retryMaxDelay) > 0) {
+    return Math.min(delay, Number(retryMaxDelay), MAX_TIMEOUT);
+  }
+  return Math.min(delay, MAX_TIMEOUT);
+}
+
 if (retryAfter.canParse()) {
   if (retryAfter.isSeconds()) {
-    // Convert seconds to milliseconds
-    delay = Math.max(0, retryAfter.seconds * 1000);
+    // RFC 7231: delta-seconds must be base-10 integer
+    const secondsStr = String(retryAfter.seconds).trim();
+    let validSeconds = 0;
+    if (/^\d+$/.test(secondsStr)) {
+      const parsed = parseInt(secondsStr, 10);
+      validSeconds = Number.isInteger(parsed) && parsed >= 0 ? parsed : 0;
+    }
+    delay = Math.max(0, validSeconds * 1000);
   } else if (retryAfter.isHttpDate()) {
     // Calculate milliseconds until date, floor past dates to 0
     delay = Math.max(0, retryAfter.date.getTime() - Date.now());
   }
-  // Clamp to retryMaxDelay, no jitter applied
-  delay = Math.min(delay, retryMaxDelay);
+  delay = clampDelay(delay, retryMaxDelay);
 } else {
   // Apply backoff with jitter, then clamp
   delay = calculateBackoffWithJitter();
-  delay = Math.min(delay, retryMaxDelay);
+  delay = clampDelay(delay, retryMaxDelay);
 }
-// Ensure delay is integer milliseconds and safe for setTimeout
-delay = Math.floor(delay);
+// Final delay is already validated by clampDelay helper
 ```
+
+**Note**: The MAX_TIMEOUT constant prevents timers being clamped at the 32-bit signed maximum (2^31-1 ms, ~24.8 days).
 
 ## Retry Configuration
 

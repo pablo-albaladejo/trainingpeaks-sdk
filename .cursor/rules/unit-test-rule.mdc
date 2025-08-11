@@ -70,11 +70,11 @@ jobs:
 ```bash
 # Check if contract tests are already integrated in workflow YAML files (includes multiline run: | and run: > blocks)
 if command -v rg >/dev/null 2>&1; then
-  rg --multiline --multiline-dotall -P -C 2 "run:[[:space:]]*(?:\||>)?[[:space:]]*(?:\n[[:space:]]+.*)*\b(?:npm|pnpm|yarn)\b.*test:contract" .github/workflows/*.yml .github/workflows/*.yaml 2>/dev/null || echo "Contract tests not found in workflows"
+  rg --glob '.github/workflows/*.yml' --glob '.github/workflows/*.yaml' -P -z -l "^\s*run:\s*(?:[|>]\s*)?(?s:).*?\b(?:npm|pnpm|yarn)\b.*\btest:contract\b" 2>/dev/null || echo "Contract tests not found in workflows"
 else
   # Check for multiline run blocks first
-  find .github/workflows/ -name "*.yml" -o -name "*.yaml" | xargs -I {} perl -0777 -ne 'print "$ARGV: $_\n" if /run:\s*(?:\n[ \t]+.*)*\b(?:npm|pnpm|yarn)\b.*test:contract/s' {} 2>/dev/null || \
-  grep -s -R -n -I -E "run:[[:space:]]*(npm|pnpm|yarn).*test:contract" .github/workflows/ --include="*.yml" --include="*.yaml" || echo "Contract tests not found in workflows"
+  find .github/workflows/ -name "*.yml" -o -name "*.yaml" | xargs -I {} perl -0777 -ne 'print "$ARGV\n" if /^\s*run:\s*(?:\n[ \t]+.*)*\b(?:npm|pnpm|yarn)\b.*\btest:contract\b/ms' {} 2>/dev/null || \
+  grep -s -R -l -I -E "^[[:space:]]*run:[[:space:]]*(npm|pnpm|yarn).*test:contract" .github/workflows/ --include="*.yml" --include="*.yaml" || echo "Contract tests not found in workflows"
 fi
 ```
 
