@@ -61,58 +61,108 @@ const architectureViolations = {
     pattern: /src\/application\/services\/.*\.ts/,
     astAnalysis: {
       checkInterfaceServices: (sourceFile) => {
-        // Import TypeScript compiler API
-        const ts = require('typescript');
-        const violations: any[] = [];
+        const violations: ServiceViolation[] = [];
         
-        // Recursive traversal that accumulates violations
-        function visit(node: any): any[] {
-          const currentViolations: any[] = [];
-          
+        // Accumulator-based visitor pattern
+        function visit(node: any, acc: ServiceViolation[]): void {
           // Check for interface declarations ending with 'Service'
           if (ts.isInterfaceDeclaration(node) && 
               node.name?.text?.endsWith('Service')) {
-            currentViolations.push({ violation: 'grouped-interface-service', node });
+            const name = node.name?.text ?? '<anonymous>';
+            const startPos = node.name?.getStart() ?? node.getStart();
+            const loc = sourceFile.getLineAndCharacterOfPosition(startPos);
+            acc.push({ 
+              violation: 'grouped-interface-service', 
+              file: sourceFile.fileName, 
+              name, 
+              line: loc.line + 1, 
+              column: loc.character + 1 
+            });
           }
           
           // Check for type aliases with object literal types containing function properties
           if (ts.isTypeAliasDeclaration(node) && 
               node.name?.text?.endsWith('Service') &&
               ts.isTypeLiteralNode(node.type)) {
-            currentViolations.push({ violation: 'grouped-type-service', node });
+            // Only flag if the type literal contains function-like members
+            const hasFunctionMembers = node.type.members.some((member: any) => 
+              ts.isCallSignatureDeclaration(member) ||
+              ts.isMethodSignature(member) ||
+              (ts.isPropertySignature(member) && member.type && ts.isFunctionTypeNode(member.type))
+            );
+            
+            if (hasFunctionMembers) {
+              const name = node.name?.text ?? '<anonymous>';
+              const startPos = node.name?.getStart() ?? node.getStart();
+              const loc = sourceFile.getLineAndCharacterOfPosition(startPos);
+              acc.push({ 
+                violation: 'grouped-type-service', 
+                file: sourceFile.fileName, 
+                name, 
+                line: loc.line + 1, 
+                column: loc.character + 1 
+              });
+            }
           }
           
-          // Recursively visit child nodes and collect their violations
+          // Recursively visit child nodes
           ts.forEachChild(node, (child) => {
-            currentViolations.push(...visit(child));
+            visit(child, acc);
           });
-          
-          return currentViolations;
         }
         
-        return visit(sourceFile);
+        visit(sourceFile, violations);
+        return violations;
       },
       checkClassServices: (sourceFile) => {
-        const ts = require('typescript');
-        const violations: any[] = [];
+        const violations: ServiceViolation[] = [];
         
-        function visit(node: any): any[] {
-          const currentViolations: any[] = [];
-          
-          if (ts.isClassDeclaration(node) && 
-              node.name?.text?.endsWith('Service')) {
-            currentViolations.push({ violation: 'class-based-service', node });
+        function visit(node: any, acc: ServiceViolation[]): void {
+          if (ts.isClassDeclaration(node)) {
+            let name = node.name?.text;
+            let shouldFlag = false;
+            
+            if (name?.endsWith('Service')) {
+              shouldFlag = true;
+            } else if (!name) {
+              // Check if this is a default exported class and filename suggests Service
+              const hasDefaultExport = node.modifiers?.some((mod: any) => 
+                mod.kind === ts.SyntaxKind.DefaultKeyword);
+              const hasExport = node.modifiers?.some((mod: any) => 
+                mod.kind === ts.SyntaxKind.ExportKeyword);
+              
+              if (hasDefaultExport && hasExport) {
+                const basename = sourceFile.fileName.split('/').pop()?.replace(/\.[^.]*$/, '') ?? '';
+                if (basename.endsWith('Service')) {
+                  name = basename;
+                  shouldFlag = true;
+                }
+              }
+              
+              if (!name) name = '<anonymous>';
+            }
+            
+            if (shouldFlag) {
+              const startPos = node.name?.getStart() ?? node.getStart();
+              const loc = sourceFile.getLineAndCharacterOfPosition(startPos);
+              acc.push({ 
+                violation: 'class-based-service', 
+                file: sourceFile.fileName, 
+                name, 
+                line: loc.line + 1, 
+                column: loc.character + 1 
+              });
+            }
           }
           
-          // Recursively collect violations from children
+          // Recursively visit children
           ts.forEachChild(node, (child) => {
-            currentViolations.push(...visit(child));
+            visit(child, acc);
           });
-          
-          return currentViolations;
         }
         
-        return visit(sourceFile);
+        visit(sourceFile, violations);
+        return violations;
       }
     },
     severity: 'major'
@@ -122,6 +172,17 @@ const architectureViolations = {
 
 #### TypeScript Quality Issues
 ```typescript
+// Import TypeScript compiler API at module scope
+import * as ts from 'typescript';
+
+type ServiceViolation = {
+  violation: 'grouped-interface-service' | 'grouped-type-service' | 'class-based-service';
+  file: string;
+  name: string;
+  line: number;
+  column: number;
+};
+
 const typeScriptDebt = {
   // Any type usage violations
   anyTypeUsage: {
@@ -224,9 +285,8 @@ const organizationDebt = {
           let escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           // Convert TypeScript wildcard to regex wildcard after escaping
           escaped = escaped.replace(/\\\*/g, '.*');
-          // Anchor to start of string and respect baseUrl
-          const basePrefix = baseUrl === 'src' ? '' : '^';
-          return new RegExp(`${basePrefix}${escaped}`);
+          // Always anchor regex to start of string
+          return new RegExp(`^${escaped}`);
         });
       } catch (error) {
         return [];
@@ -455,7 +515,9 @@ npx madge --circular src/     # Circular dependency detection
     "debt:analysis": "npm run lint && npm run check-imports && npm run test:coverage",
     "debt:architecture": "madge --circular src/ && npm run check-imports", 
     "debt:testing": "npm run test:coverage && npm run test:integration",
-    "debt:typescript": "npx tsc --noEmit --strict && npx ts-unused-exports tsconfig.json && npx eslint src/ --ext .ts --rule 'no-unused-vars: error' --rule '@typescript-eslint/no-unused-vars: error'"
+    "debt:typescript": "npx tsc --noEmit --strict && npx ts-unused-exports tsconfig.json && npx eslint src/ --ext .ts --rule 'no-unused-vars: off' --rule '@typescript-eslint/no-unused-vars: error' --max-warnings=0 --cache"
+    // NOTE: Requires @typescript-eslint/eslint-plugin and @typescript-eslint/parser in devDependencies
+    // Verification: npm list @typescript-eslint/eslint-plugin @typescript-eslint/parser
   }
 }
 ```

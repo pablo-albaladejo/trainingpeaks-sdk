@@ -49,7 +49,68 @@ src/
 
 #### **🚨 CRITICAL: Strict Ports & Adapters Separation**
 
-The application layer MUST contain orchestration logic implemented strictly as pure functions and function type aliases (contracts), with no external or side-effecting implementations, which belong only in the adapters layer.
+The application layer MUST contain orchestration logic implemented strictly as pure functions and function type aliases (contracts/ports). Ports are defined in the domain/application layer and implemented by adapters. **Rule: No direct infrastructure access — orchestrate via injected ports.**
+
+**Must move to adapters layer:** time/clocks, randomness/PRNG, network I/O, file I/O, databases, logging, OS/env access, process exit, user input, external services, global mutable state, system calls.
+
+**Allowed in application layer:** pure domain constructors, pure data transforms, validation, composition/orchestration functions, function type aliases/contracts, deterministic helpers.
+
+**✅ DO (Application Layer):**
+- Call injected port function types: `await saveUser(user)`
+- Return pure values: `return { success: true, user }`
+- Keep orchestration logic deterministic
+- Define ports: `export type SaveUser = (user: User) => Promise<void>`
+- Import from domain: `import { User } from '@domain/entities/User'`
+
+**❌ DON'T (Application Layer):**
+- Import adapters: `import { HttpClient } from '@adapters/http'`
+- Call APIs directly: `axios.post('/users', userData)`
+- Perform side-effecting I/O inside application functions
+- Access filesystem: `fs.readFileSync('config.json')`
+- Direct database calls: `db.users.create(user)`
+
+**🔒 ESLint Enforcement:**
+Add to your ESLint config to block adapter imports in application layer:
+```json
+{
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/adapters/**", "@adapters/**"],
+            "importNames": ["*"],
+            "message": "Application layer cannot import from adapters. Use injected port interfaces."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/application/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["**/adapters/**", "@adapters/**"],
+            "message": "Application layer must use injected ports, not direct adapter imports"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+**Where to define:**
+- **Ports/Contracts**: `src/domain/` or `src/application/ports/`
+- **Implementations**: `src/adapters/**`
+
+**CI Integration:** Add this ESLint rule to your CI pipeline. Builds will fail on violations, forcing authors to use injected ports for all external interactions.
+
+**Dependency Injection Pattern:** Ports are owned and defined by the application layer. Adapters implement those ports and encapsulate effects. Application-layer functions remain pure and only orchestrate by invoking injected port interfaces, while adapters perform the actual effects such as network, filesystem, or database access.
 
 #### **📋 Application Layer: ONLY Definitions & Contracts**
 
@@ -168,6 +229,8 @@ Use cases orchestrate contracts - never direct implementations:
 
 ```typescript
 // ✅ CORRECT: src/application/use-cases/create-user.ts
+import { createEmail } from '@domain/valueObjects/email';
+
 export const createUserUseCase =
   (
     saveUser: SaveUser, // ← PORT (function type)
@@ -176,9 +239,9 @@ export const createUserUseCase =
   ) =>
   async (input: CreateUserInput): Promise<CreateUserResponse> => {
     // 🎯 ORCHESTRATE USING FUNCTION CONTRACTS ONLY
-    validateEmail(input.email);
+    const email = createEmail(input.email); // Create Email VO from domain
     const userId = generateUserId();
-    const user = createUser(userId, input.email, input.name);
+    const user = createUser(userId, email, input.name);
     await saveUser(user);
     return { user };
   };

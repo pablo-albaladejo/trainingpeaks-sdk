@@ -24,27 +24,39 @@
 - **Alias Updates**: Path aliases `@infrastructure/*` now map to `@adapters/*`
 - **Documentation**: All references to "Infrastructure layer" are now "Adapters layer"
 
-**Repository-wide Migration Codemod**: Use these commands to update all import paths:
+## Repository-wide Migration Codemod
+
+Use these commands to update all import paths:
 ```bash
-# IMPORTANT: Commit or stash changes before running migration commands
+set -euo pipefail
+# IMPORTANT: Commit or stash changes, run these commands from the repo root, and use a dedicated branch
 
 # 1. Verify available tools and options
-npm view @trainingpeaks-sdk/migrate-infrastructure-to-adapters versions --json
-npm view @trainingpeaks-sdk/migrate-infrastructure-to-adapters --json | grep -E "(bin|cli|flags)"
+npx @trainingpeaks-sdk/migrate-infrastructure-to-adapters --help
 
 # 2. Run with --dry-run first to preview changes
-npx -y @trainingpeaks-sdk/migrate-infrastructure-to-adapters@latest src/ --dry-run
+npx -y @trainingpeaks-sdk/migrate-infrastructure-to-adapters@latest src/ --dry-run --include="*.ts,*.tsx,*.js,*.jsx,*.mts,*.cts,*.d.ts"
 
 # 3. Apply the migration after reviewing changes
-npx -y @trainingpeaks-sdk/migrate-infrastructure-to-adapters@latest src/ --ignore-patterns="**/*.test.*,**/*.spec.*"
+npx -y @trainingpeaks-sdk/migrate-infrastructure-to-adapters@latest src/ --include="*.ts,*.tsx,*.js,*.jsx,*.mts,*.cts,*.d.ts,*.stories.*" --ignore-patterns="**/*.test.*,**/*.spec.*"
 
 # 4. Alternative: Use ripgrep and sed for direct file replacement
-rg -l "@infrastructure/" src/ | xargs sed -i 's/@infrastructure\//@adapters\//g'
-rg -l "from ['\"]@infrastructure/" src/ | xargs sed -i "s/from \(['\"]@\)infrastructure\//from \\1adapters\//g"
+rg -0 -l "@infrastructure" src/ | xargs -0 sed -i.bak 's|@infrastructure|@adapters|g'
+# Remove backup files after verification
+# Remove only migration-created backups (be specific to avoid deleting unrelated .bak files)
+find src/ -name '*.bak' -newer .git/HEAD -print0 | xargs -0 rm -f 2>/dev/null || true
 
 # 5. Validation checklist after migration:
-grep -r "paths.*@infrastructure" tsconfig*.json vitest.config.ts  # Update path aliases
-find src/ -name "*.test.*" -exec grep -l "@infrastructure" {} \; # Check remaining test references
+# 1. Check tsconfig paths safely
+for config in tsconfig.json tsconfig.*.json; do
+  [ -f "$config" ] && jq -r '.compilerOptions.paths // {} | keys[] | select(contains("@infrastructure"))' "$config" 2>/dev/null
+done || echo "No @infrastructure paths found"
+
+# 2. Search source, test, story and build/config files excluding artifacts
+rg -n "@infrastructure" --glob '!*node_modules/*' --glob '!*dist/*' --glob '!*build/*' --glob '*.{config,conf}.{js,ts,json}' -t ts -t tsx -t js -t jsx -t json
+
+# 3. Final TypeScript typecheck to ensure no broken imports
+npx tsc --noEmit
 ```
 
 ### Impact

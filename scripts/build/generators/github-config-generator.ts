@@ -9,9 +9,35 @@ import type { ProjectConfig } from '../../../config/project.config.js';
  * Generate CODEOWNERS file content
  */
 export function generateCodeowners(config: ProjectConfig): string {
-  // Ensure all owners have @ prefix, avoiding double prefixes
-  const owners = config.github.codeowners.map(owner => owner.startsWith('@') ? owner : `@${owner}`).join(' ');
-  const primaryOwner = config.github.codeowners.length > 0 ? (config.github.codeowners[0]?.startsWith('@') ? config.github.codeowners[0] : `@${config.github.codeowners[0]}`) : '@undefined';
+  // Filter and normalize owners with hardened validation
+  const rawOwners = (config.github?.codeowners ?? [])
+    .filter(item => typeof item === 'string')
+    .map(item => item.trim())
+    .filter(item => item.length > 0 && !/\s/.test(item));
+  
+  if (rawOwners.length === 0) {
+    throw new Error('No valid codeowners found. At least one owner must be specified.');
+  }
+  
+  // Check for invalid handles with internal whitespace
+  const invalidHandles = rawOwners.filter(owner => /\s/.test(owner));
+  if (invalidHandles.length > 0) {
+    throw new Error(`Invalid codeowner handles with whitespace: ${invalidHandles.join(', ')}`);
+  }
+  
+  // Case-insensitive deduplication and normalization
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+  
+  for (const owner of rawOwners) {
+    const normalizedHandle = '@' + owner.replace(/^@+/, '').toLowerCase();
+    if (!seen.has(normalizedHandle)) {
+      seen.add(normalizedHandle);
+      normalized.push(normalizedHandle);
+    }
+  }
+  
+  const owners = normalized.join(' ');
   
   return `# Global owners - all files assigned to multiple owners to reduce bus factor risk
 # Specific entries can be added here in the future if exceptions are needed
@@ -61,7 +87,16 @@ ${assignees}
  */
 export function generateLabelsYml(config: ProjectConfig): string {
   // Helper to strip color prefixes
-  const stripColorPrefix = (color: string | undefined) => color ? color.replace(/^#+/, '') : '';
+  const stripColorPrefix = (color: string | undefined): string => {
+    if (!color) return '000000';
+    const trimmed = color.trim();
+    if (!trimmed) return '000000';
+    const cleaned = trimmed.replace(/^#+/, '');
+    if (!/^[0-9a-fA-F]{6}$/.test(cleaned)) {
+      throw new Error(`Invalid hex color: ${color}. Must be a 6-character hex color.`);
+    }
+    return cleaned.toLowerCase();
+  };
   
   const labels = [
     // Priority Labels

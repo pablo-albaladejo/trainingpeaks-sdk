@@ -68,8 +68,14 @@ jobs:
 
 **Script to verify existing workflows run contract tests**:
 ```bash
-# Check if contract tests are already integrated
-rg -C 2 "run:\s*(npm|pnpm|yarn).*test:contract" .github/workflows/ || echo "Contract tests not found in workflows"
+# Check if contract tests are already integrated in workflow YAML files (includes multiline run: | and run: > blocks)
+if command -v rg >/dev/null 2>&1; then
+  rg --multiline --multiline-dotall -P -C 2 "run:[[:space:]]*(?:\||>)?[[:space:]]*(?:\n[[:space:]]+.*)*\b(?:npm|pnpm|yarn)\b.*test:contract" .github/workflows/*.yml .github/workflows/*.yaml 2>/dev/null || echo "Contract tests not found in workflows"
+else
+  # Check for multiline run blocks first
+  find .github/workflows/ -name "*.yml" -o -name "*.yaml" | xargs -I {} perl -0777 -ne 'print "$ARGV: $_\n" if /run:\s*(?:\n[ \t]+.*)*\b(?:npm|pnpm|yarn)\b.*test:contract/s' {} 2>/dev/null || \
+  grep -s -R -n -I -E "run:[[:space:]]*(npm|pnpm|yarn).*test:contract" .github/workflows/ --include="*.yml" --include="*.yaml" || echo "Contract tests not found in workflows"
+fi
 ```
 
 **Exceptions** (must be justified):

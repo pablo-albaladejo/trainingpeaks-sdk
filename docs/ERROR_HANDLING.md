@@ -87,10 +87,61 @@ ERROR_CODES.USER_NOT_FOUND              // 'USER_3002'
 
 // Network (4000-4999)
 ERROR_CODES.NETWORK_TIMEOUT             // 'NETWORK_4001'
-ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE // 'NETWORK_4006' (HTTP 503 Service Unavailable - retryable only for idempotent methods or POST with Idempotency-Key header, Retry-After header takes precedence over backoff strategy: when present, overrides calculated delay but retryMaxDelay still applies as a cap, supports both HTTP-date and delay-seconds formats per RFC 7231, retryJitter is NOT applied when Retry-After header is present)
+ERROR_CODES.NETWORK_SERVICE_UNAVAILABLE // 'NETWORK_4007' (HTTP 503 Service Unavailable - See 'Retry-After header rules')
+
+```bash
+# request_verification
+# Verify NETWORK_4007 usage across the codebase
+rg "NETWORK_4007" src/ --type ts
+rg "SERVICE_UNAVAILABLE" src/ --type ts
+```
 
 // Validation (5000-5999)
 ERROR_CODES.VALIDATION_FAILED           // 'VALIDATION_5001'
+```
+
+**Retry-After header rules:**
+
+Evaluation sequence (exact order):
+1. **Parse Retry-After**: Attempt to parse header value as delay-seconds (integer) or HTTP-date
+2. **If parsing fails**: Fall back to calculated backoff (apply jitter and cap by retryMaxDelay)
+3. **If parsing succeeds with HTTP-date in future or delay-seconds > 0**: Use that delay (do not apply retryJitter, but still cap by retryMaxDelay)
+4. **If parsing succeeds with non-positive delay**: Treat delay-seconds ≤ 0 or HTTP-date in the past as zero delay (cap applies)
+
+Note: Retry-After disables jitter when used successfully.
+
+```bash
+# Extended verification for 503 handling semantics
+# Search for Retry-After parsing usage
+rg "Retry-After" src/ --type ts -n -A 6 -B 6
+rg "parseInt.*Retry-After|Date.parse.*Retry-After|new Date.*Retry-After" src/ --type ts -n
+
+# Find jitter application and ensure Retry-After paths skip it
+rg "jitter|retryJitter" src/ --type ts -n -A 6 -B 6 | rg -v "Retry-After" || echo "Jitter properly skipped with Retry-After"
+
+# Verify header-derived delays are capped by retryMaxDelay
+rg "retryMaxDelay|min\(|Math\.min\(" src/ --type ts -n -A 6 -B 6
+```
+
+```javascript
+// Pseudocode with unit conversion and clamping:
+if (retryAfter.canParse()) {
+  if (retryAfter.isSeconds()) {
+    // Convert seconds to milliseconds
+    delay = Math.max(0, retryAfter.seconds * 1000);
+  } else if (retryAfter.isHttpDate()) {
+    // Calculate milliseconds until date, floor past dates to 0
+    delay = Math.max(0, retryAfter.date.getTime() - Date.now());
+  }
+  // Clamp to retryMaxDelay, no jitter applied
+  delay = Math.min(delay, retryMaxDelay);
+} else {
+  // Apply backoff with jitter, then clamp
+  delay = calculateBackoffWithJitter();
+  delay = Math.min(delay, retryMaxDelay);
+}
+// Ensure delay is integer milliseconds and safe for setTimeout
+delay = Math.floor(delay);
 ```
 
 ## Retry Configuration
@@ -121,7 +172,7 @@ The SDK automatically retries these error conditions:
 
 These errors are **not** retried:
 - **Client errors (4xx)**: 400, 401, 403, 404, 422
-- **Gateway timeout (504)**: Gateway timeout errors are non-retryable by default to prevent retry storms when upstream services are overloaded. When retryOn504 is enabled, 504 retries are only allowed for idempotent HTTP methods or POST requests that include an Idempotency-Key header. Retry behavior uses the same backoff and retryMaxDelay settings as other retry types. When Retry-After header is present, it takes precedence over jitter and caps - meaning retryJitter and retryMaxDelay do NOT apply in this case. Configurable via constructor: `new TrainingPeaksSDK({ retryOn504: true, retryAttempts: 1 })`. Default handling: log the error and alert users.
+- **Gateway timeout (504)**: Gateway timeout errors are non-retryable by default to prevent retry storms when upstream services are overloaded. When retryOn504 is enabled, 504 retries are only allowed for idempotent HTTP methods or POST requests that include an Idempotency-Key header. When Retry-After header is present, it takes precedence and must be honored with no jitter while still capping the delay by retryMaxDelay. Retry-After parsing follows the same rules as the 503 section above. Configurable via constructor: `new TrainingPeaksSDK({ retryOn504: true, retryAttempts: 1 })`. Default handling: log the error and alert users.
 - **Authentication failures**: Invalid credentials (Note: 401 due to token expiration may trigger automatic token refresh and retry)
 - **Validation errors**: Malformed requests, missing required fields
 
