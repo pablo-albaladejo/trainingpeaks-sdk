@@ -1,4 +1,5 @@
 module.exports = {
+  ignores: [(message) => message.startsWith('chore(release):')],
   extends: ['@commitlint/config-conventional'],
   rules: {
     'type-enum': [
