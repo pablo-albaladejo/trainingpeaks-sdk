@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## <small>1.1.2 (2025-08-12)</small>
 
+* Merge pull request #62 from pablo-albaladejo/dependabot/npm_and_yarn/typescript-eslint-8.39.1 ([85c3a62](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/85c3a62)), closes [#62](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/62)
+* Merge pull request #63 from pablo-albaladejo/dependabot/npm_and_yarn/types/node-24.2.1 ([36b6321](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/36b6321)), closes [#63](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/63)
+* chore(deps-dev): bump @types/node from 22.17.0 to 24.2.1 ([fe9ce32](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/fe9ce32))
+* chore(deps-dev): bump typescript-eslint from 8.39.0 to 8.39.1 ([cb55cc0](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/cb55cc0))
+* chore(release): 1.1.2 [skip ci] ([b0a2fcf](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/b0a2fcf))
+
+## <small>1.1.2 (2025-08-12)</small>
+
 * Merge pull request #63 from pablo-albaladejo/dependabot/npm_and_yarn/types/node-24.2.1 ([36b6321](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/36b6321)), closes [#63](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/63)
 * chore(deps-dev): bump @types/node from 22.17.0 to 24.2.1 ([fe9ce32](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/fe9ce32))
 
