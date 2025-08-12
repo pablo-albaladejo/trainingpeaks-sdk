@@ -1,4 +1,11 @@
-import { WorkoutStepBuilder } from '@/domain/builders/workout-step-builder';
+import {
+  buildWorkoutStep,
+  createWorkoutStepBuilder,
+  withDuration,
+  withIntensityClass,
+  withName,
+  withTarget,
+} from '@/domain/builders/workout-step-builder';
 import { IntensityClass, type WorkoutStructureStep } from '@/types';
 
 /**
@@ -7,12 +14,19 @@ import { IntensityClass, type WorkoutStructureStep } from '@/types';
 export const createWarmupStep = (
   durationMinutes: number
 ): WorkoutStructureStep => {
-  return new WorkoutStepBuilder()
-    .name('Warmup')
-    .duration(durationMinutes)
-    .intensityClass(IntensityClass.WARM_UP)
-    .addTarget(45, 55)
-    .build();
+  return buildWorkoutStep(
+    withTarget(
+      withIntensityClass(
+        withDuration(
+          withName(createWorkoutStepBuilder(), 'Warmup'),
+          durationMinutes
+        ),
+        IntensityClass.WARM_UP
+      ),
+      45,
+      55
+    )
+  );
 };
 
 /**
@@ -21,12 +35,19 @@ export const createWarmupStep = (
 export const createCooldownStep = (
   durationMinutes: number
 ): WorkoutStructureStep => {
-  return new WorkoutStepBuilder()
-    .name('Cooldown')
-    .duration(durationMinutes)
-    .intensityClass(IntensityClass.COOL_DOWN)
-    .addTarget(35, 45)
-    .build();
+  return buildWorkoutStep(
+    withTarget(
+      withIntensityClass(
+        withDuration(
+          withName(createWorkoutStepBuilder(), 'Cooldown'),
+          durationMinutes
+        ),
+        IntensityClass.COOL_DOWN
+      ),
+      35,
+      45
+    )
+  );
 };
 
 /**
@@ -36,12 +57,19 @@ export const createIntervalStep = (
   durationMinutes: number,
   intensityPercent: number
 ): WorkoutStructureStep => {
-  return new WorkoutStepBuilder()
-    .name('Interval')
-    .duration(durationMinutes)
-    .intensityClass(IntensityClass.ACTIVE)
-    .addTarget(intensityPercent - 5, intensityPercent + 5)
-    .build();
+  return buildWorkoutStep(
+    withTarget(
+      withIntensityClass(
+        withDuration(
+          withName(createWorkoutStepBuilder(), 'Interval'),
+          durationMinutes
+        ),
+        IntensityClass.ACTIVE
+      ),
+      intensityPercent - 5,
+      intensityPercent + 5
+    )
+  );
 };
 
 /**
@@ -50,12 +78,19 @@ export const createIntervalStep = (
 export const createRecoveryStep = (
   durationMinutes: number
 ): WorkoutStructureStep => {
-  return new WorkoutStepBuilder()
-    .name('Recovery')
-    .duration(durationMinutes)
-    .intensityClass(IntensityClass.REST)
-    .addTarget(55, 65)
-    .build();
+  return buildWorkoutStep(
+    withTarget(
+      withIntensityClass(
+        withDuration(
+          withName(createWorkoutStepBuilder(), 'Recovery'),
+          durationMinutes
+        ),
+        IntensityClass.REST
+      ),
+      55,
+      65
+    )
+  );
 };
 
 /**
@@ -65,10 +100,17 @@ export const createSteadyStep = (
   durationMinutes: number,
   intensityPercent: number
 ): WorkoutStructureStep => {
-  return new WorkoutStepBuilder()
-    .name('Steady')
-    .duration(durationMinutes)
-    .intensityClass(IntensityClass.ACTIVE)
-    .addTarget(intensityPercent - 5, intensityPercent + 5)
-    .build();
+  return buildWorkoutStep(
+    withTarget(
+      withIntensityClass(
+        withDuration(
+          withName(createWorkoutStepBuilder(), 'Steady'),
+          durationMinutes
+        ),
+        IntensityClass.ACTIVE
+      ),
+      intensityPercent - 5,
+      intensityPercent + 5
+    )
+  );
 };

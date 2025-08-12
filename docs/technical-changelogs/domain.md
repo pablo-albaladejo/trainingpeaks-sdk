@@ -6,18 +6,18 @@
 
 ### Added
 ### Changed
-- **Builder Pattern Refactoring**: Converted 3 domain builder classes (`WorkoutStepBuilder`, `WorkoutStructureBuilder`, `WorkoutStructureElementBuilder`) to functional patterns with immutable state
-  - Introduced new functional builder types (`WorkoutStepBuilderState`, `WorkoutStructureBuilderState`, `WorkoutStructureElementBuilderState`)
+- **Builder Pattern Refactoring**: Converted 3 domain builder classes to pure functional patterns with immutable state
+  - Introduced functional builder types (`WorkoutStepBuilderState`, `WorkoutStructureBuilderState`, `WorkoutStructureElementBuilderState`)
   - Added functional builder functions (`createWorkoutStepBuilder`, `withName`, `withDuration`, etc.)
-  - Maintained backward compatibility with legacy class-based builders marked as `@deprecated`
-  - **Rationale**: Align with Clean Architecture principles by removing classes from domain layer, improve testability through immutability, enable better composition through functional approach
-  - **Impact**: Enhanced compliance with "functions over classes" pattern, improved type safety, better functional programming support
-  - **Migration**: New code should use functional builders, existing code continues to work but should migrate gradually
-### Deprecated
-- **Legacy Domain Builders**: Class-based builders (`WorkoutStepBuilder`, `WorkoutStructureBuilder`, `WorkoutStructureElementBuilder`) are now deprecated in favor of functional patterns
-  - Maintained full backward compatibility
-  - Will be removed in future major version
+  - Updated all template implementations to use functional builders
+  - **Rationale**: Align with Clean Architecture principles by removing all classes from domain layer, improve testability through immutability, enable better composition through functional approach
+  - **Impact**: 100% compliance with "functions over classes" pattern, enhanced type safety, better functional programming support, eliminated object instantiation overhead
+  - **Migration**: Breaking change - migrate from class-based to functional builders
 ### Removed
+- **Legacy Domain Builder Classes**: Removed class-based builders (`WorkoutStepBuilder`, `WorkoutStructureBuilder`, `WorkoutStructureElementBuilder`)
+  - **Breaking Change**: Code using `new WorkoutStepBuilder()` must migrate to functional API
+  - **Migration Path**: Replace `new WorkoutStepBuilder().name('x').build()` with `buildWorkoutStep(withName(createWorkoutStepBuilder(), 'x'))`
+  - All workout templates updated to use functional builders
 ### Fixed
 ### Security
 
