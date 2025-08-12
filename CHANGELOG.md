@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## <small>1.1.5 (2025-08-12)</small>
+
+* Merge pull request #58 from pablo-albaladejo/dependabot/npm_and_yarn/eslint/js-9.33.0 ([ce37ac4](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/ce37ac4)), closes [#58](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/58)
+* Merge pull request #59 from pablo-albaladejo/dependabot/npm_and_yarn/eslint-9.33.0 ([91cde37](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/91cde37)), closes [#59](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/59)
+* chore(deps-dev): bump @eslint/js from 9.32.0 to 9.33.0 ([2f88c36](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/2f88c36))
+* chore(deps-dev): bump eslint from 9.32.0 to 9.33.0 ([0e648ac](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/0e648ac))
+
 ## <small>1.1.4 (2025-08-12)</small>
 
 * Merge pull request #57 from pablo-albaladejo/dependabot/npm_and_yarn/semantic-release/github-11.0.4 ([f4a938f](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/f4a938f)), closes [#57](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/57)
