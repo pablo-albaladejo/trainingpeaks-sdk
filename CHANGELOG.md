@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## <small>1.1.1 (2025-08-12)</small>
+
+* Merge pull request #64 from pablo-albaladejo/dependabot/npm_and_yarn/dotenv-17.2.1 ([8c587b5](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/8c587b5)), closes [#64](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/64)
+* chore(deps-dev): bump dotenv from 16.6.1 to 17.2.1 ([2d95aee](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/2d95aee))
+
 ## 1.1.0 (2025-08-11)
 
 * Merge pull request #16 from pablo-albaladejo/feat/list-workouts ([3bae455](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/3bae455)), closes [#16](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/16)
