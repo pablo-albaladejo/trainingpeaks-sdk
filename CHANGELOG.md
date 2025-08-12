@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## <small>1.1.3 (2025-08-12)</small>
+
+* Merge pull request #56 from pablo-albaladejo/dependabot/npm_and_yarn/zod-4.0.17 ([e0af0ff](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/e0af0ff)), closes [#56](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/56)
+* chore(deps): bump zod from 4.0.14 to 4.0.17 ([711b8cc](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/711b8cc))
+
 ## <small>1.1.2 (2025-08-12)</small>
 
 * Merge pull request #62 from pablo-albaladejo/dependabot/npm_and_yarn/typescript-eslint-8.39.1 ([85c3a62](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/85c3a62)), closes [#62](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/62)
