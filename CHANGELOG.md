@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## <small>1.1.4 (2025-08-12)</small>
+
+* Merge pull request #57 from pablo-albaladejo/dependabot/npm_and_yarn/semantic-release/github-11.0.4 ([f4a938f](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/f4a938f)), closes [#57](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/57)
+* Merge pull request #66 from pablo-albaladejo/fix/issue-65-github-username-references ([ccc62dd](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/ccc62dd)), closes [#66](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/66)
+* fix: resolve invalid GitHub username references in CODEOWNERS ([bae3709](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/bae3709)), closes [#65](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/65)
+* chore(deps-dev): bump @semantic-release/github from 11.0.3 to 11.0.4 ([ec2953e](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/ec2953e))
+
 ## <small>1.1.3 (2025-08-12)</small>
 
 * Merge pull request #56 from pablo-albaladejo/dependabot/npm_and_yarn/zod-4.0.17 ([e0af0ff](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/e0af0ff)), closes [#56](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/56)
