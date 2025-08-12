@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## <small>1.1.2 (2025-08-12)</small>
+
+* Merge pull request #63 from pablo-albaladejo/dependabot/npm_and_yarn/types/node-24.2.1 ([36b6321](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/36b6321)), closes [#63](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/63)
+* chore(deps-dev): bump @types/node from 22.17.0 to 24.2.1 ([fe9ce32](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/fe9ce32))
+
 ## <small>1.1.1 (2025-08-12)</small>
 
 * Merge pull request #64 from pablo-albaladejo/dependabot/npm_and_yarn/dotenv-17.2.1 ([8c587b5](https://github.com/pablo-albaladejo/trainingpeaks-sdk/commit/8c587b5)), closes [#64](https://github.com/pablo-albaladejo/trainingpeaks-sdk/issues/64)
