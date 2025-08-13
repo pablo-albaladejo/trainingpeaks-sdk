@@ -9,6 +9,33 @@ import {
 import { IntensityClass, type WorkoutStructureStep } from '@/types';
 
 /**
+ * Valid intensity range constants (percentage) - inclusive bounds [0, 100]
+ */
+const MIN_INTENSITY = 0;
+const MAX_INTENSITY = 100;
+
+/**
+ * Helper function to compute valid intensity range with clamping
+ */
+const computeIntensityRange = (
+  intensityPercent: number
+): { minValue: number; maxValue: number } => {
+  let minValue = Math.max(MIN_INTENSITY, intensityPercent - 5);
+  let maxValue = Math.min(MAX_INTENSITY, intensityPercent + 5);
+
+  // Ensure minValue is less than maxValue by at least 1
+  if (minValue >= maxValue) {
+    if (maxValue === MAX_INTENSITY) {
+      minValue = Math.max(MIN_INTENSITY, maxValue - 1);
+    } else {
+      maxValue = Math.min(MAX_INTENSITY, minValue + 1);
+    }
+  }
+
+  return { minValue, maxValue };
+};
+
+/**
  * Create a warmup step
  */
 export const createWarmupStep = (
@@ -57,6 +84,8 @@ export const createIntervalStep = (
   durationMinutes: number,
   intensityPercent: number
 ): WorkoutStructureStep => {
+  const { minValue, maxValue } = computeIntensityRange(intensityPercent);
+
   return buildWorkoutStep(
     withTarget(
       withIntensityClass(
@@ -66,8 +95,8 @@ export const createIntervalStep = (
         ),
         IntensityClass.ACTIVE
       ),
-      intensityPercent - 5,
-      intensityPercent + 5
+      minValue,
+      maxValue
     )
   );
 };
@@ -100,6 +129,8 @@ export const createSteadyStep = (
   durationMinutes: number,
   intensityPercent: number
 ): WorkoutStructureStep => {
+  const { minValue, maxValue } = computeIntensityRange(intensityPercent);
+
   return buildWorkoutStep(
     withTarget(
       withIntensityClass(
@@ -109,8 +140,8 @@ export const createSteadyStep = (
         ),
         IntensityClass.ACTIVE
       ),
-      intensityPercent - 5,
-      intensityPercent + 5
+      minValue,
+      maxValue
     )
   );
 };
