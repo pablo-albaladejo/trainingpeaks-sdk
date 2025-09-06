@@ -1,5 +1,14 @@
-import { WorkoutStructureBuilder } from '@/domain/builders/workout-structure-builder';
-import { WorkoutStructureElementBuilder } from '@/domain/builders/workout-structure-element-builder';
+import {
+  buildWorkoutStructure,
+  createWorkoutStructureBuilder,
+  withStructureElement,
+} from '@/domain/builders/workout-structure-builder';
+import {
+  buildWorkoutStructureElement,
+  createWorkoutStructureElementBuilder,
+  withElementType,
+  withStep,
+} from '@/domain/builders/workout-structure-element-builder';
 import { ElementType, type WorkoutStructure } from '@/types';
 
 import {
@@ -21,41 +30,55 @@ export const createIntervalWorkout = (
   intervals: number = 6,
   cooldownMinutes: number = 10
 ): WorkoutStructure => {
-  const builder = new WorkoutStructureBuilder();
+  let builder = createWorkoutStructureBuilder();
 
   // Warmup
-  const warmupElement = new WorkoutStructureElementBuilder()
-    .type(ElementType.STEP)
-    .addStep(createWarmupStep(warmupMinutes))
-    .build();
-  builder.addElement(warmupElement);
+  const warmupElement = buildWorkoutStructureElement(
+    withStep(
+      withElementType(createWorkoutStructureElementBuilder(), ElementType.STEP),
+      createWarmupStep(warmupMinutes)
+    )
+  );
+  builder = withStructureElement(builder, warmupElement);
 
   // Intervals
   for (let i = 0; i < intervals; i++) {
-    const intervalElement = new WorkoutStructureElementBuilder()
-      .type(ElementType.STEP)
-      .addStep(createIntervalStep(intervalMinutes, intervalIntensity))
-      .build();
-    builder.addElement(intervalElement);
+    const intervalElement = buildWorkoutStructureElement(
+      withStep(
+        withElementType(
+          createWorkoutStructureElementBuilder(),
+          ElementType.STEP
+        ),
+        createIntervalStep(intervalMinutes, intervalIntensity)
+      )
+    );
+    builder = withStructureElement(builder, intervalElement);
 
     // Recovery (except after last interval)
     if (i < intervals - 1) {
-      const recoveryElement = new WorkoutStructureElementBuilder()
-        .type(ElementType.STEP)
-        .addStep(createRecoveryStep(recoveryMinutes))
-        .build();
-      builder.addElement(recoveryElement);
+      const recoveryElement = buildWorkoutStructureElement(
+        withStep(
+          withElementType(
+            createWorkoutStructureElementBuilder(),
+            ElementType.STEP
+          ),
+          createRecoveryStep(recoveryMinutes)
+        )
+      );
+      builder = withStructureElement(builder, recoveryElement);
     }
   }
 
   // Cooldown
-  const cooldownElement = new WorkoutStructureElementBuilder()
-    .type(ElementType.STEP)
-    .addStep(createCooldownStep(cooldownMinutes))
-    .build();
-  builder.addElement(cooldownElement);
+  const cooldownElement = buildWorkoutStructureElement(
+    withStep(
+      withElementType(createWorkoutStructureElementBuilder(), ElementType.STEP),
+      createCooldownStep(cooldownMinutes)
+    )
+  );
+  builder = withStructureElement(builder, cooldownElement);
 
-  return builder.build();
+  return buildWorkoutStructure(builder);
 };
 
 /**
@@ -67,30 +90,36 @@ export const createTempoWorkout = (
   tempoIntensity: number = 90,
   cooldownMinutes: number = 10
 ): WorkoutStructure => {
-  const builder = new WorkoutStructureBuilder();
+  let builder = createWorkoutStructureBuilder();
 
   // Warmup
-  const warmupElement = new WorkoutStructureElementBuilder()
-    .type(ElementType.STEP)
-    .addStep(createWarmupStep(warmupMinutes))
-    .build();
-  builder.addElement(warmupElement);
+  const warmupElement = buildWorkoutStructureElement(
+    withStep(
+      withElementType(createWorkoutStructureElementBuilder(), ElementType.STEP),
+      createWarmupStep(warmupMinutes)
+    )
+  );
+  builder = withStructureElement(builder, warmupElement);
 
   // Tempo
-  const tempoElement = new WorkoutStructureElementBuilder()
-    .type(ElementType.STEP)
-    .addStep(createSteadyStep(tempoMinutes, tempoIntensity))
-    .build();
-  builder.addElement(tempoElement);
+  const tempoElement = buildWorkoutStructureElement(
+    withStep(
+      withElementType(createWorkoutStructureElementBuilder(), ElementType.STEP),
+      createSteadyStep(tempoMinutes, tempoIntensity)
+    )
+  );
+  builder = withStructureElement(builder, tempoElement);
 
   // Cooldown
-  const cooldownElement = new WorkoutStructureElementBuilder()
-    .type(ElementType.STEP)
-    .addStep(createCooldownStep(cooldownMinutes))
-    .build();
-  builder.addElement(cooldownElement);
+  const cooldownElement = buildWorkoutStructureElement(
+    withStep(
+      withElementType(createWorkoutStructureElementBuilder(), ElementType.STEP),
+      createCooldownStep(cooldownMinutes)
+    )
+  );
+  builder = withStructureElement(builder, cooldownElement);
 
-  return builder.build();
+  return buildWorkoutStructure(builder);
 };
 
 /**
@@ -102,28 +131,34 @@ export const createLongSteadyWorkout = (
   steadyIntensity: number = 75,
   cooldownMinutes: number = 10
 ): WorkoutStructure => {
-  const builder = new WorkoutStructureBuilder();
+  let builder = createWorkoutStructureBuilder();
 
   // Warmup
-  const warmupElement = new WorkoutStructureElementBuilder()
-    .type(ElementType.STEP)
-    .addStep(createWarmupStep(warmupMinutes))
-    .build();
-  builder.addElement(warmupElement);
+  const warmupElement = buildWorkoutStructureElement(
+    withStep(
+      withElementType(createWorkoutStructureElementBuilder(), ElementType.STEP),
+      createWarmupStep(warmupMinutes)
+    )
+  );
+  builder = withStructureElement(builder, warmupElement);
 
   // Long steady
-  const steadyElement = new WorkoutStructureElementBuilder()
-    .type(ElementType.STEP)
-    .addStep(createSteadyStep(steadyMinutes, steadyIntensity))
-    .build();
-  builder.addElement(steadyElement);
+  const steadyElement = buildWorkoutStructureElement(
+    withStep(
+      withElementType(createWorkoutStructureElementBuilder(), ElementType.STEP),
+      createSteadyStep(steadyMinutes, steadyIntensity)
+    )
+  );
+  builder = withStructureElement(builder, steadyElement);
 
   // Cooldown
-  const cooldownElement = new WorkoutStructureElementBuilder()
-    .type(ElementType.STEP)
-    .addStep(createCooldownStep(cooldownMinutes))
-    .build();
-  builder.addElement(cooldownElement);
+  const cooldownElement = buildWorkoutStructureElement(
+    withStep(
+      withElementType(createWorkoutStructureElementBuilder(), ElementType.STEP),
+      createCooldownStep(cooldownMinutes)
+    )
+  );
+  builder = withStructureElement(builder, cooldownElement);
 
-  return builder.build();
+  return buildWorkoutStructure(builder);
 };

@@ -77,7 +77,7 @@ describe('Domain Templates - Workout Templates', () => {
     });
 
     it('should create intervals with correct intensity', () => {
-      const intensity = 130;
+      const intensity = 85; // Use valid intensity within 0-100 range
       const workout = createIntervalWorkout(10, 5, intensity, 3, 2, 10);
 
       // Find interval elements (not warmup, recovery, or cooldown)
@@ -88,8 +88,8 @@ describe('Domain Templates - Workout Templates', () => {
       expect(intervalElements).toHaveLength(2);
       intervalElements.forEach((element) => {
         const step = element.steps[0];
-        expect(step.targets[0].minValue).toBe(intensity - 5);
-        expect(step.targets[0].maxValue).toBe(intensity + 5);
+        expect(step.targets[0].minValue).toBe(intensity - 5); // 85 - 5 = 80
+        expect(step.targets[0].maxValue).toBe(intensity + 5); // 85 + 5 = 90
       });
     });
 

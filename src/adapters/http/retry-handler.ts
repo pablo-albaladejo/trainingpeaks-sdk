@@ -6,13 +6,13 @@
 import { isRetryableError } from '@/adapters/errors/http-errors';
 import type { Logger } from '@/adapters/logging/logger';
 
-export interface RetryConfig {
+export type RetryConfig = {
   attempts: number;
   delay: number;
   backoff: number;
   maxDelay?: number;
   jitter?: boolean;
-}
+};
 
 export class RetryHandler {
   constructor(private config: RetryConfig) {

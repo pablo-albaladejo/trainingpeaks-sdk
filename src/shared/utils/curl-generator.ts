@@ -3,13 +3,13 @@
  * Shared utility for generating curl commands from HTTP requests
  */
 
-export interface CurlRequestData {
+export type CurlRequestData = {
   method: string;
   url: string;
   headers?: Record<string, string>;
   data?: unknown;
   cookies?: string[];
-}
+};
 
 /**
  * Generate curl command from request data

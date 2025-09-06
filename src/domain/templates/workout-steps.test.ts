@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { IntensityClass } from '@/types';
+import { IntensityClass, type WorkoutStructureStep } from '@/types';
 
 import {
   createCooldownStep,
@@ -9,6 +9,18 @@ import {
   createSteadyStep,
   createWarmupStep,
 } from './workout-steps';
+
+/**
+ * Helper function to assert intensity range invariants
+ */
+const assertIntensityRangeInvariant = (step: WorkoutStructureStep): void => {
+  const target = step.targets[0];
+  const { minValue, maxValue } = target;
+
+  expect(minValue).toBeGreaterThanOrEqual(0); // 0 <= minValue
+  expect(minValue).toBeLessThan(maxValue); // minValue < maxValue
+  expect(maxValue).toBeLessThanOrEqual(100); // maxValue <= 100
+};
 
 describe('Domain Templates - Workout Steps', () => {
   describe('createWarmupStep', () => {
@@ -90,7 +102,7 @@ describe('Domain Templates - Workout Steps', () => {
   describe('createIntervalStep', () => {
     it('should create an interval step with correct properties', () => {
       const duration = 5;
-      const intensity = 125;
+      const intensity = 85; // Use a valid intensity within 0-100 range
       const step = createIntervalStep(duration, intensity);
 
       expect(step).toBeDefined();
@@ -102,22 +114,23 @@ describe('Domain Templates - Workout Steps', () => {
     });
 
     it('should create interval with intensity range ±5% around target', () => {
-      const intensity = 120;
+      const intensity = 85; // Use a valid intensity within 0-100 range
       const step = createIntervalStep(5, intensity);
 
       expect(step.targets[0]).toEqual(
         expect.objectContaining({
-          minValue: 115,
-          maxValue: 125,
+          minValue: 80, // 85 - 5 = 80
+          maxValue: 90, // 85 + 5 = 90
         })
       );
     });
 
     it.each([
-      { intensity: 100, expectedMin: 95, expectedMax: 105 },
-      { intensity: 150, expectedMin: 145, expectedMax: 155 },
+      { intensity: 100, expectedMin: 95, expectedMax: 100 }, // Clamped to MAX_INTENSITY
+      { intensity: 150, expectedMin: 99, expectedMax: 100 }, // Both clamped, adjusted to ensure min < max
       { intensity: 80, expectedMin: 75, expectedMax: 85 },
       { intensity: 10, expectedMin: 5, expectedMax: 15 },
+      { intensity: -10, expectedMin: 0, expectedMax: 1 }, // Clamped to MIN_INTENSITY
     ])(
       'should handle intensity $intensity with range $expectedMin-$expectedMax',
       ({ intensity, expectedMin, expectedMax }) => {
@@ -130,6 +143,50 @@ describe('Domain Templates - Workout Steps', () => {
         );
       }
     );
+
+    describe('Edge cases - intensity clamping', () => {
+      it('should clamp low intensity values to valid range', () => {
+        const step = createIntervalStep(10, 2); // intensityPercent - 5 = -3, should clamp to 0
+        expect(step.targets[0]).toEqual(
+          expect.objectContaining({
+            minValue: 0, // Math.max(0, 2 - 5) = 0
+            maxValue: 7, // Math.min(100, 2 + 5) = 7
+          })
+        );
+        assertIntensityRangeInvariant(step);
+      });
+
+      it('should clamp high intensity values to valid range', () => {
+        const step = createIntervalStep(10, 98); // intensityPercent + 5 = 103, should clamp to 100
+        expect(step.targets[0]).toEqual(
+          expect.objectContaining({
+            minValue: 93, // Math.max(0, 98 - 5) = 93
+            maxValue: 100, // Math.min(100, 98 + 5) = 100
+          })
+        );
+        assertIntensityRangeInvariant(step);
+      });
+
+      it('should handle boundary intensity values', () => {
+        const lowStep = createIntervalStep(10, 0);
+        expect(lowStep.targets[0]).toEqual(
+          expect.objectContaining({
+            minValue: 0, // Math.max(0, 0 - 5) = 0
+            maxValue: 5, // Math.min(100, 0 + 5) = 5
+          })
+        );
+        assertIntensityRangeInvariant(lowStep);
+
+        const highStep = createIntervalStep(10, 100);
+        expect(highStep.targets[0]).toEqual(
+          expect.objectContaining({
+            minValue: 95, // Math.max(0, 100 - 5) = 95
+            maxValue: 100, // Math.min(100, 100 + 5) = 100
+          })
+        );
+        assertIntensityRangeInvariant(highStep);
+      });
+    });
   });
 
   describe('createRecoveryStep', () => {
@@ -195,7 +252,7 @@ describe('Domain Templates - Workout Steps', () => {
 
     it.each([
       { intensity: 75, expectedMin: 70, expectedMax: 80 },
-      { intensity: 100, expectedMin: 95, expectedMax: 105 },
+      { intensity: 100, expectedMin: 95, expectedMax: 100 }, // Clamped to MAX_INTENSITY
       { intensity: 60, expectedMin: 55, expectedMax: 65 },
     ])(
       'should handle intensity $intensity with range $expectedMin-$expectedMax',
@@ -227,12 +284,56 @@ describe('Domain Templates - Workout Steps', () => {
         );
       }
     );
+
+    describe('Edge cases - intensity clamping', () => {
+      it('should clamp low intensity values to valid range', () => {
+        const step = createSteadyStep(20, 3); // intensityPercent - 5 = -2, should clamp to 0
+        expect(step.targets[0]).toEqual(
+          expect.objectContaining({
+            minValue: 0, // Math.max(0, 3 - 5) = 0
+            maxValue: 8, // Math.min(100, 3 + 5) = 8
+          })
+        );
+        assertIntensityRangeInvariant(step);
+      });
+
+      it('should clamp high intensity values to valid range', () => {
+        const step = createSteadyStep(20, 98); // intensityPercent + 5 = 103, should clamp to 100
+        expect(step.targets[0]).toEqual(
+          expect.objectContaining({
+            minValue: 93, // Math.max(0, 98 - 5) = 93
+            maxValue: 100, // Math.min(100, 98 + 5) = 100
+          })
+        );
+        assertIntensityRangeInvariant(step);
+      });
+
+      it('should handle boundary intensity values', () => {
+        const lowStep = createSteadyStep(20, 0);
+        expect(lowStep.targets[0]).toEqual(
+          expect.objectContaining({
+            minValue: 0, // Math.max(0, 0 - 5) = 0
+            maxValue: 5, // Math.min(100, 0 + 5) = 5
+          })
+        );
+        assertIntensityRangeInvariant(lowStep);
+
+        const highStep = createSteadyStep(20, 100);
+        expect(highStep.targets[0]).toEqual(
+          expect.objectContaining({
+            minValue: 95, // Math.max(0, 100 - 5) = 95
+            maxValue: 100, // Math.min(100, 100 + 5) = 100
+          })
+        );
+        assertIntensityRangeInvariant(highStep);
+      });
+    });
   });
 
   describe('Integration tests', () => {
     it('should create different step types with consistent structure', () => {
       const warmup = createWarmupStep(12);
-      const interval = createIntervalStep(5, 120);
+      const interval = createIntervalStep(5, 85); // Use a valid intensity within 0-100 range
       const recovery = createRecoveryStep(3);
       const steady = createSteadyStep(30, 90);
       const cooldown = createCooldownStep(12);
@@ -251,7 +352,7 @@ describe('Domain Templates - Workout Steps', () => {
 
     it('should create steps with appropriate intensity classes', () => {
       const warmup = createWarmupStep(12);
-      const interval = createIntervalStep(5, 120);
+      const interval = createIntervalStep(5, 85); // Use a valid intensity within 0-100 range
       const recovery = createRecoveryStep(3);
       const steady = createSteadyStep(30, 90);
       const cooldown = createCooldownStep(12);

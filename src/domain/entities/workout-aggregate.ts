@@ -19,10 +19,10 @@ import {
   updateWorkout,
 } from './workout';
 
-export interface WorkoutAggregate {
+export type WorkoutAggregate = {
   readonly workout: Workout;
   readonly structure?: WorkoutStructure;
-}
+};
 
 /**
  * Create a new Workout Aggregate
