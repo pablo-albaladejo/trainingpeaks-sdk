@@ -130,7 +130,7 @@ jobs:
         run: npm audit signatures
 
       - name: Check for secrets
-        uses: trufflesecurity/trufflehog@v3.82.13
+        uses: trufflesecurity/trufflehog@v3.95.9
         with:
           path: ./
           base: ${{ github.event.pull_request.base.sha || 'HEAD~1' }}
