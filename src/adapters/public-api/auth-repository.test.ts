@@ -149,7 +149,7 @@ describe('AuthRepository', () => {
       vi.mocked(mockHttpClient.get).mockResolvedValue({
         success: true,
         data: '<html><form></form></html>', // No token
-      } as HttpResponse<string>);
+      });
 
       const repository = createAuthRepository(dependencies);
 
