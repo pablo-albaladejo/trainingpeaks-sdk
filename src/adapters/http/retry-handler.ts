@@ -62,7 +62,7 @@ export class RetryHandler {
               error: error instanceof Error ? error.message : String(error),
               errorCode:
                 error && typeof error === 'object' && 'code' in error
-                  ? (error as { code: unknown }).code
+                  ? error.code
                   : undefined,
               retryable: isRetryableError(error),
             });
@@ -82,7 +82,7 @@ export class RetryHandler {
             error: error instanceof Error ? error.message : String(error),
             errorCode:
               error && typeof error === 'object' && 'code' in error
-                ? (error as { code: unknown }).code
+                ? error.code
                 : undefined,
           });
         }

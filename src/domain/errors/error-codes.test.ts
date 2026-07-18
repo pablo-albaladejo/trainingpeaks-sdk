@@ -86,9 +86,9 @@ describe('Error Codes', () => {
 
       errorCodes.forEach((code) => {
         expect(messageKeys).toContain(code);
-        expect(ERROR_MESSAGES[code as ErrorCode]).toBeDefined();
-        expect(typeof ERROR_MESSAGES[code as ErrorCode]).toBe('string');
-        expect(ERROR_MESSAGES[code as ErrorCode].length).toBeGreaterThan(0);
+        expect(ERROR_MESSAGES[code]).toBeDefined();
+        expect(typeof ERROR_MESSAGES[code]).toBe('string');
+        expect(ERROR_MESSAGES[code].length).toBeGreaterThan(0);
       });
     });
 
@@ -137,9 +137,9 @@ describe('Error Codes', () => {
 
       errorCodes.forEach((code) => {
         expect(statusKeys).toContain(code);
-        expect(ERROR_STATUS_CODES[code as ErrorCode]).toBeDefined();
-        expect(typeof ERROR_STATUS_CODES[code as ErrorCode]).toBe('number');
-        expect(ERROR_STATUS_CODES[code as ErrorCode]).toBeGreaterThan(0);
+        expect(ERROR_STATUS_CODES[code]).toBeDefined();
+        expect(typeof ERROR_STATUS_CODES[code]).toBe('number');
+        expect(ERROR_STATUS_CODES[code]).toBeGreaterThan(0);
       });
     });
 
@@ -237,8 +237,8 @@ describe('Error Codes', () => {
 
       errorCodeKeys.forEach((key) => {
         const errorCode = ERROR_CODES[key as keyof typeof ERROR_CODES];
-        expect(ERROR_MESSAGES[errorCode as ErrorCode]).toBeDefined();
-        expect(ERROR_STATUS_CODES[errorCode as ErrorCode]).toBeDefined();
+        expect(ERROR_MESSAGES[errorCode]).toBeDefined();
+        expect(ERROR_STATUS_CODES[errorCode]).toBeDefined();
       });
     });
   });

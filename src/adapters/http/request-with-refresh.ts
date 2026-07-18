@@ -50,7 +50,7 @@ const requestAndWrap = async <TData>(
     data: response.data,
     success: true,
     cookies: extractSetCookieHeaders(response),
-  } as HttpResponse<TData>;
+  };
 };
 
 /**

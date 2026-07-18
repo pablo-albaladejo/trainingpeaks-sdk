@@ -20,7 +20,6 @@ import type { Logger } from '@/adapters/logging/logger';
 import {
   HttpClient,
   HttpClientConfig,
-  HttpMethod,
   HttpResponse,
   InternalRequestConfig,
   RequestOptions,
@@ -144,7 +143,7 @@ const createAxiosConfig = async (
   config: InternalRequestConfig
 ): Promise<AxiosRequestConfig> => {
   const axiosConfig: AxiosRequestConfig = {
-    method: config.method.toLowerCase() as HttpMethod,
+    method: config.method.toLowerCase(),
     url: config.url,
     data: config.data,
     params: config.options?.params,
@@ -340,7 +339,7 @@ const makeRequest = async <T>(
         error: error instanceof Error ? error.message : String(error),
         errorCode:
           error && typeof error === 'object' && 'code' in error
-            ? (error as { code: unknown }).code
+            ? error.code
             : undefined,
         stack: error instanceof Error ? error.stack : undefined,
       });
