@@ -134,7 +134,7 @@
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.39.0",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "@types/rosie": "^0.0.45",
