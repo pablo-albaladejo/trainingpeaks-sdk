@@ -10,7 +10,7 @@ import type { Credentials } from '@/domain/schemas';
 
 // Simple credentials using Faker
 export const createValidCredentials = () => ({
-  username: faker.internet.userName(),
+  username: faker.internet.username(),
   password: faker.internet.password({ length: 12 }),
 });
 
@@ -25,12 +25,12 @@ export const createEmptyCredentials = () => ({
 });
 
 export const createMalformedCredentials = () => ({
-  username: faker.internet.userName() + '@#$%^&*()',
+  username: faker.internet.username() + '@#$%^&*()',
   password: faker.internet.password() + '!@#$%^&*()',
 });
 
 export const createLongCredentials = () => ({
-  username: faker.internet.userName().repeat(100),
+  username: faker.internet.username().repeat(100),
   password: faker.internet.password().repeat(100),
 });
 
@@ -41,7 +41,7 @@ export const createSpecialCharacterCredentials = () => ({
 
 // Complex credentials using Rosie Factory
 export const CredentialsFactory = new Factory<Credentials>()
-  .attr('username', () => faker.internet.userName())
+  .attr('username', () => faker.internet.username())
   .attr('password', () => faker.internet.password({ length: 12 }));
 
 // Environment-based credentials for real testing
