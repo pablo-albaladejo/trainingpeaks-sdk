@@ -13,7 +13,7 @@ export const createSuccessResponse = () => ({
   success: true,
   user: {
     id: faker.string.uuid(),
-    username: faker.internet.userName(),
+    username: faker.internet.username(),
     email: faker.internet.email(),
     firstName: faker.person.firstName(),
     lastName: faker.person.lastName(),
@@ -35,7 +35,7 @@ export const UserResponseFactory = new Factory<UserResponse>()
   .attr('success', true)
   .attr('user', () => ({
     id: faker.string.uuid(),
-    username: faker.internet.userName(),
+    username: faker.internet.username(),
     email: faker.internet.email(),
     firstName: faker.person.firstName(),
     lastName: faker.person.lastName(),

@@ -171,7 +171,7 @@ export const sessionBuilder = new Factory<Session>()
  * Creates Credentials value objects with validation patterns
  */
 export const credentialsBuilder = new Factory<Credentials>()
-  .attr('username', () => faker.internet.userName())
+  .attr('username', () => faker.internet.username())
   .attr('password', () => faker.internet.password())
   .after((credentials, options) => {
     return {
@@ -401,7 +401,7 @@ export const userInfoResponseBuilder = new Factory<UserInfoResponse>()
   .attr('data', () => ({
     user: {
       userId: faker.string.uuid(),
-      username: faker.internet.userName(),
+      username: faker.internet.username(),
       name: faker.person.fullName(),
       preferences: userPreferencesBuilder.build(),
     },
@@ -501,7 +501,7 @@ export const loginResponseBuilder = new Factory<LoginResponse>()
 export const userApiResponseBuilder = new Factory<UserApiResponse>()
   .attr('user', () => ({
     userId: faker.string.uuid(),
-    username: faker.internet.userName(),
+    username: faker.internet.username(),
     name: faker.person.fullName(),
     preferences: userPreferencesBuilder.build(),
   }))
