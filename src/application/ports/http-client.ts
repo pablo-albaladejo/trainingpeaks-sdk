@@ -7,12 +7,12 @@ import type { SessionStorage } from './session-storage';
 /**
  * Configuration options for HTTP requests
  */
-export interface RequestOptions {
+export type RequestOptions = {
   headers?: Record<string, string>;
   timeout?: number;
   params?: Record<string, string | number | boolean>;
   cookies?: string[];
-}
+};
 
 /**
  * Response from the HTTP client
